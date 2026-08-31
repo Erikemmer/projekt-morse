@@ -1,0 +1,188 @@
+/*
+ * Ruhiges Grundlayout. Farben und Abstaende ausschliesslich ueber Tokens,
+ * damit spaeter nichts an verstreuten Literalen haengt.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #14161a;
+  --panel: #1c1f25;
+  --border: #2b3038;
+  --text: #e7e9ee;
+  --muted: #9aa2b1;
+  --accent: #7fb3ff;
+  --warn: #f0b866;
+
+  --space-1: 0.5rem;
+  --space-2: 1rem;
+  --space-3: 1.5rem;
+  --space-4: 2.5rem;
+  --radius: 0.6rem;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --border: #dfe3ea;
+    --text: #1b1e24;
+    --muted: #5d6675;
+    --accent: #1f5fbf;
+    --warn: #96601a;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.shell {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: var(--space-4) var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+h1 {
+  margin: 0 0 var(--space-1);
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field > span {
+  font-size: 0.85rem;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.field output {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+input[type='text'] {
+  font: inherit;
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+input[type='range'] {
+  accent-color: var(--accent);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-1);
+}
+
+button {
+  font: inherit;
+  padding: 0.55rem 1.1rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pattern {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  min-height: 3rem;
+  align-items: flex-start;
+}
+
+.glyph {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.glyph-char {
+  font-weight: 600;
+}
+
+.glyph-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+}
+
+.facts {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  border-top: 1px solid var(--border);
+  padding-top: var(--space-2);
+}
+
+.facts dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.warning {
+  margin: 0;
+  color: var(--warn);
+  font-size: 0.9rem;
+}
