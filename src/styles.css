@@ -1,36 +1,41 @@
 /*
- * Ruhiges Grundlayout. Farben und Abstaende ausschliesslich ueber Tokens,
- * damit spaeter nichts an verstreuten Literalen haengt.
+ * Design-Richtung "Ruhe" (vom Nutzer aus drei Mockup-Optionen gewaehlt).
+ *
+ * Regel: Farben ausschliesslich ueber die Tokens unten. Es gibt genau *einen*
+ * Akzent. Keine Verlaeufe, kein Konfetti, keine Emojis. Eine weitere Farbe
+ * braucht eine dokumentierte Entscheidung -- kein Literal irgendwo hier drin.
+ *
+ * Light-first. Das Dark-Set am Ende ist Vorbereitung, nicht Auslieferung:
+ * es haelt dieselben Rollen, damit spaeter nur Werte zu tauschen sind.
  */
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 
-  --bg: #14161a;
-  --panel: #1c1f25;
-  --border: #2b3038;
-  --text: #e7e9ee;
-  --muted: #9aa2b1;
-  --accent: #7fb3ff;
-  --warn: #f0b866;
+  /* --- Farbrollen (Ruhe) --- */
+  --paper: #f6f1e8;
+  --ink: #221d16;
+  --accent: #b45309;
+  --accent-deep: #92400e;
+  --muted: #8a7f6d;
+  --line: #d8cfc0;
+  --line-soft: #e3dac9;
+
+  /* --- Typografie ---
+   * Display = Serif (Newsreader), UI = Grotesk (IBM Plex Sans). Beide kommen
+   * ueber den Link in index.html; die Fallback-Stacks sind so gewaehlt, dass
+   * die Seite ohne Netz nicht bricht, sondern nur anders aussieht. */
+  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   --space-1: 0.5rem;
   --space-2: 1rem;
   --space-3: 1.5rem;
   --space-4: 2.5rem;
-  --radius: 0.6rem;
-}
+  --radius: 0.5rem;
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f6f7f9;
-    --panel: #ffffff;
-    --border: #dfe3ea;
-    --text: #1b1e24;
-    --muted: #5d6675;
-    --accent: #1f5fbf;
-    --warn: #96601a;
-  }
+  /* Kleinste sichere Zielgroesse fuer Finger (WCAG 2.5.5). */
+  --tap: 2.75rem;
 }
 
 * {
@@ -39,13 +44,19 @@
 
 body {
   margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.6 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-deep);
+  outline-offset: 2px;
 }
 
 .shell {
-  max-width: 42rem;
+  max-width: 34rem;
   margin: 0 auto;
   padding: var(--space-4) var(--space-2);
   display: flex;
@@ -54,20 +65,21 @@ body {
 }
 
 h1 {
-  margin: 0 0 var(--space-1);
-  font-size: 1.6rem;
-  font-weight: 600;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 500;
   letter-spacing: -0.01em;
 }
 
 .lede {
-  margin: 0;
+  margin: var(--space-1) 0 0;
   color: var(--muted);
+  font-size: 1.0625rem;
 }
 
 .panel {
-  background: var(--panel);
-  border: 1px solid var(--border);
+  border: 1px solid var(--line-soft);
   border-radius: var(--radius);
   padding: var(--space-3);
   display: flex;
@@ -82,7 +94,7 @@ h1 {
 }
 
 .field > span {
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: var(--muted);
   display: flex;
   justify-content: space-between;
@@ -91,25 +103,22 @@ h1 {
 
 .field output {
   font-variant-numeric: tabular-nums;
-  color: var(--text);
+  color: var(--ink);
 }
 
 input[type='text'] {
   font: inherit;
+  min-height: var(--tap);
   padding: 0.6rem 0.75rem;
-  color: var(--text);
-  background: var(--bg);
-  border: 1px solid var(--border);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
 }
 
 input[type='range'] {
   accent-color: var(--accent);
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  min-height: var(--tap);
 }
 
 .actions {
@@ -119,10 +128,11 @@ input[type='range'] {
 
 button {
   font: inherit;
-  padding: 0.55rem 1.1rem;
-  color: var(--text);
-  background: var(--bg);
-  border: 1px solid var(--border);
+  min-height: var(--tap);
+  padding: 0.6rem 1.25rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   cursor: pointer;
 }
@@ -153,13 +163,14 @@ button:disabled {
 }
 
 .glyph-char {
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
 }
 
 .glyph-code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: var(--muted);
-  letter-spacing: 0.1em;
+  color: var(--accent-deep);
+  letter-spacing: 0.2em;
 }
 
 .facts {
@@ -167,12 +178,12 @@ button:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line-soft);
   padding-top: var(--space-2);
 }
 
 .facts dt {
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--muted);
 }
 
@@ -183,6 +194,31 @@ button:disabled {
 
 .warning {
   margin: 0;
-  color: var(--warn);
-  font-size: 0.9rem;
+  color: var(--accent-deep);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/*
+ * Dark-Set: bewusst noch nicht scharf geschaltet (kein prefers-color-scheme).
+ * Es steht hier, damit die Rollen schon benannt sind. Wird es aktiviert,
+ * gehoert eine Kontrastpruefung dazu -- nicht vorher.
+ */
+[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #17130e;
+  --ink: #f0e9dd;
+  --accent: #e08a3c;
+  --accent-deep: #f0a95c;
+  --muted: #9a8f7c;
+  --line: #3a3128;
+  --line-soft: #2a231b;
 }

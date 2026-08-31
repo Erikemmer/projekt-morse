@@ -50,7 +50,7 @@ export function App() {
       <header>
         <h1>Projekt Morse</h1>
         <p className="lede">
-          Grundgeruest: Engine, Farnsworth-Timing und Wiedergabe. Der Lernloop kommt als Naechstes.
+          Foundations: engine, Farnsworth timing and playback. The learning loop comes next.
         </p>
       </header>
 
@@ -68,7 +68,7 @@ export function App() {
 
         <label className="field" htmlFor="characterWpm">
           <span>
-            Zeichentempo <output htmlFor="characterWpm">{characterWpm} WpM</output>
+            Character speed <output htmlFor="characterWpm">{characterWpm} WPM</output>
           </span>
           <input
             id="characterWpm"
@@ -88,7 +88,7 @@ export function App() {
 
         <label className="field" htmlFor="effectiveWpm">
           <span>
-            Gesamttempo <output htmlFor="effectiveWpm">{effectiveWpm} WpM</output>
+            Overall speed <output htmlFor="effectiveWpm">{effectiveWpm} WPM</output>
           </span>
           <input
             id="effectiveWpm"
@@ -103,10 +103,10 @@ export function App() {
 
         <div className="actions">
           <button type="button" onClick={handlePlay} disabled={isPlaying || schedule.tones.length === 0}>
-            Abspielen
+            Play
           </button>
           <button type="button" onClick={handleStop} disabled={!isPlaying}>
-            Stoppen
+            Stop
           </button>
         </div>
       </section>
@@ -124,12 +124,12 @@ export function App() {
         </p>
         <dl className="facts">
           <div>
-            <dt>Dauer</dt>
+            <dt>Duration</dt>
             <dd>{schedule.duration.toFixed(2)} s</dd>
           </div>
           <div>
-            <dt>Pause zwischen Zeichen</dt>
-            <dd>{(timing.interCharacterGap / timing.unit).toFixed(1)} Einheiten</dd>
+            <dt>Gap between characters</dt>
+            <dd>{(timing.interCharacterGap / timing.unit).toFixed(1)} units</dd>
           </div>
           <div>
             <dt>dit</dt>
@@ -138,7 +138,7 @@ export function App() {
         </dl>
         {schedule.unsupported.length > 0 && (
           <p className="warning">
-            Nicht in Morse darstellbar und uebersprungen: {schedule.unsupported.join(' ')}
+            Not representable in Morse, skipped: {schedule.unsupported.join(' ')}
           </p>
         )}
       </section>

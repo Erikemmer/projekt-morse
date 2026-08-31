@@ -22,13 +22,31 @@ und Strichen. Läuft vollständig lokal, ohne Konto, ohne Server.
    wird nur die Pause. Wer Zeichen langsam lernt, muss sie später umlernen.
 4. **Lernen vor Punktzahl.** Hebt ein Feature eine Zahl, ohne das Können zu heben,
    fliegt es raus.
-5. **Lokal, ohne Konto.** Alles funktioniert offline und dauerhaft ohne Anmeldung.
-   Keine Cookies, keine Third-Party-Analytics, kein Ad-Tech.
+5. **Lokal, ohne Konto — in V1.** Alles funktioniert offline und ohne Anmeldung.
+   Keine Cookies, keine Third-Party-Analytics, kein Ad-Tech. Die Architektur bleibt
+   dabei accountfähig: eine spätere Freemium-Option ist eine bewusst offene Tür,
+   kein Widerspruch. Also nichts bauen, das einen Account *voraussetzt* — und nichts,
+   das einen später unmöglich macht.
 6. **Wissenschaftliche Ehrlichkeit.** Ist eine Metrik ein Näherungswert, wird sie in
    der UI als solcher benannt. Jede Zahl auf dem Bildschirm ist eine Behauptung.
 7. **Barrierefreiheit von vorn**, nicht als Folge-Ticket. Ein Audio-Trainer braucht
    dafür besondere Sorgfalt: jede Hörübung braucht eine selbstgesteuerte Variante.
-8. **Schön, aber zurückhaltend.** Kein Konfetti, keine Streak-Erpressung.
+8. **Schön, aber zurückhaltend.** Kein Konfetti. Beschlossen ist ein **Streak mit
+   Freeze-Gnade**: er zeigt Kontinuität und verzeiht Aussetzer, statt sie zu bestrafen
+   (SDT-konform). Der Geist von „keine Streak-Erpressung" bleibt — kein Druckaufbau,
+   kein Fortschritt, der als Druckmittel verloren geht.
+9. **Design-Richtung „Ruhe".** Vom Nutzer aus drei Mockup-Optionen gewählt: ruhig,
+   viel Weißraum, **ein** Akzent. Keine Verläufe, kein Konfetti, keine Emojis.
+   Farben ausschließlich über die Tokens in `src/styles.css` (paper, ink, accent /
+   accent-deep, muted, line, line-soft). **Keine weitere Farbe ohne dokumentierte
+   Entscheidung**, und kein Farbliteral außerhalb der Token-Definition. Typografie:
+   Display „Newsreader" (Serif), UI „IBM Plex Sans", beide mit Fallback-Stack.
+   Light-first.
+10. **EN-first.** Alle UI-Strings sind Englisch. Deutsch folgt später als eigene
+   i18n-Entscheidung — bis dahin nichts dafür vorbauen.
+
+Konzept, Recherche und Entscheidungslog liegen im Notion-Projekt des Nutzers;
+Änderungen an Produktentscheidungen dort klären, nicht hier erfinden.
 
 Widerspricht eine Aufgabe diesem Abschnitt: anhalten und den Konflikt melden.
 Nicht still auflösen.
