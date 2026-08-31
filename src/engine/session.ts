@@ -17,6 +17,7 @@
  *   AudioContext noch DOM.
  */
 
+import { maybeGrow } from './growth';
 import { pickNext } from './selection';
 import { recordAttempt, type Progress } from './stats';
 
@@ -48,6 +49,7 @@ export interface Attempt {
 }
 
 export interface SessionState {
+  /** Die geuebten Zeichen: der aktive Satz aus dem Fortschritt, waechst mit ihm. */
   readonly pool: readonly string[];
   readonly totalRounds: number;
   /** Laufende Runde, 1-basiert. */
@@ -59,32 +61,39 @@ export interface SessionState {
   readonly replays: number;
   readonly attempts: readonly Attempt[];
   readonly lastAttempt: Attempt | null;
+  /** Mit dieser Antwort neu eingefuehrtes Zeichen -- fuer die Ankuendigung im Feedback. */
+  readonly introduced: string | null;
   /** Fortschritt ueber alle Sitzungen -- Grundlage der Gewichtung. */
   readonly progress: Progress;
 }
 
 export interface SessionOptions {
-  pool: readonly string[];
   totalRounds: number;
   progress: Progress;
   /** Zufallszahl in [0,1). Als Parameter, damit Tests nicht wuerfeln muessen. */
   random: () => number;
 }
 
+/**
+ * Beginnt eine Sitzung. Geuebt wird der aktive Zeichensatz aus dem Fortschritt --
+ * es gibt bewusst keinen zweiten Ort, an dem ein Pool herkommen koennte.
+ */
 export function createSession(options: SessionOptions): SessionState {
-  if (options.pool.length === 0) throw new RangeError('Der Zeichensatz darf nicht leer sein');
+  const pool = options.progress.activeCharacters;
+  if (pool.length === 0) throw new RangeError('Der Zeichensatz darf nicht leer sein');
   if (options.totalRounds < 1) throw new RangeError('Eine Sitzung braucht mindestens eine Runde');
 
   return {
-    pool: options.pool,
+    pool,
     totalRounds: options.totalRounds,
     round: 1,
-    prompt: pickNext(options.pool, options.progress, { random: options.random }),
+    prompt: pickNext(pool, options.progress, { random: options.random }),
     phase: 'ready',
     promptEndsAt: null,
     replays: 0,
     attempts: [],
     lastAttempt: null,
+    introduced: null,
     progress: options.progress,
   };
 }
@@ -136,12 +145,18 @@ export function submitAnswer(
     replays: state.replays,
   };
 
+  // Erst verbuchen, dann die Wachstumsregel fragen -- diese Antwort zaehlt mit.
+  const recorded = recordAttempt(state.progress, attempt.char, correct, attempt.reactionSeconds);
+  const growth = maybeGrow(recorded);
+
   return {
     ...state,
     phase: 'feedback',
     attempts: [...state.attempts, attempt],
     lastAttempt: attempt,
-    progress: recordAttempt(state.progress, attempt.char, correct, attempt.reactionSeconds),
+    introduced: growth.introduced,
+    pool: growth.introduced === null ? state.pool : growth.progress.activeCharacters,
+    progress: growth.progress,
   };
 }
 
@@ -162,6 +177,7 @@ export function advance(state: SessionState, random: () => number): SessionState
     phase: 'ready',
     promptEndsAt: null,
     replays: 0,
+    introduced: null,
   };
 }
 

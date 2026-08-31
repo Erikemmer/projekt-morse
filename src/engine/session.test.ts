@@ -34,6 +34,11 @@ function sequence(values: number[]): () => number {
   return () => values[Math.min(index++, values.length - 1)];
 }
 
+/** Leerer Fortschritt mit vorgegebenem aktiven Zeichensatz. */
+function progressWith(activeCharacters: string[]) {
+  return { ...emptyProgress(), activeCharacters };
+}
+
 describe('Statistik pro Zeichen', () => {
   it('zaehlt Versuche und Treffer getrennt', () => {
     let progress = emptyProgress();
@@ -179,9 +184,8 @@ describe('Auswahl nach Schwaeche', () => {
 describe('Lernloop', () => {
   const start = (): SessionState =>
     createSession({
-      pool: ['K', 'M'],
       totalRounds: 3,
-      progress: emptyProgress(),
+      progress: progressWith(['K', 'M']),
       random: sequence([0, 0.9, 0]),
     });
 
@@ -302,10 +306,18 @@ describe('Lernloop', () => {
     expect(summary.medianReactionSeconds).toBeNull();
   });
 
+  it('uebt den aktiven Zeichensatz aus dem Fortschritt', () => {
+    const state = createSession({ totalRounds: 3, progress: emptyProgress(), random: () => 0 });
+    expect([...state.pool]).toEqual([...STARTING_CHARACTERS]);
+  });
+
   it('lehnt eine Sitzung ohne Zeichen oder ohne Runden ab', () => {
-    const base = { progress: emptyProgress(), random: () => 0 };
-    expect(() => createSession({ ...base, pool: [], totalRounds: 5 })).toThrow(RangeError);
-    expect(() => createSession({ ...base, pool: ['K'], totalRounds: 0 })).toThrow(RangeError);
+    expect(() =>
+      createSession({ progress: progressWith([]), totalRounds: 5, random: () => 0 }),
+    ).toThrow(RangeError);
+    expect(() =>
+      createSession({ progress: emptyProgress(), totalRounds: 0, random: () => 0 }),
+    ).toThrow(RangeError);
   });
 });
 

@@ -35,5 +35,18 @@ export const STARTING_CHARACTERS: readonly string[] = Object.freeze([
   'A',
 ]);
 
+/**
+ * In welcher Reihenfolge neue Zeichen dazukommen, wenn die Wachstumsregel
+ * (growth.ts) greift. Beginnt mit dem Start-Zeichensatz und folgt danach der
+ * Koch-ueblichen Folge -- die ist laut Recherche mutmasslich ein moderner
+ * Zusatz und nicht heilig, aber als feste Liste fuer V1 gut genug. Satzzeichen
+ * bleiben vorerst draussen. Sobald Daten da sind, darf eine adaptive Auswahl
+ * diese Liste abloesen; sie ist eine Setzung, kein Standard.
+ */
+export const CHARACTER_ORDER: readonly string[] = Object.freeze([
+  ...STARTING_CHARACTERS,
+  ...'PTLOWINJEF0YVG5Q9ZH38B427C1D6X',
+]);
+
 /** Anzahl der Abfragen pro Sitzung. Kurz genug, um sie zu Ende zu bringen. */
 export const ROUNDS_PER_SESSION = 20;

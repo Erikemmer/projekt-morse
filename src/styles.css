@@ -308,6 +308,19 @@ button:disabled {
   text-align: center;
 }
 
+/* Ankuendigung eines neuen Zeichens: eine Zeile, kein Konfetti. */
+.unlock {
+  margin: 0;
+  font-size: 1.0625rem;
+  color: var(--muted);
+}
+
+.unlock strong {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: var(--accent-deep);
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

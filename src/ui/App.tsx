@@ -32,12 +32,7 @@ import {
   summarize,
   type SessionState,
 } from '../engine/session';
-import {
-  CHARACTER_WPM,
-  ROUNDS_PER_SESSION,
-  STARTING_CHARACTERS,
-  STARTING_EFFECTIVE_WPM,
-} from '../engine/settings';
+import { CHARACTER_WPM, ROUNDS_PER_SESSION, STARTING_EFFECTIVE_WPM } from '../engine/settings';
 import { computeTiming } from '../engine/timing';
 import { loadProgress, saveProgressWhenIdle } from './progressStorage';
 
@@ -54,7 +49,6 @@ function spellPattern(pattern: string): string {
 export function App() {
   const [session, setSession] = useState<SessionState>(() =>
     createSession({
-      pool: STARTING_CHARACTERS,
       totalRounds: ROUNDS_PER_SESSION,
       progress: loadProgress(),
       random: Math.random,
@@ -120,7 +114,6 @@ export function App() {
   const restart = useCallback(() => {
     setSession((current) =>
       createSession({
-        pool: current.pool,
         totalRounds: current.totalRounds,
         progress: current.progress,
         random: Math.random,
@@ -174,7 +167,15 @@ export function App() {
             </p>
 
             {session.phase === 'feedback' && attempt !== null ? (
-              <Reveal char={attempt.char} pattern={schedule.characters[0]?.pattern ?? ''} />
+              <>
+                <Reveal char={attempt.char} pattern={schedule.characters[0]?.pattern ?? ''} />
+                {session.introduced !== null && (
+                  <p className="unlock" role="status">
+                    The set grows: <strong>{session.introduced}</strong> joins from the next
+                    round.
+                  </p>
+                )}
+              </>
             ) : (
               <p className="prompt prompt-blank" aria-hidden="true">
                 ·

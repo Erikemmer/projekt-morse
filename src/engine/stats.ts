@@ -20,8 +20,17 @@
  * von vor drei Wochen.
  */
 
+import { STARTING_CHARACTERS } from './settings';
+
 /** Wie viele Reaktionszeiten je Zeichen aufgehoben werden. */
 export const RECENT_SAMPLES = 10;
+
+/**
+ * Wie viele der juengsten Antworten (richtig/falsch, ueber alle Zeichen)
+ * aufgehoben werden. Das ist das rollierende Fenster der Wachstumsregel
+ * (growth.ts) -- und zugleich die Obergrenze des Speichers dafuer.
+ */
+export const RECENT_ANSWER_WINDOW = 30;
 
 export interface CharacterRecord {
   /** Wie oft das Zeichen abgefragt wurde. */
@@ -43,6 +52,20 @@ export interface CharacterRecord {
 export interface Progress {
   version: 1;
   characters: Record<string, CharacterRecord>;
+  /**
+   * Die Zeichen, die derzeit geuebt werden, in Einfuehrungsreihenfolge.
+   * Waechst ueber die Wachstumsregel (growth.ts); Default ist der
+   * Start-Zeichensatz.
+   */
+  activeCharacters: string[];
+  /** Die juengsten Antworten, true = richtig. Hoechstens RECENT_ANSWER_WINDOW. */
+  recentAnswers: boolean[];
+  /**
+   * Antworten seit der letzten Einfuehrung eines Zeichens. Traegt die Sperre
+   * der Wachstumsregel; startet bei 0, was nichts blockiert, weil das
+   * rollierende Fenster ohnehin erst gefuellt sein muss (30 > Sperre 20).
+   */
+  answersSinceGrowth: number;
 }
 
 export function emptyRecord(): CharacterRecord {
@@ -50,7 +73,13 @@ export function emptyRecord(): CharacterRecord {
 }
 
 export function emptyProgress(): Progress {
-  return { version: 1, characters: {} };
+  return {
+    version: 1,
+    characters: {},
+    activeCharacters: [...STARTING_CHARACTERS],
+    recentAnswers: [],
+    answersSinceGrowth: 0,
+  };
 }
 
 /** Liest den Datensatz zu einem Zeichen -- fehlt er, kommt ein leerer zurueck. */
@@ -86,6 +115,8 @@ export function recordAttempt(
         recentReactions,
       },
     },
+    recentAnswers: [...progress.recentAnswers, correct].slice(-RECENT_ANSWER_WINDOW),
+    answersSinceGrowth: progress.answersSinceGrowth + 1,
   };
 }
 
@@ -140,7 +171,30 @@ export function parseProgress(raw: unknown): Progress {
     characters[char] = { attempts, hits, recentReactions };
   }
 
-  return { version: 1, characters };
+  // Additive Felder: ein Stand von vor dieser Regel hat sie nicht -- Defaults,
+  // kein Verwerfen. Ein aktiver Satz, der den Start-Zeichensatz nicht enthaelt,
+  // waere kein gewachsener Stand, sondern ein kaputter: dann lieber der Default.
+  const rawActive = (raw as { activeCharacters?: unknown }).activeCharacters;
+  const active = Array.isArray(rawActive)
+    ? rawActive.filter((c): c is string => typeof c === 'string' && c.length === 1)
+    : [];
+  const activeCharacters =
+    active.length >= STARTING_CHARACTERS.length && new Set(active).size === active.length
+      ? active
+      : [...STARTING_CHARACTERS];
+
+  const rawAnswers = (raw as { recentAnswers?: unknown }).recentAnswers;
+  const recentAnswers = Array.isArray(rawAnswers)
+    ? rawAnswers.filter((a): a is boolean => typeof a === 'boolean').slice(-RECENT_ANSWER_WINDOW)
+    : [];
+
+  return {
+    version: 1,
+    characters,
+    activeCharacters,
+    recentAnswers,
+    answersSinceGrowth: finiteOrZero((raw as { answersSinceGrowth?: unknown }).answersSinceGrowth),
+  };
 }
 
 function finiteOrZero(value: unknown): number {
