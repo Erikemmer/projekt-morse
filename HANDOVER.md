@@ -1,17 +1,22 @@
-# Übergabe — Stand nach Review 3; live auf Cloudflare Pages
+# Übergabe — Stand nach Eriks erstem Eigen-Test: Politur und Einführung
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** `main` @ `6b5d842` (Review 3 bestanden und gemergt: Fußzeile
-„Works offline once loaded." und der Beleg des SW-Update-Pfads, `435f926` +
-Doku-Commit). Der Branch `claude/morse-handover-alignment-nbkk6o` ist damit
-aufgegangen; die Historie bleibt linear (Fast-Forward).
+**Stand:** `main` @ `e790d15`. Drei Commits aus dieser Runde, jeder für sich
+gebaut, getestet und deployt:
+
+1. `8183ff1` — Tagesstatistik, Sitzungszähler und Intro-Merker im Fortschritt
+2. `a101c6a` — Trainings-Screen auf das Ruhe-Mockup
+3. `e790d15` — die Einführung (zwei Bildschirme, dann los)
+
+Die Streak-Runde ist weiterhin **nicht** gelaufen; sie ist der nächste Schritt
+(§8). Die Historie bleibt linear.
 
 **Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
 Pages, mit Git-Anbindung an dieses Repo. Jeder Push auf `main` baut und
 deployt von selbst; ein manueller Schritt ist nicht mehr nötig. Details und
 der Prüfbericht stehen in §5a.
 
-**Datum:** 2026-08-31
+**Datum:** 2026-09-01
 
 Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
 [FINDINGS.md](./FINDINGS.md) — Einträge 1 und 2 sind inzwischen entschieden und
@@ -21,14 +26,25 @@ behoben, die Begründungen stehen dort.
 
 ## 1. Wo das Projekt steht
 
-Der Kern-Lernloop (hören → tippen → Feedback, adaptiv nach Schwäche) läuft und ist
-auf `main`. Auf dem Branch dazu neu:
+Der Kern-Lernloop (hören → tippen → Feedback, adaptiv nach Schwäche) läuft, ist
+live und sieht jetzt aus wie das Mockup. Unverändert gilt: der Zeichensatz
+wächst von selbst (§3), die App ist eine offline nutzbare PWA ohne jeden
+Fremdabruf, `--muted` besteht AA auch für kleinen Text.
 
-- **Der Zeichensatz wächst jetzt von selbst** nach einer festen, getesteten Regel
-  (§3). Start bleibt K M R S U A; als Nächstes käme P.
-- **Die App ist eine PWA:** installierbar, vollständig offline nutzbar, ohne
-  jeden Fremdabruf. Die Schriften liegen als woff2 im Repo.
-- `--muted` besteht jetzt AA auch für kleinen Text (5,1:1 auf paper).
+Neu aus dieser Runde:
+
+- **Der Trainings-Screen folgt dem Ruhe-Mockup** — eine 390-px-Spalte, Kopf mit
+  Sitzung und Runde über einer 2-px-Linie, in der Mitte Eyebrow, Play-Kreis und
+  Frage, unten Antwort-Gitter und Fußzeile. Ein Bild davon liegt unter
+  [`docs/screenshots/training-390.png`](./docs/screenshots/training-390.png).
+- **Eine Einführung läuft einmal** — zwei Bildschirme, „Skip intro" jederzeit,
+  „Begin" startet die erste Sitzung.
+- **Der Fortschritt kennt jetzt den Tag** — Versuche, Treffer und Zeichen des
+  laufenden Kalendertags tragen die Fußzeile („Today 87% · 14 characters").
+  Dazu ein Sitzungszähler und der Intro-Merker, alle drei additiv.
+
+Drei Stellen weichen bewusst vom Mockup ab; sie stehen in §5b und warten auf
+Fables Urteil.
 
 ## 2. Was liegt wo
 
@@ -37,19 +53,23 @@ auf `main`. Auf dem Branch dazu neu:
 | `src/engine/alphabet.ts` | Morse-Alphabet nach ITU-R M.1677-1 | unverändert |
 | `src/engine/timing.ts` | Farnsworth-Timing nach ARRL | unverändert |
 | `src/engine/schedule.ts` | Text → Zeitachse | unverändert |
-| `src/engine/settings.ts` | Tempo, Tonhöhe, Start-Satz, **Kandidatenreihe** | erweitert |
-| `src/engine/stats.ts` | Statistik pro Zeichen, **plus Wachstumsfelder** | erweitert |
+| `src/engine/settings.ts` | Tempo, Tonhöhe, Start-Satz, Kandidatenreihe, **Gruppengröße** | erweitert |
+| `src/engine/stats.ts` | Statistik pro Zeichen, Wachstumsfelder, **Tag/Sitzung/Intro** | erweitert |
 | `src/engine/growth.ts` | **Die Wachstumsregel** | neu, getestet |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
 | `src/engine/session.ts` | Loop-Zustandsautomat; Pool = aktiver Satz | angepasst |
 | `src/audio/player.ts` | Wiedergabe mit Audio-Uhr nach außen | unverändert |
-| `src/ui/App.tsx` | Lernloop-Screen, plus Ankündigung neuer Zeichen | angepasst |
-| `src/ui/progressStorage.ts` | localStorage rein/raus | unverändert |
+| `src/ui/App.tsx` | Lernloop-Screen **im Mockup-Aufbau** | neu gestaltet |
+| `src/ui/Intro.tsx` | **Die Einführung**, zwei Bildschirme | neu |
+| `src/ui/today.ts` | **Kalendertag** für die Engine (die bleibt ohne Uhr) | neu |
+| `src/ui/progressStorage.ts` | localStorage rein/raus, **plus Sofort-Schreiber** | erweitert |
+| `src/styles.css` | Tokens und Grundriss, **Mockup-Maße** | neu gestaltet |
+| `docs/screenshots/` | **Trainings-Screen bei 390 px** für den Design-Review | neu |
 | `src/fonts/` | **woff2 (latin) + SIL-OFL-Lizenzen** | neu |
 | `public/sw.js` | **Service Worker** (offline) | neu |
 | `public/manifest.webmanifest`, `public/icons/` | **PWA-Manifest, Icons** | neu |
 | `vite.config.ts` | + Plugin: injiziert Precache-Liste in `dist/sw.js` | erweitert |
-| `src/engine/*.test.ts` | **64 Tests** (16 Grundgerüst, 32 Loop, 16 Wachstum) | grün |
+| `src/engine/*.test.ts` | **74 Tests** (16 Grundgerüst, 42 Loop, 16 Wachstum) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die Engine
 kennt niemanden, die UI rechnet nicht.
@@ -129,14 +149,16 @@ das latin-ext-Subset.
 
 ## 4. Was nachgewiesen ist (und wie)
 
-- **`npm test` → 64/64 grün.** Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
+- **`npm test` → 74/74 grün** (64 vorher, 10 neu für Tagesstatistik,
+  Sitzungszähler und Intro-Merker). Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
   prüft weiter gegen den Standard, nicht gegen die Implementierung. Die
   Wachstums-Tests kippen jede Bedingung einzeln; Zufall kommt überall als
   Parameter herein.
-- **`npm run build` → sauber.** Bundle **158,04 kB roh / 51,50 kB gzip**
-  (Loop-Stand: 156,39 / 50,93), CSS 4,79 kB / 1,59 kB. Dazu einmalig 129 kB
-  woff2 (vier Dateien, gehasht, dauerhaft cachebar) und 14 kB Icons. Neue
-  devDependency: `@types/node` (nur Typen, fürs Precache-Plugin).
+- **`npm run build` → sauber.** Bundle **161,86 kB roh / 52,63 kB gzip**
+  (vorher 158,06 / 51,50), CSS **6,88 kB / 2,01 kB** (vorher 4,79 / 1,59).
+  Über die ganze Runde also +3,8 kB roh und +1,1 kB gzip beim JS, +2,1 kB beim
+  CSS — dafür der komplette Mockup-Aufbau und die Einführung. Dazu unverändert
+  einmalig 129 kB woff2 und 14 kB Icons. **Keine neue Abhängigkeit.**
 - **Wachstum im Browser durchgespielt:** Stand präpariert, dem genau eine
   richtige Antwort fehlt → Ankündigung erscheint („The set grows: P joins from
   the next round."), Gitter wächst auf 7, `activeCharacters` enthält P,
@@ -151,15 +173,21 @@ das latin-ext-Subset.
 
 Nicht nachgewiesen, ehrlich benannt:
 
+- **Der Trainings-Screen ist gegen die Referenzwerte geprüft** — im Browser bei
+  390 px, in beiden Zuständen (Frage und Auflösung). Screenshot im Repo.
+- **Die Einführung ist im Browser durchgespielt** — Erststart zeigt sie, die
+  Copy stimmt wortgleich, der Fokus wandert beim Wechsel auf die Überschrift und
+  nach „Begin"/„Skip intro" auf den Play-Kreis, beide Wege merken sich den
+  Abschluss über einen Reload hinweg, und ein Stand von vor diesem Feld sieht
+  sie genau einmal, ohne Statistik zu verlieren: 11 von 11.
 - ~~Der SW-Update-Pfad ist nicht durchgespielt~~ **Inzwischen belegt** (`435f926`),
   mit zwei echten Builds nacheinander vom selben Origin (Headless Chromium):
   Deploy 1 füllt `projekt-morse-08c43d9481d3`; nach dem Dateitausch zeigt ein
   normaler Reload sofort den neuen Stand (Navigation ist Netz-zuerst), der neue
   Worker installiert als `…-72f8a009ac93`, `activate` räumt den alten Cache weg
   — am Ende existiert genau einer, der neue — und der neue Stand kommt danach
-  auch offline aus dem neuen Cache. Auf Produktion ist die entscheidende
-  Vorbedingung geprüft (kein CDN-Caching von `sw.js`); der volle Nachweis
-  hängt am nächsten Deploy mit geänderten Assets — siehe §5a.
+  auch offline aus dem neuen Cache. **Auf Produktion inzwischen wiederholt und
+  bestanden** — die Zahlen stehen in §5a.
 - **Kein Hörtest, kein Screenreader-Durchgang, keine echte Hardware** — alles
   unverändert offen und weiterhin die wichtigsten menschlichen Prüfungen.
   Fürs Installieren als PWA gilt dasselbe: auf einem echten Telefon testen.
@@ -209,26 +237,64 @@ bevorzugte Weg hat also geklappt; Direct Upload war nicht nötig.
 - **Offline** — Netz aus, neu geladen: die App rendert vollständig aus dem
   Cache.
 
-**SW-Update-Pfad auf Produktion: halb belegt, und der Rest ist erklärbar.**
-Belegt ist die Bedingung, an der es scheitern *könnte*: Cloudflare liefert
-`sw.js` und das HTML mit `cache-control: public, max-age=0, must-revalidate`
-aus — der Browser fragt also bei jedem Aufruf nach, ein neuer Worker kommt
-ohne CDN-Verzögerung an. Der vollständige Nachweis (alter Cache weg, neuer
-da) braucht zwei Produktions-Deploys mit **unterschiedlichen Assets**; die
-Version leitet sich aus den gehashten Dateinamen ab
-(`sha256(assets).slice(0,12)`, siehe `vite.config.ts`). Der Deploy dieses
-Doku-Commits ändert an `dist/` nichts, erzeugt also bewusst *keinen*
-Cache-Wechsel — richtiges Verhalten, aber eben kein Beweis. Beim nächsten
-Deploy, der wirklich Code oder Styles anfasst, ist er in einem Schritt
-nachgeholt:
+**SW-Update-Pfad auf Produktion: abgeschlossen und bestanden.** Der erste
+Deploy dieser Runde mit geänderten Assets (`8183ff1`) war der Anlass. Ein
+Browser stand vorher auf dem alten Stand, der Deploy lief dazwischen, dann ein
+ganz normaler Reload — kein Hard-Reload, kein Cache-Bypass:
 
-```
-# vor dem Deploy notieren, nach dem Deploy erneut lesen -- es muss genau
-# ein Cache existieren, und zwar ein neuer:
-#   await caches.keys()
-```
+| | Cache | Worker |
+|---|---|---|
+| vorher | `projekt-morse-72f8a009ac93` | activated, kontrolliert |
+| nachher | `projekt-morse-a39e9b0e3234` | activated, kontrolliert |
 
-Lokal ist der Pfad bereits mit zwei echten Builds durchgespielt (§4).
+Am Ende existiert **genau ein** Cache, und zwar der neue — `activate` hat den
+alten weggeräumt. Danach offline gegengelesen: die Seite rendert vollständig
+aus dem neuen Cache. Damit ist der Pfad nicht mehr nur lokal, sondern auf der
+echten Auslieferung belegt. Die Vorbedingung dafür bleibt sichtbar in den
+Headern: Cloudflare liefert `sw.js` und das HTML mit
+`cache-control: public, max-age=0, must-revalidate`.
+
+Ein Nebenbefund für die Zukunft: ein Deploy, der nur Dokumentation ändert,
+erzeugt **keinen** Cache-Wechsel — die Version leitet sich aus den gehashten
+Asset-Dateinamen ab (`sha256(assets).slice(0,12)`, siehe `vite.config.ts`).
+Das ist richtig so und kein Fehler.
+
+## 5b. Wo die Politur vom Mockup abweicht — drei Punkte für Fable
+
+Alle drei sind gemeldet und nicht still gelöst (CLAUDE.md 2, letzter Absatz).
+Jeder ist in einer Zeile zurückzudrehen, wenn das Mockup gewinnen soll.
+
+1. **Rechts oben steht die Runde, nicht die Restzeit.** Die Vorgabe sagt
+   „Restzeit/Runden". Eine mitlaufende Uhr baut Druck auf — genau das, was
+   dieses Produkt nicht tun soll (CLAUDE.md 2.8) — und der bisherige Text sagte
+   ausdrücklich „nothing here is on a clock". Deshalb `Round 3 / 20`.
+2. **Das Eyebrow ist phasenabhängig.** „Now playing · 620 Hz" steht nur da,
+   solange wirklich etwas spielt; sonst `Ready`, `Your turn` oder `Answer`,
+   jeweils mit derselben Tonhöhe daneben. „Now playing" über einem stummen
+   Bildschirm wäre eine falsche Behauptung (CLAUDE.md 2.6). Die Tonhöhe steht
+   immer da und ist zugleich der sichtbare Hinweis, dass dieser Modus über die
+   Ohren geht.
+3. **„Works offline once loaded." ist auf den Abschluss-Screen gewandert.** Die
+   Fußzeile trägt jetzt den Tagesstand, aber der Hinweis war in `435f926`
+   ausdrücklich als bleibend beschlossen — löschen wäre eine stille Auflösung
+   gewesen. Er steht jetzt am Ende jeder Sitzung.
+
+Zwei kleinere Setzungen, wo die Vorgabe offen war:
+
+- **Die Fußzeilen-Punkte fassen je vier Runden zusammen** (`ROUNDS_PER_GROUP`),
+  also fünf Punkte für zwanzig Runden. Zwanzig einzelne Punkte wären eine
+  Perlenkette zum Abzählen — und Abzählen ist hier das Gegenteil des Ziels.
+- **Die Hervorhebung einzelner Muster-Elemente in accent ist vorbereitet, aber
+  nicht gesetzt** (`.pattern-element[data-highlight]`). Es gibt keine Regel
+  dafür, welches Element wann hervorzuheben wäre; eine zu erfinden wäre eine
+  Produktentscheidung, keine Politur.
+
+Ein Punkt, an dem das Mockup und CLAUDE.md 6 sich berühren: der
+Trainings-Screen zeigt keinen erklärenden Text mehr. Dass der Modus auditiv
+ist, sagen jetzt die Einführung (die jeder einmal sieht) und die dauerhaft
+sichtbare Tonhöhe im Eyebrow; die ausführliche Beschreibung steht weiterhin
+für Screenreader in der Seite. Wenn Fable das für zu wenig hält, gehört eine
+sichtbare Zeile zurück.
 
 ## 5. Entscheidungen: gefallen und offen
 
@@ -289,12 +355,15 @@ npm run preview    # dist ausliefern -- hier laesst sich die PWA testen
 
 ## 8. Nächster Schritt
 
-1. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
-   Telefon — die Produktions-URL steht jetzt (§5a).
-2. **SW-Update-Pfad auf Produktion abschließen** — beim nächsten Deploy, der
-   Assets ändert, einmal `await caches.keys()` vorher/nachher vergleichen
-   (§5a).
-3. **Streak mit Freeze-Gnade** — beschlossen, gebaut wird er als reine
-   Engine-Logik (`src/engine/`), Persistenz additiv.
+1. **Design-Review durch Fable** — gegen
+   [`docs/screenshots/training-390.png`](./docs/screenshots/training-390.png)
+   und die drei Abweichungen in §5b.
+2. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Gebaut wird er als
+   reine Engine-Logik (`src/engine/`), Persistenz additiv. Der Tages-Eimer aus
+   dieser Runde ist bewusst *keine* Historie: er hält nur den laufenden Tag.
+   Wer eine Reihe über Tage braucht, legt sie daneben — und sollte dabei
+   entscheiden, ob der Eimer darin aufgeht.
+3. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
+   Telefon. Alles unverändert offen und weiterhin die wichtigsten Prüfungen.
 4. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
    Notion-Entscheidung, nicht eine des Codes.
