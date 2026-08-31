@@ -1,252 +1,228 @@
-# Übergabe — Stand nach dem Kern-Lernloop
+# Übergabe — Stand nach Wachstumsregel und PWA
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Branch:** `claude/morse-handover-alignment-nbkk6o`
+**Stand:** `main` @ `f558173` (Kern-Lernloop, nach bestandenem Review gemergt);
+darauf aufbauend Branch `claude/morse-handover-alignment-nbkk6o` @ `a9aa6cc`
+mit drei weiteren Commits — **zu reviewen und dann nach `main` zu mergen**:
+
+1. `ba411bf` — `--muted` auf `#6f6455` (dokumentierte Nutzerentscheidung, WCAG AA)
+2. `cf35c5f` — Wachstumsregel für den Zeichensatz
+3. `a9aa6cc` — PWA: installierbar, offline, Schriften im Repo
+
 **Datum:** 2026-08-31
 
-Diese Übergabe löst die vorige ab (die den Stand des Grundgerüsts beschrieb). Sie
-beschreibt, was gebaut und *nachgewiesen* ist, welche Entscheidungen gefallen sind,
-welche offen bleiben und wo die Fallgruben liegen. Die verbindlichen Regeln stehen in
-[CLAUDE.md](./CLAUDE.md) — dieses Dokument ersetzt sie nicht. Nebenbefunde, die
-bewusst *nicht* mitrepariert wurden, stehen in [FINDINGS.md](./FINDINGS.md).
+Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
+[FINDINGS.md](./FINDINGS.md) — Einträge 1 und 2 sind inzwischen entschieden und
+behoben, die Begründungen stehen dort.
 
 ---
 
 ## 1. Wo das Projekt steht
 
-Zwei Schritte sind seit dem Grundgerüst dazugekommen:
+Der Kern-Lernloop (hören → tippen → Feedback, adaptiv nach Schwäche) läuft und ist
+auf `main`. Auf dem Branch dazu neu:
 
-1. **Angleichung an die Konzeptphase** — EN-first, Design-Richtung „Ruhe",
-   CLAUDE.md mit dem freigegebenen Konzept versöhnt.
-2. **Der Kern-Lernloop läuft** — hören → tippen → Feedback, adaptiv nach Schwäche,
-   mit Statistik pro Zeichen und Persistenz im localStorage.
-
-Die Demo-Oberfläche des Grundgerüsts ist damit weg. Was jetzt in `src/ui/App.tsx`
-steht, ist der Loop selbst.
+- **Der Zeichensatz wächst jetzt von selbst** nach einer festen, getesteten Regel
+  (§3). Start bleibt K M R S U A; als Nächstes käme P.
+- **Die App ist eine PWA:** installierbar, vollständig offline nutzbar, ohne
+  jeden Fremdabruf. Die Schriften liegen als woff2 im Repo.
+- `--muted` besteht jetzt AA auch für kleinen Text (5,1:1 auf paper).
 
 ## 2. Was liegt wo
 
 | Pfad | Rolle | Zustand |
 |---|---|---|
-| `src/engine/alphabet.ts` | Morse-Alphabet nach ITU-R M.1677-1 | unverändert, getestet |
-| `src/engine/timing.ts` | Farnsworth-Timing nach ARRL | unverändert, getestet |
-| `src/engine/schedule.ts` | Text → Zeitachse | unverändert, getestet |
-| `src/engine/settings.ts` | Tempo, Tonhöhe, Startzeichensatz, Rundenzahl | neu |
-| `src/engine/stats.ts` | Statistik pro Zeichen, Lesen alter Stände | neu, getestet |
-| `src/engine/selection.ts` | Gewichtung nach Schwäche, gewichtete Ziehung | neu, getestet |
-| `src/engine/session.ts` | Der Loop als reiner Zustandsautomat | neu, getestet |
-| `src/audio/player.ts` | Wiedergabe; jetzt zusätzlich mit Audio-Uhr nach außen | erweitert |
-| `src/ui/App.tsx` | Der Lernloop-Screen | neu |
-| `src/ui/progressStorage.ts` | localStorage rein/raus, mehr nicht | neu |
-| `src/styles.css` | Design-Richtung „Ruhe" als Tokens | überarbeitet |
-| `src/engine/*.test.ts` | 47 Tests (16 alt, 31 neu) | grün |
+| `src/engine/alphabet.ts` | Morse-Alphabet nach ITU-R M.1677-1 | unverändert |
+| `src/engine/timing.ts` | Farnsworth-Timing nach ARRL | unverändert |
+| `src/engine/schedule.ts` | Text → Zeitachse | unverändert |
+| `src/engine/settings.ts` | Tempo, Tonhöhe, Start-Satz, **Kandidatenreihe** | erweitert |
+| `src/engine/stats.ts` | Statistik pro Zeichen, **plus Wachstumsfelder** | erweitert |
+| `src/engine/growth.ts` | **Die Wachstumsregel** | neu, getestet |
+| `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
+| `src/engine/session.ts` | Loop-Zustandsautomat; Pool = aktiver Satz | angepasst |
+| `src/audio/player.ts` | Wiedergabe mit Audio-Uhr nach außen | unverändert |
+| `src/ui/App.tsx` | Lernloop-Screen, plus Ankündigung neuer Zeichen | angepasst |
+| `src/ui/progressStorage.ts` | localStorage rein/raus | unverändert |
+| `src/fonts/` | **woff2 (latin) + SIL-OFL-Lizenzen** | neu |
+| `public/sw.js` | **Service Worker** (offline) | neu |
+| `public/manifest.webmanifest`, `public/icons/` | **PWA-Manifest, Icons** | neu |
+| `vite.config.ts` | + Plugin: injiziert Precache-Liste in `dist/sw.js` | erweitert |
+| `src/engine/*.test.ts` | **64 Tests** (16 Grundgerüst, 32 Loop, 16 Wachstum) | grün |
 
-Die Richtung bleibt: `src/engine/` ist DOM-frei und läuft in Node, der Player kennt
-die Engine, die Engine kennt den Player nicht, die UI rechnet nicht.
+Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die Engine
+kennt niemanden, die UI rechnet nicht.
 
 ## 3. Die Entscheidungen, die den Rest erklären
 
-### Timing läuft über die Audio-Uhr, nie über Timer
+### Timing über die Audio-Uhr; Reaktionszeiten auf derselben Uhr
 
-Unverändert gültig und jetzt auch gemessen (§4). Jeder Ton bekommt Start- und Endzeit
-auf `AudioContext.currentTime`; `setInterval` weckt nur den Planer, der 0,3 s Zukunft
-vorbereitet. Muster: Chris Wilson, *A Tale of Two Clocks*. **Nicht aufweichen**, auch
-nicht „nur kurz zum Testen".
+Unverändert (siehe §3 der vorigen Übergabe, im Git-Verlauf): Töne werden auf
+`AudioContext.currentTime` geplant, `setInterval` weckt nur den Planer,
+Reaktionszeiten kommen aus `player.currentTime` — nie `Date.now()`. Farnsworth
+nach ARRL (Bloom, QEX 4/1990); bei `effectiveWpm == characterWpm` fällt alles auf
+1/3/1/3/7 zurück, ein Test hält das fest. **Nicht aufweichen.**
 
-Für den Loop kam eine Folge dazu: **auch die Reaktionszeiten liegen auf dieser Uhr.**
-`MorsePlayer` gibt sie über `player.currentTime` heraus, und `play()` liefert im
-Handle `startTime`/`endTime` der geplanten Zeitachse. Der Zustandsautomat rechnet die
-Reaktion als `Antwortzeitpunkt − promptEndsAt`; beide Werte kommen aus derselben Uhr.
-Mit `Date.now()` wäre das die Differenz zweier Größen, die nichts miteinander zu tun
-haben.
+### Die Wachstumsregel (`engine/growth.ts`)
 
-### Farnsworth von Anfang an
+Ein neues Zeichen kommt dazu, wenn **alle drei** gelten:
 
-Unverändert. Zeichen immer im Endtempo (`characterWpm`), gestreckt wird nur die Pause.
-Formel nach Jon Bloom, *A Standard for Morse Timing Using the Farnsworth Technique*,
-ARRL QEX, April 1990:
+- **(a)** rollierende Trefferquote über die letzten 30 Antworten ≥ 90 %
+  — das Fenster muss *voll* sein, 9 von 10 sind kein Beleg;
+- **(b)** jedes aktive Zeichen hat ≥ 5 Versuche
+  — ein kaum gefragtes Zeichen rutscht nicht als „gekonnt" durch;
+- **(c)** kein aktives Zeichen liegt unter 75 % Trefferquote
+  — der Durchschnitt darf kein einzelnes Problemzeichen verdecken.
 
-```
-unit  = 1.2 / characterWpm
-t_a   = (60·characterWpm − 37.2·effectiveWpm) / (characterWpm · effectiveWpm)
-Zeichenpause = 3·t_a / 19        Wortpause = 7·t_a / 19
-```
+Nach einer Einführung ist die nächste für 20 Antworten gesperrt (das neue Zeichen
+soll erst ankommen). Alle Schwellen sind benannte Konstanten. Kandidaten kommen
+aus `CHARACTER_ORDER` (settings.ts): beginnt mit K M R S U A, danach Koch-übliche
+Folge, 26 Buchstaben + 10 Ziffern, Satzzeichen bewusst noch nicht. Die Reihe ist
+eine Setzung, kein Standard — eine adaptive Auswahl darf sie ablösen, sobald
+Daten da sind.
 
-Die 37.2: PARIS ist 50 Einheiten lang, davon 31 Einheiten Zeichen und 19 Einheiten
-Pause; 31 Einheiten bei c WpM dauern 31 · 1.2/c = 37.2/c Sekunden. Bei
-`effectiveWpm == characterWpm` fällt alles auf 1/3/1/3/7 zurück — ein Test hält das
-fest. Aktuell: 20 WPM Zeichentempo, 10 WPM Gesamttempo (`settings.ts`).
+Die Prüfung läuft in `session.submitAnswer` *nach* dem Verbuchen (die Antwort
+zählt mit). Der geübte Pool ist seit `cf35c5f` der aktive Satz aus dem
+Fortschritt — `createSession` hat keinen `pool`-Parameter mehr, eine Quelle statt
+zwei. Ein neues Zeichen steht ab der nächsten Runde in Pool und Ziehung
+(ungehört = höchstes Gewicht) und wird im Feedback mit einer Zeile angekündigt.
 
-### Der Loop ist retrieval-only, und zwar in den Übergängen
+### Persistenz wächst additiv
 
-Drei Regeln stecken im Zustandsautomaten, nicht in der Komponente:
+`Progress` hat drei neue Felder: `activeCharacters` (Default: Start-Satz),
+`recentAnswers` (rollierendes Fenster, auf 30 gedeckelt), `answersSinceGrowth`.
+`parseProgress` füllt alte Stände mit Defaults auf; ein kaputter aktiver Satz
+fällt auf den Start-Satz zurück, ohne die Zeichen-Statistik zu verwerfen. Tests
+halten beides fest. **So weitermachen** (CLAUDE.md §4): neue Felder additiv mit
+Default, keine Migrationsmaschinerie.
 
-- **Während des Tons ist keine Antwort möglich.** Ein Muster ist erst am Ende
-  eindeutig (`.` ist der Anfang von `..` und `...`). Eine Antwort davor wäre geraten,
-  und die gemessene Zeit wäre Unsinn.
-- **Wiederholungen vor der Antwort zählen zum Versuch**, Nachhören nach der Auflösung
-  ändert nichts mehr am Datensatz.
-- **Weiter geht es nur aus dem Feedback heraus.** Eine übersprungene Runde würde die
-  Statistik verdünnen, ohne dass jemand etwas geübt hätte.
+### Der Service Worker ist von Hand geschrieben — und warum das trägt
 
-### Was die Zahlen behaupten — und was nicht
+Kein Workbox, keine neue Laufzeit-Abhängigkeit; `public/sw.js` ist klein genug,
+um ihn ganz zu lesen. Strategie: Navigation Netz-zuerst (Deploy kommt sofort an,
+offline trägt der letzte Stand), gehashte `/assets/` Cache-zuerst (unveränderlich),
+Rest stale-while-revalidate. Zwei Dinge muss man wissen:
 
-`stats.ts` erfasst **Reaktionszeiten nur bei richtigen Antworten**. Die Zeit bis zu
-einer falschen Antwort misst das Zögern vor einem Fehlgriff, nicht die Sicherheit beim
-Erkennen; beides in einen Median zu werfen ergäbe eine Zahl, die nichts behauptet.
-Gehalten werden die letzten 10 Zeiten pro Zeichen — das begrenzt den Speicher und
-lässt die Gewichtung auf den aktuellen Stand reagieren.
+- **Der Build injiziert die Precache-Liste.** Ein Plugin in `vite.config.ts`
+  trägt die gehashten Asset-Pfade und eine daraus abgeleitete Version in
+  `dist/sw.js` ein (Marker `self.__BUILD_ASSETS` / `self.__BUILD_VERSION`).
+  Ohne die Liste läge der erste Seitenaufbau nie im Cache — er passiert, bevor
+  der Worker die Seite kontrolliert — und offline bliebe ein leeres Gerüst.
+  Genau so im ersten Offline-Test aufgetreten.
+- **Cache-Treffer laufen mit `ignoreVary`.** Der Vite-Preview-Server setzt
+  `Vary: Origin`; ein Modul-Skript (CORS-Modus, sendet `Origin`) verfehlte damit
+  den Eintrag, den der Install ohne den Header geholt hatte. Auch das ist im
+  Test real passiert, nicht theoretisch. Gecacht wird nur gleiche Herkunft, der
+  Pfad ist der Schlüssel — `Vary` zu ignorieren ist hier korrekt.
 
-Die Reaktionszeit bleibt trotzdem ein **Näherungswert für Sicherheit, nicht ihr Maß**:
-sie enthält Motorik und die Suche auf dem Antwort-Gitter. Die Zusammenfassung am Ende
-der Sitzung sagt das ausdrücklich (CLAUDE.md §2.6). Wer weitere Zahlen anzeigt, ist an
-dieselbe Pflicht gebunden.
+Der Worker wird nur im Produktionsbuild registriert (`main.tsx`): im Dev-Server
+würde er Assets cachen, die es dort nicht gibt, und HMR durchkreuzen.
 
-Die Gewichtung in `selection.ts` ist `1 + 4·Fehlerquote + 2·Latenzanteil`, ein noch nie
-gehörtes Zeichen bekommt 4. Die Konstanten sind eine begründete Setzung, keine
-Messung: Fehler wiegt schwerer als Langsamkeit, weil Langsamkeit nur ein Proxy ist.
-**Diese Zahl taugt nicht als Fortschrittsanzeige** — sie ist ein Los, kein Können.
+### Schriften im Repo
+
+Newsreader (Variable, wght-Achse) und IBM Plex Sans (400/500/600) als woff2 in
+`src/fonts/`, latin-Subset, SIL-OFL-Lizenzen daneben, `@font-face` in
+`styles.css`. Kein Google-Fonts-Link mehr, kein Fremdabruf — FINDINGS.md §2 ist
+damit erledigt. Kommt später Deutsch (i18n-Entscheidung), braucht es zusätzlich
+das latin-ext-Subset.
 
 ## 4. Was nachgewiesen ist (und wie)
 
-- **`npm test` → 47/47 grün** (16 aus dem Grundgerüst, 31 neu). Darunter weiterhin die
-  ARRL-Referenz *„PARIS dauert bei 5 WpM genau 12 Sekunden"*, die gegen den
-  veröffentlichten Standard prüft und nicht gegen die eigene Implementierung. **Diese
-  Eigenschaft bitte erhalten.** Der Zufall kommt in allen neuen Tests als Parameter
-  herein; es wird nirgends gewürfelt.
-- **`npm run build` → sauber** (`tsc --noEmit` + Vite 6.4.3). Bundle **156,38 kB roh /
-  50,92 kB gzip** (vorher 149,98 / 48,63), CSS 3,97 kB / 1,40 kB gzip. Keine neue
-  Abhängigkeit.
-- **Ton-Timing gemessen** — das war in der letzten Übergabe noch offen. Methode:
-  `AudioContext.prototype.createOscillator` in einer Init-Skript-Instrumentierung
-  umhüllt, sodass für jeden Ton `(currentTime beim Planen, geplante Startzeit)`
-  mitgeschrieben wird; dann eine volle Sitzung durchgeklickt.
-  - 52 Töne, **kein einziger in der Vergangenheit geplant**; kleinster Vorlauf 91 ms,
-    größter 260 ms. Der Planer ist nie hinter sein Vorlauffenster gefallen.
-  - Positionierung ist damit nur noch durch die Samplerate begrenzt: bei 44,1 kHz
-    **0,023 ms** — zwei Größenordnungen unter dem Budget von < 1 ms.
-  - Hörbare Dauern exakt 60 ms (dit) und 180 ms (dah) bei 20 WPM. Der Oszillator läuft
-    5 ms länger, weil er erst *nach* der Ausblendrampe gestoppt wird; hörbar ist er
-    zu diesem Zeitpunkt bereits auf null.
-- **Eingabe-zu-Anzeige gemessen** (Event Timing API, 10 Antwortklicks): Handler-Arbeit
-  im Mittel 3,7 ms, maximal 11 ms. Bis zur nächsten Darstellung im Mittel 16,8 ms,
-  maximal 24 ms — das enthält die Wartezeit auf den nächsten Frame, und ein Frame sind
-  bei 60 Hz schon 16,7 ms. Der teuerste Klick der ganzen Sitzung ist nicht die Antwort,
-  sondern das allererste „Play" (51–85 ms): dort entsteht der AudioContext. Das
-  passiert einmal pro Sitzung und liegt nicht auf dem Übungspfad.
-- **Kein unbegrenztes Speicherwachstum:** nach einer vollen 20-Runden-Sitzung 9 MB
-  JS-Heap. Reaktionszeiten sind je Zeichen auf 10 Werte gedeckelt.
-- **Laufzeit im Browser durchgespielt** (Headless Chromium, siehe §6): volle Sitzung
-  über 20 Runden, Fortschrittslinie, Wiederholung, Tastatureingabe, Zusammenfassung,
-  Neustart mit erhaltenem Fortschritt. Während des Hörens war die Auflösung in keinem
-  Zustand im DOM — auch nicht versteckt. Der Fortschritt überlebt den Neustart der
-  Sitzung und liegt unter `projekt-morse:progress` im localStorage.
-- **Zwei Fokus-Fehler durch diesen Durchlauf gefunden und behoben:** die Antworttaste
-  verlor den Fokus an `<body>`, sobald sie während des Tons deaktiviert wurde, und am
-  Ende der Sitzung ging er beim Austausch des Bildschirms verloren. Jetzt zieht ein
-  Effekt den Fokus bei jedem Phasenwechsel nach; am Sitzungsende landet er auf der
-  Überschrift „Session done", nicht auf einer Taste.
+- **`npm test` → 64/64 grün.** Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
+  prüft weiter gegen den Standard, nicht gegen die Implementierung. Die
+  Wachstums-Tests kippen jede Bedingung einzeln; Zufall kommt überall als
+  Parameter herein.
+- **`npm run build` → sauber.** Bundle **158,04 kB roh / 51,50 kB gzip**
+  (Loop-Stand: 156,39 / 50,93), CSS 4,79 kB / 1,59 kB. Dazu einmalig 129 kB
+  woff2 (vier Dateien, gehasht, dauerhaft cachebar) und 14 kB Icons. Neue
+  devDependency: `@types/node` (nur Typen, fürs Precache-Plugin).
+- **Wachstum im Browser durchgespielt:** Stand präpariert, dem genau eine
+  richtige Antwort fehlt → Ankündigung erscheint („The set grows: P joins from
+  the next round."), Gitter wächst auf 7, `activeCharacters` enthält P,
+  Sperre auf 0, alles überlebt den Reload.
+- **Offline im Browser durchgespielt** (Headless Chromium gegen `vite preview`):
+  Worker kontrolliert die Seite; offline neu geladen rendert die App
+  vollständig, Schriften kommen aus dem Cache, eine komplette Runde läuft
+  offline durch (Audio braucht kein Netz), der Fortschritt wird gespeichert.
+- **Timing-Budget:** unverändert gültig gemessen am Loop-Stand (52 Töne, keiner
+  in der Vergangenheit geplant, Quantisierung 0,023 ms bei 44,1 kHz, Budget
+  < 1 ms). Diese Session hat am Player nichts geändert.
 
 Nicht nachgewiesen, ehrlich benannt:
 
-- **Kein Hörtest.** Ob 620 Hz, die 5-ms-Rampe und die Lautstärke *angenehm* klingen,
-  hat niemand mit Ohren geprüft. Das braucht einen Menschen und ist die
-  offensichtlichste nächste Prüfung.
-- **Kein Screenreader-Durchgang.** Die Tastaturbedienung ist durchgespielt, ARIA-Rollen
-  und Fokusführung sind gesetzt und geprüft — aber niemand hat der Seite mit NVDA,
-  VoiceOver oder Orca zugehört. Für einen Audio-Trainer bleibt das der heikelste Punkt.
-- **Kein Test auf echter Hardware.** Alles oben lief in einem Headless-Chromium im
-  Container. Ein Telefon mit Bluetooth-Kopfhörern hat andere Latenzen.
-- **Die Gewichtungskonstanten sind ungeprüft** (§3). Ob `1 + 4·Fehler + 2·Latenz` gut
-  lehrt, weiß man erst mit Nutzungsdaten.
+- **Der SW-Update-Pfad ist nicht durchgespielt** (neuer Build → neuer Worker →
+  alter Cache weggeräumt). Die Mechanik steht (Version aus Asset-Hash, `activate`
+  löscht fremde Versionen), aber niemand hat zwei echte Builds nacheinander
+  ausgeliefert und zugesehen. Beim ersten echten Deploy prüfen.
+- **Kein Hörtest, kein Screenreader-Durchgang, keine echte Hardware** — alles
+  unverändert offen und weiterhin die wichtigsten menschlichen Prüfungen.
+  Fürs Installieren als PWA gilt dasselbe: auf einem echten Telefon testen.
+- **Die Wachstums-Schwellen sind eine Setzung** (90/5/75/20/30). Ob sie gut
+  *lehren*, zeigen erst Nutzungsdaten.
 
 ## 5. Entscheidungen: gefallen und offen
 
-**Gefallen (Konzeptphase, über die Übergabe hereingekommen):**
+**Gefallen und umgesetzt:** Zeichen-für-Zeichen, retrieval-only, EN-first,
+Design „Ruhe" (inkl. `--muted`-Korrektur), Wachstumsregel wie oben, PWA mit
+selbst gehosteten Schriften.
 
-- **Eingabe-Granularität: Zeichen für Zeichen.** Die offene Frage der letzten Übergabe
-  ist beantwortet. Das adaptive Modell braucht Reaktionszeit pro Zeichen.
-- **Retrieval-only.** Kein Mitlese- oder Berieselungsmodus.
-- **EN-first**, Deutsch später als eigene i18n-Entscheidung.
-- **Design-Richtung „Ruhe"** mit genau einem Akzent und einer Token-Regel (CLAUDE.md §2.9).
-- **Streak mit Freeze-Gnade** ist beschlossen (CLAUDE.md §2.8) — **aber noch nicht
-  gebaut.** Es gibt im Code weder Streak noch Freeze; das ist ein eigenes Stück Arbeit.
-- **Accountfähig bleiben, ohne Account in V1** (CLAUDE.md §2.5).
+**Beschlossen, aber nicht gebaut:** **Streak mit Freeze-Gnade** (CLAUDE.md §2.8).
+Die Persistenz ist dafür vorbereitet (additive Felder mit Defaults).
 
 **Offen, bewusst nicht angefasst:**
 
-- **Der Zeichensatz wächst nicht.** K M R S U A sind fest; es gibt keine Regel, wann
-  ein siebtes Zeichen dazukommt. Das ist die nächste inhaltliche Entscheidung und
-  braucht ein Kriterium („ab welcher Sicherheit über welchem Zeitraum").
-- **Kein Einstellungsdialog.** Tempo, Tonhöhe und Rundenzahl stehen in `settings.ts`
-  und sind in der UI nicht änderbar.
-- **HVPT ist vorbereitet, nicht umgesetzt.** Tonhöhe und Tempo sind benannte
-  Konstanten, damit sie später bewusst streuen können — gestreut wird noch nichts.
-- **Keine Zeichenfolgen, nur Einzelzeichen.** Fünfergruppen und Klartext fehlen.
-- **Kein Dark Mode.** Die Rollen stehen in `styles.css`, aber ohne
-  `prefers-color-scheme`-Block. Wird er scharf geschaltet, gehört eine Kontrastprüfung
-  dazu (siehe FINDINGS.md §1 für die helle Variante).
+- Kein Einstellungsdialog (Tempo, Tonhöhe, Rundenzahl fest in `settings.ts`).
+- HVPT vorbereitet, nicht umgesetzt (Konstanten benannt, nichts streut).
+- Nur Einzelzeichen; Fünfergruppen und Klartext fehlen.
+- Kein Dark Mode (Rollen stehen, kein `prefers-color-scheme`-Block; beim
+  Scharfschalten Kontrast prüfen).
+- Satzzeichen fehlen in `CHARACTER_ORDER` — bewusst, Entscheidung bei Bedarf.
 
 ## 6. Umgebung und Werkzeuge
 
 ```bash
 npm install
-npm run dev        # Vite-Entwicklungsserver
-npm test           # Vitest, 47 Tests
-npm run build      # tsc --noEmit && vite build
-npm run typecheck
+npm run dev        # Vite-Entwicklungsserver (ohne Service Worker)
+npm test           # Vitest, 64 Tests
+npm run build      # tsc --noEmit && vite build (injiziert SW-Precache)
+npm run preview    # dist ausliefern -- hier laesst sich die PWA testen
 ```
 
-- Node v22.22.2, npm 10.9.7. React 18, Vite 6, TypeScript 5.7 (`strict`), Vitest 3.
-- **Vitest muss ≥ 3 bleiben.** Vitest 2 bringt sein eigenes Vite 5 mit; zwei
-  Vite-Typenbäume kollidieren dann in `vite.config.ts` mit einem sehr langen,
-  sehr unlesbaren `PluginOption`-Fehler.
-- `defineConfig` in `vite.config.ts` kommt bewusst aus `vitest/config`, damit der
-  `test`-Block typisiert ist. Vite liest dieselbe Datei und ignoriert den Block.
-- **Browser-Durchlauf** (nicht committet, bewusst ad hoc):
-  ```bash
-  npm i --no-save playwright-core     # muss im Projektordner liegen, nicht in /tmp
-  # Chromium ist vorinstalliert, aber NICHT unter dem Standardpfad:
-  # /opt/pw-browsers/chromium-1194/chrome-linux/chrome
-  # Start mit --autoplay-policy=no-user-gesture-required, sonst bleibt Audio stumm.
-  ```
-  `playwright-core` steht absichtlich nicht in `package.json` — lokales Werkzeug,
-  keine Projektabhängigkeit. Wird je ein Skript committet, muss der Chromium-Pfad
-  konfigurierbar sein, nicht hart verdrahtet.
-- **Google Fonts ist in diesem Container blockiert** (`ERR_CONNECTION_RESET`). Die
-  Fallback-Stacks greifen, die Seite bleibt heil — aber wer hier einen Screenshot
-  macht, sieht Georgia statt Newsreader. Siehe FINDINGS.md §2.
+- Node v22.22.2, npm 10.9.7. React 18, Vite 6, TypeScript 5.7 (`strict`),
+  Vitest 3 (**muss ≥ 3 bleiben**, sonst kollidieren zwei Vite-Typenbäume).
+- `defineConfig` kommt aus `vitest/config`; dieselbe Datei enthält jetzt auch
+  das Precache-Plugin — wer `sw.js` anfasst, liest beide Kopfkommentare.
+- **Browser-Durchläufe** (nicht committet, bewusst ad hoc): `npm i --no-save
+  playwright-core`, Chromium unter
+  `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, Start mit
+  `--autoplay-policy=no-user-gesture-required`. **Achtung:** jedes weitere
+  `npm install` räumt `--no-save`-Pakete wieder weg — vor jedem Durchlauf neu
+  installieren. Skripte müssen im Projektordner liegen (Modulauflösung), nicht
+  in /tmp.
+- Google Fonts ist in dieser Container-Umgebung ohnehin blockiert — seit dem
+  Selbsthosten egal, davor der Grund, warum Screenshots Georgia zeigten.
 
 ## 7. Fallgruben
 
-**Der Container ist flüchtig — früh pushen.** Ein erster Anlauf des Grundgerüsts war
-gebaut, aber nie gepusht; der Container wurde recycelt und die Arbeit war restlos weg.
-Konsequenz: nach jedem sinnvollen Schritt committen und pushen. Diese Sitzung hat sich
-daran gehalten (zwei Commits, beide gepusht).
-
-**`create_repository` schlägt in dieser Umgebung fehl.** `POST /user/repos` gibt
-`403 Resource not accessible by integration`. Falls je ein zweites Repo gebraucht wird:
-nicht nach einem Token fragen, sondern den Nutzer das leere Repo anlegen lassen.
-
-**Der Fokus geht verloren, wo man ihn nicht vermutet.** Beide in §4 genannten Fehler
-waren im Code unsichtbar und wären ohne den Browser-Durchlauf durchgerutscht. Wer den
-Loop umbaut: `document.activeElement` nach jedem Phasenwechsel prüfen, nicht nur die
-Tab-Reihenfolge ansehen.
+- **Der Container ist flüchtig — früh pushen.** Diese Session: vier Commits,
+  jeder sofort gepusht.
+- **`create_repository` schlägt in dieser Umgebung fehl** (403). Zweites Repo:
+  den Nutzer anlegen lassen.
+- **Fokus geht verloren, wo man ihn nicht vermutet** — nach jedem Umbau des
+  Loops `document.activeElement` je Phase prüfen (zwei solcher Fehler waren im
+  Code unsichtbar und fielen nur im Browser-Durchlauf auf).
+- **Service Worker + Vary-Header** (§3): wer die Cache-Strategie ändert, behält
+  `ignoreVary` bei oder weiß genau, warum nicht.
+- **Ein Test, der offline prüfen will, muss die Seite *nach* der
+  Worker-Übernahme neu laden** und vorher auf `controllerchange` warten — sonst
+  testet er den Netzwerk-Pfad und merkt es nicht.
 
 ## 8. Nächster Schritt
 
-Aus §5 sind das die zwei naheliegenden, jeweils als *eigene* Aufgabe:
-
-1. **Wachstum des Zeichensatzes.** Braucht ein Kriterium, und das ist eine
-   Produktentscheidung — gehört nach Notion, nicht in den Code (CLAUDE.md §2).
-2. **Streak mit Freeze-Gnade.** Beschlossen, aber nicht gebaut. Die Persistenz kann
-   additiv erweitert werden (`parseProgress` füllt fehlende Felder mit Default auf,
-   ein Test hält das fest).
-
-Und unabhängig davon, weil es kein Code ist: **einmal mit Ohren zuhören** und **einmal
-mit einem Screenreader durchgehen** (§4).
-
-Bausteine, die dabei nutzbar sind, ohne sie anzufassen:
-`computeTiming` → `buildSchedule` → `MorsePlayer.play(schedule, onProgress)` sowie der
-Zustandsautomat in `session.ts`. Was neu dazukommt — Wachstumsregel, Streak — gehört
-als reine Logik nach `src/engine/`, nicht in die Komponente.
+1. **Review dieses Branches** (Fable, über das Repo) und Merge nach `main` —
+   `ba411bf`, `cf35c5f`, `a9aa6cc`.
+2. **Streak mit Freeze-Gnade** — beschlossen, gebaut wird er als reine
+   Engine-Logik (`src/engine/`), Persistenz additiv.
+3. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf einem
+   echten Telefon, SW-Update-Pfad beim ersten Deploy.
+4. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
+   Notion-Entscheidung, nicht eine des Codes.
