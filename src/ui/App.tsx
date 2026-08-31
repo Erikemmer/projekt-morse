@@ -211,6 +211,7 @@ export function App() {
           <p className="note">
             Play as often as you like — nothing here is on a clock, and replays are recorded but
             never penalised. {CHARACTER_WPM} WPM characters, {STARTING_EFFECTIVE_WPM} WPM overall.
+            Works offline once loaded.
           </p>
         </>
       )}
