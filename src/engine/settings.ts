@@ -50,3 +50,12 @@ export const CHARACTER_ORDER: readonly string[] = Object.freeze([
 
 /** Anzahl der Abfragen pro Sitzung. Kurz genug, um sie zu Ende zu bringen. */
 export const ROUNDS_PER_SESSION = 20;
+
+/**
+ * Wie viele Runden ein Punkt in der Fusszeile zusammenfasst.
+ *
+ * Zwanzig einzelne Punkte waeren eine Perlenkette, die man zaehlt statt sie zu
+ * lesen -- und Zaehlen ist hier genau das, was nicht passieren soll. Vier
+ * Runden je Punkt ergeben fuenf Punkte: ein Blick genuegt.
+ */
+export const ROUNDS_PER_GROUP = 4;

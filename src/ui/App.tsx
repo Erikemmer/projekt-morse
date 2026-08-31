@@ -22,6 +22,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MorsePlayer } from '../audio/player';
+import { encodeChar } from '../engine/alphabet';
 import { buildSchedule } from '../engine/schedule';
 import {
   advance,
@@ -32,7 +33,14 @@ import {
   summarize,
   type SessionState,
 } from '../engine/session';
-import { CHARACTER_WPM, ROUNDS_PER_SESSION, STARTING_EFFECTIVE_WPM } from '../engine/settings';
+import {
+  CHARACTER_WPM,
+  DEFAULT_TONE_HZ,
+  ROUNDS_PER_GROUP,
+  ROUNDS_PER_SESSION,
+  STARTING_EFFECTIVE_WPM,
+} from '../engine/settings';
+import { dayAccuracy, dayFor, type DayStats } from '../engine/stats';
 import { computeTiming } from '../engine/timing';
 import { loadProgress, saveProgressWhenIdle } from './progressStorage';
 import { todayISO } from './today';
@@ -145,33 +153,55 @@ export function App() {
 
   return (
     <main className="shell">
-      <header className="masthead">
-        <h1>Projekt Morse</h1>
-        <p className="lede">
-          An audio drill. You hear one character, then choose what you heard. Nothing is shown
-          while the tone plays — recognising the sound is the whole exercise.
-        </p>
-      </header>
+      {/*
+        Der Name der App steht fuer Screenreader weiter oben in der Struktur,
+        auch wenn der Trainings-Screen ihn nicht mehr zeigt (Ruhe-Mockup: die
+        Kopfzeile traegt Sitzung und Runde). Ohne diese Ueberschrift haette die
+        Seite gar keine -- und der Einstieg per Ueberschriften-Navigation waere weg.
+      */}
+      <h1 className="visually-hidden">Projekt Morse</h1>
+      <p className="visually-hidden">
+        An audio drill. You hear one character, then choose what you heard. Nothing is shown
+        while the tone plays — recognising the sound is the whole exercise.
+      </p>
 
       {session.phase === 'finished' ? (
         <Summary summary={summary} onRestart={restart} headingRef={focusTarget} />
       ) : (
         <>
-          <ProgressLine done={session.attempts.length} total={session.totalRounds} />
+          <SessionHeader
+            sessionNumber={session.progress.sessionsStarted}
+            round={session.round}
+            totalRounds={session.totalRounds}
+            done={session.attempts.length}
+          />
 
           <section className="stage">
-            <p className="status" role="status">
+            <p className="eyebrow">{eyebrowFor(session.phase)}</p>
+
+            {session.phase === 'feedback' && attempt !== null ? (
+              <Reveal char={attempt.char} />
+            ) : (
+              <PlayCircle
+                buttonRef={focusTarget}
+                disabled={session.phase === 'listening'}
+                replay={session.phase === 'answering'}
+                onPlay={play}
+              />
+            )}
+
+            <p className="question" role="status">
               {session.phase === 'ready' && 'Ready when you are.'}
               {session.phase === 'listening' && 'Listening…'}
-              {session.phase === 'answering' && 'Which character was that?'}
+              {session.phase === 'answering' && 'Which character did you hear?'}
               {session.phase === 'feedback' && attempt !== null && (
                 <Verdict correct={attempt.correct} char={attempt.char} />
               )}
             </p>
 
-            {session.phase === 'feedback' && attempt !== null ? (
+            {session.phase === 'feedback' && attempt !== null && (
               <>
-                <Reveal char={attempt.char} pattern={schedule.characters[0]?.pattern ?? ''} />
+                <Pattern pattern={patternOf(attempt.char)} />
                 {session.introduced !== null && (
                   <p className="unlock" role="status">
                     The set grows: <strong>{session.introduced}</strong> joins from the next
@@ -179,29 +209,7 @@ export function App() {
                   </p>
                 )}
               </>
-            ) : (
-              <p className="prompt prompt-blank" aria-hidden="true">
-                ·
-              </p>
             )}
-
-            <div className="actions">
-              {session.phase === 'feedback' ? (
-                <button ref={focusTarget} type="button" className="button-primary" onClick={next}>
-                  {session.round >= session.totalRounds ? 'Finish' : 'Next character'}
-                </button>
-              ) : (
-                <button
-                  ref={focusTarget}
-                  type="button"
-                  className="button-primary"
-                  onClick={play}
-                  disabled={session.phase === 'listening'}
-                >
-                  {session.phase === 'answering' ? 'Play again' : 'Play'}
-                </button>
-              )}
-            </div>
           </section>
 
           <Answers
@@ -211,35 +219,168 @@ export function App() {
             onAnswer={answer}
           />
 
-          <p className="note">
-            Play as often as you like — nothing here is on a clock, and replays are recorded but
-            never penalised. {CHARACTER_WPM} WPM characters, {STARTING_EFFECTIVE_WPM} WPM overall.
-            Works offline once loaded.
-          </p>
+          {session.phase === 'feedback' && (
+            <div className="actions">
+              <button ref={focusTarget} type="button" className="button-next" onClick={next}>
+                {session.round >= session.totalRounds ? 'Finish' : 'Next character'}
+              </button>
+            </div>
+          )}
+
+          <Footer day={dayFor(session.progress, session.today)} done={session.attempts.length} />
         </>
       )}
     </main>
   );
 }
 
-function ProgressLine({ done, total }: { done: number; total: number }) {
-  const steps = Array.from({ length: total }, (_, index) => index);
+/**
+ * Die Zeile ueber dem Ton. Sie sagt, was gerade laeuft -- und bleibt dabei
+ * ehrlich: "Now playing" steht nur da, solange wirklich etwas spielt
+ * (CLAUDE.md 2.6). Die Tonhoehe steht immer daneben; sie ist zugleich der
+ * sichtbare Hinweis darauf, dass dieser Modus ueber die Ohren geht.
+ */
+function eyebrowFor(phase: SessionState['phase']): string {
+  const hz = `${DEFAULT_TONE_HZ} Hz`;
+  if (phase === 'listening') return `Now playing · ${hz}`;
+  if (phase === 'answering') return `Your turn · ${hz}`;
+  if (phase === 'feedback') return `Answer · ${hz}`;
+  return `Ready · ${hz}`;
+}
+
+/** Das Muster eines Zeichens -- nur fuers Feedback, nie waehrend des Tons. */
+function patternOf(char: string): string {
+  return encodeChar(char) ?? '';
+}
+
+/**
+ * Kopfzeile: links die laufende Sitzung, rechts die Runde, darunter die
+ * Fortschrittslinie.
+ *
+ * Rechts stehen Runden und keine Restzeit: eine mitlaufende Uhr baut Druck auf,
+ * und genau den soll dieses Produkt nicht erzeugen (CLAUDE.md 2.8).
+ */
+function SessionHeader({
+  sessionNumber,
+  round,
+  totalRounds,
+  done,
+}: {
+  sessionNumber: number;
+  round: number;
+  totalRounds: number;
+  done: number;
+}) {
+  return (
+    <header className="masthead">
+      <div className="masthead-row">
+        <span>Session {sessionNumber}</span>
+        <span>
+          Round {Math.min(round, totalRounds)} / {totalRounds}
+        </span>
+      </div>
+      <div
+        className="progress-track"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={totalRounds}
+        aria-valuenow={done}
+        aria-label="Rounds answered"
+      >
+        <div className="progress-fill" style={{ width: `${(done / totalRounds) * 100}%` }} />
+      </div>
+    </header>
+  );
+}
+
+/**
+ * Der Play-Kreis. Ein Umriss, kein gefuellter Knopf -- das Mockup will hier
+ * Ruhe, und die Flaeche von 88 px traegt die Zielgroesse locker (WCAG 2.5.5).
+ */
+function PlayCircle({
+  buttonRef,
+  disabled,
+  replay,
+  onPlay,
+}: {
+  buttonRef: (element: HTMLElement | null) => void;
+  disabled: boolean;
+  replay: boolean;
+  onPlay: () => void;
+}) {
+  return (
+    <button
+      ref={buttonRef}
+      type="button"
+      className="play"
+      disabled={disabled}
+      onClick={onPlay}
+      aria-label={replay ? 'Play the character again' : 'Play the character'}
+    >
+      <span className="play-mark" aria-hidden="true" />
+    </button>
+  );
+}
+
+/**
+ * Das Muster als Form: Punkte sind Kreise, Striche sind Pillen. Erst *nach* der
+ * Antwort sichtbar -- waehrend des Tons waere es eine Kruecke zum Mitzaehlen
+ * (CLAUDE.md 2.2).
+ */
+function Pattern({ pattern }: { pattern: string }) {
+  return (
+    <p className="pattern">
+      <span className="pattern-row" aria-hidden="true">
+        {[...pattern].map((element, index) => (
+          <span key={index} className="pattern-element" data-kind={element === '-' ? 'dah' : 'dit'} />
+        ))}
+      </span>
+      <span className="visually-hidden">{spellPattern(pattern)}</span>
+    </p>
+  );
+}
+
+/**
+ * Fusszeile: links, was heute zusammenkam, rechts die Sitzung als Punkte.
+ *
+ * "Today" meint wirklich heute -- der Eimer dahinter faengt bei Datumswechsel
+ * neu an (engine/stats.ts). Ohne Antworten steht hier ein Strich statt einer
+ * erfundenen Null (CLAUDE.md 2.6).
+ */
+function Footer({ day, done }: { day: DayStats; done: number }) {
+  const accuracy = dayAccuracy(day);
+  const characters = day.characters.length;
 
   return (
-    <div className="progress">
-      <div className="progress-track" aria-hidden="true">
-        {steps.map((index) => (
-          <span
-            key={index}
-            className="progress-step"
-            data-state={index < done ? 'done' : index === done ? 'current' : 'todo'}
-          />
-        ))}
-      </div>
-      <p className="progress-label">
-        Round {Math.min(done + 1, total)} of {total}
+    <footer className="footer">
+      <p className="footer-stats">
+        {accuracy === null
+          ? 'Today — no answers yet'
+          : `Today ${Math.round(accuracy * 100)}% · ${characters} character${characters === 1 ? '' : 's'}`}
       </p>
-    </div>
+      <GroupDots done={done} />
+    </footer>
+  );
+}
+
+/**
+ * Die Sitzung in Gruppen statt in einzelnen Runden: zwanzig Punkte waeren eine
+ * Perlenkette, fuenf sind ein Blick. Ein Punkt steht fuer ROUNDS_PER_GROUP
+ * Runden und faerbt sich, wenn die Gruppe durch ist.
+ */
+function GroupDots({ done }: { done: number }) {
+  const groups = Math.ceil(ROUNDS_PER_SESSION / ROUNDS_PER_GROUP);
+
+  return (
+    <span className="dots" aria-hidden="true">
+      {Array.from({ length: groups }, (_, index) => (
+        <span
+          key={index}
+          className="dot"
+          data-state={done >= (index + 1) * ROUNDS_PER_GROUP ? 'done' : 'open'}
+        />
+      ))}
+    </span>
   );
 }
 
@@ -259,17 +400,9 @@ function Verdict({ correct, char }: { correct: boolean; char: string }) {
   );
 }
 
-/** Die Aufloesung: Zeichen und Muster. Erst *nach* der Antwort sichtbar. */
-function Reveal({ char, pattern }: { char: string; pattern: string }) {
-  return (
-    <div className="reveal">
-      <p className="prompt">{char}</p>
-      <p className="prompt-code">
-        <span aria-hidden="true">{pattern}</span>
-        <span className="visually-hidden">{spellPattern(pattern)}</span>
-      </p>
-    </div>
-  );
+/** Die Aufloesung: das Zeichen, gross. Erst *nach* der Antwort sichtbar. */
+function Reveal({ char }: { char: string }) {
+  return <p className="reveal">{char}</p>;
 }
 
 function Answers({
@@ -305,6 +438,11 @@ function Answers({
             onClick={() => onAnswer(char)}
           >
             <span aria-hidden="true">{char}</span>
+            {mark !== undefined && (
+              <span className="answer-mark" aria-hidden="true">
+                {mark === 'correct' ? '✓' : '✗'}
+              </span>
+            )}
             <span className="visually-hidden">
               {char}
               {mark === 'correct' && ' — this was the character'}
@@ -359,10 +497,17 @@ function Summary({
         </div>
       </dl>
 
+      {/*
+        Der Hinweis auf den Offline-Betrieb stand bisher in der Fusszeile des
+        Trainings-Screens. Das Ruhe-Mockup belegt diese Zeile mit dem Tagesstand,
+        und geloescht werden sollte der Hinweis nicht (er ist in 435f926
+        ausdruecklich als bleibend beschlossen) -- also steht er jetzt hier, wo
+        ihn am Ende jeder Sitzung ohnehin jeder liest.
+      */}
       <p className="note">
         Response time is measured from the end of the tone, over correct answers only. Read it as a
         rough indicator of confidence, not a measurement of it — it also contains how fast you
-        found the button.
+        found the button. Works offline once loaded.
       </p>
 
       <div className="actions">

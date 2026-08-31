@@ -97,144 +97,217 @@ body {
   outline-offset: 2px;
 }
 
-/* --- Grundriss: ein zentrierter Mobile-first-Screen, kein Dashboard --- */
+/* --- Grundriss: eine zentrierte Spalte, Ruhe-Mockup ---
+ *
+ * Kopf oben, Mitte vertikal zentriert, Antwort-Gitter und Fusszeile unten.
+ * Die Masse stammen aus dem Mockup (Design-Owner Fable) und stehen deshalb als
+ * Pixel da, nicht als Token: sie sind eine gestalterische Setzung, kein
+ * Rhythmus, den anderswo jemand mitbenutzt. Farben bleiben ausschliesslich
+ * Tokens (CLAUDE.md 2.9).
+ */
 
 .shell {
-  max-width: 26rem;
+  max-width: 390px;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: var(--space-3) var(--space-2) var(--space-4);
+  padding: 32px 26px 28px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
 }
+
+/* --- Kopf: Sitzung, Runde, Fortschrittslinie --- */
 
 .masthead {
+  flex: none;
+}
+
+.masthead-row {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-
-h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-.lede {
-  margin: 0;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
   color: var(--muted);
-  font-size: 1.0625rem;
-}
-
-/* --- Fortschritt: eine ruhige Linie, keine Punktetafel --- */
-
-.progress {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
 }
 
 .progress-track {
-  display: flex;
-  gap: 2px;
-}
-
-.progress-step {
-  flex: 1;
-  height: 3px;
-  border-radius: 2px;
+  margin-top: 12px;
+  height: 2px;
+  border-radius: 1px;
   background: var(--line-soft);
+  overflow: hidden;
 }
 
-.progress-step[data-state='done'] {
+.progress-fill {
+  height: 100%;
+  border-radius: 1px;
   background: var(--accent);
 }
 
-.progress-step[data-state='current'] {
-  background: var(--line);
-}
-
-.progress-label {
-  margin: 0;
-  font-size: 1rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-/* --- Mitte: Status, Aufloesung, die eine Taste --- */
+/* --- Mitte: Ton, Frage, Aufloesung --- */
 
 .stage {
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  padding: var(--space-3) 0;
+  gap: 36px;
   text-align: center;
 }
 
-.status {
-  /* Feste Hoehe: der Wechsel von Status zu Urteil darf nichts verschieben. */
+.eyebrow {
   margin: 0;
-  min-height: 3.2em;
-  display: flex;
-  align-items: center;
-  font-size: 1.0625rem;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
   color: var(--muted);
 }
 
+/*
+ * Der Play-Kreis: ein Umriss, kein gefuellter Knopf. 88 px tragen die
+ * Zielgroesse aus WCAG 2.5.5 mit grossem Abstand.
+ */
+.play {
+  width: 88px;
+  height: 88px;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.play:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+/* Das Dreieck aus Rahmen gebaut -- kein Bild, kein Icon-Paket. Der Versatz
+ * nach rechts gleicht den optischen Schwerpunkt aus. */
+.play-mark {
+  width: 0;
+  height: 0;
+  margin-left: 4px;
+  border-top: 13px solid transparent;
+  border-bottom: 13px solid transparent;
+  border-left: 22px solid var(--ink);
+}
+
+.play:hover:not(:disabled) .play-mark {
+  border-left-color: var(--accent);
+}
+
+.question {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/*
+ * Urteil: Symbol und Satz, nie Farbe allein (CLAUDE.md 6). Haken und Kreuz
+ * unterscheiden sich in der Form; der Satz daneben sagt dasselbe noch einmal.
+ */
 .verdict {
   display: inline-flex;
   align-items: baseline;
-  gap: var(--space-1);
-  color: var(--ink);
+  justify-content: center;
+  gap: 12px;
 }
 
 .verdict-mark {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  line-height: 1;
+  font-family: var(--font-ui);
+  font-size: 18px;
 }
 
 .verdict[data-kind='hit'] .verdict-mark {
-  color: var(--accent-deep);
+  color: var(--accent);
 }
 
 .verdict[data-kind='miss'] .verdict-mark {
+  color: var(--ink);
+}
+
+/* Die Aufloesung: das Zeichen gross, darunter sein Muster als Form. */
+.reveal {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.pattern {
+  margin: 0;
+}
+
+.pattern-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.pattern-element {
+  display: block;
+  height: 16px;
+  background: var(--ink);
+}
+
+.pattern-element[data-kind='dit'] {
+  width: 16px;
+  border-radius: 50%;
+}
+
+.pattern-element[data-kind='dah'] {
+  width: 52px;
+  border-radius: 8px;
+}
+
+/* Fuer die Hervorhebung einzelner Elemente -- derzeit setzt nichts sie, weil
+ * es keine Regel dafuer gibt, welches Element hervorzuheben waere. */
+.pattern-element[data-highlight='true'] {
+  background: var(--accent);
+}
+
+/* --- Fusszeile: Tagesstand links, Sitzung als Punkte rechts --- */
+
+.footer {
+  flex: none;
+  margin-top: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.footer-stats {
+  margin: 0;
+  font-size: 13px;
   color: var(--muted);
 }
 
-.reveal {
+.dots {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--space-1);
+  gap: 6px;
 }
 
-.prompt {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 4rem;
-  line-height: 1;
-  font-weight: 500;
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line);
 }
 
-/* Platzhalter waehrend des Hoerens: haelt die Hoehe, verraet nichts. */
-.prompt-blank {
-  color: var(--line);
-}
-
-.prompt-code {
-  margin: 0;
-  font-size: 1.125rem;
-  letter-spacing: 0.4em;
-  /* Das letzte Zeichen bekaeme sonst rechts eine Luecke und saesse schief. */
-  text-indent: 0.4em;
-  color: var(--accent-deep);
+.dot[data-state='done'] {
+  background: var(--accent);
 }
 
 .summary-heading {
@@ -248,7 +321,9 @@ h1 {
 
 .actions {
   display: flex;
+  justify-content: center;
   gap: var(--space-1);
+  margin-top: 12px;
 }
 
 button {
@@ -283,39 +358,72 @@ button:disabled {
 /* --- Antwort-Gitter: drei Spalten, Serif --- */
 
 .answers {
+  flex: none;
+  margin-top: 36px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-1);
+  gap: 12px;
 }
 
 .answer {
+  height: 60px;
+  min-height: 0;
+  padding: 0;
+  position: relative;
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 26px;
   font-weight: 500;
-  min-height: var(--tap);
-  padding: 0.5rem;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.answer:hover:not(:disabled),
+.answer:focus-visible {
+  border-color: var(--accent);
 }
 
 /*
- * Nach der Antwort: nie nur Farbe. Das richtige Zeichen traegt einen vollen
- * Rahmen im Akzent, die eigene Fehlwahl einen gestrichelten mit Durchstreichung
- * -- beides bleibt in Graustufen und ohne Farbwahrnehmung unterscheidbar.
+ * Nach der Antwort: nie nur Farbe (CLAUDE.md 6). Beide Zustaende tragen ein
+ * Symbol, und die beiden Symbole unterscheiden sich in der Form -- Haken
+ * gegen Kreuz bleibt auch ohne Farbwahrnehmung eindeutig.
  */
 .answer[data-mark='correct'] {
   border-color: var(--accent);
-  border-width: 2px;
   color: var(--accent-deep);
 }
 
 .answer[data-mark='wrong'] {
-  border-style: dashed;
-  color: var(--muted);
-  text-decoration: line-through;
+  border-color: var(--ink);
+}
+
+.answer-mark {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 1;
 }
 
 /* Ein deaktiviertes Gitter soll ruhen, aber die Aufloesung sichtbar lassen. */
 .answer:disabled[data-mark] {
   opacity: 1;
+}
+
+/* Weiter-Taste: dieselbe Form wie eine Antwort, nur im Akzent umrandet. */
+.button-next {
+  height: 60px;
+  min-height: 0;
+  padding: 0 24px;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--accent-deep);
+  background: transparent;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
 }
 
 /* --- Sekundaeres --- */
