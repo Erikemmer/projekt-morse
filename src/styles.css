@@ -17,7 +17,10 @@
   --ink: #221d16;
   --accent: #b45309;
   --accent-deep: #92400e;
-  --muted: #8a7f6d;
+  /* Abgedunkelt gegenueber dem Mockup-Wert #8a7f6d (3,5:1): 5,1:1 auf paper,
+   * damit auch kleiner Sekundaertext WCAG AA (4,5:1) besteht. Entschieden vom
+   * Nutzer am 31.08.2026, siehe FINDINGS.md 1. */
+  --muted: #6f6455;
   --line: #d8cfc0;
   --line-soft: #e3dac9;
 

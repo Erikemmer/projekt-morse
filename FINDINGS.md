@@ -8,6 +8,11 @@ würde. Nichts hier ist eine Zusage.
 
 ## 1. `--muted` auf `--paper` erreicht 3,5:1 — zu wenig für kleinen Text
 
+**Status: entschieden und behoben** (31.08.2026, Nutzerentscheidung nach dem
+Fable-Review): `--muted` ist jetzt `#6f6455` — **5,1:1** auf `--paper`, damit
+besteht auch kleiner Sekundärtext WCAG AA. Der Rest des Eintrags bleibt als
+Begründung stehen.
+
 **Gefunden:** 31.08.2026, beim Einziehen der Design-Richtung „Ruhe".
 
 `--muted: #8a7f6d` auf `--paper: #f6f1e8` ergibt ein Kontrastverhältnis von rund
