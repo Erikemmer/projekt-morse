@@ -28,6 +28,26 @@ export function loadProgress(): Progress {
 }
 
 /**
+ * Schreibt den Fortschritt sofort.
+ *
+ * Der Regelfall ist `saveProgressWhenIdle`: waehrend einer Uebung hat Schreiben
+ * auf dem Eingabepfad nichts zu suchen (CLAUDE.md 7). An genau einer Stelle ist
+ * das falsch herum -- beim Abschluss der Einfuehrung. Der Merker entscheidet,
+ * ob jemand sie *je wieder* sieht, und wer direkt nach "Begin" oder "Skip intro"
+ * neu laedt, verlaengert den Leerlauf nie so weit, dass ein
+ * requestIdleCallback noch drankommt (gemessen: der Leerlauf-Schreiber lief
+ * erst nach ~700 ms). Hier ist der Ton laengst nicht im Spiel, also kostet der
+ * synchrone Schreibvorgang auch nichts.
+ */
+export function saveProgressNow(progress: Progress): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+  } catch {
+    // Voller oder gesperrter Speicher darf die laufende Sitzung nicht stoeren.
+  }
+}
+
+/**
  * Schreibt den Fortschritt, sobald der Hauptthread Luft hat.
  *
  * Serialisieren und Schreiben sind billig, aber sie haben auf dem Eingabepfad

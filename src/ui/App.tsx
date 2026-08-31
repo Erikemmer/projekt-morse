@@ -40,9 +40,10 @@ import {
   ROUNDS_PER_SESSION,
   STARTING_EFFECTIVE_WPM,
 } from '../engine/settings';
-import { dayAccuracy, dayFor, type DayStats } from '../engine/stats';
+import { dayAccuracy, dayFor, markIntroSeen, type DayStats } from '../engine/stats';
 import { computeTiming } from '../engine/timing';
-import { loadProgress, saveProgressWhenIdle } from './progressStorage';
+import { Intro } from './Intro';
+import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { todayISO } from './today';
 
 const TIMING = computeTiming({
@@ -91,9 +92,13 @@ export function App() {
   // muesste sich jemand, der mit der Tastatur arbeitet, nach jedem Ton neu
   // hineintabben. Ein deaktiviertes Ziel nimmt den Fokus nicht an -- der
   // naechste Wechsel holt ihn dann zurueck.
+  // `introSeen` haengt mit drin, weil der Uebergang von der Einfuehrung in den
+  // Loop kein Phasenwechsel ist: die Sitzung stand die ganze Zeit auf 'ready'.
+  // Ohne das bliebe der Fokus nach "Begin" auf dem verschwundenen Knopf, also
+  // bei <body> -- und man muesste sich neu hineintabben.
   useEffect(() => {
     focusRef.current?.focus();
-  }, [session.phase, session.round]);
+  }, [session.phase, session.round, session.progress.introSeen]);
 
   const play = useCallback(async () => {
     playerRef.current ??= new MorsePlayer();
@@ -120,6 +125,14 @@ export function App() {
   }, []);
 
   const next = useCallback(() => setSession((current) => advance(current, Math.random)), []);
+
+  const finishIntro = useCallback(() => {
+    // Sofort schreiben, nicht im Leerlauf: wer direkt nach "Begin" neu laedt,
+    // soll die Einfuehrung nicht ein zweites Mal sehen.
+    const seen = markIntroSeen(session.progress);
+    saveProgressNow(seen);
+    setSession((current) => ({ ...current, progress: seen }));
+  }, [session.progress]);
 
   const restart = useCallback(() => {
     setSession((current) =>
@@ -165,7 +178,9 @@ export function App() {
         while the tone plays — recognising the sound is the whole exercise.
       </p>
 
-      {session.phase === 'finished' ? (
+      {!session.progress.introSeen ? (
+        <Intro onDone={finishIntro} />
+      ) : session.phase === 'finished' ? (
         <Summary summary={summary} onRestart={restart} headingRef={focusTarget} />
       ) : (
         <>
