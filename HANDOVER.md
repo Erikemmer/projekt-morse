@@ -1,17 +1,15 @@
-# Übergabe — Stand nach SW-Update-Nachweis; Deployment wartet auf Zugang
+# Übergabe — Stand nach Review 3; live auf Cloudflare Pages
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** `main` @ `c7d7cc4` (Review 2 bestanden und gemergt: muted-Entscheidung,
-Wachstumsregel, PWA). Darauf aufbauend Branch
-`claude/morse-handover-alignment-nbkk6o` mit zwei weiteren Commits — zu reviewen
-und dann nach `main` zu mergen:
+**Stand:** `main` @ `6b5d842` (Review 3 bestanden und gemergt: Fußzeile
+„Works offline once loaded." und der Beleg des SW-Update-Pfads, `435f926` +
+Doku-Commit). Der Branch `claude/morse-handover-alignment-nbkk6o` ist damit
+aufgegangen; die Historie bleibt linear (Fast-Forward).
 
-1. `435f926` — Fußzeile „Works offline once loaded." + Beleg des SW-Update-Pfads
-2. (dieser Doku-Commit)
-
-**Produktions-URL: noch keine.** Die Hosting-Entscheidung ist Cloudflare Pages
-(Notion-Log); warum das Deployment aus dieser Session nicht ging, steht in §5a —
-inklusive der fertigen Einstellungen für den, der es einrichtet.
+**Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
+Pages, mit Git-Anbindung an dieses Repo. Jeder Push auf `main` baut und
+deployt von selbst; ein manueller Schritt ist nicht mehr nötig. Details und
+der Prüfbericht stehen in §5a.
 
 **Datum:** 2026-08-31
 
@@ -159,45 +157,78 @@ Nicht nachgewiesen, ehrlich benannt:
   normaler Reload sofort den neuen Stand (Navigation ist Netz-zuerst), der neue
   Worker installiert als `…-72f8a009ac93`, `activate` räumt den alten Cache weg
   — am Ende existiert genau einer, der neue — und der neue Stand kommt danach
-  auch offline aus dem neuen Cache. Auf der Produktions-URL einmal wiederholen,
-  sobald es eine gibt.
+  auch offline aus dem neuen Cache. Auf Produktion ist die entscheidende
+  Vorbedingung geprüft (kein CDN-Caching von `sw.js`); der volle Nachweis
+  hängt am nächsten Deploy mit geänderten Assets — siehe §5a.
 - **Kein Hörtest, kein Screenreader-Durchgang, keine echte Hardware** — alles
   unverändert offen und weiterhin die wichtigsten menschlichen Prüfungen.
   Fürs Installieren als PWA gilt dasselbe: auf einem echten Telefon testen.
 - **Die Wachstums-Schwellen sind eine Setzung** (90/5/75/20/30). Ob sie gut
   *lehren*, zeigen erst Nutzungsdaten.
 
-## 5a. Deployment: entschieden, aber aus dieser Session nicht ausführbar
+## 5a. Deployment: live auf Cloudflare Pages, mit Git-Anbindung
 
-**Entschieden (Notion-Log): Cloudflare Pages**, Projektname `projekt-morse`,
-bevorzugt mit Git-Anbindung, damit jeder Push auf `main` automatisch deployt.
+**Produktions-URL: https://projekt-morse.pages.dev**
 
-**Warum es hier nicht ging** — dreifach geprüft, nicht umgangen (der Nutzer hat
-ausdrücklich „nichts dafür hacken" verfügt, und CLAUDE.md verlangt Melden statt
-still Lösen):
+Eingerichtet wie in der Entscheidung vorgesehen — Cloudflare Pages, Projekt
+`projekt-morse`, **mit Git-Anbindung** an `Erikemmer/projekt-morse`. Der
+bevorzugte Weg hat also geklappt; Direct Upload war nicht nötig.
 
-1. Die **Egress-Policy dieser Umgebung lehnt jeden Cloudflare-Host ab**
-   (CONNECT 403 vom Proxy): `api.cloudflare.com`, `sparrow.cloudflare.com`,
-   `*.pages.dev`, sogar `developers.cloudflare.com`. Damit fallen wrangler
-   *und* Direct Upload aus — und auch das Verifizieren einer Produktions-URL.
-2. **Kein Token, keine wrangler-Auth** in der Umgebung.
-3. Der Nutzer hat inzwischen ein **Cloudflare-Plugin** installiert
-   (Connectoren `cloudflare-api`, `-bindings`, `-builds`, `-docs`,
-   `-observability`, „verbindet sich in Sitzung"). Diese Session lief da
-   schon; die MCP-Server hängen sich nur beim Sitzungsstart an. In dieser
-   Session sind sie nachweislich nicht verfügbar (ToolSearch/ListPlugins leer).
-   MCP-Verkehr läuft über den Anthropic-MCP-Proxy an der Egress-Policy vorbei —
-   **eine frische Session mit dem Plugin sollte deployen können.**
+**Einstellungen (stehen so im Projekt):**
 
-**Für den, der es einrichtet** (Dashboard-Git-Anbindung, der bevorzugte Weg —
-oder die nächste Session per MCP):
+- Production-Branch: `main` · Build command: `npm run build` · Output: `dist`
+- Keine Umgebungsvariablen.
+- Preview-Deployments für alle Branches, PR-Kommentare an.
 
-- Repo: `Erikemmer/projekt-morse`, Production-Branch: `main`
-- Build command: `npm run build` · Output directory: `dist`
-- Keine Umgebungsvariablen nötig. Framework-Preset „None" oder „Vite" — beides
-  ok, entscheidend sind Command und Output.
-- Danach: Produktions-URL hier in der Übergabe eintragen und den
-  SW-Update-Pfad einmal auf Produktion wiederholen (§4).
+**Warum es diesmal ging** — die drei Hinderungsgründe von vorher, nachgeprüft:
+
+1. Die Egress-Sperre gab es hier **nicht**: `api.cloudflare.com` war
+   erreichbar. Die frühere Beobachtung galt für die damalige Umgebung, nicht
+   für das Projekt.
+2. Es lag doch eine **gültige wrangler-OAuth-Sitzung** vor
+   (`~/Library/Preferences/.wrangler/config/default.toml`, Scope `pages:write`).
+   Darüber lief die Einrichtung per Pages-API.
+3. Die MCP-Connectoren des Cloudflare-Plugins waren **weiterhin nicht
+   autorisiert** (OAuth braucht eine interaktive Sitzung). Die Vermutung
+   „frische Session mit Plugin genügt" hat sich also *nicht* bestätigt —
+   getragen hat die schon vorhandene wrangler-Anmeldung.
+
+**Auf Produktion geprüft** (Playwright gegen die echte URL, Chrome):
+
+- **Seite rendert** — `h1` „Projekt Morse", Antwort-Gitter mit 6 Tasten.
+- **Schriften lokal** — kein einziger Fremd-Origin-Request auf der ganzen
+  Seite. Genutzt und geladen werden Newsreader (h1) und IBM Plex Sans 400
+  (Fließtext), beide von `projekt-morse.pages.dev`. Die Schnitte 500/600
+  stehen auf `unloaded`, weil der erste Bildschirm sie nicht braucht — so
+  soll es sein, nicht etwa ein Fehler.
+- **Service Worker aktiv** — `activated`, kontrolliert die Seite, Scope `/`.
+  Genau ein Cache, `projekt-morse-72f8a009ac93`, mit 9 Einträgen.
+- **Eine Runde gespielt** — Play → Ton → „Which character was that?" →
+  Antwort → Urteil („Not quite — that was S.", die richtige Taste markiert) →
+  „Next character" → Fortschritt steht auf 1.
+- **Offline** — Netz aus, neu geladen: die App rendert vollständig aus dem
+  Cache.
+
+**SW-Update-Pfad auf Produktion: halb belegt, und der Rest ist erklärbar.**
+Belegt ist die Bedingung, an der es scheitern *könnte*: Cloudflare liefert
+`sw.js` und das HTML mit `cache-control: public, max-age=0, must-revalidate`
+aus — der Browser fragt also bei jedem Aufruf nach, ein neuer Worker kommt
+ohne CDN-Verzögerung an. Der vollständige Nachweis (alter Cache weg, neuer
+da) braucht zwei Produktions-Deploys mit **unterschiedlichen Assets**; die
+Version leitet sich aus den gehashten Dateinamen ab
+(`sha256(assets).slice(0,12)`, siehe `vite.config.ts`). Der Deploy dieses
+Doku-Commits ändert an `dist/` nichts, erzeugt also bewusst *keinen*
+Cache-Wechsel — richtiges Verhalten, aber eben kein Beweis. Beim nächsten
+Deploy, der wirklich Code oder Styles anfasst, ist er in einem Schritt
+nachgeholt:
+
+```
+# vor dem Deploy notieren, nach dem Deploy erneut lesen -- es muss genau
+# ein Cache existieren, und zwar ein neuer:
+#   await caches.keys()
+```
+
+Lokal ist der Pfad bereits mit zwei echten Builds durchgespielt (§4).
 
 ## 5. Entscheidungen: gefallen und offen
 
@@ -258,13 +289,12 @@ npm run preview    # dist ausliefern -- hier laesst sich die PWA testen
 
 ## 8. Nächster Schritt
 
-1. **Deployment auf Cloudflare Pages** — aus einer frischen Session mit dem
-   Cloudflare-Plugin (per MCP) oder vom Nutzer im Dashboard; Einstellungen in
-   §5a. Danach Produktions-URL hier eintragen.
-2. **Review dieses Branches** (Fable) und Merge nach `main`.
-3. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
-   Telefon (braucht die Produktions-URL), SW-Update-Pfad einmal auf Produktion.
-4. **Streak mit Freeze-Gnade** — beschlossen, gebaut wird er als reine
+1. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
+   Telefon — die Produktions-URL steht jetzt (§5a).
+2. **SW-Update-Pfad auf Produktion abschließen** — beim nächsten Deploy, der
+   Assets ändert, einmal `await caches.keys()` vorher/nachher vergleichen
+   (§5a).
+3. **Streak mit Freeze-Gnade** — beschlossen, gebaut wird er als reine
    Engine-Logik (`src/engine/`), Persistenz additiv.
-5. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
+4. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
    Notion-Entscheidung, nicht eine des Codes.
