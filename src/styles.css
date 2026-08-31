@@ -55,71 +55,154 @@ body {
   outline-offset: 2px;
 }
 
+/* --- Grundriss: ein zentrierter Mobile-first-Screen, kein Dashboard --- */
+
 .shell {
-  max-width: 34rem;
+  max-width: 26rem;
+  min-height: 100dvh;
   margin: 0 auto;
-  padding: var(--space-4) var(--space-2);
+  padding: var(--space-3) var(--space-2) var(--space-4);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
 
-h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.75rem;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-}
-
-.lede {
-  margin: var(--space-1) 0 0;
-  color: var(--muted);
-  font-size: 1.0625rem;
-}
-
-.panel {
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius);
-  padding: var(--space-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.field {
+.masthead {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-.field > span {
+h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.0625rem;
+}
+
+/* --- Fortschritt: eine ruhige Linie, keine Punktetafel --- */
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.progress-track {
+  display: flex;
+  gap: 2px;
+}
+
+.progress-step {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--line-soft);
+}
+
+.progress-step[data-state='done'] {
+  background: var(--accent);
+}
+
+.progress-step[data-state='current'] {
+  background: var(--line);
+}
+
+.progress-label {
+  margin: 0;
   font-size: 1rem;
   color: var(--muted);
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
-}
-
-.field output {
   font-variant-numeric: tabular-nums;
+}
+
+/* --- Mitte: Status, Aufloesung, die eine Taste --- */
+
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) 0;
+  text-align: center;
+}
+
+.status {
+  /* Feste Hoehe: der Wechsel von Status zu Urteil darf nichts verschieben. */
+  margin: 0;
+  min-height: 3.2em;
+  display: flex;
+  align-items: center;
+  font-size: 1.0625rem;
+  color: var(--muted);
+}
+
+.verdict {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
   color: var(--ink);
 }
 
-input[type='text'] {
-  font: inherit;
-  min-height: var(--tap);
-  padding: 0.6rem 0.75rem;
-  color: var(--ink);
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+.verdict-mark {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1;
 }
 
-input[type='range'] {
-  accent-color: var(--accent);
-  min-height: var(--tap);
+.verdict[data-kind='hit'] .verdict-mark {
+  color: var(--accent-deep);
 }
+
+.verdict[data-kind='miss'] .verdict-mark {
+  color: var(--muted);
+}
+
+.reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.prompt {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 4rem;
+  line-height: 1;
+  font-weight: 500;
+}
+
+/* Platzhalter waehrend des Hoerens: haelt die Hoehe, verraet nichts. */
+.prompt-blank {
+  color: var(--line);
+}
+
+.prompt-code {
+  margin: 0;
+  font-size: 1.125rem;
+  letter-spacing: 0.4em;
+  /* Das letzte Zeichen bekaeme sonst rechts eine Luecke und saesse schief. */
+  text-indent: 0.4em;
+  color: var(--accent-deep);
+}
+
+.summary-heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 500;
+}
+
+/* --- Tasten --- */
 
 .actions {
   display: flex;
@@ -129,7 +212,7 @@ input[type='range'] {
 button {
   font: inherit;
   min-height: var(--tap);
-  padding: 0.6rem 1.25rem;
+  padding: 0.6rem 1.5rem;
   color: var(--ink);
   background: transparent;
   border: 1px solid var(--line);
@@ -146,40 +229,61 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.pattern {
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  min-height: 3rem;
-  align-items: flex-start;
-}
-
-.glyph {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.15rem;
-}
-
-.glyph-char {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 500;
-}
-
-.glyph-code {
+.button-primary {
+  border-color: var(--accent);
   color: var(--accent-deep);
-  letter-spacing: 0.2em;
 }
+
+.button-primary:hover:not(:disabled) {
+  border-color: var(--accent-deep);
+}
+
+/* --- Antwort-Gitter: drei Spalten, Serif --- */
+
+.answers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-1);
+}
+
+.answer {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  min-height: var(--tap);
+  padding: 0.5rem;
+}
+
+/*
+ * Nach der Antwort: nie nur Farbe. Das richtige Zeichen traegt einen vollen
+ * Rahmen im Akzent, die eigene Fehlwahl einen gestrichelten mit Durchstreichung
+ * -- beides bleibt in Graustufen und ohne Farbwahrnehmung unterscheidbar.
+ */
+.answer[data-mark='correct'] {
+  border-color: var(--accent);
+  border-width: 2px;
+  color: var(--accent-deep);
+}
+
+.answer[data-mark='wrong'] {
+  border-style: dashed;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+/* Ein deaktiviertes Gitter soll ruhen, aber die Aufloesung sichtbar lassen. */
+.answer:disabled[data-mark] {
+  opacity: 1;
+}
+
+/* --- Sekundaeres --- */
 
 .facts {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-3);
-  border-top: 1px solid var(--line-soft);
-  padding-top: var(--space-2);
 }
 
 .facts dt {
@@ -189,12 +293,28 @@ button:disabled {
 
 .facts dd {
   margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
 }
 
-.warning {
+.note {
   margin: 0;
-  color: var(--accent-deep);
+  font-size: 1rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

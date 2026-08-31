@@ -35,6 +35,11 @@ Ad-Tech, verletzt CLAUDE.md §2.5 also nicht wörtlich — aber es ist ein Abruf
 einem Dritten, und ohne Netz sieht die App anders aus als entworfen (die
 Fallback-Stacks greifen, es bricht nichts).
 
+**Beobachtet:** Im Entwicklungscontainer schlägt der Abruf tatsächlich fehl
+(`ERR_CONNECTION_RESET`). Die Seite bleibt heil und rendert in Georgia — der Fallback
+tut also, was er soll. Ein Screenshot aus dieser Umgebung zeigt aber nicht die
+entworfene Typografie.
+
 **Was es kosten würde:** Selbsthosten der beiden Familien als woff2 im Repo. Etwa
 100–200 kB statische Assets, dafür offline identisch und ohne Fremdabruf. Kleine
 Aufgabe, aber eine eigene.

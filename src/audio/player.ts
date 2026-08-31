@@ -14,9 +14,10 @@
  */
 
 import type { Schedule } from '../engine/schedule';
+import { DEFAULT_TONE_HZ } from '../engine/settings';
 
 export interface PlayerOptions {
-  /** Tonhoehe in Hz. 600-700 Hz gilt als angenehm fuers Ohr. */
+  /** Tonhoehe in Hz. Default: DEFAULT_TONE_HZ aus der Engine. */
   frequency?: number;
   /** Lautstaerke, 0..1. */
   volume?: number;
@@ -33,6 +34,15 @@ export interface PlaybackHandle {
   stop(): void;
   /** Erfuellt sich am Ende der Zeitachse -- oder bei stop(). */
   finished: Promise<void>;
+  /**
+   * Start des ersten Tons auf der Audio-Uhr (`AudioContext.currentTime`).
+   *
+   * Steht schon *vor* dem ersten Ton fest, weil die Zeitachse im Voraus geplant
+   * wird. Wer Reaktionszeiten misst, braucht diese Uhr -- nicht `Date.now()`.
+   */
+  startTime: number;
+  /** Ende des letzten Tons auf derselben Uhr. */
+  endTime: number;
 }
 
 /** Wie weit im Voraus geplant wird und wie oft der Planer nachlegt (Sekunden). */
@@ -50,9 +60,20 @@ export class MorsePlayer {
   private current: { stop: () => void } | null = null;
 
   constructor(options: PlayerOptions = {}) {
-    this.frequency = options.frequency ?? 650;
+    this.frequency = options.frequency ?? DEFAULT_TONE_HZ;
     this.volume = options.volume ?? 0.25;
     this.rampSeconds = options.rampSeconds ?? 0.005;
+  }
+
+  /**
+   * Der aktuelle Stand der Audio-Uhr in Sekunden.
+   *
+   * Vor `resume()` gibt es noch keinen Kontext und damit keine Uhr -- dann 0.
+   * Zeitstempel fuer Reaktionszeiten kommen von hier, damit Ton und Messung
+   * dieselbe Zeitbasis haben.
+   */
+  get currentTime(): number {
+    return this.context?.currentTime ?? 0;
   }
 
   /**
@@ -140,7 +161,7 @@ export class MorsePlayer {
     };
 
     this.current = { stop: abort };
-    return { stop: abort, finished };
+    return { stop: abort, finished, startTime, endTime: startTime + schedule.duration };
   }
 
   /** Bricht eine laufende Wiedergabe ab. */
