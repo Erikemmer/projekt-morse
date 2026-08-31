@@ -3,7 +3,8 @@
 Adaptiver Morse-Trainer im Browser. Kernloop: **hören → tippen → Feedback.**
 Ziel ist Kopfhören — das Zeichen als Klang erkennen, nicht Punkte und Striche zählen.
 
-Läuft vollständig lokal: kein Konto, kein Server, keine Cookies.
+Läuft vollständig lokal: kein Konto, kein Server, keine Cookies, keine Fremdabrufe.
+Als PWA installierbar und offline nutzbar; die Schriften liegen im Repo.
 
 ## Stand
 

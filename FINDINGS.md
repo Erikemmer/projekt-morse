@@ -32,6 +32,12 @@ deshalb dem Nutzer, nicht dem nächsten Commit.
 
 ## 2. Google Fonts ist ein Third-Party-Abruf
 
+**Status: entschieden und behoben** (31.08.2026, mit der PWA-Entscheidung aus dem
+Konzept): Newsreader und IBM Plex Sans liegen jetzt als woff2 im Repo
+(`src/fonts/`, latin-Subset, SIL-OFL-Lizenzen daneben). Der Google-Fonts-Link ist
+raus; es gibt keinen Fremdabruf mehr, und offline sieht die App aus wie entworfen.
+Der Rest des Eintrags bleibt als Begründung stehen.
+
 **Gefunden:** 31.08.2026, gleiche Aufgabe.
 
 Newsreader und IBM Plex Sans kommen per `<link>` von `fonts.googleapis.com` /

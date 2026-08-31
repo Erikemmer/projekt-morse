@@ -12,3 +12,15 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 );
+
+// Offline-Faehigkeit (PWA). Nur im Produktionsbuild: im Dev-Server wuerde der
+// Worker gebaute Assets cachen, die es dort nicht gibt, und HMR durchkreuzen.
+// Ein Fehlschlag ist kein Beinbruch -- die App laeuft dann wie eine normale
+// Seite, nur eben nicht offline.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {
+      // bewusst still: kein Feature der App haengt am Worker
+    });
+  });
+}
