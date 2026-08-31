@@ -47,7 +47,9 @@ function readyProgress(): Progress {
     characters[char] = record(GROWTH_MIN_ATTEMPTS, GROWTH_MIN_ATTEMPTS - 1);
   }
   return {
-    version: 1,
+    // Aus dem Leerstand heraus, damit spaeter additiv dazukommende Felder diesen
+    // Aufbau nicht brechen (CLAUDE.md 4: Persistenz waechst additiv).
+    ...emptyProgress(),
     characters,
     activeCharacters: [...STARTING_CHARACTERS],
     recentAnswers: [
@@ -136,8 +138,8 @@ describe('Wachstumsregel', () => {
 describe('Wachstum im Fortschritt', () => {
   it('recordAttempt fuellt das Antwortfenster und zaehlt die Sperre hoch', () => {
     let progress = emptyProgress();
-    progress = recordAttempt(progress, 'K', true, 1);
-    progress = recordAttempt(progress, 'M', false, 1);
+    progress = recordAttempt(progress, 'K', true, 1, '2026-09-01');
+    progress = recordAttempt(progress, 'M', false, 1, '2026-09-01');
 
     expect(progress.recentAnswers).toEqual([true, false]);
     expect(progress.answersSinceGrowth).toBe(2);
@@ -146,7 +148,7 @@ describe('Wachstum im Fortschritt', () => {
   it('das Antwortfenster waechst nicht ueber seine Groesse hinaus', () => {
     let progress = emptyProgress();
     for (let i = 0; i < RECENT_ANSWER_WINDOW + 10; i += 1) {
-      progress = recordAttempt(progress, 'K', true, 1);
+      progress = recordAttempt(progress, 'K', true, 1, '2026-09-01');
     }
     expect(progress.recentAnswers).toHaveLength(RECENT_ANSWER_WINDOW);
   });
@@ -162,7 +164,7 @@ describe('Wachstum im Lernloop', () => {
       progress.recentAnswers.push(true);
     }
 
-    let state = createSession({ totalRounds: 3, progress, random: () => 0 });
+    let state = createSession({ totalRounds: 3, progress, random: () => 0, today: '2026-09-01' });
     expect(state.pool).toHaveLength(STARTING_CHARACTERS.length);
 
     state = promptFinished(beginPlayback(state, 10));
@@ -187,7 +189,7 @@ describe('Wachstum im Lernloop', () => {
       progress.recentAnswers.push(true);
     }
 
-    let state = createSession({ totalRounds: 3, progress, random: () => 0 });
+    let state = createSession({ totalRounds: 3, progress, random: () => 0, today: '2026-09-01' });
     state = promptFinished(beginPlayback(state, 10));
     const wrong = state.pool.find((c) => c !== state.prompt) ?? 'X';
     state = submitAnswer(state, wrong, 10.5);

@@ -19,7 +19,7 @@
 
 import { maybeGrow } from './growth';
 import { pickNext } from './selection';
-import { recordAttempt, type Progress } from './stats';
+import { beginSession, recordAttempt, type Progress } from './stats';
 
 export type Phase =
   /** Zeichen steht bereit, wurde aber noch nicht abgespielt. */
@@ -65,6 +65,11 @@ export interface SessionState {
   readonly introduced: string | null;
   /** Fortschritt ueber alle Sitzungen -- Grundlage der Gewichtung. */
   readonly progress: Progress;
+  /**
+   * Der Kalendertag dieser Sitzung, `YYYY-MM-DD`. Wird hereingereicht statt hier
+   * gelesen: die Engine bleibt ohne Uhr und ohne DOM (CLAUDE.md 4).
+   */
+  readonly today: string;
 }
 
 export interface SessionOptions {
@@ -72,6 +77,8 @@ export interface SessionOptions {
   progress: Progress;
   /** Zufallszahl in [0,1). Als Parameter, damit Tests nicht wuerfeln muessen. */
   random: () => number;
+  /** Kalendertag als `YYYY-MM-DD`. Ebenfalls Parameter, aus demselben Grund. */
+  today: string;
 }
 
 /**
@@ -83,18 +90,23 @@ export function createSession(options: SessionOptions): SessionState {
   if (pool.length === 0) throw new RangeError('Der Zeichensatz darf nicht leer sein');
   if (options.totalRounds < 1) throw new RangeError('Eine Sitzung braucht mindestens eine Runde');
 
+  // Die Sitzung wird beim Beginn gezaehlt, und der Tages-Eimer zieht auf heute
+  // nach -- sonst stuende morgen noch die Quote von gestern unter "Today".
+  const progress = beginSession(options.progress, options.today);
+
   return {
     pool,
     totalRounds: options.totalRounds,
     round: 1,
-    prompt: pickNext(pool, options.progress, { random: options.random }),
+    prompt: pickNext(pool, progress, { random: options.random }),
     phase: 'ready',
     promptEndsAt: null,
     replays: 0,
     attempts: [],
     lastAttempt: null,
     introduced: null,
-    progress: options.progress,
+    progress,
+    today: options.today,
   };
 }
 
@@ -146,7 +158,13 @@ export function submitAnswer(
   };
 
   // Erst verbuchen, dann die Wachstumsregel fragen -- diese Antwort zaehlt mit.
-  const recorded = recordAttempt(state.progress, attempt.char, correct, attempt.reactionSeconds);
+  const recorded = recordAttempt(
+    state.progress,
+    attempt.char,
+    correct,
+    attempt.reactionSeconds,
+    state.today,
+  );
   const growth = maybeGrow(recorded);
 
   return {

@@ -32,6 +32,24 @@ export const RECENT_SAMPLES = 10;
  */
 export const RECENT_ANSWER_WINDOW = 30;
 
+/**
+ * Was an *einem* Tag geuebt wurde. Bewusst nur der laufende Tag, keine Historie:
+ * die Fusszeile zeigt "Today ...", und mehr braucht sie nicht. Wer spaeter eine
+ * Reihe ueber Wochen will (Streak), baut sie daneben -- nicht indem er hier
+ * heimlich eine Liste wachsen laesst (CLAUDE.md 7: kein unbegrenztes Wachstum).
+ *
+ * `date` ist ein lokaler Kalendertag als `YYYY-MM-DD`. Lokal und nicht UTC, weil
+ * "heute" die Frage des Nutzers ist, nicht die des Servers -- einen Server gibt
+ * es hier ohnehin nicht.
+ */
+export interface DayStats {
+  date: string;
+  attempts: number;
+  hits: number;
+  /** Verschiedene Zeichen, die an diesem Tag drankamen. */
+  characters: string[];
+}
+
 export interface CharacterRecord {
   /** Wie oft das Zeichen abgefragt wurde. */
   attempts: number;
@@ -66,10 +84,24 @@ export interface Progress {
    * rollierende Fenster ohnehin erst gefuellt sein muss (30 > Sperre 20).
    */
   answersSinceGrowth: number;
+  /**
+   * Wie viele Sitzungen begonnen wurden. Traegt die Kopfzeile ("Session N").
+   * Gezaehlt wird der Beginn, nicht der Abschluss -- die Zeile beschriftet die
+   * laufende Sitzung, und eine abgebrochene ist trotzdem eine gewesen.
+   */
+  sessionsStarted: number;
+  /** Der laufende Kalendertag. Wechselt das Datum, faengt er bei null an. */
+  day: DayStats;
+  /** Ob die Einfuehrung schon gelaufen ist. Default false: neue Staende sehen sie. */
+  introSeen: boolean;
 }
 
 export function emptyRecord(): CharacterRecord {
   return { attempts: 0, hits: 0, recentReactions: [] };
+}
+
+export function emptyDay(date = ''): DayStats {
+  return { date, attempts: 0, hits: 0, characters: [] };
 }
 
 export function emptyProgress(): Progress {
@@ -79,6 +111,9 @@ export function emptyProgress(): Progress {
     activeCharacters: [...STARTING_CHARACTERS],
     recentAnswers: [],
     answersSinceGrowth: 0,
+    sessionsStarted: 0,
+    day: emptyDay(),
+    introSeen: false,
   };
 }
 
@@ -98,8 +133,10 @@ export function recordAttempt(
   char: string,
   correct: boolean,
   reactionSeconds: number,
+  today: string,
 ): Progress {
   const previous = recordFor(progress, char);
+  const day = dayFor(progress, today);
 
   const recentReactions = correct
     ? [...previous.recentReactions, Math.max(0, reactionSeconds)].slice(-RECENT_SAMPLES)
@@ -117,7 +154,44 @@ export function recordAttempt(
     },
     recentAnswers: [...progress.recentAnswers, correct].slice(-RECENT_ANSWER_WINDOW),
     answersSinceGrowth: progress.answersSinceGrowth + 1,
+    day: {
+      date: today,
+      attempts: day.attempts + 1,
+      hits: day.hits + (correct ? 1 : 0),
+      characters: day.characters.includes(char) ? day.characters : [...day.characters, char],
+    },
   };
+}
+
+/**
+ * Der Eimer des laufenden Tages -- oder ein frischer, wenn das Datum gewechselt
+ * hat. Ein Stand von gestern wird damit nicht als "heute" ausgegeben
+ * (CLAUDE.md 2.6: jede Zahl auf dem Bildschirm ist eine Behauptung).
+ */
+export function dayFor(progress: Progress, today: string): DayStats {
+  return progress.day.date === today ? progress.day : emptyDay(today);
+}
+
+/**
+ * Beginnt eine Sitzung: zaehlt sie und zieht den Tages-Eimer auf heute nach.
+ * Rein, damit die Kopf- und Fusszeile ohne Browser pruefbar bleiben.
+ */
+export function beginSession(progress: Progress, today: string): Progress {
+  return {
+    ...progress,
+    sessionsStarted: progress.sessionsStarted + 1,
+    day: dayFor(progress, today),
+  };
+}
+
+/** Merkt, dass die Einfuehrung gesehen wurde. Einmalig, additiv. */
+export function markIntroSeen(progress: Progress): Progress {
+  return progress.introSeen ? progress : { ...progress, introSeen: true };
+}
+
+/** Trefferquote des Tages 0..1, oder null solange nichts beantwortet wurde. */
+export function dayAccuracy(day: DayStats): number | null {
+  return day.attempts === 0 ? null : day.hits / day.attempts;
 }
 
 /** Trefferquote 0..1. Ohne Versuche gibt es keine Quote -- dann null. */
@@ -194,6 +268,33 @@ export function parseProgress(raw: unknown): Progress {
     activeCharacters,
     recentAnswers,
     answersSinceGrowth: finiteOrZero((raw as { answersSinceGrowth?: unknown }).answersSinceGrowth),
+    sessionsStarted: finiteOrZero((raw as { sessionsStarted?: unknown }).sessionsStarted),
+    day: parseDay((raw as { day?: unknown }).day),
+    introSeen: (raw as { introSeen?: unknown }).introSeen === true,
+  };
+}
+
+/**
+ * Der Tages-Eimer aus unbekannten Daten. Ohne brauchbares Datum ist er wertlos
+ * -- dann lieber leer als falsch beschriftet. Mehr Treffer als Versuche wird
+ * gedeckelt, wie bei den Zeichen auch.
+ */
+function parseDay(raw: unknown): DayStats {
+  if (typeof raw !== 'object' || raw === null) return emptyDay();
+
+  const entry = raw as Partial<DayStats>;
+  if (typeof entry.date !== 'string' || entry.date === '') return emptyDay();
+
+  const attempts = finiteOrZero(entry.attempts);
+  const characters = Array.isArray(entry.characters)
+    ? [...new Set(entry.characters.filter((c): c is string => typeof c === 'string' && c.length === 1))]
+    : [];
+
+  return {
+    date: entry.date,
+    attempts,
+    hits: Math.min(finiteOrZero(entry.hits), attempts),
+    characters,
   };
 }
 

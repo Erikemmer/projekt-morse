@@ -35,6 +35,7 @@ import {
 import { CHARACTER_WPM, ROUNDS_PER_SESSION, STARTING_EFFECTIVE_WPM } from '../engine/settings';
 import { computeTiming } from '../engine/timing';
 import { loadProgress, saveProgressWhenIdle } from './progressStorage';
+import { todayISO } from './today';
 
 const TIMING = computeTiming({
   characterWpm: CHARACTER_WPM,
@@ -52,6 +53,7 @@ export function App() {
       totalRounds: ROUNDS_PER_SESSION,
       progress: loadProgress(),
       random: Math.random,
+      today: todayISO(),
     }),
   );
 
@@ -117,6 +119,7 @@ export function App() {
         totalRounds: current.totalRounds,
         progress: current.progress,
         random: Math.random,
+        today: todayISO(),
       }),
     );
   }, []);

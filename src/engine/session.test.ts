@@ -20,8 +20,12 @@ import {
 import { STARTING_CHARACTERS, ROUNDS_PER_SESSION } from './settings';
 import {
   RECENT_SAMPLES,
+  beginSession,
+  dayAccuracy,
+  dayFor,
   emptyProgress,
   hitRate,
+  markIntroSeen,
   medianReaction,
   parseProgress,
   recordAttempt,
@@ -42,9 +46,9 @@ function progressWith(activeCharacters: string[]) {
 describe('Statistik pro Zeichen', () => {
   it('zaehlt Versuche und Treffer getrennt', () => {
     let progress = emptyProgress();
-    progress = recordAttempt(progress, 'K', true, 1);
-    progress = recordAttempt(progress, 'K', false, 2);
-    progress = recordAttempt(progress, 'K', true, 1.5);
+    progress = recordAttempt(progress, 'K', true, 1, '2026-09-01');
+    progress = recordAttempt(progress, 'K', false, 2, '2026-09-01');
+    progress = recordAttempt(progress, 'K', true, 1.5, '2026-09-01');
 
     const record = recordFor(progress, 'K');
     expect(record.attempts).toBe(3);
@@ -54,8 +58,8 @@ describe('Statistik pro Zeichen', () => {
 
   it('erfasst Reaktionszeiten nur von richtigen Antworten', () => {
     let progress = emptyProgress();
-    progress = recordAttempt(progress, 'M', true, 0.8);
-    progress = recordAttempt(progress, 'M', false, 9);
+    progress = recordAttempt(progress, 'M', true, 0.8, '2026-09-01');
+    progress = recordAttempt(progress, 'M', false, 9, '2026-09-01');
 
     expect(recordFor(progress, 'M').recentReactions).toEqual([0.8]);
     expect(medianReaction(recordFor(progress, 'M'))).toBe(0.8);
@@ -64,7 +68,7 @@ describe('Statistik pro Zeichen', () => {
   it('behaelt nur die juengsten Zeiten und waechst nicht unbegrenzt', () => {
     let progress = emptyProgress();
     for (let i = 0; i < RECENT_SAMPLES + 5; i += 1) {
-      progress = recordAttempt(progress, 'S', true, i);
+      progress = recordAttempt(progress, 'S', true, i, '2026-09-01');
     }
 
     const { recentReactions } = recordFor(progress, 'S');
@@ -74,14 +78,14 @@ describe('Statistik pro Zeichen', () => {
 
   it('nimmt den Median, nicht den Mittelwert -- ein Ausreisser kippt nichts', () => {
     let progress = emptyProgress();
-    for (const seconds of [1, 1, 1, 30]) progress = recordAttempt(progress, 'R', true, seconds);
+    for (const seconds of [1, 1, 1, 30]) progress = recordAttempt(progress, 'R', true, seconds, '2026-09-01');
 
     expect(medianReaction(recordFor(progress, 'R'))).toBe(1);
   });
 
   it('laesst den Eingabe-Fortschritt unveraendert', () => {
     const before = emptyProgress();
-    const after = recordAttempt(before, 'U', true, 1);
+    const after = recordAttempt(before, 'U', true, 1, '2026-09-01');
 
     expect(before.characters).toEqual({});
     expect(after.characters.U.attempts).toBe(1);
@@ -97,8 +101,8 @@ describe('Statistik pro Zeichen', () => {
 describe('Persistenz', () => {
   it('liest einen gespeicherten Stand verlustfrei zurueck', () => {
     let progress = emptyProgress();
-    progress = recordAttempt(progress, 'K', true, 0.9);
-    progress = recordAttempt(progress, 'M', false, 4);
+    progress = recordAttempt(progress, 'K', true, 0.9, '2026-09-01');
+    progress = recordAttempt(progress, 'M', false, 4, '2026-09-01');
 
     expect(parseProgress(JSON.parse(JSON.stringify(progress)))).toEqual(progress);
   });
@@ -129,7 +133,7 @@ describe('Persistenz', () => {
 describe('Auswahl nach Schwaeche', () => {
   it('bevorzugt ein noch nie gehoertes Zeichen', () => {
     let progress = emptyProgress();
-    for (let i = 0; i < 5; i += 1) progress = recordAttempt(progress, 'K', true, 0.5);
+    for (let i = 0; i < 5; i += 1) progress = recordAttempt(progress, 'K', true, 0.5, '2026-09-01');
 
     expect(weightFor(progress, 'M')).toBeGreaterThan(weightFor(progress, 'K'));
   });
@@ -137,8 +141,8 @@ describe('Auswahl nach Schwaeche', () => {
   it('gewichtet ein oft verfehltes Zeichen hoeher als ein sicheres', () => {
     let progress = emptyProgress();
     for (let i = 0; i < 4; i += 1) {
-      progress = recordAttempt(progress, 'K', true, 0.5);
-      progress = recordAttempt(progress, 'M', false, 0);
+      progress = recordAttempt(progress, 'K', true, 0.5, '2026-09-01');
+      progress = recordAttempt(progress, 'M', false, 0, '2026-09-01');
     }
 
     expect(weightFor(progress, 'M')).toBeGreaterThan(weightFor(progress, 'K'));
@@ -147,8 +151,8 @@ describe('Auswahl nach Schwaeche', () => {
   it('gewichtet langsames Erkennen hoeher als schnelles -- bei gleicher Quote', () => {
     let progress = emptyProgress();
     for (let i = 0; i < 4; i += 1) {
-      progress = recordAttempt(progress, 'K', true, 0.4);
-      progress = recordAttempt(progress, 'M', true, 4);
+      progress = recordAttempt(progress, 'K', true, 0.4, '2026-09-01');
+      progress = recordAttempt(progress, 'M', true, 4, '2026-09-01');
     }
 
     expect(hitRate(recordFor(progress, 'K'))).toBe(hitRate(recordFor(progress, 'M')));
@@ -186,8 +190,7 @@ describe('Lernloop', () => {
     createSession({
       totalRounds: 3,
       progress: progressWith(['K', 'M']),
-      random: sequence([0, 0.9, 0]),
-    });
+      random: sequence([0, 0.9, 0]), today: '2026-09-01' });
 
   it('beginnt bereit, nicht spielend', () => {
     const state = start();
@@ -307,16 +310,16 @@ describe('Lernloop', () => {
   });
 
   it('uebt den aktiven Zeichensatz aus dem Fortschritt', () => {
-    const state = createSession({ totalRounds: 3, progress: emptyProgress(), random: () => 0 });
+    const state = createSession({ totalRounds: 3, progress: emptyProgress(), random: () => 0, today: '2026-09-01' });
     expect([...state.pool]).toEqual([...STARTING_CHARACTERS]);
   });
 
   it('lehnt eine Sitzung ohne Zeichen oder ohne Runden ab', () => {
     expect(() =>
-      createSession({ progress: progressWith([]), totalRounds: 5, random: () => 0 }),
+      createSession({ progress: progressWith([]), totalRounds: 5, random: () => 0, today: '2026-09-01' }),
     ).toThrow(RangeError);
     expect(() =>
-      createSession({ progress: emptyProgress(), totalRounds: 0, random: () => 0 }),
+      createSession({ progress: emptyProgress(), totalRounds: 0, random: () => 0, today: '2026-09-01' }),
     ).toThrow(RangeError);
   });
 });
@@ -329,5 +332,128 @@ describe('Voreinstellungen', () => {
 
   it('haelt eine Sitzung kurz genug, um sie zu Ende zu bringen', () => {
     expect(ROUNDS_PER_SESSION).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Der Tages-Eimer, der Sitzungszaehler und der Intro-Merker.
+ *
+ * Alle drei sind additiv dazugekommen (CLAUDE.md 4). Geprueft wird deshalb vor
+ * allem zweierlei: dass ein *alter* Stand ohne diese Felder weiter laedt, und
+ * dass "heute" wirklich heute meint -- eine Quote von gestern unter "Today" zu
+ * zeigen waere eine falsche Behauptung (CLAUDE.md 2.6).
+ */
+describe('Tagesstatistik, Sitzungszaehler, Intro-Merker', () => {
+  const MON = '2026-09-01';
+  const TUE = '2026-09-02';
+
+  it('zaehlt Versuche und Treffer des laufenden Tages', () => {
+    let progress = emptyProgress();
+    progress = recordAttempt(progress, 'K', true, 1, MON);
+    progress = recordAttempt(progress, 'M', false, 1, MON);
+    progress = recordAttempt(progress, 'K', true, 1, MON);
+
+    expect(progress.day.date).toBe(MON);
+    expect(progress.day.attempts).toBe(3);
+    expect(progress.day.hits).toBe(2);
+    // K zweimal, M einmal -- gezaehlt werden verschiedene Zeichen, nicht Versuche.
+    expect(progress.day.characters).toEqual(['K', 'M']);
+    expect(dayAccuracy(progress.day)).toBeCloseTo(2 / 3);
+  });
+
+  it('faengt an einem neuen Tag bei null an, statt gestern weiterzuzaehlen', () => {
+    let progress = emptyProgress();
+    progress = recordAttempt(progress, 'K', true, 1, MON);
+    progress = recordAttempt(progress, 'M', true, 1, MON);
+    expect(progress.day.attempts).toBe(2);
+
+    progress = recordAttempt(progress, 'R', false, 1, TUE);
+    expect(progress.day.date).toBe(TUE);
+    expect(progress.day.attempts).toBe(1);
+    expect(progress.day.hits).toBe(0);
+    expect(progress.day.characters).toEqual(['R']);
+  });
+
+  it('liest den Eimer von gestern gar nicht erst als heutigen', () => {
+    let progress = emptyProgress();
+    progress = recordAttempt(progress, 'K', true, 1, MON);
+
+    expect(dayFor(progress, MON).attempts).toBe(1);
+    expect(dayFor(progress, TUE).attempts).toBe(0);
+    expect(dayAccuracy(dayFor(progress, TUE))).toBeNull();
+  });
+
+  it('ohne Antworten gibt es keine Tagesquote', () => {
+    expect(dayAccuracy(emptyProgress().day)).toBeNull();
+  });
+
+  it('zaehlt begonnene Sitzungen und zieht den Tag dabei nach', () => {
+    let progress = emptyProgress();
+    expect(progress.sessionsStarted).toBe(0);
+
+    progress = beginSession(progress, MON);
+    expect(progress.sessionsStarted).toBe(1);
+    progress = recordAttempt(progress, 'K', true, 1, MON);
+
+    progress = beginSession(progress, TUE);
+    expect(progress.sessionsStarted).toBe(2);
+    // Der neue Tag beginnt leer, noch bevor eine Antwort faellt.
+    expect(progress.day.date).toBe(TUE);
+    expect(progress.day.attempts).toBe(0);
+  });
+
+  it('createSession zaehlt die Sitzung mit', () => {
+    const state = createSession({
+      totalRounds: 3,
+      progress: emptyProgress(),
+      random: () => 0,
+      today: MON,
+    });
+    expect(state.progress.sessionsStarted).toBe(1);
+    expect(state.today).toBe(MON);
+  });
+
+  it('merkt die gesehene Einfuehrung -- und laesst sie danach in Ruhe', () => {
+    const fresh = emptyProgress();
+    expect(fresh.introSeen).toBe(false);
+
+    const seen = markIntroSeen(fresh);
+    expect(seen.introSeen).toBe(true);
+    // Zweiter Aufruf gibt denselben Stand zurueck, nicht eine neue Kopie.
+    expect(markIntroSeen(seen)).toBe(seen);
+  });
+
+  it('ein Stand von vor diesen Feldern laedt weiter -- mit Defaults', () => {
+    const old = {
+      version: 1,
+      characters: { K: { attempts: 4, hits: 3, recentReactions: [1] } },
+      activeCharacters: [...STARTING_CHARACTERS],
+      recentAnswers: [true, false],
+      answersSinceGrowth: 5,
+    };
+
+    const parsed = parseProgress(old);
+    expect(parsed.characters.K.attempts).toBe(4);
+    expect(parsed.sessionsStarted).toBe(0);
+    expect(parsed.introSeen).toBe(false);
+    expect(parsed.day).toEqual({ date: '', attempts: 0, hits: 0, characters: [] });
+  });
+
+  it('ein Tages-Eimer ohne brauchbares Datum wird verworfen, nicht falsch beschriftet', () => {
+    const parsed = parseProgress({
+      characters: {},
+      day: { date: '', attempts: 9, hits: 9, characters: ['K'] },
+    });
+    expect(parsed.day.attempts).toBe(0);
+  });
+
+  it('deckelt mehr Treffer als Versuche im Tages-Eimer', () => {
+    const parsed = parseProgress({
+      characters: {},
+      day: { date: MON, attempts: 2, hits: 7, characters: ['K', 'K'] },
+    });
+    expect(parsed.day.hits).toBe(2);
+    // Doppelte Zeichen sind kein gueltiger Eimer -- einmal zaehlt einmal.
+    expect(parsed.day.characters).toEqual(['K']);
   });
 });
