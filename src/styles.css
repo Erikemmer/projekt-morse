@@ -131,7 +131,9 @@ body {
   max-width: 390px;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 32px 24px 28px;
+  /* Unten 24 wie seitlich: 28 lag neben der Skala aus 1.1 §6
+   * (Review-7-Ruling, Notion-Log #46). */
+  padding: 32px 24px 24px;
   display: flex;
   flex-direction: column;
 }
@@ -298,11 +300,13 @@ body {
   margin: 0;
 }
 
+/* Luecke im Zeichen 1u bei u = 16 (1.1 §8) -- 16, nicht 14.
+ * Review-7-Ruling, Notion-Log #46. */
 .pattern-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 16px;
 }
 
 .pattern-element {
@@ -333,7 +337,8 @@ body {
 
 .footer {
   flex: none;
-  margin-top: 28px;
+  /* 24 statt 28: auf die Skala geschnappt (1.1 §6; Review 7, Notion-Log #46). */
+  margin-top: 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -351,6 +356,8 @@ body {
 .dots {
   display: flex;
   align-items: center;
+  /* 6 bleibt absichtlich neben der Skala: die Skala aus 1.1 §6 regelt Layout,
+   * nicht Mikro-Ornamente wie diese Punktreihe (Review 7, Notion-Log #46). */
   gap: 6px;
 }
 
@@ -523,9 +530,9 @@ button:disabled {
   flex-direction: column;
 }
 
-.learn-stage {
-  gap: 28px;
-}
+/* Der Blockabstand der Lernkarte war 28 und lag damit neben der Skala; auf 32
+ * geschnappt ist er identisch mit .stage -- die eigene Regel (.learn-stage)
+ * ist damit weg (Review 7, Notion-Log #46). */
 
 /* Der Buchstabe traegt die Karte -- deutlich groesser als die Frage im
  * Training (26 px), damit klar ist: hier wird gezeigt, nicht abgefragt.
@@ -654,7 +661,9 @@ button:disabled {
 .button-begin,
 .intro-next,
 .button-go {
-  height: 60px;
+  /* 64 wie die Antworttasten: eine Formfamilie, und 60 stand nicht auf der
+   * Skala aus 1.1 §6 (Review-7-Ruling, Notion-Log #46). */
+  height: 64px;
   min-height: 0;
   padding: 0 32px;
   font-family: var(--font-serif);

@@ -120,7 +120,7 @@ function Card({
 }) {
   return (
     <>
-      <div className="stage learn-stage">
+      <div className="stage">
         <h2 id="learn-heading" className="learn-char">
           {char}
         </h2>
@@ -195,7 +195,7 @@ function Echo({
 
   return (
     <>
-      <div className="stage learn-stage">
+      <div className="stage">
         <p className="eyebrow">{`${playing ? 'Now playing' : 'Your turn'} · ${toneHz} Hz`}</p>
 
         {attempt !== null ? (
@@ -301,7 +301,7 @@ export function ReviewPicker({
 }) {
   return (
     <section className="learn" aria-labelledby="review-heading">
-      <div className="stage learn-stage">
+      <div className="stage">
         <h2 id="review-heading" className="review-heading" ref={headingRef} tabIndex={-1}>
           Review the sounds
         </h2>

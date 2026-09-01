@@ -57,6 +57,14 @@ Aufgabe, aber eine eigene.
 
 ## 3. Weitere Maße neben den Guidelines — beim Umsetzen von Review 6 gesehen
 
+**Status: entschieden und behoben** (01.09.2026, Review 7, Notion-Log #46):
+Muster-Lücke 14 → 16 px (1 u), Primär-CTAs 60 → 64 px (eine Formfamilie mit
+den Antworttasten), die 28er auf die Skala geschnappt (Shell-Unterkante und
+Fußzeile 24, Lernkarten-Blockabstand 32 — identisch mit `.stage`, die eigene
+Regel ist weg). Die **6-px-Punkte-Lücke bleibt absichtlich**: die Skala regelt
+Layout, nicht Mikro-Ornamente; der Kommentar steht an der Stelle. Der Rest des
+Eintrags bleibt als Begründung stehen.
+
 **Gefunden:** 01.09.2026, beim Einziehen der Metrik-Fixes aus Review 6 (#43).
 Die vier gerulten Fixes sind umgesetzt; dabei fielen benachbarte Maße auf, die
 ebenfalls neben 1.1 §6/§8 liegen, aber **nicht** geregelt wurden — deshalb hier
