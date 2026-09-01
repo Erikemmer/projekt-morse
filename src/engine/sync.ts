@@ -16,14 +16,34 @@
  *   Datensatz wandert dabei *ganz* (Versuche, Treffer, Reaktionszeiten), nie
  *   feldweise gemischt: `hits` aus einem und `attempts` aus einem anderen Stand
  *   ergaeben eine Trefferquote, die nie jemand erlebt hat (CLAUDE.md 2.6).
- * - **`recentAnswers`, `day`, `answersSinceGrowth` und der aktive Zeichensatz
- *   kommen vom jüngeren Stand** (`updatedAt`). Das sind Momentaufnahmen eines
- *   Verlaufs, keine Summen: das rollierende Fenster der Wachstumsregel darf
- *   nicht aus zwei Geräten zusammengeschnitten werden, sonst behauptet es eine
- *   Serie, die es nicht gab.
- * - **`introducedCharacters` ist die Vereinigung.** Was einmal als Klang
- *   vorgestellt wurde, wurde vorgestellt -- ein Merge darf niemanden zurück in
- *   den Lernmodus schicken.
+ * - **`recentAnswers`, `day` und `answersSinceGrowth` kommen vom jüngeren
+ *   Stand** (`updatedAt`). Das sind Momentaufnahmen eines Verlaufs, keine
+ *   Summen: das rollierende Fenster der Wachstumsregel darf nicht aus zwei
+ *   Geräten zusammengeschnitten werden, sonst behauptet es eine Serie, die es
+ *   nicht gab.
+ * - **`activeCharacters` und `introducedCharacters` sind die Vereinigung.**
+ *   Was einmal als Klang vorgestellt wurde, wurde vorgestellt -- ein Merge darf
+ *   niemanden zurück in den Lernmodus schicken. Und **Wachstum ist monoton**:
+ *   ein Zeichensatz, der einmal gewachsen ist, schrumpft nicht mehr
+ *   (Ruling Notion-Log #56).
+ *
+ *   Der aktive Satz kam bis Review 9 vom jüngeren Stand, so wie der Verlauf.
+ *   Das war die Vorgabe aus #49 und hatte einen Fall, der Arbeit kostete: Gerät
+ *   A wächst auf zwölf Zeichen und synchronisiert, Gerät B übt danach mit
+ *   sechsen weiter und schiebt hoch -- dann gewann B, und das Wachstum von A
+ *   war im Konto weg. Die Statistik blieb (die Versuchs-Regel schützt sie),
+ *   aber die Wachstumsregel musste den Satz neu aufbauen. Mit der Vereinigung
+ *   entfällt der Fall.
+ *
+ *   Der Preis, bewusst bezahlt: **ein aktiver Satz lässt sich durch einen Merge
+ *   nicht mehr verkleinern.** Käme je ein Weg, Zeichen wieder herauszunehmen
+ *   (heute gibt es keinen), müsste er ausdrücklich und lokal wirken -- über
+ *   diesen Merge geht er nicht.
+ *
+ *   Die Reihenfolge ist die des lokalen Standes zuerst, dann was nur der
+ *   entfernte kennt. Eine über zwei Geräte hinweg "richtige"
+ *   Einführungsreihenfolge gibt es nicht; local-first ist hier dieselbe
+ *   Entscheidung wie überall in dieser Datei.
  *
  * Drei Felder nennt die Vorgabe nicht; sie müssen trotzdem einen Wert haben,
  * weil ein `Progress` vollständig ist. Beide Regeln folgen "Persistenz verliert
@@ -65,7 +85,11 @@ export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
   return {
     version: 1,
     characters: mergeCharacters(local.progress, remote.progress),
-    activeCharacters: [...younger.activeCharacters],
+    // Vereinigung, nicht "jüngerer Stand": Wachstum ist monoton (#56, siehe Kopf).
+    activeCharacters: union(
+      local.progress.activeCharacters,
+      remote.progress.activeCharacters,
+    ),
     recentAnswers: [...younger.recentAnswers],
     answersSinceGrowth: younger.answersSinceGrowth,
     day: { ...younger.day, characters: [...younger.day.characters] },
@@ -113,9 +137,16 @@ function mergeCharacters(
  * geschrieben wurde. Der Unterschied ist der ganze Punkt, denn schon das
  * Oeffnen der App schreibt (die Sitzung wird gezaehlt). Ohne diese
  * Unterscheidung waere jedes gerade geoeffnete Geraet automatisch das
- * "juengere" und wuerde mit seinem alten Zeichensatz ein Konto ueberschreiben,
- * an dem woanders gerade gearbeitet wurde. Genau so im Browser-Durchlauf
+ * "juengere" -- und wuerde seinen alten Uebungsverlauf ueber den eines Kontos
+ * legen, an dem woanders gerade gearbeitet wurde. Genau so im Browser-Durchlauf
  * aufgefallen (Pruefung 20 fiel durch, bevor es diese Funktion gab).
+ *
+ * Seit dem Ruling #56 ist der aktive Zeichensatz davon unabhaengig (er ist die
+ * Vereinigung). Der Zeitstempel entscheidet also nur noch ueber die
+ * Momentaufnahmen: `recentAnswers`, `day`, `answersSinceGrowth`. Damit ist der
+ * Schaden, den ein falsches "juenger" anrichten koennte, kleiner geworden --
+ * verschwunden ist er nicht: ein rollierendes Fenster vom falschen Geraet
+ * verschiebt die Wachstumsregel.
  *
  * Ein String und keine Zahl: es wird nur auf Gleichheit geprueft, nie
  * gerechnet, und so bleibt lesbar, was drinsteht.
@@ -149,9 +180,9 @@ export function hasPractised(progress: Progress): boolean {
  * Diese eine Zeile entscheidet die erste Kante der Vorgabe (frisches Gerät +
  * volles Konto), und ohne sie ginge sie schief: wer die App neu installiert,
  * die Einführung durchklickt und *dann* einlogged, hat einen lokal gerade
- * geschriebenen Stand -- also den formal jüngeren. Der aktive Zeichensatz käme
- * dann vom leeren Gerät und würde ein über Monate gewachsenes Konto auf die
- * sechs Startzeichen zurückwerfen. Das wäre Datenverlust durch einen Login
+ * geschriebenen Stand -- also den formal jüngeren. Verlauf, Tagesstand und die
+ * Wachstums-Sperre kämen dann vom leeren Gerät und legten sich über ein über
+ * Monate gewachsenes Konto. Das wäre Datenverlust durch einen Login
  * (CLAUDE.md 4), und zwar im wahrscheinlichsten Fall überhaupt.
  *
  * "Jünger" heisst deshalb: *hat später etwas gelernt* -- nicht "wurde später

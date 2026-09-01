@@ -132,8 +132,10 @@ describe('Kante: beide Stände voll', () => {
     });
   });
 
-  it('nimmt den aktiven Zeichensatz vom jüngeren Stand', () => {
-    expect(merged.activeCharacters).toEqual([...STARTING_CHARACTERS, 'T', 'L']);
+  it('vereinigt die aktiven Zeichen -- lokale Reihenfolge zuerst', () => {
+    // Lokal: Start-Satz + P. Entfernt: Start-Satz + T + L. Keiner verliert
+    // etwas (Ruling #56).
+    expect(merged.activeCharacters).toEqual([...STARTING_CHARACTERS, 'P', 'T', 'L']);
   });
 
   it('vereinigt die eingeführten Zeichen -- niemand lernt zweimal', () => {
@@ -197,11 +199,82 @@ describe('Regel: ein Stand ohne Versuche ist nie der jüngere', () => {
   });
 
   it('greift nicht, sobald wirklich geübt wurde -- dann zählt der Zeitstempel', () => {
+    // Geprüft am Verlauf, nicht am Zeichensatz: der ist seit #56 die
+    // Vereinigung und hängt nicht mehr am Zeitstempel.
     const local: Snapshot = {
-      progress: progress({ characters: { K: record(1, 1) }, activeCharacters: ['K', 'M'] }),
+      progress: progress({
+        characters: { K: record(1, 1) },
+        recentAnswers: [true],
+        answersSinceGrowth: 1,
+      }),
       updatedAt: 9_000,
     };
-    expect(mergeProgress(local, remote).activeCharacters).toEqual(['K', 'M']);
+
+    const merged = mergeProgress(local, remote);
+    expect(merged.recentAnswers).toEqual([true]);
+    expect(merged.answersSinceGrowth).toBe(1);
+  });
+});
+
+describe('Regel: Wachstum ist monoton -- der aktive Satz schrumpft nie (#56)', () => {
+  it('behält den größeren Satz, auch wenn der jüngere Stand kleiner ist', () => {
+    // Der Fall, der vor #56 Arbeit kostete: Gerät A wächst auf zwölf Zeichen
+    // und synchronisiert, Gerät B übt danach mit sechsen weiter und schiebt
+    // hoch. Vorher gewann B. Jetzt gewinnt niemand -- beide behalten alles.
+    const grown = [...STARTING_CHARACTERS, 'P', 'T', 'L', 'W', 'I', 'N'];
+    const local: Snapshot = {
+      progress: progress({ characters: { K: record(80, 74) }, activeCharacters: grown }),
+      updatedAt: 1_000,
+    };
+    const remote: Snapshot = {
+      progress: progress({
+        characters: { M: record(90, 80) },
+        activeCharacters: [...STARTING_CHARACTERS],
+      }),
+      updatedAt: 9_000,
+    };
+
+    expect(mergeProgress(local, remote).activeCharacters).toEqual(grown);
+  });
+
+  it('verliert kein aktives Zeichen, egal von welcher Seite es kommt', () => {
+    const local: Snapshot = {
+      progress: progress({
+        characters: { K: record(5, 5) },
+        activeCharacters: [...STARTING_CHARACTERS, 'P'],
+      }),
+      updatedAt: 5_000,
+    };
+    const remote: Snapshot = {
+      progress: progress({
+        characters: { M: record(5, 5) },
+        activeCharacters: [...STARTING_CHARACTERS, 'L'],
+      }),
+      updatedAt: 5_000,
+    };
+
+    const merged = mergeProgress(local, remote);
+    for (const char of [...STARTING_CHARACTERS, 'P', 'L']) {
+      expect(merged.activeCharacters).toContain(char);
+    }
+    // Und nichts erfunden: genau die Vereinigung, ohne Dubletten.
+    expect(merged.activeCharacters).toHaveLength(STARTING_CHARACTERS.length + 2);
+    expect(new Set(merged.activeCharacters).size).toBe(merged.activeCharacters.length);
+  });
+
+  it('ist in beiden Argument-Reihenfolgen dieselbe Menge', () => {
+    const a: Snapshot = {
+      progress: progress({ activeCharacters: [...STARTING_CHARACTERS, 'P'] }),
+      updatedAt: 1_000,
+    };
+    const b: Snapshot = {
+      progress: progress({ activeCharacters: [...STARTING_CHARACTERS, 'L'] }),
+      updatedAt: 2_000,
+    };
+
+    const forward = mergeProgress(a, b).activeCharacters;
+    const backward = mergeProgress(b, a).activeCharacters;
+    expect([...forward].sort()).toEqual([...backward].sort());
   });
 });
 

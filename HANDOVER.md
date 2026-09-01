@@ -145,20 +145,38 @@ Aus Notion-Log #49, in `mergeProgress(local, remote)`:
   Ganzes*, nie feldweise gemischt. `hits` aus einem und `attempts` aus einem
   anderen Stand ergäben eine Trefferquote, die niemand erlebt hat
   (CLAUDE.md 2.6).
-- **`recentAnswers`, `day`, `answersSinceGrowth` und der aktive Zeichensatz
-  kommen vom jüngeren Stand.** Das sind Momentaufnahmen eines Verlaufs, keine
-  Summen — ein rollierendes Fenster aus zwei Geräten zusammenzuschneiden würde
-  eine Serie behaupten, die es nicht gab.
-- **`introducedCharacters` ist die Vereinigung.** Was einmal als Klang
-  vorgestellt wurde, wurde vorgestellt.
+- **`recentAnswers`, `day` und `answersSinceGrowth` kommen vom jüngeren Stand.**
+  Das sind Momentaufnahmen eines Verlaufs, keine Summen — ein rollierendes
+  Fenster aus zwei Geräten zusammenzuschneiden würde eine Serie behaupten, die
+  es nicht gab.
+- **`activeCharacters` und `introducedCharacters` sind die Vereinigung.** Was
+  einmal als Klang vorgestellt wurde, wurde vorgestellt. Und **Wachstum ist
+  monoton**: ein Zeichensatz, der einmal gewachsen ist, schrumpft nicht mehr.
 - **Bei jedem Gleichstand gewinnt lokal** — „lokal bleibt Quelle".
+
+**Der aktive Satz war bis Review 9 an den jüngeren Stand gebunden** (so die
+Vorgabe aus #49) und ist es seit **Ruling Notion-Log #56** nicht mehr. Der Fall,
+der das entschieden hat: Gerät A wächst auf zwölf Zeichen und synchronisiert,
+Gerät B übt danach mit sechsen weiter und schiebt hoch — dann gewann B, und das
+Wachstum von A war im Konto weg. Die Zeichen-Statistik blieb (die Versuchs-Regel
+schützt sie) und `introducedCharacters` auch, niemand musste neu lernen, aber
+die Wachstumsregel musste den Satz neu aufbauen. Mit der Vereinigung entfällt
+der Fall; der frühere §5f.1 ist damit erledigt.
+
+**Der Preis, bewusst bezahlt:** ein aktiver Satz lässt sich durch einen Merge
+nicht mehr verkleinern. Käme je ein Weg, Zeichen wieder herauszunehmen (heute
+gibt es keinen), müsste er ausdrücklich und lokal wirken — über den Merge geht
+er nicht. Steht als Kommentar an der Funktion, nicht nur hier.
+
+Die Reihenfolge der Vereinigung ist lokal zuerst, dann was nur das Konto kennt.
+Eine über zwei Geräte hinweg „richtige" Einführungsreihenfolge gibt es nicht.
 
 **Der Fund, der diese Runde am meisten wert war:** „jünger" heißt *hat später
 etwas gelernt*, nicht *wurde später gespeichert*. Der Unterschied ist keine
 Feinheit. Schon das Öffnen der App schreibt den Stand (`beginSession` zählt die
 Sitzung, der Tages-Eimer springt auf heute). Hätte das den Zeitstempel
 hochgesetzt, wäre **jedes gerade geöffnete Gerät automatisch das jüngere** und
-hätte mit seinem alten Zeichensatz ein Konto überschrieben, an dem woanders
+hätte seinen alten Übungsverlauf über den eines Kontos gelegt, an dem woanders
 gerade gearbeitet wurde — Datenverlust durch einen Login, im wahrscheinlichsten
 Ablauf überhaupt.
 
@@ -171,7 +189,14 @@ Zwei Mechanismen halten das:
 - **`effectiveUpdatedAt`** (Engine): ein Stand ohne einen einzigen Versuch ist
   *nie* der jüngere. Das entscheidet die erste Kante der Vorgabe (frisches Gerät
   + volles Konto): App neu installiert, Einführung durchgeklickt, dann
-  eingeloggt — ohne die Regel käme der aktive Satz vom leeren Gerät.
+  eingeloggt — ohne die Regel kämen Verlauf, Tagesstand und Wachstums-Sperre vom
+  leeren Gerät.
+
+**Nach #56 ist der Zuständigkeitsbereich des Zeitstempels kleiner:** er
+entscheidet nur noch über die drei Momentaufnahmen, nicht mehr über den
+Zeichensatz. Der mögliche Schaden eines falschen „jünger" ist damit kleiner
+geworden — verschwunden ist er nicht, ein rollierendes Fenster vom falschen
+Gerät verschiebt die Wachstumsregel. Beide Mechanismen bleiben.
 
 Der Browser-Durchlauf hat den Fehler gefunden, bevor ihn jemand benutzt hat
 (Prüfung 20 fiel durch). **Das ist der Grund, warum solche Durchläufe hier
@@ -357,19 +382,25 @@ Deutschland eine mit Rechtsfolgen, also keine, die ein Agent nebenbei schreibt.
 
 **Aus dieser Runde:**
 
-- **`npm test` → 143/143 grün** (114 vorher, **29 neu** für den Sync). Darunter
+- **`npm test` → 146/146 grün** (114 vorher, **32 neu** für den Sync). Darunter
   die drei Kanten aus der Vorgabe (frisches Gerät + volles Konto, voller lokaler
   Stand + leeres Konto, beide voll), der Nachweis, dass pro Zeichen der
   Datensatz *als Ganzes* wandert, dass die Funktion ihre Eingaben nicht anfasst
-  und idempotent ist, sowie sechs Tests für die Grenze „gelernt vs. gespeichert".
+  und idempotent ist, sechs Tests für die Grenze „gelernt vs. gespeichert" und
+  **drei für die Monotonie des Zeichensatzes** (#56): der größere Satz bleibt
+  auch gegen den jüngeren Stand, kein aktives Zeichen geht von einer der beiden
+  Seiten verloren, und das Ergebnis ist in beiden Argument-Reihenfolgen dieselbe
+  Menge.
 - **`npm run build` → sauber**, und er prüft jetzt zwei Projekte (`src/` und
-  `functions/`). Bundle **187,00 kB roh / 59,04 kB gzip** (vorher 176,26 /
-  56,23 — Delta **+10,74 / +2,81**), CSS **11,40 / 2,74** (vorher 10,90 / 2,67).
+  `functions/`). Bundle **187,04 kB roh / 59,06 kB gzip** (vorher 176,26 /
+  56,23 — Delta **+10,78 / +2,83**), CSS **11,40 / 2,74** (vorher 10,90 / 2,67).
   `@simplewebauthn/server` ist **nachweislich nicht im Bundle**.
-- **Der ganze Konto-Weg ist im Browser durchgespielt — 42 von 42 Prüfungen.**
-  Headless Chromium gegen `wrangler pages dev` mit lokaler D1, Passkeys aus dem
-  virtuellen Authenticator (CDP `WebAuthn.enable` +
-  `addVirtualAuthenticator`, ctap2/internal/resident). Abgedeckt:
+- **Der ganze Konto-Weg ist im Browser durchgespielt — 43 von 43 Prüfungen**,
+  nach dem #56-Fix noch einmal vollständig wiederholt.
+  Headless Chromium gegen `wrangler pages dev` mit lokaler D1 (vor dem Lauf
+  zurückgesetzt), Passkeys aus dem virtuellen Authenticator (CDP
+  `WebAuthn.enable` + `addVirtualAuthenticator`, ctap2/internal/resident).
+  Abgedeckt:
 
   - **Local-first, negativ geprüft:** ohne Konto löst die App **keinen einzigen**
     `/api/`-Aufruf aus (mitgezählt, nicht vermutet).
@@ -383,18 +414,23 @@ Deutschland eine mit Rechtsfolgen, also keine, die ein Agent nebenbei schreibt.
   - **Sitzung:** HttpOnly + Secure + SameSite=Lax im Browser abgelesen,
     `document.cookie` enthält sie **nicht**. Lokal steht nur `{linked,
     lastSyncedAt}` — kein Token.
+  - **Angemeldet: kein Amber** in der View (gezählt, inklusive Rahmenfarben —
+    siehe die Screenshot-Fallgrube in §6).
   - **Abmelden:** `/api/progress` antwortet 401, der lokale Stand ist unberührt.
     **Wieder anmelden** mit demselben Passkey stellt die Sitzung her.
   - **Eine ganze echte Sitzung** (20 Runden, echte Töne, echte Antworten), dann
     **Push am Sitzungsende**: `updated_at` wächst, und der hochgeschobene Stand
     ist byte-genau der lokale (100 Versuche hier, 100 dort).
   - **Merge auf einem zweiten „Gerät"** (zweiter Browser-Kontext, der Passkey
-    des ersten hineinkopiert — genau das, was ein synchronisierter Passkey tut):
-    aktiver Satz vom jüngeren Stand (8 Zeichen), pro Zeichen der Datensatz mit
-    mehr Versuchen (M = 60 lokal schlägt 40 im Konto; K = 40 aus dem Konto),
-    ein nur lokal bekanntes Z bleibt, `introducedCharacters` ist die
-    Vereinigung, der Sitzungszähler sinkt nicht, Einmal-Merker fallen nicht
-    zurück — und der zusammengelegte Stand geht sofort zum Server zurück.
+    des ersten hineinkopiert — genau das, was ein synchronisierter Passkey tut).
+    Der Stand des zweiten Geräts hat **Z** aktiv, das Konto **P** und **T** —
+    damit ist die Vereinigung in beide Richtungen prüfbar und nicht nur in einer.
+    Ergebnis: aktiver Satz `KMRSUAZPT` (die volle Vereinigung, ohne Dubletten,
+    lokale Reihenfolge zuerst); pro Zeichen der Datensatz mit mehr Versuchen
+    (M = 60 lokal schlägt 40 im Konto; K = 40 aus dem Konto); ein nur lokal
+    bekanntes Z bleibt; `introducedCharacters` ist die Vereinigung; der
+    Sitzungszähler sinkt nicht; Einmal-Merker fallen nicht zurück — und der
+    zusammengelegte Stand geht sofort zum Server zurück.
   - **Der Zeitstempel-Fund, als Prüfung festgehalten:** das bloße Öffnen der App
     setzt den Lern-Zeitstempel nicht hoch (gemessen: 60 Minuten alt geblieben).
   - **`/api/*` blockiert (der local-first-Beweis):** die App startet
@@ -554,35 +590,29 @@ nicht für die Bindung — das Dashboard entscheidet.
 local-first-Fall:** die App läuft vollständig, der Account-Screen sagt ruhig,
 dass kein Server erreichbar ist.
 
-### 5f. Drei Punkte für Fables Blick (Runde B)
+### 5f. Die drei Punkte aus Review 9 — zwei geregelt, einer offen
 
-Gemeldet, nicht still gelöst (CLAUDE.md 2, letzter Absatz).
-
-1. **Der aktive Zeichensatz kommt vom jüngeren Stand — wie vorgegeben — und das
-   kann Wachstum kosten.** Szenario: Gerät A ist auf 12 Zeichen gewachsen und
-   hat gesynct; Gerät B übt danach mit 6 Zeichen und schiebt hoch. Dann gewinnt
-   B, und A's Wachstum ist im Konto weg. Die Zeichen-Statistik bleibt (die
-   Versuchs-Regel schützt sie) und `introducedCharacters` auch, niemand muss
-   also neu lernen — aber der Satz schrumpft, und die Wachstumsregel muss ihn
-   neu aufbauen. Die beiden Mechanismen aus §3b fangen die *wahrscheinlichen*
-   Fälle (frisches Gerät, gerade geöffnetes Gerät); dieser hier bleibt.
-   **Alternative, eine Zeile:** der längere aktive Satz gewinnt, oder die
-   Vereinigung. Das wäre aber eine Produktentscheidung — ein Satz, der nur
-   wachsen kann, ist auch ein Satz, den niemand mehr verkleinern kann.
-2. **Im Passkey-Dialog heißt jedes Konto „Morse Lab".** Es gibt keinen
-   Nutzernamen, und einen zu erfinden wäre schlimmer. Folge: zwei Konten auf
-   demselben Gerät sind in der Passkey-Liste des Betriebssystems nicht
+1. ~~**Der aktive Zeichensatz kommt vom jüngeren Stand und das kann Wachstum
+   kosten.**~~ **Geregelt und umgesetzt** (Ruling Notion-Log #56): der aktive
+   Satz ist jetzt die Vereinigung beider Stände, Wachstum ist monoton. Der Fall
+   entfällt. Begründung, Preis und Tests in §3b.
+2. ~~**`/api/auth/*` ist ungedrosselt.**~~ **Geregelt** (Ruling #56): 10
+   Anfragen pro Minute und IP auf `/api/auth/*`. **Noch nicht angelegt** — es
+   fehlen die Cloudflare-Rechte; die exakten Schritte stehen in §5h.
+3. **Im Passkey-Dialog heißt jedes Konto „Morse Lab" — bleibt offen.** Es gibt
+   keinen Nutzernamen, und einen zu erfinden wäre schlimmer. Folge: zwei Konten
+   auf demselben Gerät sind in der Passkey-Liste des Betriebssystems nicht
    unterscheidbar. Für V1 in Kauf genommen. Wenn das störend ist, wäre das
    Minimum ein Zeitstempel im Label („Morse Lab · Sept 2026") — sichtbar, aber
-   immerhin kein personenbezogenes Datum.
-3. **`/api/auth/*` ist ungedrosselt.** Ein Rate-Limit ist bei Cloudflare
-   billig (WAF-Regel oder Rate Limiting Rules, keine Codezeile), aber es ist
-   eine Betriebsentscheidung mit einer Zahl darin, und Zahlen erfinde ich hier
-   nicht. Der Missbrauch, der real wäre: massenhaft `register/options` füllt
-   Flow-Zeilen. Sie verfallen nach fünf Minuten und werden beim nächsten
-   Zugriff derselben Sitzung weggeräumt — aber es gibt **kein** globales
-   Aufräumen (ein Vollscan auf dem Anfragepfad wäre schlimmer). Wenn das
-   Aufräumen gewollt ist, ist ein Cron Trigger der richtige Ort.
+   immerhin kein personenbezogenes Datum. **Vor der Entscheidung gehört ein
+   Blick auf echte Hardware** (§4, „nicht nachgewiesen"): wie der Systemdialog
+   das Konto benennt, sieht man im virtuellen Authenticator nicht.
+
+Weiterhin gilt, unabhängig vom Rate-Limit: **es gibt kein globales Aufräumen
+abgelaufener Flow-Zeilen.** Sie verfallen nach fünf Minuten und werden beim
+nächsten Zugriff derselben Sitzung weggeräumt; ein Vollscan auf dem Anfragepfad
+wäre schlimmer. Wenn das Aufräumen gewollt ist, ist ein Cron Trigger der
+richtige Ort — nicht der Request-Pfad.
 
 ### 5g. Ältere offene Punkte (unverändert)
 
