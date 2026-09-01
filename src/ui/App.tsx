@@ -23,6 +23,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { MorsePlayer } from '../audio/player';
 import { encodeChar } from '../engine/alphabet';
+import {
+  advanceEcho,
+  answerEcho,
+  beginEcho,
+  beginEchoPlayback,
+  cardHeard,
+  createLearnRun,
+  currentCharacter,
+  echoPromptFinished,
+  nextCard,
+  type LearnState,
+} from '../engine/learn';
 import { buildSchedule } from '../engine/schedule';
 import {
   advance,
@@ -40,9 +52,18 @@ import {
   ROUNDS_PER_SESSION,
   STARTING_EFFECTIVE_WPM,
 } from '../engine/settings';
-import { dayAccuracy, dayFor, markIntroSeen, type DayStats } from '../engine/stats';
+import {
+  dayAccuracy,
+  dayFor,
+  markIntroSeen,
+  markIntroduced,
+  pendingIntroductions,
+  type DayStats,
+} from '../engine/stats';
 import { computeTiming } from '../engine/timing';
 import { Intro } from './Intro';
+import { Learn, ReviewPicker } from './Learn';
+import { Pattern } from './Pattern';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { todayISO } from './today';
 
@@ -50,11 +71,6 @@ const TIMING = computeTiming({
   characterWpm: CHARACTER_WPM,
   effectiveWpm: STARTING_EFFECTIVE_WPM,
 });
-
-/** Vorlesbare Form eines Musters, fuer Screenreader statt '.-' als Satzzeichen. */
-function spellPattern(pattern: string): string {
-  return [...pattern].map((element) => (element === '-' ? 'dah' : 'dit')).join(' ');
-}
 
 export function App() {
   const [session, setSession] = useState<SessionState>(() =>
@@ -65,6 +81,14 @@ export function App() {
       today: todayISO(),
     }),
   );
+
+  /**
+   * Der Lernmodus laeuft neben der Sitzung her, nicht in ihr: die Sitzung steht
+   * derweil unberuehrt auf Runde 1. `null` heisst, es laeuft gerade keiner.
+   */
+  const [learn, setLearn] = useState<LearnState | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [tonePlaying, setTonePlaying] = useState(false);
 
   const playerRef = useRef<MorsePlayer | null>(null);
   /** Das Element, das in der aktuellen Phase den Fokus tragen soll. */
@@ -119,6 +143,25 @@ export function App() {
     setSession(promptFinished);
   }, [schedule]);
 
+  /**
+   * Ein einzelnes Zeichen abspielen und warten, bis es durch ist.
+   *
+   * Der Lernmodus misst keine Reaktionszeit -- er braucht das Ende des Tons
+   * nur, um weiterzuschalten. Deshalb genuegt hier das Versprechen des
+   * Players; die rAF-genaue Uhr aus dem Training ist dafuer nicht noetig.
+   */
+  const playCharacter = useCallback(async (char: string) => {
+    playerRef.current ??= new MorsePlayer();
+    const player = playerRef.current;
+    await player.resume();
+    setTonePlaying(true);
+    try {
+      await player.play(buildSchedule(char, TIMING), () => {}).finished;
+    } finally {
+      setTonePlaying(false);
+    }
+  }, []);
+
   const answer = useCallback((choice: string) => {
     const at = playerRef.current?.currentTime ?? 0;
     setSession((current) => submitAnswer(current, choice, at));
@@ -133,6 +176,98 @@ export function App() {
     saveProgressNow(seen);
     setSession((current) => ({ ...current, progress: seen }));
   }, [session.progress]);
+
+  // --- Lernmodus ---------------------------------------------------------
+
+  /**
+   * Faellig wird ein Lauf, sobald ein aktives Zeichen noch nie vorgestellt
+   * wurde -- beim Erstlauf sind das die sechs Startzeichen, nach der
+   * Wachstumsregel das eine neue. Ein Ort, beide Einstiegspunkte.
+   *
+   * Die Bedingung "Runde 1 und noch nichts gespielt" ist der Grund, warum ein
+   * mitten in der Sitzung dazugewachsenes Zeichen die laufende Sitzung nicht
+   * unterbricht: seine Karte kommt vor der *naechsten*, so wie vorgesehen.
+   */
+  const pending = pendingIntroductions(session.progress);
+  const learnDue =
+    session.progress.introSeen &&
+    !reviewing &&
+    learn === null &&
+    pending.length > 0 &&
+    session.phase === 'ready' &&
+    session.round === 1;
+
+  useEffect(() => {
+    if (!learnDue) return;
+    setLearn(
+      createLearnRun({
+        queue: pending,
+        known: session.progress.introducedCharacters,
+      }),
+    );
+  }, [learnDue, pending, session.progress.introducedCharacters]);
+
+  // Ein fertiger Lauf schreibt genau ein Feld: was jetzt vorgestellt ist.
+  useEffect(() => {
+    if (learn?.phase !== 'done') return;
+    const introduced = learn.queue;
+    setSession((current) => ({ ...current, progress: markIntroduced(current.progress, introduced) }));
+    setLearn(null);
+  }, [learn]);
+
+  /** Der Ton einer Karte laeuft beim Oeffnen einmal von selbst. */
+  const learnChar = learn === null ? null : currentCharacter(learn);
+  const learnOnCard = learn?.phase === 'card';
+
+  useEffect(() => {
+    if (!learnOnCard || learnChar === null) return;
+    let cancelled = false;
+    // Die Karte wurde per Klick erreicht, die Geste fuer den AudioContext ist
+    // also gegeben. Schlaegt es trotzdem fehl, bleibt der Play-Kreis -- gehoert
+    // wird dann eben auf Zuruf (CLAUDE.md 6: selbstgesteuerte Alternative).
+    void playCharacter(learnChar)
+      .catch(() => undefined)
+      .then(() => {
+        if (!cancelled) setLearn((current) => (current === null ? null : cardHeard(current)));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [learnOnCard, learnChar, playCharacter]);
+
+  const replayCard = useCallback(() => {
+    if (learnChar === null) return;
+    void playCharacter(learnChar)
+      .catch(() => undefined)
+      .then(() => setLearn((current) => (current === null ? null : cardHeard(current))));
+  }, [learnChar, playCharacter]);
+
+  const playEcho = useCallback(() => {
+    setLearn((current) => (current === null ? null : beginEchoPlayback(current)));
+    const prompt = learn?.echoPrompt;
+    if (prompt === undefined) return;
+    void playCharacter(prompt)
+      .catch(() => undefined)
+      .then(() => setLearn((current) => (current === null ? null : echoPromptFinished(current))));
+  }, [learn?.echoPrompt, playCharacter]);
+
+  const skipLearn = useCallback(() => {
+    // "Skip for now" laesst den Durchgang aus, ohne ihn bei jedem Start erneut
+    // vorzulegen -- die Zeichen bleiben ueber "Review the sounds" erreichbar.
+    const queue = learn?.queue ?? pending;
+    setSession((current) => ({ ...current, progress: markIntroduced(current.progress, queue) }));
+    setLearn(null);
+  }, [learn?.queue, pending]);
+
+  const openReview = useCallback((char: string) => {
+    setLearn(
+      createLearnRun({
+        queue: [char],
+        known: session.progress.introducedCharacters,
+        requireEcho: false,
+      }),
+    );
+  }, [session.progress.introducedCharacters]);
 
   const restart = useCallback(() => {
     setSession((current) =>
@@ -180,6 +315,24 @@ export function App() {
 
       {!session.progress.introSeen ? (
         <Intro onDone={finishIntro} />
+      ) : learn !== null ? (
+        <Learn
+          state={learn}
+          playing={tonePlaying}
+          onPlay={learn.phase === 'card' || learn.phase === 'card-heard' ? replayCard : playEcho}
+          onBeginEcho={() => setLearn((c) => (c === null ? null : beginEcho(c)))}
+          onNextCard={() => setLearn((c) => (c === null ? null : nextCard(c)))}
+          onAnswer={(choice) => setLearn((c) => (c === null ? null : answerEcho(c, choice)))}
+          onAdvance={() => setLearn((c) => (c === null ? null : advanceEcho(c, Math.random)))}
+          onSkip={reviewing ? undefined : skipLearn}
+        />
+      ) : reviewing ? (
+        <ReviewPicker
+          characters={session.pool}
+          onPick={openReview}
+          onClose={() => setReviewing(false)}
+          headingRef={focusTarget}
+        />
       ) : session.phase === 'finished' ? (
         <Summary summary={summary} onRestart={restart} headingRef={focusTarget} />
       ) : (
@@ -238,6 +391,19 @@ export function App() {
             <div className="actions">
               <button ref={focusTarget} type="button" className="button-next" onClick={next}>
                 {session.round >= session.totalRounds ? 'Finish' : 'Next character'}
+              </button>
+            </div>
+          )}
+
+          {/*
+            Der leise Weg zurueck zu den Klaengen -- nur auf dem Start-Screen,
+            also vor der ersten Runde. Mitten in der Sitzung waere er eine
+            Ablenkung, und nach jeder Runde eine Wiederholung.
+          */}
+          {session.round === 1 && session.phase === 'ready' && (
+            <div className="learn-skip">
+              <button type="button" className="skip" onClick={() => setReviewing(true)}>
+                Review the sounds
               </button>
             </div>
           )}
@@ -334,24 +500,6 @@ function PlayCircle({
     >
       <span className="play-mark" aria-hidden="true" />
     </button>
-  );
-}
-
-/**
- * Das Muster als Form: Punkte sind Kreise, Striche sind Pillen. Erst *nach* der
- * Antwort sichtbar -- waehrend des Tons waere es eine Kruecke zum Mitzaehlen
- * (CLAUDE.md 2.2).
- */
-function Pattern({ pattern }: { pattern: string }) {
-  return (
-    <p className="pattern">
-      <span className="pattern-row" aria-hidden="true">
-        {[...pattern].map((element, index) => (
-          <span key={index} className="pattern-element" data-kind={element === '-' ? 'dah' : 'dit'} />
-        ))}
-      </span>
-      <span className="visually-hidden">{spellPattern(pattern)}</span>
-    </p>
   );
 }
 

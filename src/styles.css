@@ -426,6 +426,59 @@ button:disabled {
   border-radius: 10px;
 }
 
+/* --- Lernmodus: Einfuehrungskarte, Echo-Check, Wiederholen --- */
+
+.learn {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.learn-stage {
+  gap: 28px;
+}
+
+/* Der Buchstabe traegt die Karte -- deutlich groesser als die Frage im
+ * Training (26 px), damit klar ist: hier wird gezeigt, nicht abgefragt. */
+.learn-char {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 64px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.learn-copy {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+/* Haelt die Hoehe frei, solange das Muster noch nicht gezeigt werden darf --
+ * sonst springt die Karte, sobald der Ton durch ist. */
+.pattern-blank {
+  height: 16px;
+}
+
+.learn-skip {
+  flex: none;
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.review-heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.review-heading:focus {
+  outline: none;
+}
+
 /* --- Einfuehrung: zwei Bildschirme, dann los --- */
 
 .intro {
