@@ -1,89 +1,74 @@
-# Übergabe — Stand nach der Navigations-Runde (das Gehäuse, Runde A)
+# Übergabe — Stand nach Runde B (Accounts: Passkeys, D1, Sync)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** `main` @ `7952e9c` (Variabilität + Review-6-Fixes + Doku — die
-Commits des Review-7-Branches sind gemergt). Darauf aufbauend Branch
-`claude/morse-handover-alignment-nbkk6o` mit drei Commits — zu reviewen (Fable)
-und dann nach `main` zu mergen; erst der Merge deployt sie auf Produktion:
+**Stand:** `main` @ `2b71931` — **die Gehäuse-Runde (Runde A) ist gemergt und
+deployt**, Review 8 (Fable) bestanden. Darauf aufbauend Branch
+`claude/morse-handover-alignment-nbkk6o` mit vier Commits — zu reviewen (Fable)
+und dann nach `main` zu mergen; erst der Merge deployt sie:
 
-1. `92501c1` — **Mikro-Fixes aus Review 7** (Notion-Log #46; Aufgabe 4)
-2. `a7f3ee3` — **das clientseitige Gehäuse: Menü, Progress, About**
-   (Aufgaben 1–3)
-3. (dieser Doku-Commit, mit den Screenshots)
+1. `bc16dd3` — **Merge-Semantik in der Engine, Backend für Passkeys und Sync**
+2. `f52c775` — **Account-Zeile im Menü, Account-Screen, Sync am Sitzungsende**
+3. `6deea18` — **Fix: „jünger" heißt gelernt, nicht gespeichert** (Fund aus dem
+   Browser-Durchlauf)
+4. (dieser Doku-Commit, mit den Screenshots)
 
-**Kontext dieser Runde:** Der Owner hat Accounts vorgezogen (Notion-Log
-#48–51). Dies ist **Runde A** — nur das clientseitige Gehäuse. Kein Backend,
-keine Auth, und **bewusst keine Account-Zeile im Menü** (1.1 §7: nichts
-zeigen, was nicht funktioniert). **Runde B** (Passkeys + D1 + Sync) folgt mit
-eigener Spezifikation. Local-first unverändert: alles läuft ohne Konto und
-offline. Die Streak-Runde ist weiterhin **bewusst nicht** gelaufen (§8).
+**Kontext dieser Runde:** Runde B nach Notion-Log #48–51. Leitplanke über
+allem war **local-first**, und sie hält: die App ist ohne Konto und offline
+exakt so vollständig wie vorher, das Konto ist ein Sync-Ziel und nie eine
+Voraussetzung. Kein Feature liegt hinter einem Login. Nachgewiesen, nicht
+behauptet — siehe §4.
+
+**Ein Punkt der Aufgabenstellung ist nicht erledigt: Schritt 1, die Bildmarke
+aus den Owner-Dateien.** Die drei Dateien waren in dieser Umgebung nicht
+erreichbar. Details und der genaue Handgriff stehen in §3f. Nicht geraten,
+nicht ersatzweise konstruiert.
 
 **Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
-Pages, mit Git-Anbindung an dieses Repo. Jeder Push auf `main` baut und
-deployt von selbst; dieser Branch deployt erst mit dem Merge.
+Pages mit Git-Anbindung. Jeder Push auf `main` baut und deployt von selbst.
+**Neu und wichtig: `/api/*` funktioniert auf Produktion erst, wenn die
+D1-Datenbank angelegt und gebunden ist** (§5e). Bis dahin läuft die App
+vollständig, nur ohne Konten — und genau dieser Zustand ist als local-first
+nachgewiesen.
 
 **`morse-lab.com` ist an das Projekt gebunden, aber noch nicht erreichbar** —
-es fehlt der eine DNS-Eintrag aus §5a.
+es fehlt der eine DNS-Eintrag aus §5a. **Neu zu bedenken:** Passkeys hängen an
+der Domain, unter der sie angelegt wurden (§3e).
 
-**Datum:** 2026-09-01 (dritte Runde dieses Tages)
+**Datum:** 2026-09-01 (vierte Runde dieses Tages)
 
 Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
-[FINDINGS.md](./FINDINGS.md) — **alle drei Einträge sind entschieden und
-behoben** (Eintrag 3 durch Review 7, Notion-Log #46, in dieser Runde
-umgesetzt).
+[FINDINGS.md](./FINDINGS.md) — alle drei Einträge sind entschieden und behoben.
 
 ---
 
 ## 1. Wo das Projekt steht
 
-Der Kern-Lernloop (hören → tippen → Feedback, adaptiv nach Schwäche) läuft, ist
-live und sieht jetzt aus wie das Mockup. Unverändert gilt: der Zeichensatz
-wächst von selbst (§3), die App ist eine offline nutzbare PWA ohne jeden
-Fremdabruf, `--gray` besteht AA auch für kleinen Text.
+Der Kern-Lernloop (hören → tippen → Feedback, adaptiv nach Schwäche) läuft,
+ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächst
+von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
+`--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde: die App hat ein Gehäuse (§3d)** — eine Kopfzeile mit
-Wortmarke und Menü auf dem Start-Screen, ein Vollbild-Menü (Practice · Learn
-the sounds · Progress · About), einen Progress-Screen (Tagesstand, Gesamtstand,
-Tabelle pro aktivem Zeichen) und einen About-Screen (Lockup, Build-Kennung,
-Offline- und Nur-lokal-Hinweis). Dazu die Mikro-Fixes aus Review 7 (§5d).
-„Learn the sounds" im Menü ersetzt den bisherigen Link „Review the sounds" als
-einzigen Einstieg in die Klang-Auswahl. Screenshots:
-[`docs/screenshots/menu-390.png`](./docs/screenshots/menu-390.png),
-[`docs/screenshots/progress-390.png`](./docs/screenshots/progress-390.png).
+**Neu aus dieser Runde: die App kann ein Konto haben — und braucht keins.**
 
-Aus der Runde davor: der Klang variiert in Stufen (§3c), und die vier
-Punkte aus dem alten §5d-Konflikt sind durch Review 6 entschieden und
-umgesetzt (§5d).
+- **Passkeys statt Passwörtern.** Einen Passkey anzulegen *ist* das Anlegen des
+  Kontos. Keine E-Mail, kein Passwort, kein Name. Anmelden geht ohne Kennung
+  (discoverable credential): der Browser fragt selbst, welcher Passkey.
+- **Cloudflare-nativ, kein neuer Vendor.** Pages Functions in `functions/`,
+  Daten in D1, Migrations versioniert in `migrations/`.
+- **Sync mit einer getesteten Merge-Regel.** Lokal bleibt die Quelle; das Konto
+  ist das Ziel. Push nach jedem Sitzungsende, Pull und Merge beim Login. Die
+  Regel ist reine Engine-Logik (`src/engine/sync.ts`), ohne Netz testbar.
+- **Der Account-Screen im Ruhe-Ton**, mit Abmelden und — DSGVO —
+  „Delete account and data". Screenshots:
+  [`docs/screenshots/account-signed-out-390.png`](./docs/screenshots/account-signed-out-390.png),
+  [`docs/screenshots/account-signed-in-390.png`](./docs/screenshots/account-signed-in-390.png).
+- **Das Menü hat jetzt fünf Einträge** (Practice · Learn the sounds · Progress ·
+  Account · About). In Runde A war die Account-Zeile bewusst weggelassen, weil
+  es kein Backend gab (1.1 §7).
 
-Aus der Marken-Runde davor gilt weiter: das Projekt heißt Morse Lab und sieht
-danach aus.
-Die Marken-Richtlinie 1.1 liegt im Repo und führt (§3b). Die Tokens tragen ihre
-Namen, das Logo ist der Morsetaster, und die Komponenten folgen den Regeln aus
-§7 und §4 — allen voran der harten: **Amber steht nie zweimal in einer View.**
-Ein Prüfskript belegt das über zwölf Ansichten.
-
-Aus der Runde davor: die App führt Zeichen ein, statt sie nur abzufragen. Wer neu anfängt, riet bisher die ersten Runden — es gab keinen
-Ort, an dem ein Zeichen als Klang vorgestellt wird. Den gibt es jetzt: eine
-Karte pro Zeichen (Buchstabe, Ton, danach das Muster), dahinter ein
-Echo-Check aus drei Abrufen nach den normalen Übungsregeln. Erreichbar an drei
-Stellen — Erstlauf, Wachstum, freies Wiederholen (§3a). Ein Bild der Karte
-liegt unter
-[`docs/screenshots/learn-card-390.png`](./docs/screenshots/learn-card-390.png).
-
-Aus der Politur-Runde davor:
-
-- **Der Trainings-Screen folgt dem Ruhe-Mockup** — eine 390-px-Spalte, Kopf mit
-  Sitzung und Runde über einer 2-px-Linie, in der Mitte Eyebrow, Play-Kreis und
-  Frage, unten Antwort-Gitter und Fußzeile. Ein Bild davon liegt unter
-  [`docs/screenshots/training-390.png`](./docs/screenshots/training-390.png).
-- **Eine Einführung läuft einmal** — zwei Bildschirme, „Skip intro" jederzeit,
-  „Begin" startet die erste Sitzung.
-- **Der Fortschritt kennt jetzt den Tag** — Versuche, Treffer und Zeichen des
-  laufenden Kalendertags tragen die Fußzeile („Today 87% · 14 characters").
-  Dazu ein Sitzungszähler und der Intro-Merker, alle drei additiv.
-
-Drei Stellen weichen bewusst vom Mockup ab; sie stehen in §5b und warten auf
-Fables Urteil.
+Aus Runde A gilt weiter: das Gehäuse (Kopfzeile, Vollbild-Menü,
+Progress-Screen, About-Screen). Aus den Runden davor: Klang-Variabilität in
+Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 
 ## 2. Was liegt wo
 
@@ -92,493 +77,400 @@ Fables Urteil.
 | `src/engine/alphabet.ts` | Morse-Alphabet nach ITU-R M.1677-1 | unverändert |
 | `src/engine/timing.ts` | Farnsworth-Timing nach ARRL | unverändert |
 | `src/engine/schedule.ts` | Text → Zeitachse | unverändert |
-| `src/engine/settings.ts` | Tempo, Tonhöhe, Start-Satz, Kandidatenreihe, **Gruppengröße** | erweitert |
-| `src/engine/stats.ts` | Statistik, Wachstum, Tag/Sitzung/Intro, **eingeführte Zeichen** | erweitert |
+| `src/engine/settings.ts` | Tempo, Tonhöhe, Start-Satz, Kandidatenreihe | unverändert |
+| `src/engine/stats.ts` | Statistik, Tag/Sitzung/Intro, eingeführte Zeichen | unverändert |
 | `src/engine/growth.ts` | Die Wachstumsregel | unverändert |
 | `src/engine/learn.ts` | Der Lernmodus: Karte, Echo-Check | unverändert |
-| `src/engine/variability.ts` | **Klang-Variabilität in Stufen (HVPT)** | neu, getestet |
+| `src/engine/variability.ts` | Klang-Variabilität in Stufen (HVPT) | unverändert |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
-| `src/engine/session.ts` | Loop-Zustandsautomat; Pool = aktiver Satz | angepasst |
+| `src/engine/session.ts` | Loop-Zustandsautomat | unverändert |
+| **`src/engine/sync.ts`** | **Merge zweier Lernstände; Lern-Kennung** | **neu, getestet** |
 | `src/audio/player.ts` | Wiedergabe mit Audio-Uhr nach außen | unverändert |
-| `src/ui/App.tsx` | Lernloop-Screen, **plus View-State des Gehäuses** | erweitert |
-| `src/ui/Intro.tsx` | Die Einführung, zwei Bildschirme | unverändert |
-| `src/ui/Learn.tsx` | Karte, Echo-Check, Auswahl (heißt jetzt **"Learn the sounds"**) | angepasst |
-| `src/ui/Menu.tsx` | **Kopfzeile (Wortmarke + Trigger) und Vollbild-Menü** | neu |
-| `src/ui/Progress.tsx` | **Progress-Screen; rechnet nichts, liest stats.ts** | neu |
-| `src/ui/About.tsx` | **About-Screen: Lockup, Build, Offline/lokal** | neu |
-| `src/ui/Pattern.tsx` | Muster als Form | unverändert |
-| `docs/brand/…1.1.html` | **Die Marken-Richtlinie — führend** | neu |
-| `docs/brand/logo.py` | **Baut die Marke aus den §3-Zahlen** | neu |
-| `docs/CI.md` | **Deutsche Kurzfassung, mit Rangfolge-Kopf** | neu |
-| `public/logo-key.svg`, `logo-lockup.svg` | **Marke und primäres Lockup** | neu |
-| `public/favicon.svg` | **Fallback-Marke** (Punkt + Pille, amber) | neu |
-| `public/icons/` | **Neu gezeichnet aus der Marke** | ersetzt |
-| `src/ui/today.ts` | **Kalendertag** für die Engine (die bleibt ohne Uhr) | neu |
-| `src/ui/progressStorage.ts` | localStorage rein/raus, **plus Sofort-Schreiber** | erweitert |
-| `src/styles.css` | **Tokens nach 1.1 §13**, Grundriss, Mockup-Maße | migriert |
-| `docs/screenshots/` | Intro, Lernkarte, Training, **Menü, Progress** bei 390 px | **neu gezogen** |
-| `src/fonts/` | **woff2 (latin) + SIL-OFL-Lizenzen** | neu |
-| `public/sw.js` | **Service Worker** (offline) | neu |
-| `public/manifest.webmanifest`, `public/icons/` | **PWA-Manifest, Icons** | neu |
-| `vite.config.ts` | + Plugin: injiziert Precache-Liste in `dist/sw.js`, **stempelt die Build-Kennung in `<meta name="build">`** | erweitert |
-| `src/engine/*.test.ts` | **114 Tests** (16 Grundgerüst, 42 Loop, 16 Wachstum, 27 Lernmodus, 13 Variabilität) | grün |
+| **`functions/_lib/`** | **Env, HTTP, Relying Party, Sitzungen** | **neu** |
+| **`functions/api/auth/`** | **Register/Login (Options + Verify), Logout** | **neu** |
+| **`functions/api/progress.ts`** | **GET/PUT — die ganze Sync-API** | **neu** |
+| **`functions/api/account.ts`** | **DELETE — Konto und Daten löschen** | **neu** |
+| **`functions/tsconfig.json`** | **Worker-Typen, getrennt von den DOM-Typen** | **neu** |
+| **`migrations/0001_accounts.sql`** | **users, credentials, sessions, progress** | **neu** |
+| **`wrangler.toml`** | **D1-Bindung `DB`; `database_id` ist ein Platzhalter** | **neu** |
+| `src/ui/App.tsx` | Lernloop-Screen, View-State, **Push am Sitzungsende** | erweitert |
+| **`src/ui/Account.tsx`** | **Der Account-Screen, drei Zustände** | **neu** |
+| **`src/ui/account.ts`** | **Passkeys, Sitzung, Abgleich — rechnet nichts** | **neu** |
+| `src/ui/Menu.tsx` | Kopfzeile und Menü, **jetzt mit Account-Zeile** | erweitert |
+| `src/ui/progressStorage.ts` | localStorage rein/raus, **plus Lern-Zeitstempel** | erweitert |
+| `src/ui/About.tsx` | About-Screen, **Datenschutz-Zeile korrigiert** | angepasst |
+| `src/ui/Progress.tsx`, `Intro.tsx`, `Learn.tsx`, `Pattern.tsx` | — | unverändert |
+| `src/styles.css` | Tokens nach 1.1 §13, **plus Account-Rollen** | erweitert |
+| `public/sw.js` | Service Worker, **`/api/` ausgenommen** | angepasst |
+| `docs/brand/logo.py` | **Konstruktions-Doku, nicht mehr Quelle** (#53/54) | angepasst |
+| `docs/screenshots/` | Intro, Lernkarte, Training, Menü, Progress, **Account ×2** | erweitert |
+| `src/engine/*.test.ts` | **143 Tests** (114 vorher, 29 neu für den Sync) | grün |
 
-Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die Engine
-kennt niemanden, die UI rechnet nicht.
+Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die
+Engine kennt niemanden, die UI rechnet nicht. **Neu dazu: der Server rechnet
+auch nicht** — er ist ein Fach, kein Modell (§3a).
 
 ## 3. Die Entscheidungen, die den Rest erklären
 
-### Timing über die Audio-Uhr; Reaktionszeiten auf derselben Uhr
+Was hier nicht steht, steht unverändert in der Übergabe der Runde davor
+(Git-Verlauf): Audio-Uhr und Reaktionszeiten, Wachstumsregel, additive
+Persistenz, der handgeschriebene Service Worker, Schriften im Repo, der
+Lernmodus, die Marke, die Klang-Variabilität, das Gehäuse. **Nicht
+aufweichen.**
 
-Unverändert (siehe §3 der vorigen Übergabe, im Git-Verlauf): Töne werden auf
-`AudioContext.currentTime` geplant, `setInterval` weckt nur den Planer,
-Reaktionszeiten kommen aus `player.currentTime` — nie `Date.now()`. Farnsworth
-nach ARRL (Bloom, QEX 4/1990); bei `effectiveWpm == characterWpm` fällt alles auf
-1/3/1/3/7 zurück, ein Test hält das fest. **Nicht aufweichen.**
+### 3a. Der Server ist ein Fach, kein Modell
 
-### Die Wachstumsregel (`engine/growth.ts`)
+`/api/progress` speichert den Blob, den der Client schickt, und gibt ihn
+zurück. Der Server liest die Felder nicht, rechnet nichts, bewertet nichts.
 
-Ein neues Zeichen kommt dazu, wenn **alle drei** gelten:
+Das ist die wichtigste Entscheidung dieser Runde, und sie hat drei Folgen:
 
-- **(a)** rollierende Trefferquote über die letzten 30 Antworten ≥ 90 %
-  — das Fenster muss *voll* sein, 9 von 10 sind kein Beleg;
-- **(b)** jedes aktive Zeichen hat ≥ 5 Versuche
-  — ein kaum gefragtes Zeichen rutscht nicht als „gekonnt" durch;
-- **(c)** kein aktives Zeichen liegt unter 75 % Trefferquote
-  — der Durchschnitt darf kein einzelnes Problemzeichen verdecken.
+1. **Die Merge-Semantik ist reine Client-Logik** (`src/engine/sync.ts`) und
+   damit ohne Netz, ohne Datenbank und ohne Browser testbar (CLAUDE.md 4).
+2. **Ein neues Feld im Lernstand braucht keine Migration.** Die additive
+   Persistenz aus den Runden davor gilt unverändert weiter.
+3. **Der Server kann keine Lernentscheidung treffen** — auch nicht
+   versehentlich, auch nicht später aus Bequemlichkeit.
 
-Nach einer Einführung ist die nächste für 20 Antworten gesperrt (das neue Zeichen
-soll erst ankommen). Alle Schwellen sind benannte Konstanten. Kandidaten kommen
-aus `CHARACTER_ORDER` (settings.ts): beginnt mit K M R S U A, danach Koch-übliche
-Folge, 26 Buchstaben + 10 Ziffern, Satzzeichen bewusst noch nicht. Die Reihe ist
-eine Setzung, kein Standard — eine adaptive Auswahl darf sie ablösen, sobald
-Daten da sind.
+Der Preis: der Server kann einen kaputten Blob nicht erkennen. Dagegen steht
+`parseProgress` auf der Client-Seite, das schon vorher jeden unbekannten Stand
+defensiv aufgefüllt hat, plus eine Größenbremse von 64 KiB (ein Konto ist kein
+Dateispeicher; gemessen liegt ein Stand unter 4 KiB).
 
-Die Prüfung läuft in `session.submitAnswer` *nach* dem Verbuchen (die Antwort
-zählt mit). Der geübte Pool ist seit `cf35c5f` der aktive Satz aus dem
-Fortschritt — `createSession` hat keinen `pool`-Parameter mehr, eine Quelle statt
-zwei. Ein neues Zeichen steht ab der nächsten Runde in Pool und Ziehung
-(ungehört = höchstes Gewicht) und wird im Feedback mit einer Zeile angekündigt.
+### 3b. Die Merge-Regel — und die eine Zeile, die sie rettet
 
-### Persistenz wächst additiv
+Aus Notion-Log #49, in `mergeProgress(local, remote)`:
 
-`Progress` hat drei neue Felder: `activeCharacters` (Default: Start-Satz),
-`recentAnswers` (rollierendes Fenster, auf 30 gedeckelt), `answersSinceGrowth`.
-`parseProgress` füllt alte Stände mit Defaults auf; ein kaputter aktiver Satz
-fällt auf den Start-Satz zurück, ohne die Zeichen-Statistik zu verwerfen. Tests
-halten beides fest. **So weitermachen** (CLAUDE.md §4): neue Felder additiv mit
-Default, keine Migrationsmaschinerie.
+- **Pro Zeichen gewinnt der Datensatz mit mehr `attempts`** — und zwar *als
+  Ganzes*, nie feldweise gemischt. `hits` aus einem und `attempts` aus einem
+  anderen Stand ergäben eine Trefferquote, die niemand erlebt hat
+  (CLAUDE.md 2.6).
+- **`recentAnswers`, `day`, `answersSinceGrowth` und der aktive Zeichensatz
+  kommen vom jüngeren Stand.** Das sind Momentaufnahmen eines Verlaufs, keine
+  Summen — ein rollierendes Fenster aus zwei Geräten zusammenzuschneiden würde
+  eine Serie behaupten, die es nicht gab.
+- **`introducedCharacters` ist die Vereinigung.** Was einmal als Klang
+  vorgestellt wurde, wurde vorgestellt.
+- **Bei jedem Gleichstand gewinnt lokal** — „lokal bleibt Quelle".
 
-### Der Service Worker ist von Hand geschrieben — und warum das trägt
+**Der Fund, der diese Runde am meisten wert war:** „jünger" heißt *hat später
+etwas gelernt*, nicht *wurde später gespeichert*. Der Unterschied ist keine
+Feinheit. Schon das Öffnen der App schreibt den Stand (`beginSession` zählt die
+Sitzung, der Tages-Eimer springt auf heute). Hätte das den Zeitstempel
+hochgesetzt, wäre **jedes gerade geöffnete Gerät automatisch das jüngere** und
+hätte mit seinem alten Zeichensatz ein Konto überschrieben, an dem woanders
+gerade gearbeitet wurde — Datenverlust durch einen Login, im wahrscheinlichsten
+Ablauf überhaupt.
 
-Kein Workbox, keine neue Laufzeit-Abhängigkeit; `public/sw.js` ist klein genug,
-um ihn ganz zu lesen. Strategie: Navigation Netz-zuerst (Deploy kommt sofort an,
-offline trägt der letzte Stand), gehashte `/assets/` Cache-zuerst (unveränderlich),
-Rest stale-while-revalidate. Zwei Dinge muss man wissen:
+Zwei Mechanismen halten das:
 
-- **Der Build injiziert die Precache-Liste.** Ein Plugin in `vite.config.ts`
-  trägt die gehashten Asset-Pfade und eine daraus abgeleitete Version in
-  `dist/sw.js` ein (Marker `self.__BUILD_ASSETS` / `self.__BUILD_VERSION`).
-  Ohne die Liste läge der erste Seitenaufbau nie im Cache — er passiert, bevor
-  der Worker die Seite kontrolliert — und offline bliebe ein leeres Gerüst.
-  Genau so im ersten Offline-Test aufgetreten.
-- **Cache-Treffer laufen mit `ignoreVary`.** Der Vite-Preview-Server setzt
-  `Vary: Origin`; ein Modul-Skript (CORS-Modus, sendet `Origin`) verfehlte damit
-  den Eintrag, den der Install ohne den Header geholt hatte. Auch das ist im
-  Test real passiert, nicht theoretisch. Gecacht wird nur gleiche Herkunft, der
-  Pfad ist der Schlüssel — `Vary` zu ignorieren ist hier korrekt.
+- **`learningRevision(progress)`** (Engine): eine Kennung, die sich ändert, wenn
+  geantwortet, gewachsen oder eingeführt wurde — und *nicht*, wenn nur der
+  Sitzungszähler hochgeht, der Tag umspringt oder ein Einmal-Merker umklappt.
+  `progressStorage` zieht die Zeit nur nach, wenn sich die Kennung geändert hat.
+- **`effectiveUpdatedAt`** (Engine): ein Stand ohne einen einzigen Versuch ist
+  *nie* der jüngere. Das entscheidet die erste Kante der Vorgabe (frisches Gerät
+  + volles Konto): App neu installiert, Einführung durchgeklickt, dann
+  eingeloggt — ohne die Regel käme der aktive Satz vom leeren Gerät.
 
-Der Worker wird nur im Produktionsbuild registriert (`main.tsx`): im Dev-Server
-würde er Assets cachen, die es dort nicht gibt, und HMR durchkreuzen.
+Der Browser-Durchlauf hat den Fehler gefunden, bevor ihn jemand benutzt hat
+(Prüfung 20 fiel durch). **Das ist der Grund, warum solche Durchläufe hier
+nicht optional sind.**
 
-### Schriften im Repo
+Der lokale Zeitstempel liegt als eigener localStorage-Eintrag
+(`projekt-morse:progress-at`, Form `{at, rev}`) *neben* dem Stand, nicht *in*
+ihm: der Stand ist der Blob, der zum Server geht, und dort führt die Datenbank
+ihren eigenen `updated_at`. Zwei Uhren in einem Objekt wären zwei Wahrheiten.
 
-Newsreader (Variable, wght-Achse) und IBM Plex Sans (400/500/600) als woff2 in
-`src/fonts/`, latin-Subset, SIL-OFL-Lizenzen daneben, `@font-face` in
-`styles.css`. Kein Google-Fonts-Link mehr, kein Fremdabruf — FINDINGS.md §2 ist
-damit erledigt. Kommt später Deutsch (i18n-Entscheidung), braucht es zusätzlich
-das latin-ext-Subset.
+**Drei Felder nennt die Vorgabe nicht** — sie müssen trotzdem einen Wert haben.
+Als Setzung ausgewiesen, nicht als Vorgabe, und beide folgen „Persistenz
+verliert keine Nutzerdaten" (CLAUDE.md 4):
 
-## 3a. Der Lernmodus — und die eine Ausnahme, die er kostet
+- `sessionsStarted`: das **Maximum**. Ein monoton wachsender Zähler darf durch
+  einen Merge nicht sinken; die Summe wäre falsch, weil beide Stände dieselbe
+  Vorgeschichte enthalten können.
+- `introSeen` und `variabilityNoticeSeen`: **logisches Oder**. Wer die
+  Einführung gesehen hat, hat sie gesehen.
 
-**Das Problem:** die App hat nur abgefragt. Beim allerersten Ton gab es nichts,
-woran man ihn hätte festmachen können — die ersten Runden waren Raten, und
-Raten trainiert nichts.
+**Ein Abgleich übernimmt den Stand, aber nicht den Zeichensatz der laufenden
+Sitzung.** Dieselbe Regel wie beim Wachstum: ein neuer Satz gilt ab der
+nächsten Sitzung. Sonst wüchse oder schrumpfte das Antwort-Gitter mitten in
+einer Übung.
 
-**Die Karte.** Pro Zeichen: der Buchstabe in 64 px Newsreader, darunter der
-Play-Kreis wie im Training. Der Ton läuft beim Öffnen einmal von selbst; die
-Karte wird per Klick erreicht, die Geste für den AudioContext ist also gegeben.
-Schlägt das Abspielen trotzdem fehl, bleibt der Play-Kreis — gehört wird dann
-auf Zuruf (CLAUDE.md 6). „Try it" ist erst frei, wenn der Ton durch war.
+### 3c. Sitzungen: Cookie außen, Zeile in D1 innen
 
-**Die Ausnahme von CLAUDE.md 2.2.** Die Regel verbietet die Visualisierung von
-Punkten und Strichen während des Hörens, weil sie zum Mitzählen einlädt statt
-zum Hören. Auf der Einführungskarte — und nur dort — ist das Muster nach dem
-ersten Anhören sichtbar und bleibt es beim Wiederholen: der Erstkontakt braucht
-die Zuordnung von Klang zu Zeichen. **Produktentscheidung, Notion-Log #33.**
-Der Kommentar steht an der Komponente selbst (`src/ui/Learn.tsx`, `Card`), nicht
-nur hier.
+- **HttpOnly, Secure, SameSite=Lax, Path=/** — kein Token im localStorage, kein
+  Skript der Seite sieht den Wert (im Browser nachgeprüft, §4).
+- **Ein opaker Zufallswert, kein JWT.** Er bedeutet nichts; alles, was er
+  bedeutet, steht in der Zeile. Damit ist ein Logout ein `DELETE` und wirkt
+  sofort — ein selbstbeschreibendes Token kann man nicht zurückrufen.
+- **Gespeichert wird der SHA-256 des Werts, nicht der Wert.** Wer die Datenbank
+  liest (Backup, Support-Dump, Leck), hält damit keine gültige Sitzung in der
+  Hand. Kosten: ein Hash pro Anfrage.
+- **Die Sitzungs-ID wechselt bei jeder Anmeldung** (Session Fixation). Deshalb
+  `promoteToUser` und kein UPDATE.
+- **Die WebAuthn-Challenge liegt in derselben `sessions`-Tabelle** als
+  Flow-Zeile (`user_id IS NULL`, Frist fünf Minuten). Die Challenge *muss*
+  serverseitig liegen — sonst prüft die Signatur nicht gegen ein frisches
+  Geheimnis. Sie hier zu führen statt in einer fünften Tabelle hält das Schema
+  bei den vier vorgegebenen Tabellen.
+- **Kein Secret in der Umgebung.** Genau eine Bindung: `DB`. Kein
+  HMAC-Geheimnis, das jemand rotieren müsste; die Relying Party leitet sich aus
+  der Anfrage ab (§3e).
 
-Die Grenze ist scharf und geprüft: im Training bleibt der Bildschirm während des
-Tons leer, und der Echo-Check hält sich ebenfalls daran — das Muster kommt dort
-erst mit der Auflösung.
+### 3d. `@simplewebauthn/server` — die eine neue Abhängigkeit
 
-**Der Echo-Check fasst die Statistik nicht an.** Drei Abrufe nach jeder Karte,
-nach den normalen Übungsregeln, Antwortoptionen ausschließlich aus dem bisher
-Eingeführten. In `learn.ts` gibt es kein `recordAttempt` — die Statistik misst
-Können, und wer ein Zeichen gerade zum ersten Mal gehört hat, kann es noch
-nicht. Flössen diese Antworten mit, verschöben sie Gewichtung (`selection.ts`)
-und Wachstumsregel (`growth.ts`) gegen den Nutzer, und die Zahlen behaupteten
-etwas anderes, als sie messen (CLAUDE.md 2.6). Zwei Unit-Tests und ein
-Browser-Durchlauf halten das fest.
+**Genehmigt in der Aufgabenstellung, und die Begründung trägt:** die
+Verifikation verbindet CBOR-Dekodierung, COSE-Schlüssel, Flag-Bits und
+Zählerlogik. Handgerollt ist *jeder* Fehler darin eine stille
+Authentifizierungslücke — eine, die kein Test dieses Projekts finden würde,
+weil der glückliche Pfad weiter funktioniert. Das ist die Sorte Code, die man
+nicht selbst schreibt.
 
-Bei der ersten Karte eines neuen Nutzers gibt es genau **eine** Antworttaste.
-Das ist die Folge der Vorgabe, nur Eingeführtes anzubieten — der Abruf ist dann
-keine Unterscheidung, sondern eine Bestätigung („war das eben K?"). Ehrlicher,
-als eine Auswahl aus Zeichen zu bauen, die noch niemand kennt.
+**Nur Server, kein Bundle-Delta** (nachgewiesen: das Paket kommt im gebauten
+JS nicht vor). Die Browserseite nutzt `navigator.credentials` direkt, wie
+vorgegeben; die eine nötige Umwandlung (base64url ↔ ArrayBuffer) steht in
+zwanzig Zeilen in `src/ui/account.ts`. Die neueren Helfer
+`PublicKeyCredential.parseCreationOptionsFromJSON()` / `.toJSON()` wären kürzer,
+sind aber erst in ganz frischen Browsern da — für eine App, die ohne Konto
+vollständig läuft, der falsche Ort für eine Versionshürde.
 
-**Drei Einstiegspunkte, eine Bedingung.** `pendingIntroductions()` — aktiv, aber
-nicht eingeführt:
+Dazu **`@cloudflare/workers-types` als devDependency**: `npm run build` prüft
+jetzt auch `functions/` (`tsc -p functions --noEmit`). Eigenes tsconfig, weil
+DOM- und Worker-Typen sich nicht mischen dürfen — gemischt kompilierte
+`localStorage` in einer Function.
 
-- **Erstlauf:** nach dem Intro die sechs Startzeichen nacheinander.
-- **Wachstum:** das neue Zeichen vor der *nächsten* Sitzung. Der Lauf beginnt
-  nur bei „Runde 1 und noch nichts gespielt"; deshalb unterbricht ein mitten in
-  der Sitzung dazugewachsenes Zeichen die laufende Sitzung nicht. Die
-  Ankündigungszeile im Feedback bleibt unberührt.
-- **Wiederholen:** der leise Link „Review the sounds" auf dem Start-Screen führt
-  zu einem Gitter der aktiven Zeichen; ein Tipp öffnet die Karte, ohne
-  Pflicht-Echo-Check.
+### 3e. Passkeys hängen an der Domain — was das für `morse-lab.com` heißt
 
-**Bestandsnutzer bekommen keinen Zwangsdurchlauf.** `introducedCharacters` ist
-additiv, aber sein Default ist bewusst kein konstanter: fehlt das Feld,
-entscheidet die Vorgeschichte. Wer schon geübt hat (irgendein Versuch > 0), gilt
-als vollständig eingeführt; ein Stand ohne einen einzigen Versuch fängt vorn an.
+Ein Passkey gilt nur für die **RP ID**, unter der er angelegt wurde. Die RP ID
+leitet sich hier aus der Anfrage ab, gegen eine gelesene Liste
+(`functions/_lib/rp.ts`): `localhost`, `*.pages.dev`, `morse-lab.com`,
+`www.morse-lab.com`. Der Host-Header allein darf das nicht entscheiden — ein
+Client bestimmt ihn frei; was nicht auf der Liste steht, bekommt keine Optionen
+(400, kein stiller Rückfall auf einen Standardwert).
 
-## 3b. Die Marke — was jetzt gilt und wer gewinnt
+**Die Folge, die vor dem DNS-Eintrag zu bedenken ist:** wer sich heute auf
+`projekt-morse.pages.dev` einen Passkey anlegt, kann sich damit auf
+`morse-lab.com` **nicht** anmelden. Das ist WebAuthn, kein Fehler hier. Sobald
+die Custom Domain die kanonische ist, gehört dorthin eine Weiterleitung von
+pages.dev (dann entsteht das Problem nicht) — oder ein Hinweis für die Handvoll
+früher Konten. **Entscheidung offen, gehört vor den DNS-Eintrag.**
 
-**Rangfolge.** Führend ist
-[`docs/brand/Morse_Lab_Brand_Guidelines_1.1.html`](./docs/brand/Morse_Lab_Brand_Guidelines_1.1.html).
-[`docs/CI.md`](./docs/CI.md) ist die deutsche Kurzfassung und nachrangig; sie
-trägt einen Kopf, der die drei Stellen benennt, an denen sie überholt ist
-(Token-Namen, Bildmarke, Rampe). Beides steht auch in CLAUDE.md §2.9.
+`127.0.0.1` steht bewusst *nicht* auf der Liste: eine RP ID muss ein Domainname
+sein, eine IP-Adresse lehnt der Browser ab. Beim ersten Browser-Durchlauf
+aufgefallen.
 
-**Drei Addenda von Fable gehen 1.1 vor** (Notion-Log #41):
+### 3f. Die Bildmarke — Schritt 1 ist NICHT erledigt
 
-- **(a) Kein Live-Sync im Standard-Hörtraining.** Der „visuelle Zwilling" aus
-  1.1 §12 ist **nicht gebaut** und soll es hier auch nicht werden — er
-  widerspräche CLAUDE.md §2.2. Er kommt später als opt-in „Visual practice".
-  Damit bleibt die Barrierefreiheits-Zusage aus §12 vorerst offen; das ist eine
-  bewusste Schuld, keine vergessene.
-- **(b) `#92400e`** ist kein Token aus §13, sondern der interne
-  hover/active-Shade von Amber (`--amber-deep`), nie eine eigene Fläche.
-- **(c) Der Play-Kreis bleibt während der Wiedergabe bedienbar** — er hat gar
-  keinen `disabled`-Zustand mehr.
+**Was gefordert war** (Notion-Log #53/54): die drei Owner-Dateien aus
+`~/Downloads/assets/` (`morse-lab-mark.svg`, `morse-lab-mark-inverse.svg`,
+`morse-lab-appicon.svg`) unverändert nach `docs/brand/assets/` übernehmen und
+Favicon, App-Icons (192/512/maskable/apple-touch) und das About-Lockup aus
+**diesen** Dateien ableiten statt aus der `logo.py`-Konstruktion.
 
-**Das Logo ist gerechnet, nicht gezeichnet.**
-[`docs/brand/logo.py`](./docs/brand/logo.py) hält die Zahlen aus §3 als
-Konstanten und leitet den Rest ab; es druckt beim Lauf die Gegenproben mit
-(Knopf 20,695 über dem Lager, gedrehte Hebellänge exakt 92,000). Wer die Marke
-ändern will, ändert die Konstanten und lässt neu bauen — nicht umgekehrt.
+**Warum es nicht passiert ist:** der Ordner existiert in dieser Umgebung nicht.
+Diese Session läuft in einem flüchtigen Remote-Container, in dem nur das Repo
+liegt — `~/Downloads/` gibt es dort nicht, und das ganze Dateisystem wurde nach
+den drei Dateinamen durchsucht, ohne Treffer.
 
-Das Favicon ist bewusst **nicht** der Taster, sondern die Fallback-Marke: unter
-24 px zerfällt er, und ein Favicon ist 16–32 px groß (§3).
+**Was stattdessen getan wurde:** nichts geraten und nichts ersatzweise
+konstruiert. `docs/brand/logo.py` sagt jetzt in der ersten Zeile, dass es nicht
+mehr die Quelle der Bildmarke ist, wer es ist, und dass die Dateien noch
+fehlen. Favicon und Icons stehen unverändert auf dem alten Stand; der
+Punkt+Pille-Fallback für < 24 px ist ohnehin unberührt.
 
-**Die eine Regel, die am leichtesten bricht:** Amber nie zweimal in einer View.
-Sie ist deshalb nicht nur beschrieben, sondern geprüft — siehe §4.
+**Was fehlt, wenn die Dateien da sind** — eine kleine, klar umrissene Aufgabe:
 
-## 3c. Die Klang-Variabilität — erst stabil, dann variabel
+1. Die drei SVGs unverändert nach `docs/brand/assets/` legen (kanonische
+   Originale, nicht anfassen).
+2. `public/logo-key.svg` (About-Lockup) und die Icons unter `public/icons/`
+   daraus rendern — Chromium wie gehabt, `icon-192`, `icon-512`,
+   `icon-maskable-512`, `apple-touch-icon`.
+3. **Maskable mit Safe-Zone prüfen:** der sichtbare Inhalt muss innerhalb des
+   inneren Kreises von 80 % Kantenlänge liegen, sonst beschneidet Android.
+4. Das Favicon bleibt der Punkt+Pille-Fallback (unter 24 px zerfällt der
+   Taster, 1.1 §3) — das ist eine bestehende Entscheidung, keine offene Frage.
 
-**Warum:** HVPT (high variability phonetic training) — wer immer denselben
-620-Hz-Ton hört, lernt Kategorien, die im Funkalltag nicht generalisieren.
-**Aber:** Variabilität erst, wenn der Grundstock sitzt. Die Stufe leitet sich
-deshalb rein aus dem Fortschritt ab (Größe des aktiven Zeichensatzes), wie die
-Wachstumsregel; alles in `engine/variability.ts`, Zufall als Parameter, Werte
-als benannte Konstanten.
+## 3g. Backend & Datenschutz — was gespeichert wird, und was nicht
 
-- **Stufe 0** (bis 7 aktive Zeichen): fest 620 Hz — exakt wie vorher, kein
-  Würfeln.
-- **Stufe 1** (ab 8): Tonhöhe **einmal pro Sitzung** aus 560–680 Hz, dann fest.
-- **Stufe 2** (ab 12): Tonhöhe **pro Abfrage** aus 520–720 Hz; zusätzlich
-  variiert das Gesamttempo pro Sitzung um ±10 % um den Sollwert.
-- **Stufe 3** (Timing-Imperfektion, QRN): **nicht gebaut**, nur als Konstante
-  mit Kommentar vorgesehen. Schwelle und Ausgestaltung sind offene
-  Notion-Entscheidungen — nicht hier erfinden.
+Der ehrliche Kern dieser Runde. Wer wissen will, was ein Konto über einen Nutzer
+weiß, findet hier die vollständige Antwort — und sie ist kurz.
 
-Fünf Regeln, alle getestet:
+**Was auf dem Server liegt** (das ganze Schema, `migrations/0001_accounts.sql`):
 
-1. **Das Zeichentempo bleibt immer 20 WPM.** Variieren dürfen nur die
-   Farnsworth-Pausen. `SessionSound` führt bewusst kein `characterWpm` — was
-   es nicht gibt, kann niemand versehentlich variieren.
-2. **Das Eyebrow zeigt immer die echte Tonhöhe der laufenden Abfrage**
-   (CLAUDE.md 2.6), im Training wie im Echo-Check.
-3. **Lernkarten und Echo-Check spielen immer den Sitzungs-Ton** — kein
-   Prompt-Jitter beim Erstkontakt; ein neuer Klang braucht einen Anker.
-4. **Eine Wiederholung derselben Abfrage behält ihren Ton**: gezogen wird pro
-   Prompt, nicht pro Abspielen. „Noch mal hören" wiederholt dasselbe Signal.
-5. **Statistik und Wachstumsregel sehen von alledem nichts**: gleicher
-   Antwortverlauf ergibt byte-gleichen Fortschritt, egal bei welchem Klang.
+| Tabelle | Inhalt | Was das über eine Person sagt |
+|---|---|---|
+| `users` | eine zufällige ID, ein Anlegedatum | dass es dieses Konto gibt |
+| `credentials` | der **öffentliche** Passkey-Schlüssel, seine ID, der Signaturzähler, die Transports | mit welchem Gerätetyp angemeldet wird |
+| `sessions` | Hash des Sitzungswerts, Ablauf, ggf. eine laufende WebAuthn-Challenge | dass gerade eine Sitzung offen ist |
+| `progress` | der Lernstand als JSON-Blob, plus `updated_at` | wie gut jemand Morse hört |
 
-Beim ersten Aktivwerden von Stufe 1 steht **einmalig** eine leise Zeile auf dem
-Start-Screen („From here on, the pitch varies between sessions — real signals
-do."). Das Flag (`variabilityNoticeSeen`, additiv) wird **sofort** geschrieben,
-wie `introSeen` — der Leerlauf-Schreiber käme bei einem schnellen Reload zu
-spät.
+**Was ausdrücklich NICHT gespeichert wird** — und zwar nicht „noch nicht",
+sondern als Entwurfsentscheidung:
 
-Der Player nimmt dafür eine optionale Frequenz **pro Wiedergabe** entgegen;
-das Timing entsteht pro Sitzung statt als Modul-Konstante. An der Audio-Uhr
-und am Planer hat sich nichts geändert.
+- **Keine E-Mail-Adresse.** Es gibt kein Feld dafür.
+- **Kein Name und kein Anzeigename.** Auch nicht optional.
+- **Kein Passwort und kein Passwort-Hash.** Es gibt keine Passwörter.
+- **Keine IP-Adresse, kein User-Agent, kein Login-Zeitpunkt.** Kein
+  Zugriffsprotokoll.
+- **Keine Analytics, keine Third-Party-Aufrufe, kein Ad-Tech**
+  (CLAUDE.md 2.5, unverändert).
+- **Genau ein Cookie**, und der ist funktional notwendig: die Sitzung. HttpOnly,
+  Secure, SameSite=Lax. Kein Tracking-Cookie, kein Consent-Banner nötig.
 
-## 3d. Das Gehäuse — die Entscheidungen dieser Runde
+**Der private Schlüssel des Passkeys verlässt das Gerät nie.** Das ist WebAuthn:
+der Server hält nur den öffentlichen Teil. Ein Leck der Datenbank gibt niemandem
+Zugang zu einem Konto — und wegen der gehashten Sitzungswerte (§3c) auch keine
+laufende Sitzung.
 
-**Kein Router, keine URL-Zustände.** Vier Orte, ein `useState` in `App.tsx`
-(`view` + `reviewing` + `menuOpen`). Ein Router wäre eine neue Abhängigkeit
-ohne zweiten Bedarf (CLAUDE.md 3); die Konsequenz — ein Reload landet immer
-auf Practice — ist für eine Übungs-App richtig, nicht nur billig.
+**Löschen ist vollständig und liegt beim Nutzer** (Art. 17 DSGVO):
+„Delete account and data" im Account-Screen entfernt Lernstand, Passkeys,
+Sitzungen und das Konto — vier ausdrückliche `DELETE` in einem `batch`, nicht
+über `ON DELETE CASCADE` allein: eine Löschpflicht darf nicht an einem Pragma
+hängen. Im Browser-Durchlauf gegengelesen, auch auf Datenbank-Ebene: `users`,
+`credentials` und `progress` stehen danach auf 0 (§4).
 
-**Das Menü ersetzt den Screen, es überlagert ihn nicht.** Solange es offen
-ist, rendert App.tsx nichts anderes. Damit gibt es hinter dem Dialog nichts
-Fokussierbares und keine nachgebaute Fokus-Falle — die häufigste
-Barrierefreiheits-Baustelle von Overlays entfällt per Konstruktion.
-Fokusführung: beim Öffnen auf den ersten Eintrag, X und Esc schließen, danach
-steht der Fokus wieder auf dem Trigger; bei einem Ortswechsel setzt der neue
-Screen sein eigenes Ziel (Überschrift bzw. Play-Kreis). Der aktuelle Ort
-trägt den Amber-Punkt — das eine Amber der Menü-View — **und** `aria-current`
-(nie Farbe allein, CLAUDE.md 6).
+**Der lokale Lernstand bleibt beim Löschen erhalten.** Das Konto war ein
+Sync-Ziel, nicht der Ort der Daten. Wer sein Konto löscht, übt weiter — nur
+ohne Abgleich. Die Bestätigung sagt das ausdrücklich, damit niemand „Löschen"
+für „meinen Fortschritt wegwerfen" liest.
 
-**Die Kopfzeile steht nur auf dem Start-Screen und den Gehäuse-Screens**
-(Progress, About, Klang-Auswahl). Mitten in einer Sitzung, im Lernmodus, in
-der Einführung und auf dem Abschluss-Screen gibt es sie nicht — dort wäre ein
-Menü eine Ablenkung. Folge, als Setzung für Fables Blick: **beim ersten Play
-einer Sitzung verschwindet die Kopfzeile** (der Screen rückt nach oben). Das
-ist gewollt („hide what can't be used", 1.1 §7), aber es ist ein sichtbarer
-Sprung genau beim Start des Tons — wenn das stört, wäre die Alternative, die
-Kopfzeile über die ganze Sitzung stehen zu lassen und nur den Trigger zu
-verbergen.
+**Ohne Konto verlässt nichts das Gerät.** Nachgewiesen und nicht bloß
+zugesichert: die App löst ohne Konto keinen einzigen `/api/`-Aufruf aus, auch
+nicht beim Start (der Account-Screen fragt erst, wenn man ihn öffnet — und nur,
+wenn auf diesem Gerät je angemeldet wurde). Der About-Screen sagt jetzt genau
+das, statt wie vorher „nothing is sent anywhere" zu behaupten, was mit Konten
+für einen Teil der Nutzer falsch wäre (CLAUDE.md 2.6).
 
-**Der Lernmodus startet nur noch in der Practice-View.** Die
-`learnDue`-Bedingung kennt jetzt `view` und `menuOpen`: ohne das hätte ein
-fälliger Erstlauf seinen Karten-Ton in den Progress-Screen hineingespielt.
+**Wo die Daten liegen:** Cloudflare D1. Der Standort einer D1-Datenbank ist
+nicht frei wählbar; sie wird in einer Region angelegt, die Cloudflare bestimmt.
+**Wenn EU-Datenresidenz zugesichert werden soll, ist das eine offene Frage vor
+dem Anlegen** (§5e) — sie gehört in die Datenschutzerklärung, die es noch nicht
+gibt. Nicht hier erfunden.
 
-**„Learn the sounds" statt „Review the sounds".** Der Menü-Eintrag ist der
-einzige Einstieg in die Klang-Auswahl (der Start-Screen-Link ist weg,
-Redundanz vermieden), und er soll auch beim Erstkontakt nicht nach
-Wiederholung klingen. Die Überschrift des Pickers heißt mit; die
-Variabilitäts-Zeile auf dem Start-Screen bleibt unberührt.
-
-**Die Build-Kennung ist die Asset-Version, kein Datum.** Der bestehende
-SW-Inject-Schritt in `vite.config.ts` stempelt dieselbe deterministische
-Version (`sha256(assets).slice(0,12)`), die den Service-Worker-Cache benennt,
-zusätzlich in `<meta name="build">`; der About-Screen liest sie von dort. Im
-Dev-Server steht ehrlich „dev". Bewusst kein Datum und kein Commit-Hash: die
-Kennung hängt nur am Inhalt, ein Doku-Deploy ändert sie nicht — die
-Eigenschaft „Doku-Deploy erzeugt keinen Cache-Wechsel" (§5a) bleibt erhalten.
-Angenehmer Nebeneffekt: About-Screen und SW-Cache-Name sind per Konstruktion
-dieselbe Zahl — beim Debuggen genügt ein Blick.
-
-**Das About-Lockup ist zusammengesetzt, nicht `logo-lockup.svg`.** Ein SVG in
-einem `<img>` darf die Schriften der Seite nicht laden — die Wortmarke stünde
-im Georgia-Fallback. Deshalb Taster-SVG (`logo-key.svg`) plus HTML-Wortmarke
-in echtem Newsreader daneben (1.1 §3, Marke links). Der Amber-Knopf ist das
-eine Amber der View.
-
-**Amber-Budget je View:** Menü = Ortspunkt, About = Taster-Knopf,
-Progress = **kein** Amber (Zahlen sind Fakten, kein Akzent nötig),
-Start-Screen unverändert in Ruhe ohne Amber.
-
-**Der Progress-Screen erfindet keine Werte.** Keine Quote ohne Versuche, kein
-Median ohne richtige Antwort — dann steht ein Strich (CLAUDE.md 2.6). Die
-Reaktionszeit trägt die Fußnote aus der Aufgabenstellung wortgleich. Der
-leere Zustand (noch nie geantwortet) ist eine Zeile, die sagt, was hier
-erscheinen wird; die Kopf-Zeilen (Today/Characters/Sessions) stehen auch dann,
-denn sie sind Fakten. Keine Balken, Gauges oder Medaillen (1.1 §7).
+**Was noch fehlt, bevor echte Nutzer Konten anlegen:** eine
+Datenschutzerklärung. Der Inhalt steht praktisch schon in diesem Abschnitt, aber
+sie zu formulieren (und zu verlinken) ist eine Aufgabe für sich — und in
+Deutschland eine mit Rechtsfolgen, also keine, die ein Agent nebenbei schreibt.
 
 ## 4. Was nachgewiesen ist (und wie)
 
-**Aus dieser Runde (Gehäuse + Review-7-Fixes):**
+**Aus dieser Runde:**
 
-- **`npm test` → 114/114 grün, `npm run build` sauber.** Keine neuen Tests:
-  die Runde hat `src/engine/` nicht angefasst — das Gehäuse rendert nur und
-  liest bestehende, getestete Funktionen (`dayAccuracy`, `hitRate`,
-  `medianReaction`). Bundle **176,26 kB roh / 56,23 kB gzip** (vorher 171,30 /
-  54,92), CSS 10,90 / 2,67 (vorher 8,26 / 2,28). **Keine neue Abhängigkeit.**
-- **Das Gehäuse ist im Browser durchgespielt** (Headless Chromium gegen
-  `vite preview`, 390 px) — 27 von 27 Prüfungen: Wortmarke in Newsreader 400,
-  Trigger 44×44, kein „Review the sounds" mehr, Fokus beim Öffnen auf dem
-  ersten Eintrag, vier Einträge, Esc schließt mit Fokus zurück auf dem
-  Trigger, Ortsmarker wandert mit (Practice → Progress → Learn the sounds),
-  Progress-Überschrift bekommt den Fokus, Today-/Gesamt-Zeilen und alle acht
-  Tabellenzeilen stimmen gegen einen präparierten Stand, Fußnote wortgleich,
-  About zeigt Build-Kennung (= Asset-Version), Offline- und Lokal-Zeile,
-  Rückweg zu Practice setzt den Fokus auf den Play-Kreis, und ein frischer
-  Nutzer sieht im Progress die eine Leerzustands-Zeile statt der Tabelle.
-  (Eine 28. Prüfung schlug fehl, weil die *Erwartung* falsch war: „Sessions"
-  zählt die beim Laden begonnene Sitzung mit — `beginSession` zählt den
-  Beginn, so ist es spezifiziert.)
-- **Amber nie zweimal (1.1 §4), am gerenderten Ergebnis gezählt:** Menü genau
-  eins (der Ortspunkt), Progress null, Start-Screen in Ruhe null. About trägt
-  sein Amber im Taster-SVG (der Zähler sieht nur CSS-Farben; das SVG ist per
-  Augenschein genau ein Amber-Knopf).
-- **Die Review-7-Maße sind im Browser nachgemessen:** Muster-Lücke 16 px,
-  „Try it"/„Next" 64 px hoch.
-- **Screenshots neu gezogen** (alle bei 390 px): `menu-390.png` und
-  `progress-390.png` neu; `intro-390.png`, `learn-card-390.png`,
-  `training-390.png` neu gezogen, weil die Review-7-Maße sie überholt hatten.
-- **Timing unberührt:** weder Player noch Engine sind angefasst; auf dem
-  Eingabepfad einer Übung ist nichts dazugekommen (das Gehäuse existiert dort
-  gar nicht — die Kopfzeile verschwindet mit dem ersten Play).
+- **`npm test` → 143/143 grün** (114 vorher, **29 neu** für den Sync). Darunter
+  die drei Kanten aus der Vorgabe (frisches Gerät + volles Konto, voller lokaler
+  Stand + leeres Konto, beide voll), der Nachweis, dass pro Zeichen der
+  Datensatz *als Ganzes* wandert, dass die Funktion ihre Eingaben nicht anfasst
+  und idempotent ist, sowie sechs Tests für die Grenze „gelernt vs. gespeichert".
+- **`npm run build` → sauber**, und er prüft jetzt zwei Projekte (`src/` und
+  `functions/`). Bundle **187,00 kB roh / 59,04 kB gzip** (vorher 176,26 /
+  56,23 — Delta **+10,74 / +2,81**), CSS **11,40 / 2,74** (vorher 10,90 / 2,67).
+  `@simplewebauthn/server` ist **nachweislich nicht im Bundle**.
+- **Der ganze Konto-Weg ist im Browser durchgespielt — 42 von 42 Prüfungen.**
+  Headless Chromium gegen `wrangler pages dev` mit lokaler D1, Passkeys aus dem
+  virtuellen Authenticator (CDP `WebAuthn.enable` +
+  `addVirtualAuthenticator`, ctap2/internal/resident). Abgedeckt:
 
-**Aus den Runden davor (unverändert gültig):**
+  - **Local-first, negativ geprüft:** ohne Konto löst die App **keinen einzigen**
+    `/api/`-Aufruf aus (mitgezählt, nicht vermutet).
+  - **Menü:** fünf Einträge, Account an vierter Stelle; Fokus landet auf der
+    Account-Überschrift.
+  - **Abgemeldet:** die Zeile zum Ist-Zustand, beide CTAs, **genau ein Amber**
+    in der View (am gerenderten Ergebnis gezählt).
+  - **Passkey anlegen:** der Authenticator hält genau einen Resident-Passkey für
+    `localhost`; der Server hat danach den lokalen Stand (acht aktive Zeichen,
+    K mit 40 Versuchen); die Statuszeile sagt „Synced · just now".
+  - **Sitzung:** HttpOnly + Secure + SameSite=Lax im Browser abgelesen,
+    `document.cookie` enthält sie **nicht**. Lokal steht nur `{linked,
+    lastSyncedAt}` — kein Token.
+  - **Abmelden:** `/api/progress` antwortet 401, der lokale Stand ist unberührt.
+    **Wieder anmelden** mit demselben Passkey stellt die Sitzung her.
+  - **Eine ganze echte Sitzung** (20 Runden, echte Töne, echte Antworten), dann
+    **Push am Sitzungsende**: `updated_at` wächst, und der hochgeschobene Stand
+    ist byte-genau der lokale (100 Versuche hier, 100 dort).
+  - **Merge auf einem zweiten „Gerät"** (zweiter Browser-Kontext, der Passkey
+    des ersten hineinkopiert — genau das, was ein synchronisierter Passkey tut):
+    aktiver Satz vom jüngeren Stand (8 Zeichen), pro Zeichen der Datensatz mit
+    mehr Versuchen (M = 60 lokal schlägt 40 im Konto; K = 40 aus dem Konto),
+    ein nur lokal bekanntes Z bleibt, `introducedCharacters` ist die
+    Vereinigung, der Sitzungszähler sinkt nicht, Einmal-Merker fallen nicht
+    zurück — und der zusammengelegte Stand geht sofort zum Server zurück.
+  - **Der Zeitstempel-Fund, als Prüfung festgehalten:** das bloße Öffnen der App
+    setzt den Lern-Zeitstempel nicht hoch (gemessen: 60 Minuten alt geblieben).
+  - **`/api/*` blockiert (der local-first-Beweis):** die App startet
+    vollständig, die Einführung läuft, der Lernmodus läuft, eine echte Runde
+    mit Ton läuft durch, der Fortschritt wird gespeichert und überlebt einen
+    Reload, der Progress-Screen funktioniert. „Create a passkey" gibt **eine
+    ruhige Zeile** („No connection to the server. Your progress stays on this
+    device.") statt eines Modals — ohne Ausrufezeichen und ohne Schuldton. Kein
+    unbehandelter Skriptfehler auf dem ganzen Weg.
+  - **Löschen (DSGVO):** die Bestätigung sagt ausdrücklich, dass der lokale
+    Stand bleibt; **kein Amber und kein Rot** in der Bestätigung; danach 401,
+    der lokale Lernstand ist vollständig erhalten, und mit dem gelöschten
+    Passkey ist **keine Anmeldung mehr möglich** („No account found for that
+    passkey.", im Ruhe-Ton). **Auf Datenbank-Ebene gegengelesen: `users`,
+    `credentials` und `progress` stehen danach auf 0.**
+- **Nebenbefund, sofort behoben, weil er mit Sync ein echter Fehler geworden
+  wäre:** der Service Worker cachte `/api/*` per stale-while-revalidate. Eine
+  sitzungsgebundene Antwort im Cache wäre ein fremder Lernstand für den nächsten
+  Aufruf. `/api/` ist jetzt ausgenommen — zwei Riegel, denn jede API-Antwort
+  trägt zusätzlich `Cache-Control: no-store`. (Kein FINDINGS-Eintrag: das
+  Problem entsteht *durch* diese Runde, es war keins vorher.)
+- **Timing-Budget: unberührt.** Weder Player noch Engine-Timing sind angefasst.
+  Auf dem Eingabepfad einer Übung ist nichts dazugekommen — der Push liegt am
+  *Ende* einer Sitzung, wenn kein Ton mehr läuft und keine Reaktionszeit mehr
+  gemessen wird, und `pushProgress` kehrt ohne Konto sofort um. Das eine neue
+  Stück Rechnung auf dem Schreibpfad (`learningRevision`, eine Summe über eine
+  Handvoll Zeichen) läuft im Leerlauf-Schreiber, nicht bei der Eingabe.
+- **Screenshots** (390 px): `account-signed-out-390.png`,
+  `account-signed-in-390.png`. Beim Ziehen ist die Fallgrube aus §7 wieder
+  zugeschlagen — der Zeiger stand nach dem Klick genau auf „Sign out", das dann
+  im Hover-Amber stand. Maus wegbewegen, dann erst Bild; zusätzlich prüft jetzt
+  eine Prüfung, dass die eingeloggte View **kein** Amber trägt.
 
-- **`npm test` → 114/114 grün** (101 vorher, 13 neu für die Variabilität:
-  Bandgrenzen direkt angefahren statt statistisch getroffen, Stufenwechsel,
-  Konstanz über Runden, Byte-Gleichheit des Fortschritts bei verschiedenen
-  Klängen). Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
-  prüft weiter gegen den Standard, nicht gegen die Implementierung. Die
-  Wachstums-Tests kippen jede Bedingung einzeln; Zufall kommt überall als
-  Parameter herein.
-- **`npm run build` → sauber.** Bundle **171,30 kB roh / 54,92 kB gzip**
-  (vorher 170,10 / 54,47), CSS 8,26 kB / 2,28 kB. **Keine neue Abhängigkeit.**
-- **Die Variabilität ist im Browser durchgespielt** (instrumentierte
-  Oszillatoren): Stufe 0 unverändert 620 Hz ohne Zeile; Stufe 1 zeigt die
-  Zeile genau einmal, hält den Ton über die Runden (Oszillator-Frequenz ==
-  Eyebrow, 667 Hz) und zieht in der nächsten Sitzung neu (642 Hz); Stufe 2
-  zieht pro Abfrage (4 Runden, 4 verschiedene Töne, Oszillatoren decken sich
-  mit dem Eyebrow). Beim „einmalig" der Zeile gilt für künftige Tests: ein
-  `addInitScript`-Seed läuft bei **jeder** Navigation, auch beim Reload — wer
-  das vergisst, testet seinen eigenen Seed statt der App.
-- **Die Review-6-Maße sind im Browser nachgemessen:** Antworttasten 64 px,
-  Shell-Padding `32/24/28`, Strich-Pille 48×16, Lernkarten-Buchstabe in
-  Weight 300 (Screenshot). Screenshots in `docs/screenshots/` neu gezogen.
-- **Amber nie zweimal in einer View (1.1 §4) — 12 von 12 Ansichten.** Geprüft
-  wird am *gerenderten* Ergebnis, nicht am Stylesheet: das Skript geht jedes
-  sichtbare Element durch und zählt Fläche, Rahmen und Text in `--amber` oder
-  `--amber-deep`, verschachtelte Treffer zusammengefasst. Abgedeckt sind beide
-  Intro-Schritte, die Lernkarte mit laufendem und mit beendetem Ton, der
-  Echo-Check in drei Phasen, das Training in vier Phasen und die
-  Wiederholen-Auswahl. Der Lauf hat dabei zwei echte Doppelbelegungen gefunden,
-  bevor sie gefixt waren.
-- **Der Play-Kreis füllt sich und bleibt bedienbar** — im Browser nachgemessen:
-  vor dem Ton transparent mit ink-Rand, während des Tons `rgb(180, 83, 9)` in
-  Fläche und Rand mit paper-Dreieck, danach zurück; Übergang 0,15 s;
-  `disabled` durchgehend `false`.
-- **Wachstum im Browser durchgespielt:** Stand präpariert, dem genau eine
-  richtige Antwort fehlt → Ankündigung erscheint („The set grows: P joins from
-  the next round."), Gitter wächst auf 7, `activeCharacters` enthält P,
-  Sperre auf 0, alles überlebt den Reload.
-- **Offline im Browser durchgespielt** (Headless Chromium gegen `vite preview`):
-  Worker kontrolliert die Seite; offline neu geladen rendert die App
-  vollständig, Schriften kommen aus dem Cache, eine komplette Runde läuft
-  offline durch (Audio braucht kein Netz), der Fortschritt wird gespeichert.
-- **Timing-Budget:** unverändert gültig gemessen am Loop-Stand (52 Töne, keiner
-  in der Vergangenheit geplant, Quantisierung 0,023 ms bei 44,1 kHz, Budget
-  < 1 ms). Diese Session hat am Player nichts geändert.
+**Aus den Runden davor (unverändert gültig):** ARRL-Referenz („PARIS bei 5 WpM
+= 12 s") prüft gegen den Standard statt gegen die Implementierung; Amber nie
+zweimal in einer View über zwölf Ansichten am gerenderten Ergebnis gezählt; das
+Gehäuse mit 27 von 27 Prüfungen; Klang-Variabilität mit instrumentierten
+Oszillatoren; Wachstum, Lernmodus und Einführung im Browser durchgespielt;
+Offline-Betrieb und der SW-Update-Pfad auf Produktion belegt; Timing-Budget
+gemessen (52 Töne, keiner in der Vergangenheit geplant, Quantisierung 0,023 ms
+bei 44,1 kHz, Budget < 1 ms).
 
-Nicht nachgewiesen, ehrlich benannt:
+**Nicht nachgewiesen, ehrlich benannt:**
 
-- **Der Trainings-Screen ist gegen die Referenzwerte geprüft** — im Browser bei
-  390 px, in beiden Zuständen (Frage und Auflösung). Screenshot im Repo.
-- **Der Lernmodus ist im Browser durchgespielt** — lokal und danach noch einmal
-  auf der Produktions-URL, 18 von 18: die Karte kommt nach dem Intro, das Muster
-  erscheint erst nach dem Ton (vorher 0 Formen, nachher 3), die Antwortoptionen
-  wachsen von einer auf sechs, der Durchlauf persistiert, „Skip for now" hält
-  über einen Reload, ein Bestandsstand bekommt keinen Durchlauf, das Wiederholen
-  öffnet Karten ohne Echo-Check, und ein gewachsenes `P` wird vor der Sitzung
-  eingeführt. **Darunter der Beleg, dass Echo-Antworten die Statistik nicht
-  anfassen:** nach sechs Karten `characters={}`, `recentAnswers=0`,
-  `day.attempts=0`.
-- **Offline auch mit dem Lernmodus** — auf Produktion mit abgeschaltetem Netz
-  neu geladen: die Einführung rendert aus dem Cache, die Lernkarte öffnet, der
-  Ton läuft und das Muster steht. Audio braucht kein Netz.
-- **Die Einführung ist im Browser durchgespielt** — Erststart zeigt sie, die
-  Copy stimmt wortgleich, der Fokus wandert beim Wechsel auf die Überschrift und
-  nach „Begin"/„Skip intro" auf den Play-Kreis, beide Wege merken sich den
-  Abschluss über einen Reload hinweg, und ein Stand von vor diesem Feld sieht
-  sie genau einmal, ohne Statistik zu verlieren: 11 von 11.
-- ~~Der SW-Update-Pfad ist nicht durchgespielt~~ **Inzwischen belegt** (`435f926`),
-  mit zwei echten Builds nacheinander vom selben Origin (Headless Chromium):
-  Deploy 1 füllt `projekt-morse-08c43d9481d3`; nach dem Dateitausch zeigt ein
-  normaler Reload sofort den neuen Stand (Navigation ist Netz-zuerst), der neue
-  Worker installiert als `…-72f8a009ac93`, `activate` räumt den alten Cache weg
-  — am Ende existiert genau einer, der neue — und der neue Stand kommt danach
-  auch offline aus dem neuen Cache. **Auf Produktion wiederholt und bestanden**,
-  inzwischen zweimal — die Zahlen stehen in §5a.
-- **Kein Hörtest, kein Screenreader-Durchgang, keine echte Hardware** — alles
-  unverändert offen und weiterhin die wichtigsten menschlichen Prüfungen.
-  Fürs Installieren als PWA gilt dasselbe: auf einem echten Telefon testen.
+- **Passkeys auf echter Hardware sind nicht getestet.** Der virtuelle
+  Authenticator ist ein sehr guter Stellvertreter für das Protokoll, aber er ist
+  kein Touch ID, kein Windows Hello und kein YubiKey. Insbesondere ungetestet:
+  wie der Dialog aussieht, wenn `userName` überall „Morse Lab" heißt (§5f), und
+  ob ein Cloud-Passkey mit konstantem Signaturzähler durchläuft (spezifiziert
+  ist es; der Code nimmt den Wert, wie er kommt).
+- **Auf Produktion ist von dieser Runde nichts geprüft** — es gibt dort noch
+  keine D1 (§5e). Alles oben ist lokal gegen `wrangler pages dev` belegt.
+- **Kein Hörtest, kein Screenreader-Durchgang, keine echte Hardware, keine
+  PWA-Installation auf einem Telefon.** Unverändert offen und weiterhin die
+  wichtigsten menschlichen Prüfungen.
 - **Die Wachstums-Schwellen sind eine Setzung** (90/5/75/20/30). Ob sie gut
   *lehren*, zeigen erst Nutzungsdaten.
+- **Kein Lasttest, keine Missbrauchsbremse.** `/api/auth/*` ist ungedrosselt.
+  Cloudflare bringt Grundschutz mit, aber ein Rate-Limit ist keine Zeile, die
+  hier still dazukäme — siehe §5f.
 
-## 5a. Deployment: live auf Cloudflare Pages, mit Git-Anbindung
+## 5. Deployment und Betrieb
 
-**Produktions-URL: https://projekt-morse.pages.dev**
+### 5a. Cloudflare Pages (unverändert)
 
-Eingerichtet wie in der Entscheidung vorgesehen — Cloudflare Pages, Projekt
-`projekt-morse`, **mit Git-Anbindung** an `Erikemmer/projekt-morse`. Der
-bevorzugte Weg hat also geklappt; Direct Upload war nicht nötig.
+**Produktions-URL: https://projekt-morse.pages.dev**, Projekt
+`projekt-morse`, Git-Anbindung an `Erikemmer/projekt-morse`.
+Production-Branch `main`, Build `npm run build`, Output `dist`, keine
+Umgebungsvariablen, Preview-Deployments für alle Branches.
 
-**Einstellungen (stehen so im Projekt):**
-
-- Production-Branch: `main` · Build command: `npm run build` · Output: `dist`
-- Keine Umgebungsvariablen.
-- Preview-Deployments für alle Branches, PR-Kommentare an.
-
-**Warum es diesmal ging** — die drei Hinderungsgründe von vorher, nachgeprüft:
-
-1. Die Egress-Sperre gab es hier **nicht**: `api.cloudflare.com` war
-   erreichbar. Die frühere Beobachtung galt für die damalige Umgebung, nicht
-   für das Projekt.
-2. Es lag doch eine **gültige wrangler-OAuth-Sitzung** vor
-   (`~/Library/Preferences/.wrangler/config/default.toml`, Scope `pages:write`).
-   Darüber lief die Einrichtung per Pages-API.
-3. Die MCP-Connectoren des Cloudflare-Plugins waren **weiterhin nicht
-   autorisiert** (OAuth braucht eine interaktive Sitzung). Die Vermutung
-   „frische Session mit Plugin genügt" hat sich also *nicht* bestätigt —
-   getragen hat die schon vorhandene wrangler-Anmeldung.
-
-**Auf Produktion geprüft** (Playwright gegen die echte URL, Chrome):
-
-- **Seite rendert** — `h1` „Morse Lab", Antwort-Gitter mit 6 Tasten.
-- **Schriften lokal** — kein einziger Fremd-Origin-Request auf der ganzen
-  Seite. Genutzt und geladen werden Newsreader (h1) und IBM Plex Sans 400
-  (Fließtext), beide von `projekt-morse.pages.dev`. Die Schnitte 500/600
-  stehen auf `unloaded`, weil der erste Bildschirm sie nicht braucht — so
-  soll es sein, nicht etwa ein Fehler.
-- **Service Worker aktiv** — `activated`, kontrolliert die Seite, Scope `/`.
-  Genau ein Cache, `projekt-morse-72f8a009ac93`, mit 9 Einträgen.
-- **Eine Runde gespielt** — Play → Ton → „Which character was that?" →
-  Antwort → Urteil („Not quite — that was S.", die richtige Taste markiert) →
-  „Next character" → Fortschritt steht auf 1.
-- **Offline** — Netz aus, neu geladen: die App rendert vollständig aus dem
-  Cache.
-
-**SW-Update-Pfad auf Produktion: abgeschlossen und bestanden.** Der erste
-Deploy dieser Runde mit geänderten Assets (`8183ff1`) war der Anlass. Ein
-Browser stand vorher auf dem alten Stand, der Deploy lief dazwischen, dann ein
-ganz normaler Reload — kein Hard-Reload, kein Cache-Bypass:
-
-| | Cache | Worker |
-|---|---|---|
-| vorher | `projekt-morse-72f8a009ac93` | activated, kontrolliert |
-| nachher | `projekt-morse-a39e9b0e3234` | activated, kontrolliert |
-
-Am Ende existiert **genau ein** Cache, und zwar der neue — `activate` hat den
-alten weggeräumt. Danach offline gegengelesen: die Seite rendert vollständig
-aus dem neuen Cache. Damit ist der Pfad nicht mehr nur lokal, sondern auf der
-echten Auslieferung belegt. Die Vorbedingung dafür bleibt sichtbar in den
-Headern: Cloudflare liefert `sw.js` und das HTML mit
-`cache-control: public, max-age=0, must-revalidate`.
-
-### Custom Domain `morse-lab.com` — ein Handgriff fehlt
-
-Die Domain ist **an das Pages-Projekt gebunden** (`status: pending`,
-HTTP-Validierung) und liegt bei Cloudflare mit Cloudflare-Nameservern
-(`dion` / `paige`), Zone `2bef7122ee328f9197516d727b9929a2`, aktiv. Also kein
-fremdes DNS — die Auskunft aus der Aufgabenstellung trifft hier nicht zu.
-
-Trotzdem ist sie **noch nicht erreichbar**: die Zone hat keinen einzigen
-DNS-Eintrag, und die vorhandene wrangler-Anmeldung darf keinen anlegen — ihre
-Scopes enthalten `zone:read`, aber kein `dns_records:write`. Anlegen muss ihn
-also jemand mit DNS-Rechten:
+**Custom Domain `morse-lab.com` — ein Handgriff fehlt.** Die Domain ist an das
+Pages-Projekt gebunden (`status: pending`, HTTP-Validierung), liegt bei
+Cloudflare mit Cloudflare-Nameservern, Zone
+`2bef7122ee328f9197516d727b9929a2`, aktiv. Die Zone hat keinen einzigen
+DNS-Eintrag, und die frühere wrangler-Anmeldung durfte keinen anlegen
+(`zone:read`, kein `dns_records:write`):
 
 | Feld | Wert |
 |---|---|
@@ -589,198 +481,174 @@ also jemand mit DNS-Rechten:
 | TTL | Auto |
 
 Cloudflare flacht den Apex-CNAME selbst ab; ein A-Record ist nicht nötig.
-Sobald der Eintrag steht, validiert Pages von selbst und stellt das Zertifikat
-aus (wenige Minuten). `projekt-morse.pages.dev` bleibt daneben bestehen.
+**Vor diesem Schritt bitte §3e lesen** (Passkeys und Domainwechsel).
 
-Wer `www` auch will, legt denselben CNAME für `www` an — das war nicht
-gefordert und ist deshalb nicht passiert.
+### 5b. Der SW-Update-Pfad (unverändert belegt)
 
-### Cache-Wechsel
+Auf Produktion zweimal durchgespielt: ein normaler Reload zeigt sofort den
+neuen Stand (Navigation ist Netz-zuerst), der neue Worker installiert, `activate`
+räumt den alten Cache weg, am Ende existiert genau einer. Ein Deploy, der nur
+Dokumentation ändert, erzeugt **keinen** Cache-Wechsel — die Version leitet sich
+aus den gehashten Asset-Dateinamen ab. Das ist richtig so.
 
-**Beim Lernmodus-Deploy wiederholt** (Routine): `projekt-morse-112cb6b729ee` →
-`projekt-morse-cd711867d85c`, wieder genau ein Cache am Ende, der alte
-weggeräumt, danach offline der neue Stand.
+**Neu in dieser Runde:** `sw.js` hat sich geändert (die `/api/`-Ausnahme). Der
+Cache-Name hängt an den Assets, nicht am Worker-Inhalt — der Cache wechselt hier
+also über die geänderten Assets, und der neue Worker installiert wie immer. Es
+gibt keine `/api/`-Einträge aus der Vergangenheit, die aufzuräumen wären: vor
+dieser Runde gab es keine API.
 
-Ein Nebenbefund für die Zukunft: ein Deploy, der nur Dokumentation ändert,
-erzeugt **keinen** Cache-Wechsel — die Version leitet sich aus den gehashten
-Asset-Dateinamen ab (`sha256(assets).slice(0,12)`, siehe `vite.config.ts`).
-Das ist richtig so und kein Fehler.
-
-## 5b. Wo die Politur vom Mockup abweicht — drei Punkte für Fable
-
-Alle drei sind gemeldet und nicht still gelöst (CLAUDE.md 2, letzter Absatz).
-Jeder ist in einer Zeile zurückzudrehen, wenn das Mockup gewinnen soll.
-
-1. **Rechts oben steht die Runde, nicht die Restzeit.** Die Vorgabe sagt
-   „Restzeit/Runden". Eine mitlaufende Uhr baut Druck auf — genau das, was
-   dieses Produkt nicht tun soll (CLAUDE.md 2.8) — und der bisherige Text sagte
-   ausdrücklich „nothing here is on a clock". Deshalb `Round 3 / 20`.
-2. **Das Eyebrow ist phasenabhängig.** „Now playing · 620 Hz" steht nur da,
-   solange wirklich etwas spielt; sonst `Ready`, `Your turn` oder `Answer`,
-   jeweils mit derselben Tonhöhe daneben. „Now playing" über einem stummen
-   Bildschirm wäre eine falsche Behauptung (CLAUDE.md 2.6). Die Tonhöhe steht
-   immer da und ist zugleich der sichtbare Hinweis, dass dieser Modus über die
-   Ohren geht.
-3. **„Works offline once loaded." ist auf den Abschluss-Screen gewandert.** Die
-   Fußzeile trägt jetzt den Tagesstand, aber der Hinweis war in `435f926`
-   ausdrücklich als bleibend beschlossen — löschen wäre eine stille Auflösung
-   gewesen. Er steht jetzt am Ende jeder Sitzung.
-
-Zwei kleinere Setzungen, wo die Vorgabe offen war:
-
-- **Die Fußzeilen-Punkte fassen je vier Runden zusammen** (`ROUNDS_PER_GROUP`),
-  also fünf Punkte für zwanzig Runden. Zwanzig einzelne Punkte wären eine
-  Perlenkette zum Abzählen — und Abzählen ist hier das Gegenteil des Ziels.
-- **Die Hervorhebung einzelner Muster-Elemente in accent ist vorbereitet, aber
-  nicht gesetzt** (`.pattern-element[data-highlight]`). Es gibt keine Regel
-  dafür, welches Element wann hervorzuheben wäre; eine zu erfinden wäre eine
-  Produktentscheidung, keine Politur.
-
-Ein Punkt, an dem das Mockup und CLAUDE.md 6 sich berühren: der
-Trainings-Screen zeigt keinen erklärenden Text mehr. Dass der Modus auditiv
-ist, sagen jetzt die Einführung (die jeder einmal sieht) und die dauerhaft
-sichtbare Tonhöhe im Eyebrow; die ausführliche Beschreibung steht weiterhin
-für Screenreader in der Seite. Wenn Fable das für zu wenig hält, gehört eine
-sichtbare Zeile zurück.
-
-## 5c. Zwei Fragen aus dem Lernmodus an Fable
-
-1. **„Skip for now" merkt die Zeichen als vorgestellt.** Die Copy verspricht mit
-   „for now" streng genommen eine Wiedervorlage. Ich habe sie *nicht* wieder
-   vorgelegt: derselbe Bildschirm bei jedem Start wäre Druck (CLAUDE.md 2.8),
-   und erreichbar bleiben die Klänge über „Review the sounds". Wenn die
-   Wiedervorlage gewollt ist, ist es eine Zeile — dann sollte aber auch die
-   Copy dazu passen.
-2. **Der Ton der Karte läuft beim Öffnen von selbst.** Das ist so vorgegeben und
-   durch die Klick-Geste gedeckt, berührt aber die bisherige Hausregel „nichts
-   läuft von allein, jede Wiedergabe ist eine Nutzergeste" (Kommentarkopf in
-   `App.tsx`). Der Play-Kreis bleibt als selbstgesteuerter Weg daneben stehen,
-   die Regel aus CLAUDE.md 6 ist also gewahrt — die Hausregel ist es strenger
-   gelesen nicht mehr.
-
-## 5d. Wo Umsetzung und 1.1 auseinandergingen — durch Review 6 entschieden
-
-**Alle vier Punkte sind mit Review 6 (Notion-Log #43) geregelt und in
-`5193d22` umgesetzt:** (1) Strich 48×16 statt 52×16, (2) Lernkarten-Buchstabe
-Weight 300, (3) Seitenpadding 24, Blockabstand 32, Antworttasten 64,
-(4) das sichtbar-deaktivierte Antwort-Gitter bleibt — als **dokumentierte
-Ausnahme von §7**, der Kommentar steht am Gitter selbst (`App.tsx`, `Answers`)
-und an der CSS-Regel. Die benachbarten Maße aus FINDINGS.md 3 hat **Review 7
-(Notion-Log #46) geregelt und diese Runde umgesetzt** (`92501c1`):
-Muster-Lücke 16, CTAs 64, 28er auf die Skala, die 6-px-Punkte-Lücke bleibt
-absichtlich. Der ursprüngliche Wortlaut der vier Review-6-Punkte folgt als
-Kontext:
-
-Gefunden beim Umsetzen, **nicht** eigenmächtig geändert: alle vier liegen außerhalb
-der zehn Aufgabenpunkte, und drei davon würden Maße anfassen, die Fable im
-Mockup selbst gesetzt hat.
-
-1. **Der Strich ist 52 px breit, 1.1 §8 sagt 48.** Die Richtlinie definiert den
-   Strich als `3 u × 1 u` bei `u` = Punktdurchmesser; bei `u = 16` sind das
-   48 × 16. Implementiert sind 52 × 16 — so stand es in den verbindlichen
-   Mockup-Werten der Politur-Runde. Eine Zeile CSS, aber es ändert das
-   Erscheinungsbild jedes Musters.
-2. **Der Lernkarten-Buchstabe hat Gewicht 500, 1.1 §5 sagt Light 300.** Größe
-   (64 px) und Familie stimmen. 300 wäre deutlich zarter.
-3. **Die Abstände liegen teilweise neben der Skala aus 1.1 §6**
-   (4/8/12/16/24/32/48/64): der Screen hat 26 px seitliches Padding, 36 px
-   zwischen den Blöcken, 28 px unten, und die Tasten sind 60 px hoch. Auch das
-   sind Mockup-Werte. Die Token-Skala selbst ist inzwischen sauber (8/16/24).
-4. **Das Antwort-Gitter bleibt sichtbar-deaktiviert, während der Ton läuft** —
-   1.1 §7 sagt „no disabled-gray ghost rows — hide what can't be used". Auf der
-   Lernkarte habe ich das umgesetzt („Try it" erscheint erst nach dem Ton); beim
-   Antwort-Gitter wäre es ein Eingriff in den Kernloop: das Gitter ist der
-   Kontext der Frage, nicht eine abgeblendete Werkzeugleiste. Bewusst gelassen.
-
-Dazu eine Beobachtung ohne Handlungsbedarf: der Trainings-Screen hat in Ruhe
-**gar kein** Amber mehr — Fortschritt ist ink, die Punkte sind ink, der
-Play-Kreis wird erst beim Klingen amber. Das ist die Folge von „Amber ist
-rationiert" und liest sich sehr ruhig; falls dort dauerhaft ein Akzent stehen
-soll, ist das eine Design-Entscheidung, keine Korrektur.
-
-## 5. Entscheidungen: gefallen und offen
-
-**Gefallen und umgesetzt:** Zeichen-für-Zeichen, retrieval-only, EN-first,
-Design „Ruhe" (inkl. `--muted`-Korrektur), Wachstumsregel wie oben, PWA mit
-selbst gehosteten Schriften.
-
-**Beschlossen, aber nicht gebaut:** **Streak mit Freeze-Gnade** (CLAUDE.md §2.8).
-Die Persistenz ist dafür vorbereitet (additive Felder mit Defaults).
-
-**Offen, bewusst nicht angefasst:**
-
-- Kein Einstellungsdialog (Tempo, Tonhöhe, Rundenzahl fest in `settings.ts`).
-- HVPT vorbereitet, nicht umgesetzt (Konstanten benannt, nichts streut).
-- Nur Einzelzeichen; Fünfergruppen und Klartext fehlen.
-- Kein Dark Mode (Rollen stehen, kein `prefers-color-scheme`-Block; beim
-  Scharfschalten Kontrast prüfen).
-- Satzzeichen fehlen in `CHARACTER_ORDER` — bewusst, Entscheidung bei Bedarf.
-
-## 6. Umgebung und Werkzeuge
+### 5c. Lokal entwickeln — mit Backend
 
 ```bash
 npm install
-npm run dev        # Vite-Entwicklungsserver (ohne Service Worker)
-npm test           # Vitest, 64 Tests
-npm run build      # tsc --noEmit && vite build (injiziert SW-Precache)
-npm run preview    # dist ausliefern -- hier laesst sich die PWA testen
+npm run dev          # Vite, ohne Functions und ohne Service Worker
+npm test             # Vitest, 143 Tests
+npm run build        # tsc (src) && tsc (functions) && vite build
+
+# Mit Backend, lokal:
+npx wrangler d1 migrations apply morse-lab --local
+npm run build && npx wrangler pages dev --port 8788 --ip 127.0.0.1
+# -> http://localhost:8788   (NICHT 127.0.0.1: siehe §3e)
 ```
 
+Lokal legt Wrangler die Datenbank unter `.wrangler/state/` an; `database_id`
+spielt dabei keine Rolle, eine Cloudflare-Anmeldung auch nicht. `.wrangler/` ist
+ignoriert.
+
+### 5d. Umgebung und Werkzeuge
+
 - Node v22.22.2, npm 10.9.7. React 18, Vite 6, TypeScript 5.7 (`strict`),
-  Vitest 3 (**muss ≥ 3 bleiben**, sonst kollidieren zwei Vite-Typenbäume).
-- `defineConfig` kommt aus `vitest/config`; dieselbe Datei enthält jetzt auch
-  das Precache-Plugin — wer `sw.js` anfasst, liest beide Kopfkommentare.
+  Vitest 3 (**muss ≥ 3 bleiben**, sonst kollidieren zwei Vite-Typenbäume),
+  wrangler 4.
+- `defineConfig` kommt aus `vitest/config`; dieselbe Datei enthält das
+  Precache-Plugin — wer `sw.js` anfasst, liest beide Kopfkommentare.
 - **Browser-Durchläufe** (nicht committet, bewusst ad hoc): `npm i --no-save
   playwright-core`, Chromium unter
   `/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, Start mit
   `--autoplay-policy=no-user-gesture-required`. **Achtung:** jedes weitere
-  `npm install` räumt `--no-save`-Pakete wieder weg — vor jedem Durchlauf neu
-  installieren. Skripte müssen im Projektordner liegen (Modulauflösung), nicht
-  in /tmp.
-- Google Fonts ist in dieser Container-Umgebung ohnehin blockiert — seit dem
-  Selbsthosten egal, davor der Grund, warum Screenshots Georgia zeigten.
+  `npm install` räumt `--no-save`-Pakete wieder weg. Skripte müssen im
+  Projektordner liegen (Modulauflösung), nicht in `/tmp`.
 
-## 7. Fallgruben
+### 5e. D1 auf Produktion — der eine offene Handgriff
+
+**`/api/*` funktioniert auf Produktion noch nicht.** Es fehlt die Datenbank und
+ihre Bindung. `wrangler.toml` trägt sichtbar einen Platzhalter statt einer
+`database_id` — Absicht, kein vergessener Wert: diese Session hatte **keine
+Cloudflare-Anmeldung** (`wrangler whoami`: nicht authentifiziert), und ein
+geratener Wert wäre schlimmer als ein sichtbarer Platzhalter. Dokumentiert statt
+gehackt, wie in diesem Projekt üblich.
+
+```bash
+npx wrangler login                      # oder CLOUDFLARE_API_TOKEN
+npx wrangler d1 create morse-lab        # gibt die echte database_id aus
+#   -> in wrangler.toml eintragen, committen
+npx wrangler d1 migrations apply morse-lab --remote
+```
+
+Danach im Pages-Projekt `projekt-morse` die D1-Bindung **`DB`** auf die
+Datenbank `morse-lab` setzen (Settings → Functions → D1 database bindings),
+für **Production und Preview**. Bei Git-Anbindung liest Pages `wrangler.toml`
+nicht für die Bindung — das Dashboard entscheidet.
+
+**Solange das aussteht, ist der Zustand nicht kaputt, sondern der nachgewiesene
+local-first-Fall:** die App läuft vollständig, der Account-Screen sagt ruhig,
+dass kein Server erreichbar ist.
+
+### 5f. Drei Punkte für Fables Blick (Runde B)
+
+Gemeldet, nicht still gelöst (CLAUDE.md 2, letzter Absatz).
+
+1. **Der aktive Zeichensatz kommt vom jüngeren Stand — wie vorgegeben — und das
+   kann Wachstum kosten.** Szenario: Gerät A ist auf 12 Zeichen gewachsen und
+   hat gesynct; Gerät B übt danach mit 6 Zeichen und schiebt hoch. Dann gewinnt
+   B, und A's Wachstum ist im Konto weg. Die Zeichen-Statistik bleibt (die
+   Versuchs-Regel schützt sie) und `introducedCharacters` auch, niemand muss
+   also neu lernen — aber der Satz schrumpft, und die Wachstumsregel muss ihn
+   neu aufbauen. Die beiden Mechanismen aus §3b fangen die *wahrscheinlichen*
+   Fälle (frisches Gerät, gerade geöffnetes Gerät); dieser hier bleibt.
+   **Alternative, eine Zeile:** der längere aktive Satz gewinnt, oder die
+   Vereinigung. Das wäre aber eine Produktentscheidung — ein Satz, der nur
+   wachsen kann, ist auch ein Satz, den niemand mehr verkleinern kann.
+2. **Im Passkey-Dialog heißt jedes Konto „Morse Lab".** Es gibt keinen
+   Nutzernamen, und einen zu erfinden wäre schlimmer. Folge: zwei Konten auf
+   demselben Gerät sind in der Passkey-Liste des Betriebssystems nicht
+   unterscheidbar. Für V1 in Kauf genommen. Wenn das störend ist, wäre das
+   Minimum ein Zeitstempel im Label („Morse Lab · Sept 2026") — sichtbar, aber
+   immerhin kein personenbezogenes Datum.
+3. **`/api/auth/*` ist ungedrosselt.** Ein Rate-Limit ist bei Cloudflare
+   billig (WAF-Regel oder Rate Limiting Rules, keine Codezeile), aber es ist
+   eine Betriebsentscheidung mit einer Zahl darin, und Zahlen erfinde ich hier
+   nicht. Der Missbrauch, der real wäre: massenhaft `register/options` füllt
+   Flow-Zeilen. Sie verfallen nach fünf Minuten und werden beim nächsten
+   Zugriff derselben Sitzung weggeräumt — aber es gibt **kein** globales
+   Aufräumen (ein Vollscan auf dem Anfragepfad wäre schlimmer). Wenn das
+   Aufräumen gewollt ist, ist ein Cron Trigger der richtige Ort.
+
+### 5g. Ältere offene Punkte (unverändert)
+
+**Gefallen und umgesetzt:** Zeichen-für-Zeichen, retrieval-only, EN-first,
+Design „Ruhe", Wachstumsregel, PWA mit selbst gehosteten Schriften, das
+Gehäuse, Accounts.
+
+**Beschlossen, aber nicht gebaut:** **Streak mit Freeze-Gnade**
+(CLAUDE.md §2.8). Die Persistenz ist dafür vorbereitet.
+
+**Offen, bewusst nicht angefasst:** kein Einstellungsdialog; nur Einzelzeichen
+(keine Fünfergruppen, kein Klartext); kein Dark Mode (Rollen stehen, kein
+`prefers-color-scheme`-Block); Satzzeichen fehlen in `CHARACTER_ORDER`;
+Variabilitäts-Stufe 3 (QRN) nicht gebaut; „Visual practice" als opt-in-Modus
+(die offene Zusage aus 1.1 §12, siehe Addendum (a) in CLAUDE.md §2.9).
+
+Die drei Abweichungen vom Mockup und die zwei Lernmodus-Fragen aus den
+Vorrunden stehen unverändert in der Übergabe der Runde davor (Git-Verlauf) und
+warten weiter auf ein Urteil.
+
+## 6. Fallgruben
 
 - **Der Container ist flüchtig — früh pushen.** Diese Session: vier Commits,
   jeder sofort gepusht.
+- **`~/Downloads/` gibt es hier nicht.** Wer Owner-Dateien braucht, braucht sie
+  im Repo oder gar nicht (§3f).
+- **Für WebAuthn lokal `localhost` benutzen, nicht `127.0.0.1`** — eine RP ID
+  muss ein Domainname sein (§3e).
+- **`addInitScript` läuft bei *jeder* Navigation, auch beim Reload.** Wer damit
+  einen Stand präpariert, braucht eine Einmal-Sperre — sonst testet er seinen
+  eigenen Seed statt der App. Zweimal zugeschlagen (Variabilitäts-Runde und
+  diese).
+- **Ein `evaluate` nach dem Laden verliert das Rennen gegen den
+  Leerlauf-Schreiber der App.** Präparierte Stände gehören ins Init-Script,
+  nicht hinter das `goto`.
+- **Screenshots: die Maus wegbewegen.** Nach einem Klick steht der Zeiger auf
+  dem Knopf, der danach an dieser Stelle liegt — der trägt dann Hover-Amber und
+  sieht wie eine Design-Verletzung aus. Und beim Menü erst das Einblenden
+  abwarten (250 ms).
+- **Fokus geht verloren, wo man ihn nicht vermutet** — nach jedem Umbau des
+  Loops `document.activeElement` je Phase prüfen.
+- **Service Worker + Vary-Header:** wer die Cache-Strategie ändert, behält
+  `ignoreVary` bei oder weiß genau, warum nicht. Und **`/api/` bleibt
+  ausgenommen.**
+- **Ein Test, der offline prüfen will, muss die Seite *nach* der
+  Worker-Übernahme neu laden** und vorher auf `controllerchange` warten.
 - **`create_repository` schlägt in dieser Umgebung fehl** (403). Zweites Repo:
   den Nutzer anlegen lassen.
-- **Fokus geht verloren, wo man ihn nicht vermutet** — nach jedem Umbau des
-  Loops `document.activeElement` je Phase prüfen (zwei solcher Fehler waren im
-  Code unsichtbar und fielen nur im Browser-Durchlauf auf).
-- **Service Worker + Vary-Header** (§3): wer die Cache-Strategie ändert, behält
-  `ignoreVary` bei oder weiß genau, warum nicht.
-- **Ein Test, der offline prüfen will, muss die Seite *nach* der
-  Worker-Übernahme neu laden** und vorher auf `controllerchange` warten — sonst
-  testet er den Netzwerk-Pfad und merkt es nicht.
-- **Screenshots vom Menü: erst das Einblenden abwarten** (250 ms), sonst ist
-  das ganze Panel halbtransparent im Bild. Und **die Maus wegbewegen**: nach
-  dem Klick auf den Trigger steht der Zeiger genau dort, wo im Panel das X
-  liegt — das X ist dann im Hover-Amber und sieht wie ein zweites Amber aus.
 
-## 8. Nächster Schritt
+## 7. Nächster Schritt
 
-1. **Review durch Fable und Merge nach `main`** — die drei Commits dieser
-   Runde (`92501c1`, `a7f3ee3`, Doku). Erst der Merge deployt sie. Zum Review
-   gehören: die Screenshots (Menü, Progress), die Setzungen aus §3d — allen
-   voran die verschwindende Kopfzeile beim ersten Play —, dazu weiterhin §5b
-   und §5c.
-2. **Runde B: Passkeys + D1 + Sync** — kommt mit eigener Spezifikation
-   (Notion-Log #48–51). Erst dann bekommt das Menü eine Account-Zeile; das
-   Gehäuse ist dafür gebaut, setzt aber nichts davon voraus. Local-first
-   bleibt Gesetz.
-3. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a. Danach ist
-   die Marken-Runde wirklich fertig.
-4. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Gebaut wird er als
-   reine Engine-Logik (`src/engine/`), Persistenz additiv. Der Tages-Eimer aus
-   dieser Runde ist bewusst *keine* Historie: er hält nur den laufenden Tag.
-   Wer eine Reihe über Tage braucht, legt sie daneben — und sollte dabei
-   entscheiden, ob der Eimer darin aufgeht.
-5. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
-   Telefon — jetzt auch: sieht das neue Icon auf einem echten Homescreen gut
-   aus? Alles unverändert offen.
-6. **„Visual practice"** als opt-in-Modus — die offene Zusage aus 1.1 §12,
-   siehe Addendum (a) in §3b.
-7. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
+1. **Review durch Fable und Merge nach `main`** — die vier Commits dieser Runde.
+   Zum Review gehören: die Merge-Setzungen aus §3b (`sessionsStarted` als
+   Maximum, die Merker als Oder), die drei Punkte aus §5f — allen voran der
+   schrumpfende Zeichensatz —, die Copy des Account-Screens und die beiden
+   Screenshots.
+2. **D1 anlegen und binden** (§5e). Erst danach ist Runde B auf Produktion
+   wirklich fertig, und erst danach lässt sich der Konto-Weg dort prüfen.
+3. **Schritt 1 nachholen: die Bildmarke aus den Owner-Dateien** (§3f). Braucht
+   nur die drei Dateien im Repo.
+4. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a, **nachdem**
+   §3e entschieden ist (Passkeys und Domainwechsel).
+5. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Reine Engine-Logik,
+   Persistenz additiv. Der Tages-Eimer ist bewusst *keine* Historie.
+6. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
+   Telefon — **und jetzt neu: ein Passkey auf echter Hardware**, mit einem Blick
+   darauf, wie der Systemdialog das Konto benennt (§5f.2).
+7. Danach die offenen Produktfragen aus §5g — Reihenfolge ist eine
    Notion-Entscheidung, nicht eine des Codes.
