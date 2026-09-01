@@ -1,15 +1,18 @@
-# Übergabe — Stand nach Eriks erstem Eigen-Test: Politur und Einführung
+# Übergabe — Stand nach dem Lernmodus
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** `main` @ `e790d15`. Drei Commits aus dieser Runde, jeder für sich
-gebaut, getestet und deployt:
+**Stand:** `main` @ `2cd1c58`. Zwei Commits aus dieser Runde:
 
-1. `8183ff1` — Tagesstatistik, Sitzungszähler und Intro-Merker im Fortschritt
-2. `a101c6a` — Trainings-Screen auf das Ruhe-Mockup
-3. `e790d15` — die Einführung (zwei Bildschirme, dann los)
+1. `88100e8` — der Lernmodus als Engine (Karte, Echo-Check, eingeführte Zeichen)
+2. `2cd1c58` — derselbe auf dem Bildschirm, mit den drei Einstiegspunkten
 
-Die Streak-Runde ist weiterhin **nicht** gelaufen; sie ist der nächste Schritt
-(§8). Die Historie bleibt linear.
+Davor aus der Politur-Runde: `8183ff1` (Tagesstatistik, Sitzungszähler,
+Intro-Merker), `a101c6a` (Trainings-Screen auf das Mockup), `e790d15` (die
+Einführung), `0261303` (Übergabe).
+
+Die Streak-Runde ist weiterhin **nicht** gelaufen — sie wurde bewusst hinter
+den Lernmodus gestellt und bleibt der nächste Schritt (§8). Die Historie
+bleibt linear.
 
 **Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
 Pages, mit Git-Anbindung an dieses Repo. Jeder Push auf `main` baut und
@@ -31,7 +34,16 @@ live und sieht jetzt aus wie das Mockup. Unverändert gilt: der Zeichensatz
 wächst von selbst (§3), die App ist eine offline nutzbare PWA ohne jeden
 Fremdabruf, `--muted` besteht AA auch für kleinen Text.
 
-Neu aus dieser Runde:
+**Neu aus dieser Runde: die App führt Zeichen jetzt ein, statt sie nur
+abzufragen.** Wer neu anfängt, riet bisher die ersten Runden — es gab keinen
+Ort, an dem ein Zeichen als Klang vorgestellt wird. Den gibt es jetzt: eine
+Karte pro Zeichen (Buchstabe, Ton, danach das Muster), dahinter ein
+Echo-Check aus drei Abrufen nach den normalen Übungsregeln. Erreichbar an drei
+Stellen — Erstlauf, Wachstum, freies Wiederholen (§3a). Ein Bild der Karte
+liegt unter
+[`docs/screenshots/learn-card-390.png`](./docs/screenshots/learn-card-390.png).
+
+Aus der Politur-Runde davor:
 
 - **Der Trainings-Screen folgt dem Ruhe-Mockup** — eine 390-px-Spalte, Kopf mit
   Sitzung und Runde über einer 2-px-Linie, in der Mitte Eyebrow, Play-Kreis und
@@ -54,13 +66,16 @@ Fables Urteil.
 | `src/engine/timing.ts` | Farnsworth-Timing nach ARRL | unverändert |
 | `src/engine/schedule.ts` | Text → Zeitachse | unverändert |
 | `src/engine/settings.ts` | Tempo, Tonhöhe, Start-Satz, Kandidatenreihe, **Gruppengröße** | erweitert |
-| `src/engine/stats.ts` | Statistik pro Zeichen, Wachstumsfelder, **Tag/Sitzung/Intro** | erweitert |
-| `src/engine/growth.ts` | **Die Wachstumsregel** | neu, getestet |
+| `src/engine/stats.ts` | Statistik, Wachstum, Tag/Sitzung/Intro, **eingeführte Zeichen** | erweitert |
+| `src/engine/growth.ts` | Die Wachstumsregel | unverändert |
+| `src/engine/learn.ts` | **Der Lernmodus**: Karte, Echo-Check | neu, getestet |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
 | `src/engine/session.ts` | Loop-Zustandsautomat; Pool = aktiver Satz | angepasst |
 | `src/audio/player.ts` | Wiedergabe mit Audio-Uhr nach außen | unverändert |
 | `src/ui/App.tsx` | Lernloop-Screen **im Mockup-Aufbau** | neu gestaltet |
-| `src/ui/Intro.tsx` | **Die Einführung**, zwei Bildschirme | neu |
+| `src/ui/Intro.tsx` | Die Einführung, zwei Bildschirme | unverändert |
+| `src/ui/Learn.tsx` | **Karte, Echo-Check, Wiederholen-Gitter** | neu |
+| `src/ui/Pattern.tsx` | **Muster als Form** — aus App.tsx herausgezogen | neu |
 | `src/ui/today.ts` | **Kalendertag** für die Engine (die bleibt ohne Uhr) | neu |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, **plus Sofort-Schreiber** | erweitert |
 | `src/styles.css` | Tokens und Grundriss, **Mockup-Maße** | neu gestaltet |
@@ -69,7 +84,7 @@ Fables Urteil.
 | `public/sw.js` | **Service Worker** (offline) | neu |
 | `public/manifest.webmanifest`, `public/icons/` | **PWA-Manifest, Icons** | neu |
 | `vite.config.ts` | + Plugin: injiziert Precache-Liste in `dist/sw.js` | erweitert |
-| `src/engine/*.test.ts` | **74 Tests** (16 Grundgerüst, 42 Loop, 16 Wachstum) | grün |
+| `src/engine/*.test.ts` | **101 Tests** (16 Grundgerüst, 42 Loop, 16 Wachstum, 27 Lernmodus) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die Engine
 kennt niemanden, die UI rechnet nicht.
@@ -147,17 +162,70 @@ Newsreader (Variable, wght-Achse) und IBM Plex Sans (400/500/600) als woff2 in
 damit erledigt. Kommt später Deutsch (i18n-Entscheidung), braucht es zusätzlich
 das latin-ext-Subset.
 
+## 3a. Der Lernmodus — und die eine Ausnahme, die er kostet
+
+**Das Problem:** die App hat nur abgefragt. Beim allerersten Ton gab es nichts,
+woran man ihn hätte festmachen können — die ersten Runden waren Raten, und
+Raten trainiert nichts.
+
+**Die Karte.** Pro Zeichen: der Buchstabe in 64 px Newsreader, darunter der
+Play-Kreis wie im Training. Der Ton läuft beim Öffnen einmal von selbst; die
+Karte wird per Klick erreicht, die Geste für den AudioContext ist also gegeben.
+Schlägt das Abspielen trotzdem fehl, bleibt der Play-Kreis — gehört wird dann
+auf Zuruf (CLAUDE.md 6). „Try it" ist erst frei, wenn der Ton durch war.
+
+**Die Ausnahme von CLAUDE.md 2.2.** Die Regel verbietet die Visualisierung von
+Punkten und Strichen während des Hörens, weil sie zum Mitzählen einlädt statt
+zum Hören. Auf der Einführungskarte — und nur dort — ist das Muster nach dem
+ersten Anhören sichtbar und bleibt es beim Wiederholen: der Erstkontakt braucht
+die Zuordnung von Klang zu Zeichen. **Produktentscheidung, Notion-Log #33.**
+Der Kommentar steht an der Komponente selbst (`src/ui/Learn.tsx`, `Card`), nicht
+nur hier.
+
+Die Grenze ist scharf und geprüft: im Training bleibt der Bildschirm während des
+Tons leer, und der Echo-Check hält sich ebenfalls daran — das Muster kommt dort
+erst mit der Auflösung.
+
+**Der Echo-Check fasst die Statistik nicht an.** Drei Abrufe nach jeder Karte,
+nach den normalen Übungsregeln, Antwortoptionen ausschließlich aus dem bisher
+Eingeführten. In `learn.ts` gibt es kein `recordAttempt` — die Statistik misst
+Können, und wer ein Zeichen gerade zum ersten Mal gehört hat, kann es noch
+nicht. Flössen diese Antworten mit, verschöben sie Gewichtung (`selection.ts`)
+und Wachstumsregel (`growth.ts`) gegen den Nutzer, und die Zahlen behaupteten
+etwas anderes, als sie messen (CLAUDE.md 2.6). Zwei Unit-Tests und ein
+Browser-Durchlauf halten das fest.
+
+Bei der ersten Karte eines neuen Nutzers gibt es genau **eine** Antworttaste.
+Das ist die Folge der Vorgabe, nur Eingeführtes anzubieten — der Abruf ist dann
+keine Unterscheidung, sondern eine Bestätigung („war das eben K?"). Ehrlicher,
+als eine Auswahl aus Zeichen zu bauen, die noch niemand kennt.
+
+**Drei Einstiegspunkte, eine Bedingung.** `pendingIntroductions()` — aktiv, aber
+nicht eingeführt:
+
+- **Erstlauf:** nach dem Intro die sechs Startzeichen nacheinander.
+- **Wachstum:** das neue Zeichen vor der *nächsten* Sitzung. Der Lauf beginnt
+  nur bei „Runde 1 und noch nichts gespielt"; deshalb unterbricht ein mitten in
+  der Sitzung dazugewachsenes Zeichen die laufende Sitzung nicht. Die
+  Ankündigungszeile im Feedback bleibt unberührt.
+- **Wiederholen:** der leise Link „Review the sounds" auf dem Start-Screen führt
+  zu einem Gitter der aktiven Zeichen; ein Tipp öffnet die Karte, ohne
+  Pflicht-Echo-Check.
+
+**Bestandsnutzer bekommen keinen Zwangsdurchlauf.** `introducedCharacters` ist
+additiv, aber sein Default ist bewusst kein konstanter: fehlt das Feld,
+entscheidet die Vorgeschichte. Wer schon geübt hat (irgendein Versuch > 0), gilt
+als vollständig eingeführt; ein Stand ohne einen einzigen Versuch fängt vorn an.
+
 ## 4. Was nachgewiesen ist (und wie)
 
-- **`npm test` → 74/74 grün** (64 vorher, 10 neu für Tagesstatistik,
-  Sitzungszähler und Intro-Merker). Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
+- **`npm test` → 101/101 grün** (74 vorher, 27 neu für den Lernmodus). Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
   prüft weiter gegen den Standard, nicht gegen die Implementierung. Die
   Wachstums-Tests kippen jede Bedingung einzeln; Zufall kommt überall als
   Parameter herein.
-- **`npm run build` → sauber.** Bundle **161,86 kB roh / 52,63 kB gzip**
-  (vorher 158,06 / 51,50), CSS **6,88 kB / 2,01 kB** (vorher 4,79 / 1,59).
-  Über die ganze Runde also +3,8 kB roh und +1,1 kB gzip beim JS, +2,1 kB beim
-  CSS — dafür der komplette Mockup-Aufbau und die Einführung. Dazu unverändert
+- **`npm run build` → sauber.** Bundle **169,97 kB roh / 54,42 kB gzip**
+  (vorher 161,86 / 52,63), CSS **7,35 kB / 2,09 kB** (vorher 6,88 / 2,01).
+  Der Lernmodus kostet also +8,1 kB roh und +1,8 kB gzip. Dazu unverändert
   einmalig 129 kB woff2 und 14 kB Icons. **Keine neue Abhängigkeit.**
 - **Wachstum im Browser durchgespielt:** Stand präpariert, dem genau eine
   richtige Antwort fehlt → Ankündigung erscheint („The set grows: P joins from
@@ -175,6 +243,18 @@ Nicht nachgewiesen, ehrlich benannt:
 
 - **Der Trainings-Screen ist gegen die Referenzwerte geprüft** — im Browser bei
   390 px, in beiden Zuständen (Frage und Auflösung). Screenshot im Repo.
+- **Der Lernmodus ist im Browser durchgespielt** — lokal und danach noch einmal
+  auf der Produktions-URL, 18 von 18: die Karte kommt nach dem Intro, das Muster
+  erscheint erst nach dem Ton (vorher 0 Formen, nachher 3), die Antwortoptionen
+  wachsen von einer auf sechs, der Durchlauf persistiert, „Skip for now" hält
+  über einen Reload, ein Bestandsstand bekommt keinen Durchlauf, das Wiederholen
+  öffnet Karten ohne Echo-Check, und ein gewachsenes `P` wird vor der Sitzung
+  eingeführt. **Darunter der Beleg, dass Echo-Antworten die Statistik nicht
+  anfassen:** nach sechs Karten `characters={}`, `recentAnswers=0`,
+  `day.attempts=0`.
+- **Offline auch mit dem Lernmodus** — auf Produktion mit abgeschaltetem Netz
+  neu geladen: die Einführung rendert aus dem Cache, die Lernkarte öffnet, der
+  Ton läuft und das Muster steht. Audio braucht kein Netz.
 - **Die Einführung ist im Browser durchgespielt** — Erststart zeigt sie, die
   Copy stimmt wortgleich, der Fokus wandert beim Wechsel auf die Überschrift und
   nach „Begin"/„Skip intro" auf den Play-Kreis, beide Wege merken sich den
@@ -186,8 +266,8 @@ Nicht nachgewiesen, ehrlich benannt:
   normaler Reload sofort den neuen Stand (Navigation ist Netz-zuerst), der neue
   Worker installiert als `…-72f8a009ac93`, `activate` räumt den alten Cache weg
   — am Ende existiert genau einer, der neue — und der neue Stand kommt danach
-  auch offline aus dem neuen Cache. **Auf Produktion inzwischen wiederholt und
-  bestanden** — die Zahlen stehen in §5a.
+  auch offline aus dem neuen Cache. **Auf Produktion wiederholt und bestanden**,
+  inzwischen zweimal — die Zahlen stehen in §5a.
 - **Kein Hörtest, kein Screenreader-Durchgang, keine echte Hardware** — alles
   unverändert offen und weiterhin die wichtigsten menschlichen Prüfungen.
   Fürs Installieren als PWA gilt dasselbe: auf einem echten Telefon testen.
@@ -254,6 +334,10 @@ echten Auslieferung belegt. Die Vorbedingung dafür bleibt sichtbar in den
 Headern: Cloudflare liefert `sw.js` und das HTML mit
 `cache-control: public, max-age=0, must-revalidate`.
 
+**Beim Lernmodus-Deploy wiederholt** (Routine): `projekt-morse-112cb6b729ee` →
+`projekt-morse-cd711867d85c`, wieder genau ein Cache am Ende, der alte
+weggeräumt, danach offline der neue Stand.
+
 Ein Nebenbefund für die Zukunft: ein Deploy, der nur Dokumentation ändert,
 erzeugt **keinen** Cache-Wechsel — die Version leitet sich aus den gehashten
 Asset-Dateinamen ab (`sha256(assets).slice(0,12)`, siehe `vite.config.ts`).
@@ -295,6 +379,21 @@ ist, sagen jetzt die Einführung (die jeder einmal sieht) und die dauerhaft
 sichtbare Tonhöhe im Eyebrow; die ausführliche Beschreibung steht weiterhin
 für Screenreader in der Seite. Wenn Fable das für zu wenig hält, gehört eine
 sichtbare Zeile zurück.
+
+## 5c. Zwei Fragen aus dem Lernmodus an Fable
+
+1. **„Skip for now" merkt die Zeichen als vorgestellt.** Die Copy verspricht mit
+   „for now" streng genommen eine Wiedervorlage. Ich habe sie *nicht* wieder
+   vorgelegt: derselbe Bildschirm bei jedem Start wäre Druck (CLAUDE.md 2.8),
+   und erreichbar bleiben die Klänge über „Review the sounds". Wenn die
+   Wiedervorlage gewollt ist, ist es eine Zeile — dann sollte aber auch die
+   Copy dazu passen.
+2. **Der Ton der Karte läuft beim Öffnen von selbst.** Das ist so vorgegeben und
+   durch die Klick-Geste gedeckt, berührt aber die bisherige Hausregel „nichts
+   läuft von allein, jede Wiedergabe ist eine Nutzergeste" (Kommentarkopf in
+   `App.tsx`). Der Play-Kreis bleibt als selbstgesteuerter Weg daneben stehen,
+   die Regel aus CLAUDE.md 6 ist also gewahrt — die Hausregel ist es strenger
+   gelesen nicht mehr.
 
 ## 5. Entscheidungen: gefallen und offen
 
@@ -355,9 +454,10 @@ npm run preview    # dist ausliefern -- hier laesst sich die PWA testen
 
 ## 8. Nächster Schritt
 
-1. **Design-Review durch Fable** — gegen
+1. **Review durch Fable** — gegen
    [`docs/screenshots/training-390.png`](./docs/screenshots/training-390.png)
-   und die drei Abweichungen in §5b.
+   und [`learn-card-390.png`](./docs/screenshots/learn-card-390.png), dazu die
+   Abweichungen in §5b und die zwei Fragen in §5c.
 2. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Gebaut wird er als
    reine Engine-Logik (`src/engine/`), Persistenz additiv. Der Tages-Eimer aus
    dieser Runde ist bewusst *keine* Historie: er hält nur den laufenden Tag.
