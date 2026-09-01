@@ -1046,16 +1046,28 @@ button:disabled {
 }
 
 /*
- * Die einmalige Zeile zur Klang-Variabilitaet (Stufe 1 wird aktiv): leise,
- * zentriert, gray -- eine Information, kein Ereignis. Sie erscheint genau
- * einmal auf dem Start-Screen und nie wieder (engine/session.ts).
+ * Die leisen Zeilen: Klang-Variabilitaet (einmalig, wenn Stufe 1 aktiv wird)
+ * und der Streak. Beide sagen dasselbe Wenige aus: leise, zentriert, gray --
+ * eine Information, kein Ereignis. Kein Amber, keine Auszeichnung, keine
+ * eigene Flaeche; ein Streak, der ins Auge springt, waere Druck (CLAUDE.md
+ * 2.8).
+ *
+ * Zwei Klassen mit einer Regel und nicht eine Klasse fuer beides: die Namen
+ * sagen, *was* dasteht. Zusammengelegt sind sie erst, seit es die zweite Zeile
+ * wirklich gibt (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
  */
-.variability-note {
+.variability-note,
+.streak-note {
   margin: 16px 0 0;
   font-size: 13px;
   line-height: 1.65;
   text-align: center;
   color: var(--gray);
+}
+
+/* Auf dem Abschluss-Screen traegt schon die .stage-Luecke den Abstand. */
+.stage > .streak-note {
+  margin-top: 0;
 }
 
 /* Ankuendigung eines neuen Zeichens: eine Zeile, kein Konfetti. */

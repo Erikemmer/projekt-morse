@@ -62,6 +62,7 @@ import {
   type DayStats,
   type Progress,
 } from '../engine/stats';
+import { streakStanding, type StreakStanding } from '../engine/streak';
 import { computeTiming } from '../engine/timing';
 import { About } from './About';
 import { Account } from './Account';
@@ -425,6 +426,13 @@ export function App() {
   const attempt = session.lastAttempt;
   const summary = summarize(session);
 
+  /*
+   * Der Streak, wie er *heute* dasteht -- nicht, wie er beim letzten Ueben
+   * dastand. Die Umrechnung macht die Engine (engine/streak.ts); hier wird
+   * nur gerendert.
+   */
+  const streak = streakStanding(session.progress.streak, session.today);
+
   /**
    * Der Start-Screen: Runde 1, noch nichts gespielt. Nur hier (und auf den
    * Screens des Gehäuses) steht die Kopfzeile mit dem Menü — mitten in einer
@@ -486,7 +494,7 @@ export function App() {
           headingRef={focusTarget}
         />
       ) : session.phase === 'finished' ? (
-        <Summary summary={summary} onRestart={restart} headingRef={focusTarget} />
+        <Summary summary={summary} streak={streak} onRestart={restart} headingRef={focusTarget} />
       ) : (
         <>
           <SessionHeader
@@ -548,18 +556,25 @@ export function App() {
           )}
 
           {/*
-            Einmalig, beim ersten Aktivwerden von Variabilitaets-Stufe 1:
-            eine leise Zeile, kein Dialog. Danach traegt das Eyebrow die
-            jeweils echte Tonhoehe, und die Zeile kommt nie wieder
-            (progress.variabilityNoticeSeen). Der fruehere Link "Review the
-            sounds" stand hier daneben; sein Einstieg heisst jetzt "Learn the
-            sounds" und wohnt im Menue -- ein Weg statt zwei.
+            Genau **eine** leise Zeile auf dem Start-Screen, nie zwei
+            untereinander (1.1 §4, CLAUDE.md 2.8: Ruhe geht vor
+            Vollstaendigkeit).
+
+            Vorrang hat die Variabilitaets-Zeile: sie erscheint einmal im
+            Leben eines Standes, beim ersten Aktivwerden von Stufe 1, und
+            danach nie wieder (progress.variabilityNoticeSeen). Der Streak
+            steht in genau dieser einen Sitzung nur auf dem Abschluss-Screen
+            -- verloren geht er dadurch nicht.
           */}
-          {session.round === 1 && session.phase === 'ready' && session.showVariabilityNotice && (
-            <p className="variability-note">
-              From here on, the pitch varies between sessions — real signals do.
-            </p>
-          )}
+          {session.round === 1 &&
+            session.phase === 'ready' &&
+            (session.showVariabilityNotice ? (
+              <p className="variability-note">
+                From here on, the pitch varies between sessions — real signals do.
+              </p>
+            ) : (
+              <p className="streak-note">{streakLine(streak)}</p>
+            ))}
 
           <Footer day={dayFor(session.progress, session.today)} done={session.attempts.length} />
         </>
@@ -582,6 +597,25 @@ function eyebrowFor(phase: SessionState['phase'], toneHz: number): string {
   if (phase === 'answering') return `Your turn · ${hz}`;
   if (phase === 'feedback') return `Answer · ${hz}`;
   return `Ready · ${hz}`;
+}
+
+/**
+ * Die eine Streak-Zeile (Notion-Log #29).
+ *
+ * Kein Ausrufezeichen, kein "Don't break it", kein Zaehler, der etwas
+ * androht -- die Zeile stellt fest und geht wieder (CLAUDE.md 2.8). Auch
+ * "Starting fresh." ist bewusst neutral formuliert: es ist der Zustand nach
+ * einer Pause und **kein** Verlust, den jemand zu verantworten haette.
+ *
+ * Der Freeze wird nur benannt, wenn er wirklich zutrifft: bereitliegend, oder
+ * gestern verbraucht. Beides zugleich kann nach einem Merge zweier Geraete
+ * dastehen -- dann gilt das Ereignis vor dem Vorrat, weil es das Neue ist.
+ */
+function streakLine(streak: StreakStanding): string {
+  if (streak.days === 0) return 'Starting fresh.';
+  if (streak.freezeUsedYesterday) return `Day ${streak.days} — freeze used yesterday.`;
+  if (streak.freezeReady) return `Day ${streak.days} — freeze ready.`;
+  return `Day ${streak.days}.`;
 }
 
 /** Das Muster eines Zeichens -- nur fuers Feedback, nie waehrend des Tons. */
@@ -789,10 +823,12 @@ function Answers({
 
 function Summary({
   summary,
+  streak,
   onRestart,
   headingRef,
 }: {
   summary: ReturnType<typeof summarize>;
+  streak: StreakStanding;
   onRestart: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
@@ -828,6 +864,14 @@ function Summary({
           </dd>
         </div>
       </dl>
+
+      {/*
+        Die Streak-Zeile steht *unter* den Zahlen, nicht ueber ihnen: geuebt
+        wird fuer das Koennen, nicht fuer die Reihe (CLAUDE.md 2.4). An dieser
+        Stelle traegt sie den frisch verbuchten Tag -- der faellt in advance(),
+        wenn die Sitzung beendet ist.
+      */}
+      <p className="streak-note">{streakLine(streak)}</p>
 
       {/*
         Der Hinweis auf den Offline-Betrieb stand bisher in der Fusszeile des
