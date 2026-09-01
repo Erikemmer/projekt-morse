@@ -59,7 +59,8 @@ export interface Snapshot {
  */
 export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
   // Bei gleichem Zeitstempel gewinnt der lokale Stand -- "lokal bleibt Quelle".
-  const younger = remote.updatedAt > local.updatedAt ? remote.progress : local.progress;
+  const younger =
+    effectiveUpdatedAt(remote) > effectiveUpdatedAt(local) ? remote.progress : local.progress;
 
   return {
     version: 1,
@@ -97,6 +98,36 @@ function mergeCharacters(
   }
 
   return merged;
+}
+
+/**
+ * Ob dieser Stand ueberhaupt schon geuebt hat.
+ *
+ * Dieselbe Unterscheidung, die `parseProgress` beim Auffuellen von
+ * `introducedCharacters` trifft (stats.ts): irgendein Versuch > 0 heisst "hier
+ * ist gelebte Uebung", alles andere ist ein Anfang.
+ */
+export function hasPractised(progress: Progress): boolean {
+  return Object.values(progress.characters).some((record) => record.attempts > 0);
+}
+
+/**
+ * Der Zeitstempel, mit dem verglichen wird -- **ein Stand ohne einen einzigen
+ * Versuch ist nie der jüngere.**
+ *
+ * Diese eine Zeile entscheidet die erste Kante der Vorgabe (frisches Gerät +
+ * volles Konto), und ohne sie ginge sie schief: wer die App neu installiert,
+ * die Einführung durchklickt und *dann* einlogged, hat einen lokal gerade
+ * geschriebenen Stand -- also den formal jüngeren. Der aktive Zeichensatz käme
+ * dann vom leeren Gerät und würde ein über Monate gewachsenes Konto auf die
+ * sechs Startzeichen zurückwerfen. Das wäre Datenverlust durch einen Login
+ * (CLAUDE.md 4), und zwar im wahrscheinlichsten Fall überhaupt.
+ *
+ * "Jünger" heisst deshalb: *hat später etwas gelernt* -- nicht "wurde später
+ * gespeichert". Ein Merker, der umgeklappt ist, ist kein Lernfortschritt.
+ */
+function effectiveUpdatedAt(snapshot: Snapshot): number {
+  return hasPractised(snapshot.progress) ? snapshot.updatedAt : 0;
 }
 
 /** Vereinigung zweier Listen, Reihenfolge der ersten zuerst, ohne Dubletten. */

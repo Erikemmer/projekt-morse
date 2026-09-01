@@ -19,12 +19,20 @@
 import { useEffect, useRef } from 'react';
 
 /** Wo man gerade ist — 'learn' ist die Klang-Auswahl (ReviewPicker). */
-export type MenuLocation = 'practice' | 'learn' | 'progress' | 'about';
+export type MenuLocation = 'practice' | 'learn' | 'progress' | 'account' | 'about';
 
+/*
+ * „Account" stand in Runde A bewusst nicht hier (1.1 §7: nichts zeigen, was
+ * nicht funktioniert) — es gab kein Backend. Jetzt gibt es eins, also steht
+ * der Eintrag da. Er steht *unter* Progress und über About: er ist ein Ort für
+ * eigene Daten, kein Teil des Übens, und niemand soll ihn für den Einstieg
+ * halten. Die App bleibt ohne ihn vollständig.
+ */
 const ENTRIES: readonly { location: MenuLocation; label: string }[] = Object.freeze([
   { location: 'practice', label: 'Practice' },
   { location: 'learn', label: 'Learn the sounds' },
   { location: 'progress', label: 'Progress' },
+  { location: 'account', label: 'Account' },
   { location: 'about', label: 'About' },
 ]);
 

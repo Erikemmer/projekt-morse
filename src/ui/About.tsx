@@ -37,7 +37,16 @@ export function About({ headingRef }: { headingRef: (element: HTMLElement | null
       <ul className="about-facts">
         <li>Build {build}</li>
         <li>Works offline once loaded.</li>
-        <li>Your practice data is stored only on this device — nothing is sent anywhere.</li>
+        {/*
+          Diese Zeile hiess bis Runde B „stored only on this device — nothing is
+          sent anywhere". Seit es Konten gibt, waere das fuer einen Teil der
+          Nutzer schlicht falsch, und eine falsche Behauptung ist hier
+          schlimmer als eine laengere (CLAUDE.md 2.6). Der neue Wortlaut stimmt
+          in beiden Faellen und nennt die Bedingung, statt sie zu verschweigen.
+        */}
+        <li>
+          Your practice data stays on this device unless you create an account to sync it.
+        </li>
       </ul>
     </section>
   );

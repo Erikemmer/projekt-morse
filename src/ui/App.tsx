@@ -60,9 +60,12 @@ import {
   markIntroduced,
   pendingIntroductions,
   type DayStats,
+  type Progress,
 } from '../engine/stats';
 import { computeTiming } from '../engine/timing';
 import { About } from './About';
+import { Account } from './Account';
+import { pushProgress } from './account';
 import { Intro } from './Intro';
 import { Learn, ReviewPicker } from './Learn';
 import { AppHeader, MenuPanel, type MenuLocation } from './Menu';
@@ -95,7 +98,7 @@ export function App() {
    * Verlauf, keine neue Abhängigkeit (CLAUDE.md 3). Die Sitzung läuft dabei
    * unberührt weiter; Progress und About lesen nur.
    */
-  const [view, setView] = useState<'practice' | 'progress' | 'about'>('practice');
+  const [view, setView] = useState<'practice' | 'progress' | 'account' | 'about'>('practice');
   const [menuOpen, setMenuOpen] = useState(false);
   /** Der Menü-Trigger — Fokusziel nach dem Schließen ohne Ortswechsel. */
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -143,6 +146,27 @@ export function App() {
     if (session.showVariabilityNotice) saveProgressNow(session.progress);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.showVariabilityNotice]);
+
+  /*
+   * Am Ende einer Sitzung einmal zum Konto hochschieben -- **best effort**.
+   *
+   * Kein `await`, kein Ergebnis in der UI, kein Modal: ein Abgleich, der nicht
+   * durchkommt, ist kein Ereignis fuer den Nutzer (ui/account.ts). Ohne Konto
+   * tut `pushProgress` gar nichts und loest keinen einzigen Aufruf aus.
+   *
+   * Der synchrone Schreibvorgang davor ist Absicht: `pushProgress` schickt den
+   * Zeitstempel des letzten *Schreibens* mit, und der Leerlauf-Schreiber waere
+   * hier vielleicht noch nicht gelaufen -- dann traege der Blob eine Uhr, die
+   * aelter ist als er selbst, und ein anderes Geraet koennte darueber gewinnen.
+   * Auf dem Eingabepfad einer Uebung liegt das nicht: die Sitzung ist vorbei.
+   */
+  const sessionFinished = session.phase === 'finished';
+  useEffect(() => {
+    if (!sessionFinished) return;
+    saveProgressNow(session.progress);
+    void pushProgress(session.progress);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionFinished]);
 
   // Bei jedem Phasenwechsel wandert der Fokus auf das, was jetzt dran ist.
   //
@@ -342,6 +366,22 @@ export function App() {
     );
   }, []);
 
+  /**
+   * Ein Abgleich mit dem Konto hat einen neuen Stand ergeben.
+   *
+   * Übernommen wird `progress` — **nicht** der Zeichensatz der laufenden
+   * Sitzung. Das ist dieselbe Regel wie beim Wachstum: eine laufende Sitzung
+   * behält ihren Pool, ein neuer Satz gilt ab der nächsten. Sonst wüchse oder
+   * schrumpfte das Antwort-Gitter mitten in einer Übung, und die Ziehung zöge
+   * plötzlich aus anderen Zeichen als die, die man gerade übt.
+   *
+   * Geschrieben ist der Stand zu diesem Zeitpunkt schon (`ui/account.ts`); hier
+   * zieht nur der React-Zustand nach.
+   */
+  const adoptProgress = useCallback((progress: Progress) => {
+    setSession((current) => ({ ...current, progress }));
+  }, []);
+
   // --- Gehäuse: Menü und Orte ---------------------------------------------
 
   /** Der Ort fürs Menü: die Klang-Auswahl zählt als eigener ('learn'). */
@@ -434,6 +474,8 @@ export function App() {
         />
       ) : view === 'progress' ? (
         <ProgressScreen progress={session.progress} today={session.today} headingRef={focusTarget} />
+      ) : view === 'account' ? (
+        <Account headingRef={focusTarget} onProgress={adoptProgress} />
       ) : view === 'about' ? (
         <About headingRef={focusTarget} />
       ) : reviewing ? (

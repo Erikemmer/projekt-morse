@@ -163,6 +163,48 @@ describe('Regel: pro Zeichen wandert der Datensatz als Ganzes', () => {
   });
 });
 
+describe('Regel: ein Stand ohne Versuche ist nie der jüngere', () => {
+  const remote: Snapshot = { progress: fullProgress(), updatedAt: 5_000 };
+
+  it('lässt ein frisch installiertes Gerät das Konto nicht zurückwerfen', () => {
+    // Der wahrscheinlichste Ablauf überhaupt: App neu installiert, Einführung
+    // durchgeklickt (schreibt introSeen -> lokaler Stand ist formal jünger),
+    // dann eingeloggt. Ohne die Regel käme der aktive Satz vom leeren Gerät.
+    const local: Snapshot = { progress: progress({ introSeen: true }), updatedAt: 9_999_999 };
+
+    const merged = mergeProgress(local, remote);
+    expect(merged.activeCharacters).toEqual([...STARTING_CHARACTERS, 'P', 'T']);
+    expect(merged.recentAnswers).toEqual([true, true, false, true]);
+    expect(merged.day.date).toBe('2026-08-30');
+    expect(merged.answersSinceGrowth).toBe(12);
+  });
+
+  it('nimmt den Einmal-Merker des frischen Geräts trotzdem mit', () => {
+    // Der Stand verliert seinen Zeitstempel-Vorrang, nicht seine Fakten.
+    const local: Snapshot = { progress: progress({ introSeen: true }), updatedAt: 9_999_999 };
+    expect(mergeProgress(local, remote).introSeen).toBe(true);
+  });
+
+  it('gilt auch umgekehrt: ein leeres Konto wirft das Gerät nicht zurück', () => {
+    const local: Snapshot = { progress: fullProgress(), updatedAt: 1_000 };
+    const emptyButNewer: Snapshot = { progress: progress({ introSeen: true }), updatedAt: 9_000 };
+
+    expect(mergeProgress(local, emptyButNewer).activeCharacters).toEqual([
+      ...STARTING_CHARACTERS,
+      'P',
+      'T',
+    ]);
+  });
+
+  it('greift nicht, sobald wirklich geübt wurde -- dann zählt der Zeitstempel', () => {
+    const local: Snapshot = {
+      progress: progress({ characters: { K: record(1, 1) }, activeCharacters: ['K', 'M'] }),
+      updatedAt: 9_000,
+    };
+    expect(mergeProgress(local, remote).activeCharacters).toEqual(['K', 'M']);
+  });
+});
+
 describe('Regel: lokal bleibt Quelle', () => {
   it('gewinnt bei gleichem Zeitstempel', () => {
     const local = snapshot({ recentAnswers: [true], answersSinceGrowth: 1 }, 7_000);

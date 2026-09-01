@@ -940,6 +940,82 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+/* --- Account: eine Aussage, zwei Wege, kein Druck ---
+ *
+ * Der Screen borgt sich Grundriss und Ueberschrift von den anderen
+ * Gehaeuse-Screens (.screen, .screen-heading). Neu sind nur vier Zeilen-Rollen
+ * und eine Knopfspalte -- eine eigene Screen-Klasse braeuchte es fuer nichts
+ * (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
+ *
+ * Amber-Budget: abgemeldet traegt "Create a passkey" (.button-primary) das eine
+ * Amber. Angemeldet ist der Screen amberfrei -- dort stehen Fakten, kein
+ * Angebot.
+ */
+
+/* Die tragende Aussage: ink, nicht gray -- sie ist der Grund, hier zu sein. */
+.account-line {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+/* Der Status ist eine Behauptung ueber Daten, also in derselben Schrift wie
+ * die Zahlen im Progress-Screen -- und mit tabellarischen Ziffern, damit die
+ * Stundenangabe beim Wechsel nicht springt. */
+.account-status {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Das Kleingedruckte, das keines ist: was gespeichert wird und was nicht. */
+.account-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
+/*
+ * Knoepfe untereinander und ueber die ganze Breite, nicht als Reihe wie
+ * .actions: hier stehen zwei gleichrangige Wege, keine Haupt- und
+ * Nebenhandlung mit einem Weiter-Knopf. 64 px wie die anderen CTAs
+ * (Review 7, 1.1 §6).
+ */
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.account-actions button {
+  width: 100%;
+  min-height: 64px;
+}
+
+/* Die Bestaetigung ersetzt die Knopfspalte an derselben Stelle, statt sie zu
+ * ueberlagern -- wie das Menue den Screen ersetzt. Kein Dialog, keine
+ * Fokus-Falle, kein Rot (1.1 §4). */
+.account-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/*
+ * Die Meldezeile ist immer im Layout, auch leer: sonst springt der Screen,
+ * sobald "Waiting for your passkey…" erscheint. Eine Zeilenhoehe reicht --
+ * alle vorgesehenen Texte sind einzeilig bei 390 px.
+ */
+.account-message {
+  margin: 0;
+  min-height: 1.65em;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
 /* --- Sekundaeres --- */
 
 .facts {
