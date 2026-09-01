@@ -1,15 +1,22 @@
-# Übergabe — Stand nach Klang-Variabilität und Review-6-Fixes
+# Übergabe — Stand nach der Navigations-Runde (das Gehäuse, Runde A)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** `main` @ `8d35159` (Marken-Runde). Darauf aufbauend Branch
+**Stand:** `main` @ `7952e9c` (Variabilität + Review-6-Fixes + Doku — die
+Commits des Review-7-Branches sind gemergt). Darauf aufbauend Branch
 `claude/morse-handover-alignment-nbkk6o` mit drei Commits — zu reviewen (Fable)
 und dann nach `main` zu mergen; erst der Merge deployt sie auf Produktion:
 
-1. `09c5ca2` — **Klang-Variabilität in Stufen** (HVPT; Aufgabe 1 dieser Runde)
-2. `5193d22` — **Metrik-Fixes aus Review 6** (Notion-Log #43; Aufgabe 2)
-3. (dieser Doku-Commit, mit den neu gezogenen Screenshots)
+1. `92501c1` — **Mikro-Fixes aus Review 7** (Notion-Log #46; Aufgabe 4)
+2. `a7f3ee3` — **das clientseitige Gehäuse: Menü, Progress, About**
+   (Aufgaben 1–3)
+3. (dieser Doku-Commit, mit den Screenshots)
 
-Die Streak-Runde ist weiterhin **bewusst nicht** gelaufen (§8).
+**Kontext dieser Runde:** Der Owner hat Accounts vorgezogen (Notion-Log
+#48–51). Dies ist **Runde A** — nur das clientseitige Gehäuse. Kein Backend,
+keine Auth, und **bewusst keine Account-Zeile im Menü** (1.1 §7: nichts
+zeigen, was nicht funktioniert). **Runde B** (Passkeys + D1 + Sync) folgt mit
+eigener Spezifikation. Local-first unverändert: alles läuft ohne Konto und
+offline. Die Streak-Runde ist weiterhin **bewusst nicht** gelaufen (§8).
 
 **Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
 Pages, mit Git-Anbindung an dieses Repo. Jeder Push auf `main` baut und
@@ -18,12 +25,12 @@ deployt von selbst; dieser Branch deployt erst mit dem Merge.
 **`morse-lab.com` ist an das Projekt gebunden, aber noch nicht erreichbar** —
 es fehlt der eine DNS-Eintrag aus §5a.
 
-**Datum:** 2026-09-01 (zweite Runde dieses Tages)
+**Datum:** 2026-09-01 (dritte Runde dieses Tages)
 
 Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
-[FINDINGS.md](./FINDINGS.md) — Einträge 1 und 2 sind entschieden und behoben;
-**Eintrag 3 ist neu** (Maße neben den Guidelines, die Review 6 *nicht* geregelt
-hat) und wartet auf das nächste Review.
+[FINDINGS.md](./FINDINGS.md) — **alle drei Einträge sind entschieden und
+behoben** (Eintrag 3 durch Review 7, Notion-Log #46, in dieser Runde
+umgesetzt).
 
 ---
 
@@ -34,8 +41,19 @@ live und sieht jetzt aus wie das Mockup. Unverändert gilt: der Zeichensatz
 wächst von selbst (§3), die App ist eine offline nutzbare PWA ohne jeden
 Fremdabruf, `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde: der Klang variiert in Stufen (§3c), und die vier
-Punkte aus §5d sind durch Review 6 entschieden und umgesetzt (§5d).**
+**Neu aus dieser Runde: die App hat ein Gehäuse (§3d)** — eine Kopfzeile mit
+Wortmarke und Menü auf dem Start-Screen, ein Vollbild-Menü (Practice · Learn
+the sounds · Progress · About), einen Progress-Screen (Tagesstand, Gesamtstand,
+Tabelle pro aktivem Zeichen) und einen About-Screen (Lockup, Build-Kennung,
+Offline- und Nur-lokal-Hinweis). Dazu die Mikro-Fixes aus Review 7 (§5d).
+„Learn the sounds" im Menü ersetzt den bisherigen Link „Review the sounds" als
+einzigen Einstieg in die Klang-Auswahl. Screenshots:
+[`docs/screenshots/menu-390.png`](./docs/screenshots/menu-390.png),
+[`docs/screenshots/progress-390.png`](./docs/screenshots/progress-390.png).
+
+Aus der Runde davor: der Klang variiert in Stufen (§3c), und die vier
+Punkte aus dem alten §5d-Konflikt sind durch Review 6 entschieden und
+umgesetzt (§5d).
 
 Aus der Marken-Runde davor gilt weiter: das Projekt heißt Morse Lab und sieht
 danach aus.
@@ -82,9 +100,12 @@ Fables Urteil.
 | `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
 | `src/engine/session.ts` | Loop-Zustandsautomat; Pool = aktiver Satz | angepasst |
 | `src/audio/player.ts` | Wiedergabe mit Audio-Uhr nach außen | unverändert |
-| `src/ui/App.tsx` | Lernloop-Screen **im Mockup-Aufbau** | neu gestaltet |
+| `src/ui/App.tsx` | Lernloop-Screen, **plus View-State des Gehäuses** | erweitert |
 | `src/ui/Intro.tsx` | Die Einführung, zwei Bildschirme | unverändert |
-| `src/ui/Learn.tsx` | **Karte, Echo-Check, Wiederholen-Gitter** | neu |
+| `src/ui/Learn.tsx` | Karte, Echo-Check, Auswahl (heißt jetzt **"Learn the sounds"**) | angepasst |
+| `src/ui/Menu.tsx` | **Kopfzeile (Wortmarke + Trigger) und Vollbild-Menü** | neu |
+| `src/ui/Progress.tsx` | **Progress-Screen; rechnet nichts, liest stats.ts** | neu |
+| `src/ui/About.tsx` | **About-Screen: Lockup, Build, Offline/lokal** | neu |
 | `src/ui/Pattern.tsx` | Muster als Form | unverändert |
 | `docs/brand/…1.1.html` | **Die Marken-Richtlinie — führend** | neu |
 | `docs/brand/logo.py` | **Baut die Marke aus den §3-Zahlen** | neu |
@@ -95,11 +116,11 @@ Fables Urteil.
 | `src/ui/today.ts` | **Kalendertag** für die Engine (die bleibt ohne Uhr) | neu |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, **plus Sofort-Schreiber** | erweitert |
 | `src/styles.css` | **Tokens nach 1.1 §13**, Grundriss, Mockup-Maße | migriert |
-| `docs/screenshots/` | Intro, Lernkarte, Training bei 390 px | **neu gezogen** |
+| `docs/screenshots/` | Intro, Lernkarte, Training, **Menü, Progress** bei 390 px | **neu gezogen** |
 | `src/fonts/` | **woff2 (latin) + SIL-OFL-Lizenzen** | neu |
 | `public/sw.js` | **Service Worker** (offline) | neu |
 | `public/manifest.webmanifest`, `public/icons/` | **PWA-Manifest, Icons** | neu |
-| `vite.config.ts` | + Plugin: injiziert Precache-Liste in `dist/sw.js` | erweitert |
+| `vite.config.ts` | + Plugin: injiziert Precache-Liste in `dist/sw.js`, **stempelt die Build-Kennung in `<meta name="build">`** | erweitert |
 | `src/engine/*.test.ts` | **114 Tests** (16 Grundgerüst, 42 Loop, 16 Wachstum, 27 Lernmodus, 13 Variabilität) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die Engine
@@ -307,7 +328,106 @@ Der Player nimmt dafür eine optionale Frequenz **pro Wiedergabe** entgegen;
 das Timing entsteht pro Sitzung statt als Modul-Konstante. An der Audio-Uhr
 und am Planer hat sich nichts geändert.
 
+## 3d. Das Gehäuse — die Entscheidungen dieser Runde
+
+**Kein Router, keine URL-Zustände.** Vier Orte, ein `useState` in `App.tsx`
+(`view` + `reviewing` + `menuOpen`). Ein Router wäre eine neue Abhängigkeit
+ohne zweiten Bedarf (CLAUDE.md 3); die Konsequenz — ein Reload landet immer
+auf Practice — ist für eine Übungs-App richtig, nicht nur billig.
+
+**Das Menü ersetzt den Screen, es überlagert ihn nicht.** Solange es offen
+ist, rendert App.tsx nichts anderes. Damit gibt es hinter dem Dialog nichts
+Fokussierbares und keine nachgebaute Fokus-Falle — die häufigste
+Barrierefreiheits-Baustelle von Overlays entfällt per Konstruktion.
+Fokusführung: beim Öffnen auf den ersten Eintrag, X und Esc schließen, danach
+steht der Fokus wieder auf dem Trigger; bei einem Ortswechsel setzt der neue
+Screen sein eigenes Ziel (Überschrift bzw. Play-Kreis). Der aktuelle Ort
+trägt den Amber-Punkt — das eine Amber der Menü-View — **und** `aria-current`
+(nie Farbe allein, CLAUDE.md 6).
+
+**Die Kopfzeile steht nur auf dem Start-Screen und den Gehäuse-Screens**
+(Progress, About, Klang-Auswahl). Mitten in einer Sitzung, im Lernmodus, in
+der Einführung und auf dem Abschluss-Screen gibt es sie nicht — dort wäre ein
+Menü eine Ablenkung. Folge, als Setzung für Fables Blick: **beim ersten Play
+einer Sitzung verschwindet die Kopfzeile** (der Screen rückt nach oben). Das
+ist gewollt („hide what can't be used", 1.1 §7), aber es ist ein sichtbarer
+Sprung genau beim Start des Tons — wenn das stört, wäre die Alternative, die
+Kopfzeile über die ganze Sitzung stehen zu lassen und nur den Trigger zu
+verbergen.
+
+**Der Lernmodus startet nur noch in der Practice-View.** Die
+`learnDue`-Bedingung kennt jetzt `view` und `menuOpen`: ohne das hätte ein
+fälliger Erstlauf seinen Karten-Ton in den Progress-Screen hineingespielt.
+
+**„Learn the sounds" statt „Review the sounds".** Der Menü-Eintrag ist der
+einzige Einstieg in die Klang-Auswahl (der Start-Screen-Link ist weg,
+Redundanz vermieden), und er soll auch beim Erstkontakt nicht nach
+Wiederholung klingen. Die Überschrift des Pickers heißt mit; die
+Variabilitäts-Zeile auf dem Start-Screen bleibt unberührt.
+
+**Die Build-Kennung ist die Asset-Version, kein Datum.** Der bestehende
+SW-Inject-Schritt in `vite.config.ts` stempelt dieselbe deterministische
+Version (`sha256(assets).slice(0,12)`), die den Service-Worker-Cache benennt,
+zusätzlich in `<meta name="build">`; der About-Screen liest sie von dort. Im
+Dev-Server steht ehrlich „dev". Bewusst kein Datum und kein Commit-Hash: die
+Kennung hängt nur am Inhalt, ein Doku-Deploy ändert sie nicht — die
+Eigenschaft „Doku-Deploy erzeugt keinen Cache-Wechsel" (§5a) bleibt erhalten.
+Angenehmer Nebeneffekt: About-Screen und SW-Cache-Name sind per Konstruktion
+dieselbe Zahl — beim Debuggen genügt ein Blick.
+
+**Das About-Lockup ist zusammengesetzt, nicht `logo-lockup.svg`.** Ein SVG in
+einem `<img>` darf die Schriften der Seite nicht laden — die Wortmarke stünde
+im Georgia-Fallback. Deshalb Taster-SVG (`logo-key.svg`) plus HTML-Wortmarke
+in echtem Newsreader daneben (1.1 §3, Marke links). Der Amber-Knopf ist das
+eine Amber der View.
+
+**Amber-Budget je View:** Menü = Ortspunkt, About = Taster-Knopf,
+Progress = **kein** Amber (Zahlen sind Fakten, kein Akzent nötig),
+Start-Screen unverändert in Ruhe ohne Amber.
+
+**Der Progress-Screen erfindet keine Werte.** Keine Quote ohne Versuche, kein
+Median ohne richtige Antwort — dann steht ein Strich (CLAUDE.md 2.6). Die
+Reaktionszeit trägt die Fußnote aus der Aufgabenstellung wortgleich. Der
+leere Zustand (noch nie geantwortet) ist eine Zeile, die sagt, was hier
+erscheinen wird; die Kopf-Zeilen (Today/Characters/Sessions) stehen auch dann,
+denn sie sind Fakten. Keine Balken, Gauges oder Medaillen (1.1 §7).
+
 ## 4. Was nachgewiesen ist (und wie)
+
+**Aus dieser Runde (Gehäuse + Review-7-Fixes):**
+
+- **`npm test` → 114/114 grün, `npm run build` sauber.** Keine neuen Tests:
+  die Runde hat `src/engine/` nicht angefasst — das Gehäuse rendert nur und
+  liest bestehende, getestete Funktionen (`dayAccuracy`, `hitRate`,
+  `medianReaction`). Bundle **176,26 kB roh / 56,23 kB gzip** (vorher 171,30 /
+  54,92), CSS 10,90 / 2,67 (vorher 8,26 / 2,28). **Keine neue Abhängigkeit.**
+- **Das Gehäuse ist im Browser durchgespielt** (Headless Chromium gegen
+  `vite preview`, 390 px) — 27 von 27 Prüfungen: Wortmarke in Newsreader 400,
+  Trigger 44×44, kein „Review the sounds" mehr, Fokus beim Öffnen auf dem
+  ersten Eintrag, vier Einträge, Esc schließt mit Fokus zurück auf dem
+  Trigger, Ortsmarker wandert mit (Practice → Progress → Learn the sounds),
+  Progress-Überschrift bekommt den Fokus, Today-/Gesamt-Zeilen und alle acht
+  Tabellenzeilen stimmen gegen einen präparierten Stand, Fußnote wortgleich,
+  About zeigt Build-Kennung (= Asset-Version), Offline- und Lokal-Zeile,
+  Rückweg zu Practice setzt den Fokus auf den Play-Kreis, und ein frischer
+  Nutzer sieht im Progress die eine Leerzustands-Zeile statt der Tabelle.
+  (Eine 28. Prüfung schlug fehl, weil die *Erwartung* falsch war: „Sessions"
+  zählt die beim Laden begonnene Sitzung mit — `beginSession` zählt den
+  Beginn, so ist es spezifiziert.)
+- **Amber nie zweimal (1.1 §4), am gerenderten Ergebnis gezählt:** Menü genau
+  eins (der Ortspunkt), Progress null, Start-Screen in Ruhe null. About trägt
+  sein Amber im Taster-SVG (der Zähler sieht nur CSS-Farben; das SVG ist per
+  Augenschein genau ein Amber-Knopf).
+- **Die Review-7-Maße sind im Browser nachgemessen:** Muster-Lücke 16 px,
+  „Try it"/„Next" 64 px hoch.
+- **Screenshots neu gezogen** (alle bei 390 px): `menu-390.png` und
+  `progress-390.png` neu; `intro-390.png`, `learn-card-390.png`,
+  `training-390.png` neu gezogen, weil die Review-7-Maße sie überholt hatten.
+- **Timing unberührt:** weder Player noch Engine sind angefasst; auf dem
+  Eingabepfad einer Übung ist nichts dazugekommen (das Gehäuse existiert dort
+  gar nicht — die Kopfzeile verschwindet mit dem ersten Play).
+
+**Aus den Runden davor (unverändert gültig):**
 
 - **`npm test` → 114/114 grün** (101 vorher, 13 neu für die Variabilität:
   Bandgrenzen direkt angefahren statt statistisch getroffen, Stufenwechsel,
@@ -545,8 +665,11 @@ sichtbare Zeile zurück.
 Weight 300, (3) Seitenpadding 24, Blockabstand 32, Antworttasten 64,
 (4) das sichtbar-deaktivierte Antwort-Gitter bleibt — als **dokumentierte
 Ausnahme von §7**, der Kommentar steht am Gitter selbst (`App.tsx`, `Answers`)
-und an der CSS-Regel. Benachbarte, *nicht* geregelte Maße stehen in
-FINDINGS.md 3. Der ursprüngliche Wortlaut der vier Punkte folgt als Kontext:
+und an der CSS-Regel. Die benachbarten Maße aus FINDINGS.md 3 hat **Review 7
+(Notion-Log #46) geregelt und diese Runde umgesetzt** (`92501c1`):
+Muster-Lücke 16, CTAs 64, 28er auf die Skala, die 6-px-Punkte-Lücke bleibt
+absichtlich. Der ursprüngliche Wortlaut der vier Review-6-Punkte folgt als
+Kontext:
 
 Gefunden beim Umsetzen, **nicht** eigenmächtig geändert: alle vier liegen außerhalb
 der zehn Aufgabenpunkte, und drei davon würden Maße anfassen, die Fable im
@@ -631,24 +754,33 @@ npm run preview    # dist ausliefern -- hier laesst sich die PWA testen
 - **Ein Test, der offline prüfen will, muss die Seite *nach* der
   Worker-Übernahme neu laden** und vorher auf `controllerchange` warten — sonst
   testet er den Netzwerk-Pfad und merkt es nicht.
+- **Screenshots vom Menü: erst das Einblenden abwarten** (250 ms), sonst ist
+  das ganze Panel halbtransparent im Bild. Und **die Maus wegbewegen**: nach
+  dem Klick auf den Trigger steht der Zeiger genau dort, wo im Panel das X
+  liegt — das X ist dann im Hover-Amber und sieht wie ein zweites Amber aus.
 
 ## 8. Nächster Schritt
 
 1. **Review durch Fable und Merge nach `main`** — die drei Commits dieser
-   Runde (`09c5ca2`, `5193d22`, Doku). Erst der Merge deployt sie. Zum Review
-   gehören: die neu gezogenen Screenshots, §3c (Variabilität), die
-   FINDINGS.md-3-Maße, dazu weiterhin §5b und §5c.
-2. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a. Danach ist
+   Runde (`92501c1`, `a7f3ee3`, Doku). Erst der Merge deployt sie. Zum Review
+   gehören: die Screenshots (Menü, Progress), die Setzungen aus §3d — allen
+   voran die verschwindende Kopfzeile beim ersten Play —, dazu weiterhin §5b
+   und §5c.
+2. **Runde B: Passkeys + D1 + Sync** — kommt mit eigener Spezifikation
+   (Notion-Log #48–51). Erst dann bekommt das Menü eine Account-Zeile; das
+   Gehäuse ist dafür gebaut, setzt aber nichts davon voraus. Local-first
+   bleibt Gesetz.
+3. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a. Danach ist
    die Marken-Runde wirklich fertig.
-3. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Gebaut wird er als
+4. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Gebaut wird er als
    reine Engine-Logik (`src/engine/`), Persistenz additiv. Der Tages-Eimer aus
    dieser Runde ist bewusst *keine* Historie: er hält nur den laufenden Tag.
    Wer eine Reihe über Tage braucht, legt sie daneben — und sollte dabei
    entscheiden, ob der Eimer darin aufgeht.
-4. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
+5. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
    Telefon — jetzt auch: sieht das neue Icon auf einem echten Homescreen gut
    aus? Alles unverändert offen.
-5. **„Visual practice"** als opt-in-Modus — die offene Zusage aus 1.1 §12,
+6. **„Visual practice"** als opt-in-Modus — die offene Zusage aus 1.1 §12,
    siehe Addendum (a) in §3b.
-6. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
+7. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
    Notion-Entscheidung, nicht eine des Codes.
