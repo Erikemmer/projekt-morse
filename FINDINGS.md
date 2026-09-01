@@ -54,3 +54,26 @@ entworfene Typografie.
 **Was es kosten würde:** Selbsthosten der beiden Familien als woff2 im Repo. Etwa
 100–200 kB statische Assets, dafür offline identisch und ohne Fremdabruf. Kleine
 Aufgabe, aber eine eigene.
+
+## 3. Weitere Maße neben den Guidelines — beim Umsetzen von Review 6 gesehen
+
+**Gefunden:** 01.09.2026, beim Einziehen der Metrik-Fixes aus Review 6 (#43).
+Die vier gerulten Fixes sind umgesetzt; dabei fielen benachbarte Maße auf, die
+ebenfalls neben 1.1 §6/§8 liegen, aber **nicht** geregelt wurden — deshalb hier
+statt still mitrepariert (CLAUDE.md §5):
+
+- **Muster-Lücke 14 px** (`.pattern-row` gap): §8 sagt „gap within a character
+  1 u" — bei u = 16 wären das 16 px. Dieselbe Sorte Abweichung wie der
+  52er-Strich, nur nicht im Ruling genannt.
+- **Primär-CTAs 60 px hoch** (`.button-go`, `.button-begin`, `.intro-next`):
+  60 steht nicht auf der §6-Skala; die Antworttasten wurden auf 64 geregelt,
+  die CTAs nicht. (`.button-next` folgt den Antworttasten, weil sein eigener
+  Kommentar „dieselbe Form wie eine Antwort" verspricht und er mit dem Gitter
+  in einer View steht.)
+- **Diverse 28er:** `.shell` padding-bottom, `.footer` margin-top,
+  `.learn-stage` gap. 28 liegt zwischen 24 und 32.
+- **Punkte-Lücke 6 px** (`.dots` gap) — zwischen 4 und 8, falls die Skala auch
+  für solche Kleinstmaße gelten soll.
+
+**Was es kosten würde:** je ein Einzeiler. Es sind Design-Entscheidungen
+(Fable), keine technischen — gehören ins nächste Review, nicht in diesen Commit.

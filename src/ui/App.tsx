@@ -611,6 +611,17 @@ function Reveal({ char }: { char: string }) {
   return <p className="reveal">{char}</p>;
 }
 
+/**
+ * Das Antwort-Gitter.
+ *
+ * Es ist in jeder Phase sichtbar und ausserhalb von 'answering' deaktiviert --
+ * eine **dokumentierte Ausnahme von Guidelines 1.1 §7** ("hide what can't be
+ * used"): die Tasten sind der Kontext der Frage. Wer den Ton hoert, soll
+ * schon sehen, *woraus* er gleich waehlt; ein Gitter, das erst nach dem Ton
+ * einblendet, laesst den Blick jedes Mal neu suchen und verschiebt die
+ * gemessene Reaktionszeit um genau diese Suche. Review-6-Ruling,
+ * Notion-Log #43.
+ */
 function Answers({
   pool,
   enabled,

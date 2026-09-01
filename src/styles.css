@@ -131,7 +131,7 @@ body {
   max-width: 390px;
   min-height: 100dvh;
   margin: 0 auto;
-  padding: 32px 26px 28px;
+  padding: 32px 24px 28px;
   display: flex;
   flex-direction: column;
 }
@@ -179,7 +179,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 36px;
+  gap: 32px;
   text-align: center;
 }
 
@@ -316,8 +316,10 @@ body {
   border-radius: 50%;
 }
 
+/* Pille 3u x 1u bei u = 16 (1.1 §8) -- 48, nicht "ungefaehr drei Einheiten".
+ * Review-6-Ruling, Notion-Log #43. */
 .pattern-element[data-kind='dah'] {
-  width: 52px;
+  width: 48px;
   border-radius: 8px;
 }
 
@@ -422,14 +424,14 @@ button:disabled {
 
 .answers {
   flex: none;
-  margin-top: 36px;
+  margin-top: 32px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
 .answer {
-  height: 60px;
+  height: 64px;
   min-height: 0;
   padding: 0;
   position: relative;
@@ -480,7 +482,13 @@ button:disabled {
   line-height: 1;
 }
 
-/* Ein deaktiviertes Gitter soll ruhen, aber die Aufloesung sichtbar lassen. */
+/*
+ * Das sichtbar-deaktivierte Gitter ist eine dokumentierte Ausnahme von
+ * 1.1 §7 ("hide what can't be used"): die Tasten sind der Kontext der Frage
+ * -- man muss sehen, *woraus* man gleich waehlt, waehrend der Ton laeuft.
+ * Review-6-Ruling, Notion-Log #43. Ausfuehrlich am Gitter selbst
+ * (src/ui/App.tsx, Answers).
+ */
 .answer:disabled[data-mark] {
   opacity: 1;
 }
@@ -490,7 +498,7 @@ button:disabled {
  * und in ink. Das Amber dieser View gehoert der richtigen Antwort (1.1 §4, §7).
  */
 .button-next {
-  height: 60px;
+  height: 64px;
   min-height: 0;
   padding: 0 24px;
   font-family: var(--font-serif);
@@ -520,12 +528,13 @@ button:disabled {
 }
 
 /* Der Buchstabe traegt die Karte -- deutlich groesser als die Frage im
- * Training (26 px), damit klar ist: hier wird gezeigt, nicht abgefragt. */
+ * Training (26 px), damit klar ist: hier wird gezeigt, nicht abgefragt.
+ * Weight 300: 1.1 §5 setzt den "Practice letter" in Light (Review 6, #43). */
 .learn-char {
   margin: 0;
   font-family: var(--font-serif);
   font-size: 64px;
-  font-weight: 500;
+  font-weight: 300;
   line-height: 1;
 }
 
