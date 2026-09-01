@@ -9,9 +9,11 @@ Sync und Konto ist **nichts** angefasst worden. Die Commits der Runde:
 2. `65c6584` — **Die eine leise Zeile** auf Start- und Abschluss-Screen
 3. `9e19530` — **Settings: Tonhöhe und Lautstärke**, gerätespezifisch (Log #66)
 4. `bfe1ef9` — **ICR-Drills: die Speed round** (Log #66)
-5. (dieser Commit) — **Fix aus dem Browser-Durchlauf** (die Ergebniszeile des
-   Drills verschwand genau dann, wenn er geholfen hatte — §4), Screenshots und
-   diese Übergabe
+5. `8615559` — **Fix aus dem Browser-Durchlauf**: die Ergebniszeile des Drills
+   verschwand genau dann, wenn er geholfen hatte (§4)
+6. `e49ef35` — Übergabe und Screenshots
+7. (dieser Commit) — Übergabe: **der Sync ist mit den neuen Feldern
+   durchgespielt**, zwei Geräte gegen lokale D1 (§4)
 
 **Kontext dieser Runde:** drei Features nach Notion-Log #29 und #66. Alles
 davon ist local-first und ohne Konto vollständig: der Streak liegt im
@@ -577,6 +579,24 @@ bekommt keine Zeile.
     dabei geparkt sein — die Hover-Fallgrube aus §7 hat auch in dieser Runde
     einmal zugeschlagen und eine Menü-Zählung auf 2 gebracht.
   - **Kein unbehandelter Skriptfehler** auf keinem der Wege.
+- **Der Sync mit den neuen Feldern, im Browser durchgespielt — 12 von 12.**
+  Zwei „Geräte" als zwei Browser-Kontexte gegen `wrangler pages dev` mit
+  lokaler D1, der Passkey des ersten in den zweiten kopiert (genau das, was ein
+  synchronisierter Passkey tut).
+
+  - **Der Server trägt den Streak — ohne dass eine Server-Zeile davon weiss.**
+    Das ist §3a in der Praxis: der Server ist ein Fach, ein neues Feld im
+    Lernstand braucht dort keine Zeile. Gegengelesen über `GET /api/progress`.
+  - **Und er trägt die Einstellungen nicht.** Gerät A hatte 760 Hz und 50 %
+    gesetzt; im Blob auf dem Server kommen weder `toneHz` noch `volume` vor.
+  - **Der Merge stuft nicht zurück, end-to-end:** Gerät A hat sieben Tage
+    (zuletzt gestern) und einen Freeze im Vorrat, Gerät B ist frisch aufgesetzt
+    und hat heute geübt — für sich genommen ein Streak von 1. Nach dem Login
+    auf B steht **Day 8 — freeze ready.** auf dem Start-Screen, und der
+    zusammengelegte Stand geht sofort zum Server zurück.
+  - **Ein Stand von vor dieser Runde** (ohne `streak`-Feld) lädt weiter, zeigt
+    neutral „Starting fresh." statt einer erfundenen Reihe und behält seine
+    Statistik.
 - **Ein Fehler, den erst der Durchlauf gezeigt hat — und der Fix:** die
   Ergebniszeile des Drills verschwand **genau dann, wenn der Drill geholfen
   hatte.** Sie fragte am Ende neu, welche Zeichen langsam sind — und wenn die
@@ -590,11 +610,9 @@ bekommt keine Zeile.
 
 - **Nichts davon ist auf Produktion geprüft** — die Umgebung kommt dort nicht
   hin (§5e), und diese Runde hat den Deploy nicht angefasst.
-- **Der Sync ist mit den neuen Feldern nicht im Browser durchgespielt.** Die
-  Merge-Regel des Streaks ist als reine Funktion getestet (beide Richtungen,
-  Idempotenz, toter Streak, fehlender Stand), aber ein Zwei-Geräte-Durchlauf
-  wie in Runde B stand diesmal nicht an. Alte Stände ohne `streak` laden
-  weiter — der Default ist additiv und getestet.
+- **Der Drill ist nicht über zwei Geräte geprüft** — es gibt daran auch nichts
+  Geräteübergreifendes: er schreibt nur die Statistik pro Zeichen, und für die
+  gilt die Merge-Regel aus Runde B unverändert.
 - **Kein Hörtest mit Menschen.** Ob 500 Hz auf einem Telefonlautsprecher noch
   trägt und ob 5 % Lautstärke leise genug sind, weiss hier niemand.
 
