@@ -18,6 +18,20 @@ export const STARTING_EFFECTIVE_WPM = 10;
 export const DEFAULT_TONE_HZ = 620;
 
 /**
+ * Ein- und Ausblendzeit pro Ton in Sekunden (Guidelines 1.1 §10: "attack/release
+ * ~ 8 ms -- no clicks, no hard cut-offs").
+ *
+ * Die Rampe verlaengert kein Element: der Player deckelt sie auf ein Drittel der
+ * Tondauer. Das kuerzeste Element ist ein dit, bei 20 WPM 60 ms -- die Grenze
+ * liegt also bei 20 ms und 8 ms passen locker darunter. Am Zeitraster aendert
+ * sich damit nichts (CLAUDE.md 2.1, 7).
+ *
+ * Das CSS-Token --tone-ramp in styles.css spiegelt diesen Wert nur; Audio liest
+ * kein CSS. Hier ist die Quelle.
+ */
+export const TONE_RAMP_SECONDS = 0.008;
+
+/**
  * Start-Zeichensatz: kontrastreich gewaehlt, damit die ersten Verwechslungen
  * nicht am Klang zweier fast gleicher Muster liegen.
  *

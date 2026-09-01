@@ -51,33 +51,54 @@
 :root {
   color-scheme: light;
 
-  /* --- Farbrollen (Ruhe) --- */
-  --paper: #f6f1e8;
-  --ink: #221d16;
-  --accent: #b45309;
-  --accent-deep: #92400e;
-  /* Abgedunkelt gegenueber dem Mockup-Wert #8a7f6d (3,5:1): 5,1:1 auf paper,
-   * damit auch kleiner Sekundaertext WCAG AA (4,5:1) besteht. Entschieden vom
-   * Nutzer am 31.08.2026, siehe FINDINGS.md 1. */
-  --muted: #6f6455;
-  --line: #d8cfc0;
-  --line-soft: #e3dac9;
+  /* --- Tokens nach Guidelines 1.1 §13 ---
+   * Die Namen sind Teil der Spezifikation, nicht Geschmack: wer die Richtlinie
+   * liest und hier nachsieht, soll dieselben Woerter finden. Vier Toene, mehr
+   * gibt es nicht -- und Amber steht hoechstens einmal pro View. */
+  --paper: #F6F1E8;
+  --ink: #221D16;
+  --amber: #B45309;
+  --gray: #6F6455;
 
-  /* --- Typografie ---
-   * Display = Serif (Newsreader), UI = Grotesk (IBM Plex Sans). Beide liegen
-   * als woff2 im Repo (siehe @font-face unten) -- kein Fremdabruf, offline
-   * identisch. Die Fallback-Stacks decken den kurzen Moment vor dem Laden. */
-  --font-display: 'Newsreader', Georgia, 'Times New Roman', serif;
-  --font-ui: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Papierkanten: Haarlinien, Kartenrand, Kartenflaeche. Nie fuer Text. */
+  --edge: #DED5C4;
+  --edge-soft: #E5DCCB;
+  --card: #FFFCF6;
 
-  --space-1: 0.5rem;
-  --space-2: 1rem;
-  --space-3: 1.5rem;
-  --space-4: 2.5rem;
-  --radius: 0.5rem;
+  /* Kein Token aus 1.1 §13, sondern der interne hover/active-Shade von Amber
+   * -- er erscheint nie als eigenstaendige Flaeche. Addendum (b) von Fable,
+   * Notion-Log #41; ohne dieses Addendum waere er eine fuenfte Farbe. */
+  --amber-deep: #92400e;
 
-  /* Kleinste sichere Zielgroesse fuer Finger (WCAG 2.5.5). */
-  --tap: 2.75rem;
+  /* --- Typografie (1.1 §13) ---
+   * Beide Familien liegen als woff2 im Repo (siehe @font-face oben) -- kein
+   * Fremdabruf, offline identisch. Die Fallback-Stacks decken den kurzen
+   * Moment vor dem Laden. */
+  --font-serif: 'Newsreader', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+
+  /* Abstaende aus der Skala in 1.1 §6 (4/8/12/16/24/32/48/64), nichts
+   * dazwischen. Das frueher definierte --space-4 lag mit 40 px neben der
+   * Skala und wurde nirgends benutzt -- es ist ersatzlos weg. */
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+
+  --radius: 10px;
+  --hairline: 1px solid var(--edge);
+
+  /* Zwei Dauern, mehr nicht (1.1 §9): Zustand und Layout, beide ease-out. */
+  --dur-state: 150ms;
+  --dur-layout: 250ms;
+
+  /* Klang-Kennwerte aus 1.1 §13. Dokumentation, keine Quelle: Audio liest kein
+   * CSS. Massgeblich sind DEFAULT_TONE_HZ und TONE_RAMP_SECONDS in
+   * src/engine/settings.ts -- wer hier etwas aendert, aendert dort mit. */
+  --tone-freq: 620;
+  --tone-ramp: 0.008;
+
+  /* Kleinste sichere Zielgroesse fuer Finger (WCAG 2.5.5, 1.1 §6). */
+  --tap: 44px;
 }
 
 * {
@@ -88,12 +109,12 @@ body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
-  font: 16px/1.6 var(--font-ui);
+  font: 16px/1.6 var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent-deep);
+  outline: 2px solid var(--amber-deep);
   outline-offset: 2px;
 }
 
@@ -129,21 +150,21 @@ body {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--muted);
+  color: var(--gray);
 }
 
 .progress-track {
   margin-top: 12px;
   height: 2px;
   border-radius: 1px;
-  background: var(--line-soft);
+  background: var(--edge-soft);
   overflow: hidden;
 }
 
 .progress-fill {
   height: 100%;
   border-radius: 1px;
-  background: var(--accent);
+  background: var(--amber);
 }
 
 /* --- Mitte: Ton, Frage, Aufloesung --- */
@@ -163,7 +184,7 @@ body {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.18em;
-  color: var(--muted);
+  color: var(--gray);
 }
 
 /*
@@ -184,7 +205,7 @@ body {
 }
 
 .play:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-color: var(--amber);
 }
 
 /* Das Dreieck aus Rahmen gebaut -- kein Bild, kein Icon-Paket. Der Versatz
@@ -199,12 +220,12 @@ body {
 }
 
 .play:hover:not(:disabled) .play-mark {
-  border-left-color: var(--accent);
+  border-left-color: var(--amber);
 }
 
 .question {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 26px;
   font-weight: 500;
   line-height: 1.3;
@@ -222,12 +243,12 @@ body {
 }
 
 .verdict-mark {
-  font-family: var(--font-ui);
+  font-family: var(--font-sans);
   font-size: 18px;
 }
 
 .verdict[data-kind='hit'] .verdict-mark {
-  color: var(--accent);
+  color: var(--amber);
 }
 
 .verdict[data-kind='miss'] .verdict-mark {
@@ -237,7 +258,7 @@ body {
 /* Die Aufloesung: das Zeichen gross, darunter sein Muster als Form. */
 .reveal {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 64px;
   font-weight: 500;
   line-height: 1;
@@ -273,7 +294,7 @@ body {
 /* Fuer die Hervorhebung einzelner Elemente -- derzeit setzt nichts sie, weil
  * es keine Regel dafuer gibt, welches Element hervorzuheben waere. */
 .pattern-element[data-highlight='true'] {
-  background: var(--accent);
+  background: var(--amber);
 }
 
 /* --- Fusszeile: Tagesstand links, Sitzung als Punkte rechts --- */
@@ -290,7 +311,7 @@ body {
 .footer-stats {
   margin: 0;
   font-size: 13px;
-  color: var(--muted);
+  color: var(--gray);
 }
 
 .dots {
@@ -303,16 +324,16 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--line);
+  background: var(--edge);
 }
 
 .dot[data-state='done'] {
-  background: var(--accent);
+  background: var(--amber);
 }
 
 .summary-heading {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 1.75rem;
   font-weight: 500;
 }
@@ -332,13 +353,13 @@ button {
   padding: 0.6rem 1.5rem;
   color: var(--ink);
   background: transparent;
-  border: 1px solid var(--line);
+  border: 1px solid var(--edge);
   border-radius: var(--radius);
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-color: var(--amber);
 }
 
 button:disabled {
@@ -347,12 +368,12 @@ button:disabled {
 }
 
 .button-primary {
-  border-color: var(--accent);
-  color: var(--accent-deep);
+  border-color: var(--amber);
+  color: var(--amber-deep);
 }
 
 .button-primary:hover:not(:disabled) {
-  border-color: var(--accent-deep);
+  border-color: var(--amber-deep);
 }
 
 /* --- Antwort-Gitter: drei Spalten, Serif --- */
@@ -370,18 +391,18 @@ button:disabled {
   min-height: 0;
   padding: 0;
   position: relative;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 26px;
   font-weight: 500;
   color: var(--ink);
   background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
 }
 
 .answer:hover:not(:disabled),
 .answer:focus-visible {
-  border-color: var(--accent);
+  border-color: var(--amber);
 }
 
 /*
@@ -390,8 +411,8 @@ button:disabled {
  * gegen Kreuz bleibt auch ohne Farbwahrnehmung eindeutig.
  */
 .answer[data-mark='correct'] {
-  border-color: var(--accent);
-  color: var(--accent-deep);
+  border-color: var(--amber);
+  color: var(--amber-deep);
 }
 
 .answer[data-mark='wrong'] {
@@ -402,7 +423,7 @@ button:disabled {
   position: absolute;
   top: 6px;
   right: 8px;
-  font-family: var(--font-ui);
+  font-family: var(--font-sans);
   font-size: 12px;
   line-height: 1;
 }
@@ -417,13 +438,13 @@ button:disabled {
   height: 60px;
   min-height: 0;
   padding: 0 24px;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 20px;
   font-weight: 500;
-  color: var(--accent-deep);
+  color: var(--amber-deep);
   background: transparent;
-  border: 1px solid var(--accent);
-  border-radius: 10px;
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
 }
 
 /* --- Lernmodus: Einfuehrungskarte, Echo-Check, Wiederholen --- */
@@ -442,7 +463,7 @@ button:disabled {
  * Training (26 px), damit klar ist: hier wird gezeigt, nicht abgefragt. */
 .learn-char {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 64px;
   font-weight: 500;
   line-height: 1;
@@ -451,7 +472,7 @@ button:disabled {
 .learn-copy {
   margin: 0;
   font-size: 15px;
-  color: var(--muted);
+  color: var(--gray);
 }
 
 /* Haelt die Hoehe frei, solange das Muster noch nicht gezeigt werden darf --
@@ -469,7 +490,7 @@ button:disabled {
 
 .review-heading {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 26px;
   font-weight: 500;
   line-height: 1.3;
@@ -511,7 +532,7 @@ button:disabled {
 
 .intro-headline {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 32px;
   font-weight: 500;
   line-height: 1.2;
@@ -527,7 +548,7 @@ button:disabled {
   margin: 0;
   font-size: 17px;
   line-height: 1.6;
-  color: var(--muted);
+  color: var(--gray);
 }
 
 .intro-foot {
@@ -544,13 +565,13 @@ button:disabled {
   padding: 0.5rem 0;
   min-height: var(--tap);
   font-size: 13px;
-  color: var(--muted);
+  color: var(--gray);
   background: transparent;
   border: none;
 }
 
 .skip:hover {
-  color: var(--accent-deep);
+  color: var(--amber-deep);
 }
 
 .button-begin,
@@ -558,13 +579,13 @@ button:disabled {
   height: 60px;
   min-height: 0;
   padding: 0 32px;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 20px;
   font-weight: 500;
-  color: var(--accent-deep);
+  color: var(--amber-deep);
   background: transparent;
-  border: 1px solid var(--accent);
-  border-radius: 10px;
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
 }
 
 /* --- Sekundaeres --- */
@@ -579,12 +600,12 @@ button:disabled {
 
 .facts dt {
   font-size: 1rem;
-  color: var(--muted);
+  color: var(--gray);
 }
 
 .facts dd {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-size: 1.5rem;
   font-variant-numeric: tabular-nums;
 }
@@ -592,7 +613,7 @@ button:disabled {
 .note {
   margin: 0;
   font-size: 1rem;
-  color: var(--muted);
+  color: var(--gray);
   text-align: center;
 }
 
@@ -600,13 +621,13 @@ button:disabled {
 .unlock {
   margin: 0;
   font-size: 1.0625rem;
-  color: var(--muted);
+  color: var(--gray);
 }
 
 .unlock strong {
-  font-family: var(--font-display);
+  font-family: var(--font-serif);
   font-weight: 500;
-  color: var(--accent-deep);
+  color: var(--amber-deep);
 }
 
 .visually-hidden {
@@ -640,9 +661,10 @@ button:disabled {
   color-scheme: dark;
   --paper: #17130e;
   --ink: #f0e9dd;
-  --accent: #e08a3c;
-  --accent-deep: #f0a95c;
-  --muted: #9a8f7c;
-  --line: #3a3128;
-  --line-soft: #2a231b;
+  --amber: #e08a3c;
+  --amber-deep: #f0a95c;
+  --gray: #9a8f7c;
+  --edge: #3a3128;
+  --edge-soft: #2a231b;
+  --card: #1e1913;
 }

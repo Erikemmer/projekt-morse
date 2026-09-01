@@ -14,7 +14,7 @@
  */
 
 import type { Schedule } from '../engine/schedule';
-import { DEFAULT_TONE_HZ } from '../engine/settings';
+import { DEFAULT_TONE_HZ, TONE_RAMP_SECONDS } from '../engine/settings';
 
 export interface PlayerOptions {
   /** Tonhoehe in Hz. Default: DEFAULT_TONE_HZ aus der Engine. */
@@ -62,7 +62,7 @@ export class MorsePlayer {
   constructor(options: PlayerOptions = {}) {
     this.frequency = options.frequency ?? DEFAULT_TONE_HZ;
     this.volume = options.volume ?? 0.25;
-    this.rampSeconds = options.rampSeconds ?? 0.005;
+    this.rampSeconds = options.rampSeconds ?? TONE_RAMP_SECONDS;
   }
 
   /**
