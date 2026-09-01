@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-30.000 -17.695 180.000 119.695" role="img" aria-label="Morse Lab">
+  <title>Morse Lab</title>
+  <rect x="0" y="64" width="120" height="8" rx="4" fill="#221D16"/>
+  <g transform="rotate(13 108 48)">
+    <rect x="16" y="44" width="92" height="8" rx="4" fill="#221D16"/>
+  </g>
+  <circle cx="18.358" cy="27.305" r="15" fill="#B45309"/>
+  <circle cx="108" cy="48" r="5" fill="none" stroke="#221D16" stroke-width="3"/>
+</svg>
