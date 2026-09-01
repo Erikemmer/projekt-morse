@@ -1,0 +1,194 @@
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8"><title>Morse Lab — Brand &amp; Product Guidelines</title>
+<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->
+<style>
+@page { size: A4; margin: 2.2cm; }
+body { font-family: "IBM Plex Sans", Calibri, sans-serif; font-size: 11pt; color: #221D16; line-height: 1.5; }
+.meta { font-size: 8pt; letter-spacing: 2pt; text-transform: uppercase; color: #6F6455; border-bottom: 1pt solid #DED5C4; padding-bottom: 6pt; }
+h1 { font-family: Newsreader, Georgia, serif; font-weight: normal; font-size: 25pt; color: #221D16; margin: 18pt 0 6pt; }
+.essenz { font-family: Newsreader, Georgia, serif; font-style: italic; font-size: 13pt; color: #6F6455; margin: 0 0 6pt; }
+.intro { font-size: 9.5pt; color: #6F6455; margin: 0 0 16pt; }
+h2 { font-family: Newsreader, Georgia, serif; font-weight: normal; font-size: 16pt; color: #221D16; margin: 22pt 0 6pt; border-bottom: 0.5pt solid #DED5C4; padding-bottom: 3pt; }
+h3 { font-size: 11pt; font-weight: bold; margin: 12pt 0 4pt; }
+p, li { font-size: 10.5pt; }
+ul { margin: 4pt 0 10pt; }
+li { margin-bottom: 3pt; }
+table { border-collapse: collapse; width: 100%; margin: 6pt 0 12pt; }
+th { text-align: left; font-size: 9.5pt; border-bottom: 1.2pt solid #221D16; padding: 4pt 6pt; }
+td { font-size: 9.5pt; border-bottom: 0.5pt solid #E5DCCB; padding: 4pt 6pt; vertical-align: top; }
+.hint { font-size: 9.5pt; color: #6F6455; }
+.code { font-family: "IBM Plex Mono", "Courier New", monospace; font-size: 9pt; background: #FFFCF6; border: 0.5pt solid #DED5C4; padding: 8pt 10pt; }
+.pagebreak { page-break-before: always; }</style></head>
+<body>
+
+<p class="meta">Morse Lab · Brand &amp; Product Guidelines — Version 1.1 · September 2026</p>
+<h1>Morse Lab — Brand &amp; Product Guidelines</h1>
+<p class="essenz">Paper, ink, one spark of amber — and the rest is sound.</p>
+<p class="intro">This document covers the entire project: brand, logo, color, typography, layout, components, iconography, motion, sound, voice, accessibility and implementation tokens. It is the reference for design and development alike. A German summary version (CI 1.0) exists; where the two differ, this document governs.</p>
+
+<h2>1 · Brand core</h2>
+<p>Morse Lab is a web app for learning Morse code. It treats learning as a <b>focused ritual</b>: nothing pushes, nothing blinks, nothing rewards with noise. The interface behaves like a good notebook — warm paper, dark ink, exactly one accent. Every design decision is tested against four principles:</p>
+<ul>
+<li><b>Calm before stimulus.</b> Generous whitespace; no shadows, no gradients, no emojis, no confetti.</li>
+<li><b>Outlined, not filled.</b> Thin lines carry the interface; filled surfaces are the exception.</li>
+<li><b>One accent.</b> Amber marks the single most important thing per view — never two things at once.</li>
+<li><b>The rest is sound.</b> The app makes no sound other than Morse.</li>
+</ul>
+<p class="hint">Litmus test: could this screen sit quietly on a desk next to a paper notebook and a straight key without embarrassing either?</p>
+
+<h2>2 · Name &amp; wordmark</h2>
+<ul>
+<li>The name is <b>Morse Lab</b> — two words, both capitalized. Never “MorseLab”, “morselab” or “MORSE LAB”.</li>
+<li>Domain: <b>morse-lab.com</b> (hyphenated, lowercase); the pages.dev URL remains as fallback.</li>
+<li>Wordmark: “Morse Lab” in Newsreader Regular, sentence case, default tracking. Never letterspaced, never all-caps.</li>
+</ul>
+
+<h2>3 · Logo — the key</h2>
+<p>The mark is a straight key (Morse key) reduced to three geometric elements: base, lever, knob. The knob is the <i>only filled amber surface in the brand</i> — the part you touch.</p>
+<h3>Construction</h3>
+<ul>
+<li>Base 120 × 8, lever 92 × 8, both radius 4 (half the bar height), ink.</li>
+<li>Lever raised 13°, pivot at the right bearing.</li>
+<li>Knob ⌀ 30, amber, filled. Bearing ⌀ 10, 3 px ink outline, unfilled.</li>
+<li>Clear space: one knob diameter on all sides.</li>
+<li>Minimum sizes: mark alone 24 px wide, lockup with wordmark 140 px. Below that: fallback mark, dot + pill (· —).</li>
+</ul>
+<h3>Variants</h3>
+<ul>
+<li><b>Primary lockup</b> — mark above or left of the wordmark, on paper.</li>
+<li><b>Inverse</b> — on ink: bars in paper, knob stays amber.</li>
+<li><b>App icon / favicon</b> — mark alone, centered on paper, 10 px corner radius at 44 px (scale proportionally).</li>
+<li><b>Fallback mark</b> — dot + pill in amber, for sizes under 24 px and inline contexts.</li>
+</ul>
+<h3>Don’ts</h3>
+<p>Do not fill or thicken the bars · do not rotate or mirror the mark · no shadows or gradients · knob in any color other than amber · logo on an amber surface (paper or ink only) · wordmark letterspaced or in all-caps.</p>
+
+<h2 class="pagebreak">4 · Color</h2>
+<p>Four tones, no more. Amber is rationed: exactly one element per view.</p>
+<table>
+<tr><th>Swatch</th><th>Role</th><th>Hex</th><th>Usage</th></tr>
+<tr><td style="background:#F6F1E8">&nbsp;</td><td>Paper</td><td><b>#F6F1E8</b></td><td>Base surface of every view; light logo ground</td></tr>
+<tr><td style="background:#221D16">&nbsp;</td><td>Ink</td><td><b>#221D16</b></td><td>Text, lines, icons; dark ground</td></tr>
+<tr><td style="background:#B45309">&nbsp;</td><td>Amber</td><td><b>#B45309</b></td><td>The one accent: knob, active state, links, the element currently sounding</td></tr>
+<tr><td style="background:#6F6455">&nbsp;</td><td>Warm gray</td><td><b>#6F6455</b></td><td>Secondary text, labels, captions</td></tr>
+<tr><td style="background:#E5DCCB">&nbsp;</td><td>Paper edges</td><td><b>#E5DCCB / #DED5C4 / #FFFCF6</b></td><td>Hairlines, card borders, card fill — never for text</td></tr>
+</table>
+<ul>
+<li>On ink ground: text in paper, amber stays amber. No transparency, no additional grays.</li>
+<li>Contrast: body text is always ink on paper (≈ 13:1). Warm gray only for text ≥ 11 px (passes 4.5:1). Amber text ≥ 14 px or bold.</li>
+<li>Amber never appears twice in one view. If two things compete, one of them is wrong.</li>
+<li>No semantic red/green. Correct = a calm ink checkmark; incorrect = the correct answer shown in amber. Errors are information, not alarms.</li>
+</ul>
+
+<h2>5 · Typography</h2>
+<p>Two typefaces, never more. <b>Newsreader</b> (serif) for headlines, questions and the letters being learned. <b>IBM Plex Sans</b> for everything functional: body copy, buttons, labels, statistics. IBM Plex Mono only inside code blocks in documentation, never in the product UI.</p>
+<table>
+<tr><th>Level</th><th>Face</th><th>Size / weight</th><th>Sample</th></tr>
+<tr><td>Practice letter</td><td>Newsreader</td><td>64–96 px · Light 300</td><td style="font-family:Newsreader,Georgia,serif;font-size:16pt">K</td></tr>
+<tr><td>Headline / question</td><td>Newsreader</td><td>24–34 px · 400–500</td><td style="font-family:Newsreader,Georgia,serif">Which letter was that?</td></tr>
+<tr><td>Body</td><td>IBM Plex Sans</td><td>15–16 px · 400 · line-height 1.65</td><td>Listen to the signal and answer.</td></tr>
+<tr><td>Button</td><td>IBM Plex Sans</td><td>14 px · Medium 500</td><td><b>Keep practicing</b></td></tr>
+<tr><td>Label</td><td>IBM Plex Sans</td><td>11 px · 500 · caps, +0.18 em</td><td style="letter-spacing:1.5pt">LESSON 4 · 20 WPM</td></tr>
+</table>
+<p class="hint">Statistics use tabular numerals. No weight above 600, no third typeface, no mixing faces within a line except letter quotations in Newsreader.</p>
+
+<h2 class="pagebreak">6 · Layout &amp; spacing</h2>
+<ul>
+<li><b>Spacing scale:</b> 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 px. Nothing in between.</li>
+<li><b>Content width:</b> max 680 px for reading, 960 px for dashboards. One column by default; the practice view is a single centered column.</li>
+<li><b>Corner radius:</b> 10 px on cards, inputs and buttons — one radius everywhere (circles excepted).</li>
+<li><b>Borders:</b> 1 px in paper-edge tones. Depth comes from lines and distance — no shadows, ever.</li>
+<li><b>Whitespace:</b> sections breathe; prefer a second screen over a full one. The practice letter sits alone with at least 64 px of clearance.</li>
+<li><b>Touch targets:</b> minimum 44 × 44 px on mobile; the key button is full-width.</li>
+</ul>
+
+<h2>7 · Components</h2>
+<ul>
+<li><b>Play button:</b> an empty circle with an ink outline. It fills — amber — only while sound is playing, and empties again when it stops.</li>
+<li><b>Buttons:</b> outlined by default; exactly one filled amber primary per view (usually “Start” or “Check”). No disabled-gray ghost rows — hide what can’t be used.</li>
+<li><b>Progress:</b> a hairline 2 px track in paper-edge tone with an ink fill. Never a thick bar, a ring, or a percentage badge.</li>
+<li><b>Cards:</b> #FFFCF6 fill, 1 px #DED5C4 border, radius 10, padding 24. Used sparingly — most content sits directly on paper.</li>
+<li><b>Inputs:</b> outlined, radius 10; focus = 2 px ink outline (no glow). The answer field is the largest element after the practice letter.</li>
+<li><b>The key button:</b> the tap/space target for keying practice mirrors the logo — a wide outlined pill that “presses” 2 px down while held, knob-amber while sounding.</li>
+<li><b>Statistics:</b> plain tabular numbers with labels, separated by hairlines. No gauges, no medals, no streak flames.</li>
+</ul>
+
+<h2>8 · Iconography &amp; the code motif</h2>
+<ul>
+<li>UI icons are line icons: 1.5 px stroke, ink, round caps, 20/24 px grid. No filled or two-tone icons.</li>
+<li>The Morse code itself is the brand’s only ornament — always <b>real, readable code</b> in correct proportions. Base unit u = dot diameter.</li>
+<li>Dot: circle ⌀ 1 u · dash: pill 3 u × 1 u, radius 0.5 u · gap within a character 1 u · between letters 3 u · between words 7 u.</li>
+<li>Color: ink; the element currently sounding is amber. Decorative fake code is never allowed — if code appears, it spells something.</li>
+</ul>
+
+<h2 class="pagebreak">9 · Motion</h2>
+<ul>
+<li>Motion is functional, never celebratory. Two durations: <b>150 ms</b> (state: hover, press, fill) and <b>250 ms</b> (layout: panels, transitions), both ease-out.</li>
+<li>The only expressive animation is the <b>signal itself</b>: dots and dashes turning amber in time with the sound; the play circle filling while audio runs.</li>
+<li>Nothing bounces, nothing pulses idle, nothing auto-plays. Motion follows a user action or the audio clock — never a timer.</li>
+<li>Respect prefers-reduced-motion: keep the amber sync highlight (it is information), drop everything else.</li>
+</ul>
+
+<h2>10 · Sound</h2>
+<ul>
+<li>One voice: a warm <b>620 Hz sine tone</b>. No square waves, no chords, no alternate pitches.</li>
+<li>Envelope: soft ramps, attack/release ≈ 8 ms — no clicks, no hard cut-offs.</li>
+<li>Timing follows the <b>PARIS standard</b> from the configured WPM; Farnsworth spacing allowed for beginners.</li>
+<li>The app makes <b>no other sound than Morse</b>: no success jingles, no notification pings, no UI clicks. Silence is part of the brand.</li>
+</ul>
+
+<h2>11 · Voice &amp; tone</h2>
+<p>Calm, precise, honest. <b>No exclamation marks, no guilt.</b> Praise sparingly and concretely, correct factually, always offer the next step. Product copy is English first; the German UI translation follows the same rules.</p>
+<table>
+<tr><th style="width:50%">Like this</th><th>Not this</th></tr>
+<tr><td>Correct. Next up: K.</td><td style="color:#6F6455">Awesome!!! You’re on fire 🎉</td></tr>
+<tr><td>That was · — · · — L. Hear it again?</td><td style="color:#6F6455">Wrong. Try harder.</td></tr>
+<tr><td>12 minutes practiced. R is waiting tomorrow.</td><td style="color:#6F6455">Don’t lose your streak!!!</td></tr>
+<tr><td>Audio is off. Turn it on to practice by ear.</td><td style="color:#6F6455">Oops! Something needs your attention 😬</td></tr>
+</table>
+<ul>
+<li>Short sentences. Present tense. Second person only when needed; often no pronoun at all.</li>
+<li>Numbers are facts, not trophies: “14 of 26 letters” — never “14 letters unlocked”.</li>
+<li>Errors name the fix, not the fault. Empty states say what will appear here, in one line.</li>
+</ul>
+
+<h2 class="pagebreak">12 · Accessibility</h2>
+<ul>
+<li>Contrast: ink on paper ≈ 13:1; warm gray only ≥ 11 px; amber text ≥ 14 px or bold. All pass WCAG AA in their roles.</li>
+<li>Every audio exercise has a visual twin: the code lights up in sync, so deaf and hard-of-hearing users can practice by sight (and everyone can practice muted).</li>
+<li>Full keyboard operation: space = key down, enter = check, letters answer directly. Focus is a 2 px ink outline, never suppressed.</li>
+<li>Meaning never rides on color alone — amber highlights pair with position or motion in time.</li>
+<li>Respect prefers-reduced-motion and prefers-color-scheme (dark mode = ink ground, paper text, amber unchanged).</li>
+</ul>
+
+<h2>13 · Implementation tokens</h2>
+<p>Reference CSS custom properties for the codebase — names are part of the spec:</p>
+<p class="code">:root {<br>
+&nbsp;&nbsp;--paper: #F6F1E8; &nbsp;--ink: #221D16;<br>
+&nbsp;&nbsp;--amber: #B45309; &nbsp;--gray: #6F6455;<br>
+&nbsp;&nbsp;--edge: #DED5C4; &nbsp;--edge-soft: #E5DCCB; &nbsp;--card: #FFFCF6;<br>
+&nbsp;&nbsp;--font-serif: "Newsreader", Georgia, serif;<br>
+&nbsp;&nbsp;--font-sans: "IBM Plex Sans", system-ui, sans-serif;<br>
+&nbsp;&nbsp;--radius: 10px; &nbsp;--hairline: 1px solid var(--edge);<br>
+&nbsp;&nbsp;--dur-state: 150ms; &nbsp;--dur-layout: 250ms;<br>
+&nbsp;&nbsp;--tone-freq: 620; /* Hz, sine */<br>
+&nbsp;&nbsp;--tone-ramp: 0.008; /* s, attack + release */<br>
+}</p>
+
+<h2>Appendix A · Rebranding checklist</h2>
+<p>The name is recorded in the decision log; the “find a project name” task is done. To migrate the existing project, append this paragraph to the Claude Code session (kept in German, as the session runs in German):</p>
+<p class="code">Zusatz: Das Projekt heißt jetzt "Morse Lab" (Domain morse-lab.com, gekauft).<br>
+App-Titel, Manifest, index.html, README, CLAUDE.md und HANDOVER.md entsprechend<br>
+umstellen (Schreibweise: "Morse Lab", zwei Wörter). morse-lab.com als Custom<br>
+Domain an das Cloudflare-Pages-Projekt binden (pages.dev bleibt bestehen);<br>
+falls die Domain woanders registriert ist, die nötigen DNS-Einträge nennen.</p>
+<ul>
+<li>App title, manifest, index.html, README, CLAUDE.md, HANDOVER.md → “Morse Lab” (two words)</li>
+<li>morse-lab.com as custom domain on the Cloudflare Pages project (pages.dev remains)</li>
+<li>Favicon and app icon → the key mark (section 3); fallback mark for 16 px</li>
+<li>Adopt the token block from section 13 as the single source of truth for styling</li>
+</ul>
+
+<p class="meta" style="border-bottom:none;border-top:1pt solid #DED5C4;padding-top:6pt;margin-top:24pt">Morse Lab · Brand &amp; Product Guidelines 1.1 · — — &nbsp; · — · ·</p>
+
+</body></html>

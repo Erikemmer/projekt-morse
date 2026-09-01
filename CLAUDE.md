@@ -35,13 +35,30 @@ und Strichen. Läuft vollständig lokal, ohne Konto, ohne Server.
    Freeze-Gnade**: er zeigt Kontinuität und verzeiht Aussetzer, statt sie zu bestrafen
    (SDT-konform). Der Geist von „keine Streak-Erpressung" bleibt — kein Druckaufbau,
    kein Fortschritt, der als Druckmittel verloren geht.
-9. **Design-Richtung „Ruhe".** Vom Nutzer aus drei Mockup-Optionen gewählt: ruhig,
-   viel Weißraum, **ein** Akzent. Keine Verläufe, kein Konfetti, keine Emojis.
-   Farben ausschließlich über die Tokens in `src/styles.css` (paper, ink, accent /
-   accent-deep, muted, line, line-soft). **Keine weitere Farbe ohne dokumentierte
-   Entscheidung**, und kein Farbliteral außerhalb der Token-Definition. Typografie:
-   Display „Newsreader" (Serif), UI „IBM Plex Sans", beide mit Fallback-Stack.
+9. **Design-Richtung „Ruhe" — führend ist die Marken-Richtlinie.**
+   Verbindlich ist
+   [`docs/brand/Morse_Lab_Brand_Guidelines_1.1.html`](./docs/brand/Morse_Lab_Brand_Guidelines_1.1.html)
+   (**1.1 führt**); [`docs/CI.md`](./docs/CI.md) ist die deutsche Kurzfassung und
+   im Zweifel nachrangig.
+
+   Farben ausschließlich über die Tokens in `src/styles.css` (`paper`, `ink`,
+   `amber`, `gray`, `edge`, `edge-soft`, `card` — 1.1 §13). **Keine weitere Farbe
+   ohne dokumentierte Entscheidung**, und kein Farbliteral außerhalb der
+   Token-Definition. **Amber nie zweimal in einer View.** Typografie: Display
+   „Newsreader" (Serif), UI „IBM Plex Sans", beide mit Fallback-Stack, nichts
+   fetter als 600. Keine Verläufe, kein Konfetti, keine Emojis, keine Schatten.
    Light-first.
+
+   **Drei Addenda von Fable haben Vorrang vor 1.1** (Notion-Log #41):
+
+   - **(a) Kein Live-Sync im Standard-Hörtraining.** Der „visuelle Zwilling" aus
+     1.1 §12 wird im normalen Hörtraining **nicht** gebaut — er widerspräche
+     Punkt 2.2 oben. Er kommt später als opt-in-Modus „Visual practice".
+     **Jetzt nicht bauen.**
+   - **(b) `#92400e`** steht nicht im Token-Block von 1.1, bleibt aber als
+     **interner hover/active-Shade von Amber** — nie als eigenständige Fläche.
+   - **(c) Der Play-Kreis bleibt während der Wiedergabe bedienbar** (Replay),
+     auch wenn 1.1 §7 nur die Füllung beschreibt.
 10. **EN-first.** Alle UI-Strings sind Englisch. Deutsch folgt später als eigene
    i18n-Entscheidung — bis dahin nichts dafür vorbauen.
 
