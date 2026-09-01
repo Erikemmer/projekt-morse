@@ -112,13 +112,20 @@ export function App() {
    */
   const [learn, setLearn] = useState<LearnState | null>(null);
   /**
-   * Der Median der langsamen Zeichen, **bevor** der Drill lief -- sonst gaebe
-   * es am Ende nichts, womit man ehrlich vergleichen koennte. Er wird beim
-   * Start des Drills festgehalten, weil die Antworten des Drills danach in
-   * genau diese Messreihe laufen. `null` heisst: kein Drill, oder es gab
-   * nichts zu vergleichen.
+   * Womit der Drill angetreten ist: **welche** Zeichen langsam waren und wie
+   * ihr Median vorher stand.
+   *
+   * Beides wird beim Start festgehalten, nicht am Ende neu berechnet -- und
+   * das ist keine Optimierung, sondern die Bedingung dafuer, dass die
+   * Ergebniszeile ueberhaupt stimmt. Ein Drill *veraendert* die Messreihe, aus
+   * der "langsam" abgeleitet wird: hinterher neu zu fragen, welche Zeichen
+   * langsam sind, liefert im besten Fall -- der Drill hat geholfen -- eine
+   * leere Liste. Genau dann verschwaende die Zeile, die den Erfolg berichten
+   * soll. Im Browser-Durchlauf genau so passiert.
+   *
+   * `null` heisst: es lief kein Drill.
    */
-  const [drillBefore, setDrillBefore] = useState<number | null>(null);
+  const [drillTarget, setDrillTarget] = useState<DrillTarget | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [tonePlaying, setTonePlaying] = useState(false);
 
@@ -415,7 +422,7 @@ export function App() {
   }, [session.progress.introducedCharacters]);
 
   const restart = useCallback(() => {
-    setDrillBefore(null);
+    setDrillTarget(null);
     setSession((current) =>
       createSession({
         totalRounds: current.totalRounds,
@@ -439,7 +446,8 @@ export function App() {
 
     // Der Vergleichswert gilt den *langsamen* Zeichen, nicht den Kontrasten:
     // verglichen wird, was vergleichbar ist (CLAUDE.md 2.6).
-    setDrillBefore(storedMedianOver(session.progress, slowCharacters(session.progress)));
+    const characters = slowCharacters(session.progress);
+    setDrillTarget({ characters, before: storedMedianOver(session.progress, characters) });
     setSession((current) =>
       createSession({
         totalRounds: DRILL_ROUNDS,
@@ -651,7 +659,7 @@ export function App() {
           kind={session.kind}
           summary={summary}
           streak={streak}
-          drillResult={drillResult(session, drillBefore)}
+          drillResult={drillResult(session, drillTarget)}
           onRestart={restart}
           headingRef={focusTarget}
         />
@@ -775,6 +783,14 @@ function eyebrowFor(phase: SessionState['phase'], toneHz: number): string {
   return `Ready · ${hz}`;
 }
 
+/** Womit ein Drill angetreten ist -- siehe `drillTarget` in App(). */
+interface DrillTarget {
+  /** Die langsamen Zeichen, so wie sie beim Start hiessen. */
+  readonly characters: readonly string[];
+  /** Ihr gemeinsamer Median vor dem Drill, oder null. */
+  readonly before: number | null;
+}
+
 /**
  * Die Einladung zum Drill, als Satz.
  *
@@ -805,15 +821,16 @@ function slowSentence(characters: readonly string[]): string {
  * Zehn Abfragen sind ausserdem eine kleine Stichprobe -- der Satz behauptet
  * deshalb ein Ergebnis dieses Laufs, kein neues Koennen.
  */
-function drillResult(session: SessionState, before: number | null): string | null {
-  if (session.kind !== 'drill') return null;
+function drillResult(session: SessionState, target: DrillTarget | null): string | null {
+  if (session.kind !== 'drill' || target === null) return null;
 
-  const drilled = slowCharacters(session.progress);
-  const now = attemptMedianOver(session.attempts, drilled);
+  const now = attemptMedianOver(session.attempts, target.characters);
   if (now === null) return null;
 
   const line = `Median ${now.toFixed(1)} s`;
-  return before !== null && now < before ? `${line} — down from ${before.toFixed(1)} s.` : `${line}.`;
+  return target.before !== null && now < target.before
+    ? `${line} — down from ${target.before.toFixed(1)} s.`
+    : `${line}.`;
 }
 
 /**
