@@ -18,6 +18,39 @@ export const STARTING_EFFECTIVE_WPM = 10;
 export const DEFAULT_TONE_HZ = 620;
 
 /**
+ * Die Spanne, in der die Tonhoehe eingestellt werden kann (Settings, Log #66).
+ *
+ * 500-800 Hz deckt den ueblichen Bereich von Funkempfaengern ab und laesst
+ * Raum fuer Gehoere, denen 620 Hz unangenehm liegt -- ein Grund, warum jemand
+ * die Einstellung ueberhaupt sucht. Enger als das Variabilitaets-Band ist sie
+ * bewusst nicht: was die Baender ab Stufe 1 spielen, ist eine Uebungsfrage;
+ * was hier steht, ist eine Frage des Komforts.
+ */
+export const TONE_HZ_RANGE = Object.freeze({ min: 500, max: 800 });
+
+/** Schrittweite des Tonhoehen-Reglers in Hz. 620 liegt auf diesem Raster. */
+export const TONE_HZ_STEP = 10;
+
+/**
+ * Grundlautstaerke 0..1. Derselbe Wert, den der Player bisher fest hatte --
+ * die Einstellung aendert die Voreinstellung nicht, sie macht sie nur
+ * erreichbar.
+ */
+export const DEFAULT_VOLUME = 0.25;
+
+/**
+ * Die Spanne der Lautstaerke.
+ *
+ * Das Minimum ist bewusst nicht 0: ein stumm gestellter Hoertrainer sieht
+ * kaputt aus, nicht leise. Wer wirklich Stille will, hat den Regler des
+ * Geraets -- und der ist nicht unsere Behauptung (CLAUDE.md 2.6).
+ */
+export const VOLUME_RANGE = Object.freeze({ min: 0.05, max: 1 });
+
+/** Schrittweite des Lautstaerke-Reglers (5 %). */
+export const VOLUME_STEP = 0.05;
+
+/**
  * Ein- und Ausblendzeit pro Ton in Sekunden (Guidelines 1.1 §10: "attack/release
  * ~ 8 ms -- no clicks, no hard cut-offs").
  *

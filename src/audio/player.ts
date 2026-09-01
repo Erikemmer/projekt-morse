@@ -14,7 +14,7 @@
  */
 
 import type { Schedule } from '../engine/schedule';
-import { DEFAULT_TONE_HZ, TONE_RAMP_SECONDS } from '../engine/settings';
+import { DEFAULT_TONE_HZ, DEFAULT_VOLUME, TONE_RAMP_SECONDS, VOLUME_RANGE } from '../engine/settings';
 
 export interface PlayerOptions {
   /** Tonhoehe in Hz. Default: DEFAULT_TONE_HZ aus der Engine. */
@@ -55,14 +55,34 @@ const START_OFFSET_SECONDS = 0.1;
 export class MorsePlayer {
   private context: AudioContext | null = null;
   private readonly frequency: number;
-  private readonly volume: number;
   private readonly rampSeconds: number;
   private current: { stop: () => void } | null = null;
 
+  /**
+   * Die Lautstaerke, 0..1 -- als einziger Wert hier veraenderlich.
+   *
+   * Der Player lebt so lange wie die Seite (an ihm haengt der AudioContext),
+   * die Einstellung darf sich dazwischen aendern. Ein neuer Player je
+   * Lautstaerke haette einen neuen Kontext -- und damit eine neue Uhr, auf der
+   * keine Reaktionszeit mehr vergleichbar waere (CLAUDE.md 2.1).
+   *
+   * Gesetzt wird sie vor dem naechsten `play()`; ein laufender Ton behaelt
+   * seine Huellkurve, weil sie auf der Audio-Uhr schon geplant ist.
+   */
+  private currentVolume: number;
+
   constructor(options: PlayerOptions = {}) {
     this.frequency = options.frequency ?? DEFAULT_TONE_HZ;
-    this.volume = options.volume ?? 0.25;
+    this.currentVolume = clampVolume(options.volume ?? DEFAULT_VOLUME);
     this.rampSeconds = options.rampSeconds ?? TONE_RAMP_SECONDS;
+  }
+
+  get volume(): number {
+    return this.currentVolume;
+  }
+
+  set volume(value: number) {
+    this.currentVolume = clampVolume(value);
   }
 
   /**
@@ -197,8 +217,8 @@ export class MorsePlayer {
 
     const envelope = context.createGain();
     envelope.gain.setValueAtTime(0, startTime);
-    envelope.gain.linearRampToValueAtTime(this.volume, startTime + ramp);
-    envelope.gain.setValueAtTime(this.volume, endTime - ramp);
+    envelope.gain.linearRampToValueAtTime(this.currentVolume, startTime + ramp);
+    envelope.gain.setValueAtTime(this.currentVolume, endTime - ramp);
     envelope.gain.linearRampToValueAtTime(0, endTime);
 
     oscillator.connect(envelope);
@@ -210,4 +230,15 @@ export class MorsePlayer {
       envelope.disconnect();
     };
   }
+}
+
+/**
+ * Lautstaerke in die zulaessige Spanne ziehen.
+ *
+ * Die Grenzen stehen in der Engine (settings.ts), nicht hier: der Player ist
+ * die Wiedergabe, nicht die Quelle der Kennwerte.
+ */
+function clampVolume(value: number): number {
+  if (!Number.isFinite(value)) return DEFAULT_VOLUME;
+  return Math.min(VOLUME_RANGE.max, Math.max(VOLUME_RANGE.min, value));
 }

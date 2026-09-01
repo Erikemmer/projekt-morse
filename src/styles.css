@@ -1016,6 +1016,63 @@ button:disabled {
   color: var(--gray);
 }
 
+/* --- Settings: zwei Regler, ein Probeton ---
+ *
+ * Der Screen borgt sich Grundriss, Ueberschrift, Knopfspalte und die
+ * Notiz-Zeile von den anderen Gehaeuse-Screens (.screen, .screen-heading,
+ * .account-actions, .account-note) -- neu sind nur die Regler-Rollen
+ * (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
+ *
+ * Amber-Budget: "Play test tone" (.button-primary) traegt das eine Amber. Die
+ * Regler laufen in ink -- sie zeigen einen Zustand, sie laden nicht ein.
+ */
+
+.setting {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.setting-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.setting-head label {
+  font-size: 16px;
+}
+
+/* Tabellarische Ziffern: beim Schieben soll die Zahl nicht wackeln. */
+.setting-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--gray);
+}
+
+/*
+ * Der native Regler, nur eingefaerbt und auf Zielgroesse gebracht. Nichts
+ * nachgebaut: ein eigener Schieber muesste Tastatur, Touch und Screenreader
+ * von Hand koennen, was der Browser laengst kann (CLAUDE.md 6).
+ *
+ * `accent-color` faerbt Schiene und Griff in einem -- ink, nicht amber
+ * (1.1 §4).
+ */
+.slider {
+  width: 100%;
+  min-height: var(--tap);
+  accent-color: var(--ink);
+}
+
+/* Die ehrliche Zeile unter dem Tonhoehen-Regler. Gleiche Rolle wie
+ * .account-note, aber direkt am Regler -- deshalb ohne eigenen Abstand. */
+.setting-note {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
 /* --- Sekundaeres --- */
 
 .facts {

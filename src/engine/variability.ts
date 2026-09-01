@@ -80,14 +80,24 @@ export function variabilityStage(progress: Progress): VariabilityStage {
 /**
  * Zieht den Klang einer neuen Sitzung.
  *
- * Stufe 0 wuerfelt nicht: fest DEFAULT_TONE_HZ und STARTING_EFFECTIVE_WPM,
- * exakt das Verhalten von vor dieser Mechanik.
+ * Stufe 0 wuerfelt nicht: fest der Heimton und STARTING_EFFECTIVE_WPM, exakt
+ * das Verhalten von vor dieser Mechanik.
+ *
+ * `homeToneHz` ist die Tonhoehe aus den Geraete-Einstellungen
+ * (engine/deviceSettings.ts); ohne Angabe bleibt es bei DEFAULT_TONE_HZ. Er
+ * gilt **nur auf Stufe 0** -- ab Stufe 1 haben die Baender Vorrang und werden
+ * von der Einstellung nicht verschoben. Ein Band, das der Nutzer mitbewegen
+ * kann, waere kein Trainingsband mehr (Produktentscheidung, Notion-Log #66).
  */
-export function drawSessionSound(progress: Progress, random: () => number): SessionSound {
+export function drawSessionSound(
+  progress: Progress,
+  random: () => number,
+  homeToneHz: number = DEFAULT_TONE_HZ,
+): SessionSound {
   const stage = variabilityStage(progress);
 
   if (stage === 0) {
-    return { stage, sessionToneHz: DEFAULT_TONE_HZ, effectiveWpm: STARTING_EFFECTIVE_WPM };
+    return { stage, sessionToneHz: homeToneHz, effectiveWpm: STARTING_EFFECTIVE_WPM };
   }
 
   // Ab Stufe 2 kommt auch der Sitzungs-Ton aus dem breiteren Band -- er ist

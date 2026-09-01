@@ -95,6 +95,12 @@ export interface SessionOptions {
   random: () => number;
   /** Kalendertag als `YYYY-MM-DD`. Ebenfalls Parameter, aus demselben Grund. */
   today: string;
+  /**
+   * Der Heimton dieses Geraets in Hz (engine/deviceSettings.ts). Er traegt die
+   * Sitzung auf Variabilitaets-Stufe 0; ab Stufe 1 haben die Baender Vorrang.
+   * Fehlt er, bleibt es bei DEFAULT_TONE_HZ.
+   */
+  homeToneHz?: number;
 }
 
 /**
@@ -111,7 +117,7 @@ export function createSession(options: SessionOptions): SessionState {
   let progress = beginSession(options.progress, options.today);
 
   // Der Klang der Sitzung: einmal gezogen, dann fest (variability.ts).
-  const sound = drawSessionSound(progress, options.random);
+  const sound = drawSessionSound(progress, options.random, options.homeToneHz);
 
   // Die einmalige Zeile beim ersten Aktivwerden der Variabilitaet. Das Flag
   // wird sofort gesetzt und mit dem normalen Speichern persistiert; gezeigt
@@ -242,6 +248,33 @@ export function advance(state: SessionState, random: () => number): SessionState
     introduced: null,
     // Pro Abfrage, nicht pro Abspielen: Wiederholungen behalten den Ton.
     promptToneHz: drawPromptTone(state.sound, random),
+  };
+}
+
+/**
+ * Stellt den Heimton einer laufenden Sitzung nach -- **nur auf Stufe 0**.
+ *
+ * Wer die Tonhoehe in den Einstellungen aendert und zurueck ins Training geht,
+ * soll den neuen Ton hoeren und nicht den von vorhin. Auf Stufe 0 ist das
+ * unproblematisch: dort *ist* der Sitzungs-Ton der Heimton, es wurde nichts
+ * gezogen, was man ueberschriebe.
+ *
+ * Ab Stufe 1 passiert nichts. Die Tonhoehe dieser Sitzung ist dann ein
+ * gezogener Wert, und ein gezogener Wert gehoert der Sitzung -- ihn
+ * nachtraeglich zu verschieben, hiesse die Variabilitaet aushebeln.
+ *
+ * Der Rueckgabewert ist identisch (===), wenn sich nichts aendert.
+ */
+export function retuneHomeTone(state: SessionState, homeToneHz: number): SessionState {
+  if (state.sound.stage !== 0) return state;
+  if (state.sound.sessionToneHz === homeToneHz) return state;
+
+  return {
+    ...state,
+    sound: { ...state.sound, sessionToneHz: homeToneHz },
+    // Unter Stufe 2 ist die Tonhoehe der Abfrage der Sitzungs-Ton -- sie muss
+    // mitgehen, sonst behauptet das Eyebrow eine Zahl, die nicht gespielt wird.
+    promptToneHz: homeToneHz,
   };
 }
 

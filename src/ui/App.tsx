@@ -42,12 +42,14 @@ import {
   nextCard,
   type LearnState,
 } from '../engine/learn';
+import { withToneHz, withVolume, type DeviceSettings } from '../engine/deviceSettings';
 import { buildSchedule } from '../engine/schedule';
 import {
   advance,
   beginPlayback,
   createSession,
   promptFinished,
+  retuneHomeTone,
   submitAnswer,
   summarize,
   type SessionState,
@@ -73,15 +75,25 @@ import { AppHeader, MenuPanel, type MenuLocation } from './Menu';
 import { Pattern } from './Pattern';
 import { ProgressScreen } from './Progress';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
+import { loadDeviceSettings, saveDeviceSettings } from './deviceStorage';
+import { Settings } from './Settings';
 import { todayISO } from './today';
 
 export function App() {
+  /**
+   * Die Einstellungen dieses Geraets (Tonhoehe, Lautstaerke). Sie stehen vor
+   * der Sitzung, weil die Sitzung ihren Heimton beim Anlegen braucht -- und
+   * sie gehen nie zum Konto (ui/deviceStorage.ts).
+   */
+  const [device, setDevice] = useState<DeviceSettings>(loadDeviceSettings);
+
   const [session, setSession] = useState<SessionState>(() =>
     createSession({
       totalRounds: ROUNDS_PER_SESSION,
       progress: loadProgress(),
       random: Math.random,
       today: todayISO(),
+      homeToneHz: device.toneHz,
     }),
   );
 
@@ -99,7 +111,9 @@ export function App() {
    * Verlauf, keine neue Abhängigkeit (CLAUDE.md 3). Die Sitzung läuft dabei
    * unberührt weiter; Progress und About lesen nur.
    */
-  const [view, setView] = useState<'practice' | 'progress' | 'account' | 'about'>('practice');
+  const [view, setView] = useState<'practice' | 'progress' | 'account' | 'settings' | 'about'>(
+    'practice',
+  );
   const [menuOpen, setMenuOpen] = useState(false);
   /** Der Menü-Trigger — Fokusziel nach dem Schließen ohne Ortswechsel. */
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -194,9 +208,22 @@ export function App() {
     focusRef.current?.focus();
   }, [session.phase, session.round, session.progress.introSeen, view, reviewing, menuOpen]);
 
-  const play = useCallback(async () => {
+  /**
+   * Der Player dieser Seite -- einer, sein Leben lang.
+   *
+   * An ihm haengt der AudioContext und damit die Uhr, auf der alle
+   * Reaktionszeiten liegen; ihn fuer eine neue Lautstaerke neu zu bauen, hiesse
+   * die Uhr zu wechseln (CLAUDE.md 2.1). Die Lautstaerke wird deshalb vor
+   * jedem Abspielen gesetzt, nicht im Konstruktor.
+   */
+  const ensurePlayer = useCallback(() => {
     playerRef.current ??= new MorsePlayer();
-    const player = playerRef.current;
+    playerRef.current.volume = device.volume;
+    return playerRef.current;
+  }, [device.volume]);
+
+  const play = useCallback(async () => {
+    const player = ensurePlayer();
     // Muss in der Klick-Geste passieren, sonst bleibt Audio stumm.
     await player.resume();
 
@@ -215,7 +242,7 @@ export function App() {
     // Rueckfall, falls es keinen rAF-Takt gab (Tab im Hintergrund).
     await handle.finished;
     setSession(promptFinished);
-  }, [schedule, session.promptToneHz]);
+  }, [schedule, session.promptToneHz, ensurePlayer]);
 
   /**
    * Ein einzelnes Zeichen abspielen und warten, bis es durch ist.
@@ -231,8 +258,7 @@ export function App() {
   const learnToneHz = session.sound.sessionToneHz;
   const playCharacter = useCallback(
     async (char: string) => {
-      playerRef.current ??= new MorsePlayer();
-      const player = playerRef.current;
+      const player = ensurePlayer();
       await player.resume();
       setTonePlaying(true);
       try {
@@ -241,7 +267,7 @@ export function App() {
         setTonePlaying(false);
       }
     },
-    [timing, learnToneHz],
+    [timing, learnToneHz, ensurePlayer],
   );
 
   const answer = useCallback((choice: string) => {
@@ -363,9 +389,10 @@ export function App() {
         progress: current.progress,
         random: Math.random,
         today: todayISO(),
+        homeToneHz: device.toneHz,
       }),
     );
-  }, []);
+  }, [device.toneHz]);
 
   /**
    * Ein Abgleich mit dem Konto hat einen neuen Stand ergeben.
@@ -382,6 +409,50 @@ export function App() {
   const adoptProgress = useCallback((progress: Progress) => {
     setSession((current) => ({ ...current, progress }));
   }, []);
+
+  // --- Einstellungen -------------------------------------------------------
+
+  /*
+   * Eine Aenderung wird sofort geschrieben und sofort wirksam. "Sofort
+   * wirksam" heisst bei der Lautstaerke: beim naechsten Ton (ensurePlayer),
+   * und bei der Tonhoehe: fuer die laufende Sitzung, sofern sie auf
+   * Variabilitaets-Stufe 0 laeuft -- sonst behauptete das Eyebrow im Training
+   * eine Zahl, die gar nicht gespielt wird (CLAUDE.md 2.6). Ab Stufe 1 laesst
+   * `retuneHomeTone` die gezogene Tonhoehe in Ruhe.
+   */
+  const applySettings = useCallback((next: DeviceSettings) => {
+    setDevice(next);
+    saveDeviceSettings(next);
+  }, []);
+
+  useEffect(() => {
+    setSession((current) => retuneHomeTone(current, device.toneHz));
+  }, [device.toneHz]);
+
+  /**
+   * Der Probeton: **nur auf eine Geste**, nie beim Schieben des Reglers.
+   *
+   * Gespielt wird die eingestellte Tonhoehe selbst, nicht der Sitzungs-Ton --
+   * sonst hoerte man auf hoeheren Variabilitaets-Stufen etwas anderes, als der
+   * Regler zeigt. Ein kurzes Zeichen mit dit *und* dah, damit beide
+   * Elementlaengen zu hoeren sind.
+   */
+  const playPreview = useCallback(() => {
+    void (async () => {
+      const player = ensurePlayer();
+      await player.resume();
+      setTonePlaying(true);
+      try {
+        await player.play(buildSchedule(PREVIEW_CHARACTER, timing), () => {}, device.toneHz)
+          .finished;
+      } catch {
+        // Verweigert der Browser den Ton, bleibt der Knopf stehen -- ein
+        // zweiter Versuch ist ein Klick, und mehr ist hier nicht zu melden.
+      } finally {
+        setTonePlaying(false);
+      }
+    })();
+  }, [ensurePlayer, timing, device.toneHz]);
 
   // --- Gehäuse: Menü und Orte ---------------------------------------------
 
@@ -484,6 +555,15 @@ export function App() {
         <ProgressScreen progress={session.progress} today={session.today} headingRef={focusTarget} />
       ) : view === 'account' ? (
         <Account headingRef={focusTarget} onProgress={adoptProgress} />
+      ) : view === 'settings' ? (
+        <Settings
+          settings={device}
+          playing={tonePlaying}
+          onToneHz={(hz) => applySettings(withToneHz(device, hz))}
+          onVolume={(volume) => applySettings(withVolume(device, volume))}
+          onPreview={playPreview}
+          headingRef={focusTarget}
+        />
       ) : view === 'about' ? (
         <About headingRef={focusTarget} />
       ) : reviewing ? (
@@ -598,6 +678,15 @@ function eyebrowFor(phase: SessionState['phase'], toneHz: number): string {
   if (phase === 'feedback') return `Answer · ${hz}`;
   return `Ready · ${hz}`;
 }
+
+/**
+ * Das Zeichen des Probetons in den Einstellungen: R (dit-dah-dit).
+ *
+ * Kurz genug, um nicht zu nerven, und es enthaelt beide Elementlaengen -- bei
+ * einem reinen dah hoerte man die Tonhoehe, aber nicht, wie sich ein dit
+ * anfuehlt.
+ */
+const PREVIEW_CHARACTER = 'R';
 
 /**
  * Die eine Streak-Zeile (Notion-Log #29).
