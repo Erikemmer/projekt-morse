@@ -1,40 +1,58 @@
 # Übergabe — Stand nach Runde B (Accounts: Passkeys, D1, Sync)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** `main` @ `2b71931` — **die Gehäuse-Runde (Runde A) ist gemergt und
-deployt**, Review 8 (Fable) bestanden. Darauf aufbauend Branch
-`claude/morse-handover-alignment-nbkk6o` mit vier Commits — zu reviewen (Fable)
-und dann nach `main` zu mergen; erst der Merge deployt sie:
+**Stand:** **Runde B ist gemergt.** `main` trägt jetzt Backend, Sync und den
+Account-Screen; Review 9 (Fable) ist bestanden, das Ruling Notion-Log #56 ist
+umgesetzt. Die Commits der Runde:
 
 1. `bc16dd3` — **Merge-Semantik in der Engine, Backend für Passkeys und Sync**
 2. `f52c775` — **Account-Zeile im Menü, Account-Screen, Sync am Sitzungsende**
 3. `6deea18` — **Fix: „jünger" heißt gelernt, nicht gespeichert** (Fund aus dem
    Browser-Durchlauf)
-4. (dieser Doku-Commit, mit den Screenshots)
+4. `b0bc074` — Übergabe mit Screenshots
+5. `3608ae5` — **Fix aus Review 9 (#56): aktiver Zeichensatz ist die
+   Vereinigung, Wachstum ist monoton**
+6. (dieser Doku-Commit)
 
-**Kontext dieser Runde:** Runde B nach Notion-Log #48–51. Leitplanke über
-allem war **local-first**, und sie hält: die App ist ohne Konto und offline
-exakt so vollständig wie vorher, das Konto ist ein Sync-Ziel und nie eine
-Voraussetzung. Kein Feature liegt hinter einem Login. Nachgewiesen, nicht
-behauptet — siehe §4.
+**Kontext dieser Runde:** Runde B nach Notion-Log #48–51, abgeschlossen mit dem
+Ruling #56. Leitplanke über allem war **local-first**, und sie hält: die App ist
+ohne Konto und offline exakt so vollständig wie vorher, das Konto ist ein
+Sync-Ziel und nie eine Voraussetzung. Kein Feature liegt hinter einem Login.
+Nachgewiesen, nicht behauptet — siehe §4.
 
-**Ein Punkt der Aufgabenstellung ist nicht erledigt: Schritt 1, die Bildmarke
-aus den Owner-Dateien.** Die drei Dateien waren in dieser Umgebung nicht
-erreichbar. Details und der genaue Handgriff stehen in §3f. Nicht geraten,
-nicht ersatzweise konstruiert.
+> ### Drei Punkte sind NICHT erledigt — alle drei aus demselben Grund
+>
+> Diese Session lief in einem **flüchtigen Remote-Container**, obwohl die
+> Aufgabenstellung sie als lokale Session beschrieb. Daraus folgen drei
+> Blockaden, die kein Code lösen kann:
+>
+> 1. **Die Bildmarke aus den Owner-Dateien** (Log #53/54, zweiter Anlauf).
+>    `~/Downloads/` existiert in diesem Container nicht; das Dateisystem wurde
+>    nach den drei Dateinamen durchsucht, ohne Treffer. → §3f
+> 2. **D1 auf Produktion.** Keine Cloudflare-Anmeldung — **und** der
+>    Egress-Proxy sperrt `api.cloudflare.com` und `dash.cloudflare.com`
+>    vollständig. Auch mit Zugangsdaten wäre es von hier nicht möglich. → §5e
+> 3. **Die WAF-Rate-Limit-Regel** (Ruling #56). Gleiche Sperre. Die exakten
+>    Dashboard-Schritte stehen dokumentiert. → §5h
+>
+> Nichts davon ist geraten oder ersatzweise gebaut. Alle drei sind so
+> beschrieben, dass sie in Minuten nachzuholen sind — Punkte 2 und 3 brauchen
+> eine Umgebung mit Cloudflare-Zugang oder den Owner im Dashboard.
 
 **Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
 Pages mit Git-Anbindung. Jeder Push auf `main` baut und deployt von selbst.
-**Neu und wichtig: `/api/*` funktioniert auf Produktion erst, wenn die
-D1-Datenbank angelegt und gebunden ist** (§5e). Bis dahin läuft die App
-vollständig, nur ohne Konten — und genau dieser Zustand ist als local-first
-nachgewiesen.
+**Wichtig: `/api/*` funktioniert auf Produktion erst, wenn die D1-Datenbank
+angelegt und gebunden ist** (§5e). Bis dahin läuft die App vollständig, nur
+ohne Konten — und genau dieser Zustand ist als local-first nachgewiesen. Der
+Account-Screen sagt dann ruhig, dass kein Server erreichbar ist.
 
 **`morse-lab.com` ist an das Projekt gebunden, aber noch nicht erreichbar** —
-es fehlt der eine DNS-Eintrag aus §5a. **Neu zu bedenken:** Passkeys hängen an
-der Domain, unter der sie angelegt wurden (§3e).
+es fehlt der eine DNS-Eintrag aus §5a. **Zwei Dinge hängen daran:** Passkeys
+hängen an der Domain, unter der sie angelegt wurden (§3e), und die
+Rate-Limit-Regel lässt sich nach meinem Verständnis nur auf einer eigenen Zone
+anlegen, nicht auf `*.pages.dev` (§5h).
 
-**Datum:** 2026-09-01 (vierte Runde dieses Tages)
+**Datum:** 2026-09-01 (fünfte Runde dieses Tages)
 
 Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
 [FINDINGS.md](./FINDINGS.md) — alle drei Einträge sind entschieden und behoben.
@@ -104,7 +122,7 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `public/sw.js` | Service Worker, **`/api/` ausgenommen** | angepasst |
 | `docs/brand/logo.py` | **Konstruktions-Doku, nicht mehr Quelle** (#53/54) | angepasst |
 | `docs/screenshots/` | Intro, Lernkarte, Training, Menü, Progress, **Account ×2** | erweitert |
-| `src/engine/*.test.ts` | **143 Tests** (114 vorher, 29 neu für den Sync) | grün |
+| `src/engine/*.test.ts` | **146 Tests** (114 vorher, 32 neu für den Sync) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die
 Engine kennt niemanden, die UI rechnet nicht. **Neu dazu: der Server rechnet
@@ -293,10 +311,19 @@ aufgefallen.
 Favicon, App-Icons (192/512/maskable/apple-touch) und das About-Lockup aus
 **diesen** Dateien ableiten statt aus der `logo.py`-Konstruktion.
 
-**Warum es nicht passiert ist:** der Ordner existiert in dieser Umgebung nicht.
-Diese Session läuft in einem flüchtigen Remote-Container, in dem nur das Repo
-liegt — `~/Downloads/` gibt es dort nicht, und das ganze Dateisystem wurde nach
-den drei Dateinamen durchsucht, ohne Treffer.
+**Warum es nicht passiert ist — zum zweiten Mal:** der Ordner existiert in
+dieser Umgebung nicht. Beide Sessions dieser Runde liefen in einem flüchtigen
+Remote-Container, in dem nur das Repo liegt. Geprüft, nicht vermutet:
+`$HOME` ist `/root` und enthält kein `Downloads`; eine Suche über das gesamte
+Dateisystem nach den drei Dateinamen blieb ohne Treffer; und `mount` zeigt
+keinen eingebundenen Ordner des Host-Rechners (nur `/`, die Skill-Images und
+das Claude-Code-Verzeichnis).
+
+**Das ist wichtig für die nächste Runde:** die Aufgabenstellung beschrieb diese
+Session als „lokale Session". Sie war es nicht. Solange sie im Remote-Container
+läuft, ist ein Pfad auf dem Rechner des Owners kein gültiger Weg, Dateien
+hereinzugeben — **der einzige Weg ist, sie ins Repo zu legen** (Commit, oder
+Anhang, den eine Session ins Repo schreibt).
 
 **Was stattdessen getan wurde:** nichts geraten und nichts ersatzweise
 konstruiert. `docs/brand/logo.py` sagt jetzt in der ersten Zeile, dass es nicht
@@ -538,7 +565,7 @@ dieser Runde gab es keine API.
 ```bash
 npm install
 npm run dev          # Vite, ohne Functions und ohne Service Worker
-npm test             # Vitest, 143 Tests
+npm test             # Vitest, 146 Tests
 npm run build        # tsc (src) && tsc (functions) && vite build
 
 # Mit Backend, lokal:
@@ -565,26 +592,68 @@ ignoriert.
   `npm install` räumt `--no-save`-Pakete wieder weg. Skripte müssen im
   Projektordner liegen (Modulauflösung), nicht in `/tmp`.
 
-### 5e. D1 auf Produktion — der eine offene Handgriff
+### 5e. D1 auf Produktion — offen, mit zwei Blockaden
 
 **`/api/*` funktioniert auf Produktion noch nicht.** Es fehlt die Datenbank und
 ihre Bindung. `wrangler.toml` trägt sichtbar einen Platzhalter statt einer
-`database_id` — Absicht, kein vergessener Wert: diese Session hatte **keine
-Cloudflare-Anmeldung** (`wrangler whoami`: nicht authentifiziert), und ein
-geratener Wert wäre schlimmer als ein sichtbarer Platzhalter. Dokumentiert statt
-gehackt, wie in diesem Projekt üblich.
+`database_id` — Absicht, kein vergessener Wert: ein geratener Wert wäre
+schlimmer als ein sichtbarer Platzhalter.
+
+**Zwei Blockaden, beide geprüft:**
+
+1. **Keine Cloudflare-Anmeldung.** `npx wrangler whoami` → „You are not
+   authenticated"; unter `~/.config/.wrangler/` liegen nur Logs und
+   `metrics.json`, keine OAuth-Sitzung. Es sind auch keine
+   `CLOUDFLARE_*`-Umgebungsvariablen gesetzt.
+2. **Der Egress-Proxy sperrt Cloudflare vollständig.** `api.cloudflare.com` und
+   `dash.cloudflare.com` antworten beide mit `connect_rejected` (Organisations-
+   Policy). **Auch mit gültigen Zugangsdaten wäre der Schritt von hier aus nicht
+   möglich.** Das ist neu gegenüber der Runde, die Pages eingerichtet hat —
+   dort war `api.cloudflare.com` erreichbar. Die Sperre gehört zur Umgebung,
+   nicht zum Projekt.
+
+Es braucht also eine Umgebung mit Cloudflare-Zugang oder den Owner im
+Dashboard. **Der Weg über die CLI:**
 
 ```bash
-npx wrangler login                      # oder CLOUDFLARE_API_TOKEN
+npx wrangler login                      # oder CLOUDFLARE_API_TOKEN=…
 npx wrangler d1 create morse-lab        # gibt die echte database_id aus
 #   -> in wrangler.toml eintragen, committen
 npx wrangler d1 migrations apply morse-lab --remote
 ```
 
-Danach im Pages-Projekt `projekt-morse` die D1-Bindung **`DB`** auf die
-Datenbank `morse-lab` setzen (Settings → Functions → D1 database bindings),
-für **Production und Preview**. Bei Git-Anbindung liest Pages `wrangler.toml`
-nicht für die Bindung — das Dashboard entscheidet.
+Ein API-Token braucht dafür die Berechtigungen **Account → D1 → Edit** (und,
+wenn die Bindung per CLI gesetzt werden soll, **Account → Cloudflare Pages →
+Edit**).
+
+**Der Weg über das Dashboard**, wenn die CLI nicht in Frage kommt:
+
+1. dash.cloudflare.com → **Storage & Databases → D1 SQL Database** → *Create*
+   → Name `morse-lab` → *Create*. Die angezeigte **Database ID** in
+   `wrangler.toml` als `database_id` eintragen und committen.
+2. In derselben Datenbank den Tab **Console** öffnen und den Inhalt von
+   [`migrations/0001_accounts.sql`](./migrations/0001_accounts.sql)
+   ausführen. (Achtung: die Konsole führt kein Migrations-Journal — wer so
+   migriert, sollte die Migration danach *nicht* zusätzlich per
+   `wrangler d1 migrations apply --remote` laufen lassen, sonst scheitert sie
+   an bereits existierenden Tabellen.)
+3. **Workers & Pages → `projekt-morse` → Settings → Functions → D1 database
+   bindings** → *Add binding*: Variable name **`DB`**, Database `morse-lab`.
+   **Für Production UND Preview je einmal.**
+4. Einen neuen Deploy auslösen (ein Push auf `main` genügt) — Bindungen greifen
+   erst für Deploys nach dem Setzen.
+
+Bei Git-Anbindung liest Pages `wrangler.toml` **nicht** für die Bindung; das
+Dashboard entscheidet. Der Eintrag in `wrangler.toml` ist für `wrangler pages
+dev` und als Dokumentation da.
+
+**Danach auf Produktion nachweisen** (war für diese Runde vorgesehen und ist
+offen): Register → eine Sitzung spielen → Push → Login in einem zweiten
+Browser-Kontext → Merge, dann Löschen inklusive Gegenlesen. Das Skript des
+lokalen Durchlaufs (§4) lässt sich dafür wiederverwenden — nur `BASE` auf die
+Produktions-URL zeigen und die vorbereiteten Stände beibehalten. **Ein echter
+Passkey auf Produktion legt ein echtes Konto an**; es gehört am Ende des Laufs
+über „Delete account and data" wieder weg, und der Durchlauf tut das schon.
 
 **Solange das aussteht, ist der Zustand nicht kaputt, sondern der nachgewiesene
 local-first-Fall:** die App läuft vollständig, der Account-Screen sagt ruhig,
@@ -614,7 +683,52 @@ nächsten Zugriff derselben Sitzung weggeräumt; ein Vollscan auf dem Anfragepfa
 wäre schlimmer. Wenn das Aufräumen gewollt ist, ist ein Cron Trigger der
 richtige Ort — nicht der Request-Pfad.
 
-### 5g. Ältere offene Punkte (unverändert)
+### 5h. Die Rate-Limit-Regel (Ruling #56) — noch nicht angelegt
+
+**Beschlossen:** 10 Anfragen pro Minute und IP auf `/api/auth/*`, Aktion
+*Block*. **Nicht angelegt**, aus denselben zwei Gründen wie §5e (keine
+Anmeldung, Cloudflare per Egress-Proxy gesperrt).
+
+> **Ein Vorbehalt, den ich nicht prüfen konnte.** Nach meinem Verständnis sind
+> Rate-Limiting-Regeln ein **Zonen**-Feature: sie hängen an einer Domain im
+> eigenen Cloudflare-Konto. `projekt-morse.pages.dev` liegt in Cloudflares
+> eigener Zone, nicht in der des Owners — dort ließe sich die Regel dann
+> **nicht** anlegen, und sie greift erst, wenn `morse-lab.com` über die Zone
+> läuft (§5a). Ich konnte das **nicht belegen**: `developers.cloudflare.com` ist
+> vom Egress-Proxy gesperrt. Wer die Regel anlegt, sieht in einem Blick, ob im
+> Zonen-Wähler eine Zone für die Pages-Domain auftaucht — bitte diesen Absatz
+> danach korrigieren, in die eine oder andere Richtung.
+
+**Schritte im Dashboard** (Zone `morse-lab.com`):
+
+1. dash.cloudflare.com → Zone **`morse-lab.com`** wählen.
+2. **Security → WAF → Reiter „Rate limiting rules"** → *Create rule*.
+3. **Rule name:** `api-auth-10-per-minute`
+4. **If incoming requests match:** *Custom filter expression*
+   - Field **URI Path** · Operator **starts with** · Value **`/api/auth/`**
+   - (als Ausdruck: `starts_with(http.request.uri.path, "/api/auth/")`)
+5. **With the same characteristics:** **IP** (IP-Adresse)
+6. **When rate exceeds:** Requests **10** · Period **1 minute**
+7. **Then take action:** **Block** · Mitigation timeout **1 minute**
+8. *Deploy*.
+
+**Zur Zahl 10:** ein vollständiger Anmelde- oder Registriervorgang sind genau
+**zwei** Anfragen (`options` + `verify`). 10 pro Minute lassen also fünf
+Versuche — für eine Person reichlich, für ein Skript nichts. **Der Fall, der
+davon zu Unrecht getroffen werden kann:** viele Nutzer hinter einer IP (Schule,
+Büro, Mobilfunk-NAT). Wenn das je auffällt, ist die Charakteristik das
+Stellrad, nicht die Zahl — mit einer bezahlten Stufe ließe sich statt der IP
+ein JA3/Client-Merkmal nehmen. Für V1 ist die IP richtig, weil es keinen
+Nutzernamen gibt, an dem man drosseln könnte.
+
+**Was die Regel nicht löst:** abgelaufene Flow-Zeilen werden nur beim nächsten
+Zugriff derselben Sitzung weggeräumt, nicht global (§5f). Ein Rate-Limit bremst
+das Auffüllen, es räumt nicht auf. Wenn das gewollt ist, ist ein **Cron Trigger**
+der richtige Ort — ein `DELETE FROM sessions WHERE expires_at <= now`, einmal
+pro Stunde. Bewusst nicht gebaut: das ist ein eigener Worker und damit eine
+eigene Aufgabe.
+
+### 5i. Ältere offene Punkte (unverändert)
 
 **Gefallen und umgesetzt:** Zeichen-für-Zeichen, retrieval-only, EN-first,
 Design „Ruhe", Wachstumsregel, PWA mit selbst gehosteten Schriften, das
@@ -635,10 +749,20 @@ warten weiter auf ein Urteil.
 
 ## 6. Fallgruben
 
-- **Der Container ist flüchtig — früh pushen.** Diese Session: vier Commits,
-  jeder sofort gepusht.
+- **Der Container ist flüchtig — früh pushen.** Beide Sessions dieser Runde:
+  jeder Commit sofort gepusht.
+- **„Lokale Session" heißt hier nicht lokal.** Beide Sessions dieser Runde
+  liefen im Remote-Container, auch die als lokal beschriebene. Vor jeder Aufgabe,
+  die einen Pfad auf dem Rechner des Owners nennt: **erst nachsehen, dann
+  planen** (`ls`, `mount`). Zweimal an derselben Aufgabe verloren (§3f).
 - **`~/Downloads/` gibt es hier nicht.** Wer Owner-Dateien braucht, braucht sie
   im Repo oder gar nicht (§3f).
+- **Cloudflare ist vom Egress-Proxy gesperrt** — `api.cloudflare.com` und
+  `dash.cloudflare.com` antworten mit `connect_rejected`. Alles, was über die
+  Cloudflare-API läuft (D1 anlegen, WAF-Regeln, DNS), ist von hier aus
+  unmöglich, **auch mit Zugangsdaten**. In der Runde, die Pages eingerichtet
+  hat, war das noch anders — die Sperre ist eine Eigenschaft der Umgebung, nicht
+  des Projekts. Erst `curl` gegen die API, dann planen.
 - **Für WebAuthn lokal `localhost` benutzen, nicht `127.0.0.1`** — eine RP ID
   muss ein Domainname sein (§3e).
 - **`addInitScript` läuft bei *jeder* Navigation, auch beim Reload.** Wer damit
@@ -664,21 +788,31 @@ warten weiter auf ein Urteil.
 
 ## 7. Nächster Schritt
 
-1. **Review durch Fable und Merge nach `main`** — die vier Commits dieser Runde.
-   Zum Review gehören: die Merge-Setzungen aus §3b (`sessionsStarted` als
-   Maximum, die Merker als Oder), die drei Punkte aus §5f — allen voran der
-   schrumpfende Zeichensatz —, die Copy des Account-Screens und die beiden
-   Screenshots.
-2. **D1 anlegen und binden** (§5e). Erst danach ist Runde B auf Produktion
-   wirklich fertig, und erst danach lässt sich der Konto-Weg dort prüfen.
-3. **Schritt 1 nachholen: die Bildmarke aus den Owner-Dateien** (§3f). Braucht
-   nur die drei Dateien im Repo.
+**Die drei offenen Punkte brauchen etwas, das der Code nicht liefern kann** —
+Dateien im Repo oder Cloudflare-Zugang. Sie stehen deshalb oben.
+
+1. **D1 anlegen und binden** (§5e). Braucht eine Umgebung mit
+   Cloudflare-Zugang oder den Owner im Dashboard; die Schritte für beide Wege
+   stehen dort. Erst danach ist Runde B auf Produktion wirklich fertig — und
+   erst danach lässt sich der Konto-Weg dort nachweisen (Register → Sitzung →
+   Push → Login im zweiten Kontext → Merge → Löschen).
+2. **Die Rate-Limit-Regel anlegen** (§5h), 10/Minute/IP auf `/api/auth/*`.
+   Gleiche Voraussetzung. **Bitte dabei den Vorbehalt in §5h klären** — ob die
+   Regel für `*.pages.dev` überhaupt anlegbar ist, konnte ich nicht belegen
+   (Cloudflare-Doku ist hier gesperrt).
+3. **Die Bildmarke aus den Owner-Dateien** (§3f). Braucht nur die drei Dateien
+   **im Repo** — ein Pfad auf dem Rechner des Owners genügt nicht, siehe §6.
 4. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a, **nachdem**
-   §3e entschieden ist (Passkeys und Domainwechsel).
+   §3e entschieden ist (Passkeys hängen an der Domain). Danach greift auch die
+   Rate-Limit-Regel, falls der Vorbehalt aus §5h zutrifft.
 5. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Reine Engine-Logik,
    Persistenz additiv. Der Tages-Eimer ist bewusst *keine* Historie.
 6. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
    Telefon — **und jetzt neu: ein Passkey auf echter Hardware**, mit einem Blick
-   darauf, wie der Systemdialog das Konto benennt (§5f.2).
-7. Danach die offenen Produktfragen aus §5g — Reihenfolge ist eine
+   darauf, wie der Systemdialog das Konto benennt (§5f.3). Das ist die
+   Vorbedingung für die letzte offene Design-Entscheidung dieser Runde.
+7. **Vor echten Nutzern: eine Datenschutzerklärung** (§3g). Der Inhalt steht
+   dort praktisch fertig; formulieren und verlinken ist eine eigene Aufgabe mit
+   Rechtsfolgen.
+8. Danach die offenen Produktfragen aus §5i — Reihenfolge ist eine
    Notion-Entscheidung, nicht eine des Codes.
