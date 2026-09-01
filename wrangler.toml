@@ -12,24 +12,18 @@
 # Lokal legt Wrangler die Datenbank in `.wrangler/state/` an -- `database_id`
 # spielt dabei keine Rolle, ein Login auch nicht.
 #
-# ## Produktion -- einmalig, braucht Cloudflare-Rechte
+# ## Produktion
 #
-#   npx wrangler login                       # oder CLOUDFLARE_API_TOKEN
-#   npx wrangler d1 create morse-lab         # gibt die echte database_id aus
-#   # -> unten eintragen, committen
-#   npx wrangler d1 migrations apply morse-lab --remote
+# Die Datenbank **existiert** (Cloudflare-Account des Owners, Name `morse-lab`,
+# Region WEUR); `migrations/0001_accounts.sql` ist dort samt Migrations-Journal
+# bereits angewandt. `database_id` unten ist die echte ID dieser Datenbank.
 #
-# Danach im Pages-Projekt `projekt-morse` die D1-Bindung `DB` auf die Datenbank
-# `morse-lab` setzen (Settings -> Functions -> D1 database bindings) -- fuer
-# Production **und** Preview. Bei Git-Anbindung liest Pages diese Datei nicht
-# fuer die Bindung; das Dashboard entscheidet.
+# **Keine wrangler-Migrationsbefehle mehr ausfuehren** -- ein zweiter Lauf gegen
+# `--remote` scheitert an bereits existierenden Tabellen.
 #
-# `database_id` steht bis dahin auf dem Platzhalter unten. Das ist Absicht und
-# kein vergessener Wert: die Session, die diese Runde gebaut hat, hatte keine
-# Cloudflare-Anmeldung (`wrangler whoami`: nicht authentifiziert), und ein
-# geratener Wert waere schlimmer als ein sichtbarer Platzhalter. Solange er
-# dort steht, laeuft die App vollstaendig -- nur `/api/*` antwortet nicht, und
-# genau das ist der Fall, der als "local-first" nachgewiesen ist.
+# Die Bindung `DB` setzt der Git-Deploy per config-as-code aus dieser Datei:
+# Pages liest `wrangler.toml` beim Build, ein Dashboard-Eintrag ist dafuer
+# nicht noetig. Wirksam wird sie mit dem naechsten Deploy nach diesem Commit.
 
 name = "projekt-morse"
 pages_build_output_dir = "dist"
@@ -38,5 +32,5 @@ compatibility_date = "2026-09-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "morse-lab"
-database_id = "PLACEHOLDER-run-wrangler-d1-create-morse-lab"
+database_id = "1df14984-0c7a-41a0-b839-c4855a05a82c"
 migrations_dir = "migrations"

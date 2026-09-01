@@ -16,12 +16,18 @@ umgesetzt. Die Commits der Runde:
    gemergt)
 7. `3fd06d3` — **Fix: 5xx ist nicht „abgelehnt"** — zwei falsche Behauptungen
    für genau den Zustand, in dem Produktion mit diesem Merge live geht (§5e)
-8. (dieser Doku-Commit)
+8. `403602b` — Übergabe: Commit-Liste vervollständigt
+
+**Nachtrag nach Runde B** (eigener Anlass, Notion-Log #60):
+
+9. (dieser Commit) — **D1 auf Produktion ist verdrahtet:** die echte
+   `database_id` steht in `wrangler.toml`, die Bindung `DB` setzt der Git-Deploy
+   per config-as-code aus dieser Datei. → §5e
 
 Die Commits 7 und 8 liegen **direkt auf `main`**, nicht mehr auf dem
-Arbeitsbranch: sie sind nach dem Merge entstanden. Der Branch
-`claude/morse-handover-alignment-nbkk6o` ist auf denselben Stand nachgezogen,
-damit beide dasselbe zeigen.
+Arbeitsbranch: sie sind nach dem Merge entstanden. Commit 9 liegt wieder auf
+`claude/morse-handover-alignment-nbkk6o` und wartet auf den Merge — **erst der
+bringt die D1-Bindung auf Produktion**, denn der Git-Deploy baut aus `main`.
 
 **Kontext dieser Runde:** Runde B nach Notion-Log #48–51, abgeschlossen mit dem
 Ruling #56. Leitplanke über allem war **local-first**, und sie hält: die App ist
@@ -29,31 +35,32 @@ ohne Konto und offline exakt so vollständig wie vorher, das Konto ist ein
 Sync-Ziel und nie eine Voraussetzung. Kein Feature liegt hinter einem Login.
 Nachgewiesen, nicht behauptet — siehe §4.
 
-> ### Drei Punkte sind NICHT erledigt — alle drei aus demselben Grund
+> ### Die drei offenen Punkte — einer ist erledigt, zwei stehen noch
 >
-> Diese Session lief in einem **flüchtigen Remote-Container**, obwohl die
-> Aufgabenstellung sie als lokale Session beschrieb. Daraus folgen drei
-> Blockaden, die kein Code lösen kann:
+> Runde B endete mit drei Blockaden, die kein Code lösen konnte. Stand jetzt:
 >
-> 1. **Die Bildmarke aus den Owner-Dateien** (Log #53/54, zweiter Anlauf).
->    `~/Downloads/` existiert in diesem Container nicht; das Dateisystem wurde
->    nach den drei Dateinamen durchsucht, ohne Treffer. → §3f
-> 2. **D1 auf Produktion.** Keine Cloudflare-Anmeldung — **und** der
->    Egress-Proxy sperrt `api.cloudflare.com` und `dash.cloudflare.com`
->    vollständig. Auch mit Zugangsdaten wäre es von hier nicht möglich. → §5e
-> 3. **Die WAF-Rate-Limit-Regel** (Ruling #56). Gleiche Sperre. Die exakten
+> 1. **Die Bildmarke aus den Owner-Dateien** (Log #53/54) — **offen, dritter
+>    Anlauf ohne Dateien.** Der Nachtrag hat sie als Anhang angekündigt; an
+>    dieser Session lag keiner an (`/mnt/attach` leer, kein Treffer im
+>    Dateisystem, nichts Neues im Repo). Nichts ersatzweise konstruiert. → §3f
+> 2. ~~**D1 auf Produktion.**~~ **Erledigt.** Die Datenbank `morse-lab` (WEUR)
+>    existiert im Account des Owners, Migration `0001` ist samt Journal
+>    angewandt (Fable über den Cloudflare-Connector, Log #60), und
+>    `wrangler.toml` trägt seit diesem Commit die echte `database_id`. → §5e
+> 3. **Die WAF-Rate-Limit-Regel** (Ruling #56) — **offen.** Die exakten
 >    Dashboard-Schritte stehen dokumentiert. → §5h
 >
-> Nichts davon ist geraten oder ersatzweise gebaut. Alle drei sind so
-> beschrieben, dass sie in Minuten nachzuholen sind — Punkte 2 und 3 brauchen
-> eine Umgebung mit Cloudflare-Zugang oder den Owner im Dashboard.
+> Nichts davon ist geraten oder ersatzweise gebaut.
 
 **Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
 Pages mit Git-Anbindung. Jeder Push auf `main` baut und deployt von selbst.
-**Wichtig: `/api/*` funktioniert auf Produktion erst, wenn die D1-Datenbank
-angelegt und gebunden ist** (§5e). Bis dahin läuft die App vollständig, nur
-ohne Konten — und genau dieser Zustand ist als local-first nachgewiesen. Der
-Account-Screen sagt dann ruhig, dass kein Server erreichbar ist.
+**`/api/*` sollte dort mit dem ersten Deploy nach diesem Commit tragen** — die
+D1-Bindung kommt aus `wrangler.toml` (§5e). **Nachgewiesen ist das von hier aus
+nicht:** der Egress-Proxy dieser Umgebung sperrt Cloudflare weiterhin, die
+Verifikation übernimmt Fable von außen (Erwartung: `/api/progress` ohne Sitzung
+antwortet **401** statt **500** — 500 hieße, die Bindung greift noch nicht).
+Griffe sie nicht, liefe die App weiterhin vollständig, nur ohne Konten, und der
+Account-Screen sagte ruhig, dass kein Server erreichbar ist.
 
 **`morse-lab.com` ist an das Projekt gebunden, aber noch nicht erreichbar** —
 es fehlt der eine DNS-Eintrag aus §5a. **Zwei Dinge hängen daran:** Passkeys
@@ -119,7 +126,7 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | **`functions/api/account.ts`** | **DELETE — Konto und Daten löschen** | **neu** |
 | **`functions/tsconfig.json`** | **Worker-Typen, getrennt von den DOM-Typen** | **neu** |
 | **`migrations/0001_accounts.sql`** | **users, credentials, sessions, progress** | **neu** |
-| **`wrangler.toml`** | **D1-Bindung `DB`; `database_id` ist ein Platzhalter** | **neu** |
+| **`wrangler.toml`** | **D1-Bindung `DB`; echte `database_id` (config-as-code)** | **neu** |
 | `src/ui/App.tsx` | Lernloop-Screen, View-State, **Push am Sitzungsende** | erweitert |
 | **`src/ui/Account.tsx`** | **Der Account-Screen, drei Zustände** | **neu** |
 | **`src/ui/account.ts`** | **Passkeys, Sitzung, Abgleich — rechnet nichts** | **neu** |
@@ -312,7 +319,16 @@ früher Konten. **Entscheidung offen, gehört vor den DNS-Eintrag.**
 sein, eine IP-Adresse lehnt der Browser ab. Beim ersten Browser-Durchlauf
 aufgefallen.
 
-### 3f. Die Bildmarke — Schritt 1 ist NICHT erledigt
+### 3f. Die Bildmarke — Schritt 1 ist NICHT erledigt (dritter Anlauf)
+
+> **Nachtrag, Stand dieser Session:** die Aufgabe hat die drei SVGs als
+> **Anhang** angekündigt („falls angehängt"). **Es lag keiner an.** Geprüft,
+> nicht vermutet: `/mnt/attach` ist leer, `docs/brand/assets/` existiert nicht,
+> eine Suche über das Dateisystem nach `morse-lab-mark*` / `*appicon*` bleibt
+> ohne Treffer, und das Repo trägt unverändert nur die fünf SVGs unter
+> `public/`. Also wieder: nichts geraten, nichts ersatzweise konstruiert. Der
+> Schritt bleibt genau so offen, wie er unten beschrieben ist — er ist klein,
+> sobald die Dateien wirklich da sind.
 
 **Was gefordert war** (Notion-Log #53/54): die drei Owner-Dateien aus
 `~/Downloads/assets/` (`morse-lab-mark.svg`, `morse-lab-mark-inverse.svg`,
@@ -525,8 +541,9 @@ bei 44,1 kHz, Budget < 1 ms).
   wie der Dialog aussieht, wenn `userName` überall „Morse Lab" heißt (§5f), und
   ob ein Cloud-Passkey mit konstantem Signaturzähler durchläuft (spezifiziert
   ist es; der Code nimmt den Wert, wie er kommt).
-- **Auf Produktion ist von dieser Runde nichts geprüft** — es gibt dort noch
-  keine D1 (§5e). Alles oben ist lokal gegen `wrangler pages dev` belegt.
+- **Auf Produktion ist von dieser Runde nichts geprüft.** Alles oben ist lokal
+  gegen `wrangler pages dev` belegt. Die D1 steht dort inzwischen (§5e), aber
+  der Nachweis am laufenden System steht aus — er ist an Fable übergeben.
 - **Kein Hörtest, kein Screenreader-Durchgang, keine echte Hardware, keine
   PWA-Installation auf einem Telefon.** Unverändert offen und weiterhin die
   wichtigsten menschlichen Prüfungen.
@@ -592,7 +609,9 @@ npm run build && npx wrangler pages dev --port 8788 --ip 127.0.0.1
 ```
 
 Lokal legt Wrangler die Datenbank unter `.wrangler/state/` an; `database_id`
-spielt dabei keine Rolle, eine Cloudflare-Anmeldung auch nicht. `.wrangler/` ist
+spielt dabei keine Rolle, eine Cloudflare-Anmeldung auch nicht. **`--local` ist
+hier kein Detail, sondern die Sicherung:** ohne das Flag ginge die Migration
+gegen die Produktions-D1, und die ist schon migriert (§5e). `.wrangler/` ist
 ignoriert.
 
 ### 5d. Umgebung und Werkzeuge
@@ -609,77 +628,74 @@ ignoriert.
   `npm install` räumt `--no-save`-Pakete wieder weg. Skripte müssen im
   Projektordner liegen (Modulauflösung), nicht in `/tmp`.
 
-### 5e. D1 auf Produktion — offen, mit zwei Blockaden
+### 5e. D1 auf Produktion — angelegt und verdrahtet, Nachweis offen
 
-**`/api/*` funktioniert auf Produktion noch nicht.** Es fehlt die Datenbank und
-ihre Bindung. `wrangler.toml` trägt sichtbar einen Platzhalter statt einer
-`database_id` — Absicht, kein vergessener Wert: ein geratener Wert wäre
-schlimmer als ein sichtbarer Platzhalter.
+**Die Datenbank existiert.** Fable hat sie über den Cloudflare-Connector
+angelegt (Notion-Log #60): Name `morse-lab`, Region **WEUR**,
+`migrations/0001_accounts.sql` ist dort samt Migrations-Journal angewandt.
+`wrangler.toml` trägt seit dem Nachtrags-Commit die echte
+`database_id = "1df14984-0c7a-41a0-b839-c4855a05a82c"`.
 
-**Zwei Blockaden, beide geprüft:**
+**Nachgeprüft, nicht übernommen:** derselbe Connector war in dieser Session
+verfügbar, und ein Abruf über die eingetragene ID liefert genau diese Datenbank
+— `name: morse-lab`, `running_in_region: WEUR`, `version: production`,
+**`num_tables: 5`**. Fünf ist die erwartete Zahl: die vier Tabellen der
+Migration (`users`, `credentials`, `sessions`, `progress`) plus das Journal
+`d1_migrations`. Die ID im Repo zeigt also auf die richtige, migrierte
+Datenbank. (Ein `SELECT` auf `sqlite_master`, der die Namen einzeln bestätigt
+hätte, hat die Umgebung abgelehnt — die Tabellenzahl ist das Beste, was von
+hier aus belegbar ist.)
 
-1. **Keine Cloudflare-Anmeldung.** `npx wrangler whoami` → „You are not
-   authenticated"; unter `~/.config/.wrangler/` liegen nur Logs und
-   `metrics.json`, keine OAuth-Sitzung. Es sind auch keine
-   `CLOUDFLARE_*`-Umgebungsvariablen gesetzt.
-2. **Der Egress-Proxy sperrt Cloudflare vollständig.** `api.cloudflare.com` und
-   `dash.cloudflare.com` antworten beide mit `connect_rejected` (Organisations-
-   Policy). **Auch mit gültigen Zugangsdaten wäre der Schritt von hier aus nicht
-   möglich.** Das ist neu gegenüber der Runde, die Pages eingerichtet hat —
-   dort war `api.cloudflare.com` erreichbar. Die Sperre gehört zur Umgebung,
-   nicht zum Projekt.
+> **Keine `wrangler d1 migrations apply --remote` mehr gegen diese Datenbank.**
+> Ein zweiter Lauf scheitert an bereits existierenden Tabellen. Der Stand ist
+> vollständig; die nächste Migration heißt `0002_*`.
 
-Es braucht also eine Umgebung mit Cloudflare-Zugang oder den Owner im
-Dashboard. **Der Weg über die CLI:**
+**Die Bindung `DB` kommt aus dieser Datei.** Pages liest `wrangler.toml` beim
+Git-Build (config-as-code); ein Eintrag unter *Settings → Functions → D1
+database bindings* ist dafür nicht nötig. Wirksam wird sie mit dem **ersten
+Deploy nach dem Merge dieses Commits nach `main`** — Bindungen greifen nie
+rückwirkend für schon gebaute Deploys.
 
-```bash
-npx wrangler login                      # oder CLOUDFLARE_API_TOKEN=…
-npx wrangler d1 create morse-lab        # gibt die echte database_id aus
-#   -> in wrangler.toml eintragen, committen
-npx wrangler d1 migrations apply morse-lab --remote
+**Was noch aussteht, und warum nicht hier:** der Nachweis am laufenden System.
+Der Egress-Proxy dieser Umgebung sperrt `api.cloudflare.com` und
+`dash.cloudflare.com` weiterhin vollständig (`connect_rejected`,
+Organisations-Policy), und auch die Produktions-URL ist von hier nicht
+abrufbar. **Die Verifikation übernimmt Fable von außen.** Das kleinste
+belastbare Signal:
+
+```
+GET https://projekt-morse.pages.dev/api/progress   (ohne Sitzungs-Cookie)
+  401  -> Bindung greift, die Function redet mit D1
+  500  -> `env.DB` ist undefiniert, die Bindung greift noch nicht
 ```
 
-Ein API-Token braucht dafür die Berechtigungen **Account → D1 → Edit** (und,
-wenn die Bindung per CLI gesetzt werden soll, **Account → Cloudflare Pages →
-Edit**).
-
-**Der Weg über das Dashboard**, wenn die CLI nicht in Frage kommt:
-
-1. dash.cloudflare.com → **Storage & Databases → D1 SQL Database** → *Create*
-   → Name `morse-lab` → *Create*. Die angezeigte **Database ID** in
-   `wrangler.toml` als `database_id` eintragen und committen.
-2. In derselben Datenbank den Tab **Console** öffnen und den Inhalt von
-   [`migrations/0001_accounts.sql`](./migrations/0001_accounts.sql)
-   ausführen. (Achtung: die Konsole führt kein Migrations-Journal — wer so
-   migriert, sollte die Migration danach *nicht* zusätzlich per
-   `wrangler d1 migrations apply --remote` laufen lassen, sonst scheitert sie
-   an bereits existierenden Tabellen.)
-3. **Workers & Pages → `projekt-morse` → Settings → Functions → D1 database
-   bindings** → *Add binding*: Variable name **`DB`**, Database `morse-lab`.
-   **Für Production UND Preview je einmal.**
-4. Einen neuen Deploy auslösen (ein Push auf `main` genügt) — Bindungen greifen
-   erst für Deploys nach dem Setzen.
-
-Bei Git-Anbindung liest Pages `wrangler.toml` **nicht** für die Bindung; das
-Dashboard entscheidet. Der Eintrag in `wrangler.toml` ist für `wrangler pages
-dev` und als Dokumentation da.
-
-**Danach auf Produktion nachweisen** (war für diese Runde vorgesehen und ist
+**Der vollständige Durchlauf danach** (war für Runde B vorgesehen und ist
 offen): Register → eine Sitzung spielen → Push → Login in einem zweiten
 Browser-Kontext → Merge, dann Löschen inklusive Gegenlesen. Das Skript des
 lokalen Durchlaufs (§4) lässt sich dafür wiederverwenden — nur `BASE` auf die
 Produktions-URL zeigen und die vorbereiteten Stände beibehalten. **Ein echter
 Passkey auf Produktion legt ein echtes Konto an**; es gehört am Ende des Laufs
 über „Delete account and data" wieder weg, und der Durchlauf tut das schon.
+**Vorher §3e lesen:** Passkeys hängen an der Domain, unter der sie angelegt
+wurden — ein Konto von `projekt-morse.pages.dev` ist unter `morse-lab.com`
+später nicht wiederzufinden.
 
-**Solange das aussteht, ist der Zustand nicht kaputt** — aber er ist nicht
-derselbe wie „offline". Ohne Bindung ist `env.DB` undefiniert, die Function
-läuft auf einen Fehler und Pages antwortet **500**. Genau dafür unterscheidet
-der Client seit dieser Runde 5xx von einer Ablehnung: „Create a passkey" sagt
-dann „The server is not available right now. Your progress stays on this
-device." statt fälschlich den Passkey zu beschuldigen, und ein Löschversuch
-meldet keinen Erfolg. Beides ist im Browser nachgewiesen (§4). Geübt wird
-unterdessen normal weiter.
+**Falls die Bindung wider Erwarten nicht greift** (500 statt 401), ist der
+Rückfallweg der alte, im Dashboard: **Workers & Pages → `projekt-morse` →
+Settings → Functions → D1 database bindings** → *Add binding*: Variable name
+**`DB`**, Database `morse-lab` — **für Production UND Preview je einmal** —,
+danach einen neuen Deploy auslösen. Ein API-Token für den CLI-Weg bräuchte
+**Account → D1 → Edit** (und für die Bindung **Account → Cloudflare Pages →
+Edit**).
+
+**Solange der Nachweis aussteht, ist der Zustand nicht kaputt** — aber er ist
+nicht derselbe wie „offline". Ohne Bindung ist `env.DB` undefiniert, die
+Function läuft auf einen Fehler und Pages antwortet **500**. Genau dafür
+unterscheidet der Client seit Runde B 5xx von einer Ablehnung: „Create a
+passkey" sagt dann „The server is not available right now. Your progress stays
+on this device." statt fälschlich den Passkey zu beschuldigen, und ein
+Löschversuch meldet keinen Erfolg. Beides ist im Browser nachgewiesen (§4).
+Geübt wird unterdessen normal weiter.
 
 ### 5f. Die drei Punkte aus Review 9 — zwei geregelt, einer offen
 
@@ -816,20 +832,23 @@ warten weiter auf ein Urteil.
 
 ## 7. Nächster Schritt
 
-**Die drei offenen Punkte brauchen etwas, das der Code nicht liefern kann** —
+**Die offenen Punkte brauchen etwas, das der Code nicht liefern kann** —
 Dateien im Repo oder Cloudflare-Zugang. Sie stehen deshalb oben.
 
-1. **D1 anlegen und binden** (§5e). Braucht eine Umgebung mit
-   Cloudflare-Zugang oder den Owner im Dashboard; die Schritte für beide Wege
-   stehen dort. Erst danach ist Runde B auf Produktion wirklich fertig — und
-   erst danach lässt sich der Konto-Weg dort nachweisen (Register → Sitzung →
-   Push → Login im zweiten Kontext → Merge → Löschen).
+1. **Diesen Branch nach `main` mergen und den Deploy nachsehen** (§5e). Die D1
+   steht, die Bindung liegt in `wrangler.toml`, aber sie greift erst mit dem
+   Deploy aus `main`. Danach das kleine Signal prüfen — `/api/progress` ohne
+   Sitzung muss **401** antworten, nicht 500 —, und erst dann den Konto-Weg auf
+   Produktion nachweisen (Register → Sitzung → Push → Login im zweiten Kontext
+   → Merge → Löschen). **Von dieser Umgebung aus nicht machbar** (Cloudflare
+   und die Produktions-URL sind gesperrt); übernommen hat es Fable.
 2. **Die Rate-Limit-Regel anlegen** (§5h), 10/Minute/IP auf `/api/auth/*`.
    Gleiche Voraussetzung. **Bitte dabei den Vorbehalt in §5h klären** — ob die
    Regel für `*.pages.dev` überhaupt anlegbar ist, konnte ich nicht belegen
    (Cloudflare-Doku ist hier gesperrt).
 3. **Die Bildmarke aus den Owner-Dateien** (§3f). Braucht nur die drei Dateien
-   **im Repo** — ein Pfad auf dem Rechner des Owners genügt nicht, siehe §6.
+   **im Repo** — ein Pfad auf dem Rechner des Owners genügt nicht, siehe §6,
+   und ein angekündigter Anhang, der nicht ankommt, auch nicht (dritter Anlauf).
 4. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a, **nachdem**
    §3e entschieden ist (Passkeys hängen an der Domain). Danach greift auch die
    Rate-Limit-Regel, falls der Vorbehalt aus §5h zutrifft.
