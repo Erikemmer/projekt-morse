@@ -1,10 +1,16 @@
-# Projekt Morse
+# Morse Lab
 
 Adaptiver Morse-Trainer im Browser. Kernloop: **hören → tippen → Feedback.**
 Ziel ist Kopfhören — das Zeichen als Klang erkennen, nicht Punkte und Striche zählen.
 
 Läuft vollständig lokal: kein Konto, kein Server, keine Cookies, keine Fremdabrufe.
 Als PWA installierbar und offline nutzbar; die Schriften liegen im Repo.
+
+**Live:** https://morse-lab.com — dazu unverändert https://projekt-morse.pages.dev
+
+Gestaltung und Sprache richten sich nach
+[`docs/brand/Morse_Lab_Brand_Guidelines_1.1.html`](./docs/brand/Morse_Lab_Brand_Guidelines_1.1.html)
+(führend); [`docs/CI.md`](./docs/CI.md) ist die deutsche Kurzfassung.
 
 ## Stand
 

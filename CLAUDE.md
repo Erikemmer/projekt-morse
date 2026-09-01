@@ -1,4 +1,4 @@
-# CLAUDE.md — Projekt Morse
+# CLAUDE.md — Morse Lab
 
 Stehender Kontext für jeden Agenten in diesem Repo. Das ist **keine Aufgabe**, sondern
 die Beschreibung davon, *wie* hier gearbeitet wird — nie *was* gebaut wird.

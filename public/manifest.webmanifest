@@ -1,7 +1,7 @@
 {
-  "name": "Projekt Morse",
-  "short_name": "Morse",
-  "description": "An adaptive Morse code trainer. Hear a character, answer, get feedback.",
+  "name": "Morse Lab",
+  "short_name": "Morse Lab",
+  "description": "Learn Morse code by ear. Hear a character, answer, get feedback.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

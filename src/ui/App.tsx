@@ -307,7 +307,7 @@ export function App() {
         Kopfzeile traegt Sitzung und Runde). Ohne diese Ueberschrift haette die
         Seite gar keine -- und der Einstieg per Ueberschriften-Navigation waere weg.
       */}
-      <h1 className="visually-hidden">Projekt Morse</h1>
+      <h1 className="visually-hidden">Morse Lab</h1>
       <p className="visually-hidden">
         An audio drill. You hear one character, then choose what you heard. Nothing is shown
         while the tone plays — recognising the sound is the whole exercise.
