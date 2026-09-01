@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-30.000 -17.695 389.440 119.695" role="img" aria-label="Morse Lab">
+  <title>Morse Lab</title>
+  <!--
+    Primaeres Lockup (1.1 §3): Marke links, Wortmarke rechts, Abstand ein
+    Knopfdurchmesser. Die Wortmarke steht in Newsreader Regular, ohne Sperrung
+    und ohne Versalien. Sie ist als Text ausgezeichnet, nicht in Pfade
+    gewandelt -- im Repo liegt die Schrift, und so bleibt sie durchsuchbar und
+    vorlesbar. Wo Newsreader fehlt, greift der Fallback-Stack.
+    Mindestgroesse fuer dieses Lockup: 140 px Breite.
+  -->
+  <rect x="0" y="64" width="120" height="8" rx="4" fill="#221D16"/>
+  <g transform="rotate(13 108 48)">
+    <rect x="16" y="44" width="92" height="8" rx="4" fill="#221D16"/>
+  </g>
+  <circle cx="18.358" cy="27.305" r="15" fill="#B45309"/>
+  <circle cx="108" cy="48" r="5" fill="none" stroke="#221D16" stroke-width="3"/>
+  <text x="150.000" y="57.792"
+        font-family="Newsreader, Georgia, serif" font-size="46"
+        font-weight="400" letter-spacing="0" fill="#221D16">Morse Lab</text>
+</svg>

@@ -1,14 +1,16 @@
-# Übergabe — Stand nach dem Lernmodus
+# Übergabe — Stand nach der Marken-Runde: Morse Lab
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** `main` @ `2cd1c58`. Zwei Commits aus dieser Runde:
+**Stand:** `main` @ `915eb83`. Fünf Commits aus der Marken-Runde:
 
-1. `88100e8` — der Lernmodus als Engine (Karte, Echo-Check, eingeführte Zeichen)
-2. `2cd1c58` — derselbe auf dem Bildschirm, mit den drei Einstiegspunkten
+1. `e819703` — Guidelines 1.1 ins Repo, Rangfolge und die drei Addenda
+2. `05b5166` — Token-Migration auf 1.1 §13
+3. `958a427` — das neue Logo (der Morsetaster), Favicon und App-Icons
+4. `126b6f2` — Umbenennung auf **Morse Lab**
+5. `915eb83` — die Komponenten auf 1.1-Stand (Block B)
 
-Davor aus der Politur-Runde: `8183ff1` (Tagesstatistik, Sitzungszähler,
-Intro-Merker), `a101c6a` (Trainings-Screen auf das Mockup), `e790d15` (die
-Einführung), `0261303` (Übergabe).
+Davor: `88100e8`/`2cd1c58` (Lernmodus), `8183ff1`/`a101c6a`/`e790d15`
+(Politur und Einführung), `0261303`/`2c84cfa` (Übergaben).
 
 Die Streak-Runde ist weiterhin **nicht** gelaufen — sie wurde bewusst hinter
 den Lernmodus gestellt und bleibt der nächste Schritt (§8). Die Historie
@@ -16,8 +18,11 @@ bleibt linear.
 
 **Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
 Pages, mit Git-Anbindung an dieses Repo. Jeder Push auf `main` baut und
-deployt von selbst; ein manueller Schritt ist nicht mehr nötig. Details und
-der Prüfbericht stehen in §5a.
+deployt von selbst.
+
+**`morse-lab.com` ist an das Projekt gebunden, aber noch nicht erreichbar** —
+es fehlt ein DNS-Eintrag, den ich nicht anlegen darf. Der genaue Eintrag steht
+in §5a; es ist ein Handgriff.
 
 **Datum:** 2026-09-01
 
@@ -32,10 +37,15 @@ behoben, die Begründungen stehen dort.
 Der Kern-Lernloop (hören → tippen → Feedback, adaptiv nach Schwäche) läuft, ist
 live und sieht jetzt aus wie das Mockup. Unverändert gilt: der Zeichensatz
 wächst von selbst (§3), die App ist eine offline nutzbare PWA ohne jeden
-Fremdabruf, `--muted` besteht AA auch für kleinen Text.
+Fremdabruf, `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde: die App führt Zeichen jetzt ein, statt sie nur
-abzufragen.** Wer neu anfängt, riet bisher die ersten Runden — es gab keinen
+**Neu aus dieser Runde: das Projekt heißt Morse Lab und sieht danach aus.**
+Die Marken-Richtlinie 1.1 liegt im Repo und führt (§3b). Die Tokens tragen ihre
+Namen, das Logo ist der Morsetaster, und die Komponenten folgen den Regeln aus
+§7 und §4 — allen voran der harten: **Amber steht nie zweimal in einer View.**
+Ein Prüfskript belegt das über zwölf Ansichten.
+
+Aus der Runde davor: die App führt Zeichen ein, statt sie nur abzufragen. Wer neu anfängt, riet bisher die ersten Runden — es gab keinen
 Ort, an dem ein Zeichen als Klang vorgestellt wird. Den gibt es jetzt: eine
 Karte pro Zeichen (Buchstabe, Ton, danach das Muster), dahinter ein
 Echo-Check aus drei Abrufen nach den normalen Übungsregeln. Erreichbar an drei
@@ -75,10 +85,16 @@ Fables Urteil.
 | `src/ui/App.tsx` | Lernloop-Screen **im Mockup-Aufbau** | neu gestaltet |
 | `src/ui/Intro.tsx` | Die Einführung, zwei Bildschirme | unverändert |
 | `src/ui/Learn.tsx` | **Karte, Echo-Check, Wiederholen-Gitter** | neu |
-| `src/ui/Pattern.tsx` | **Muster als Form** — aus App.tsx herausgezogen | neu |
+| `src/ui/Pattern.tsx` | Muster als Form | unverändert |
+| `docs/brand/…1.1.html` | **Die Marken-Richtlinie — führend** | neu |
+| `docs/brand/logo.py` | **Baut die Marke aus den §3-Zahlen** | neu |
+| `docs/CI.md` | **Deutsche Kurzfassung, mit Rangfolge-Kopf** | neu |
+| `public/logo-key.svg`, `logo-lockup.svg` | **Marke und primäres Lockup** | neu |
+| `public/favicon.svg` | **Fallback-Marke** (Punkt + Pille, amber) | neu |
+| `public/icons/` | **Neu gezeichnet aus der Marke** | ersetzt |
 | `src/ui/today.ts` | **Kalendertag** für die Engine (die bleibt ohne Uhr) | neu |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, **plus Sofort-Schreiber** | erweitert |
-| `src/styles.css` | Tokens und Grundriss, **Mockup-Maße** | neu gestaltet |
+| `src/styles.css` | **Tokens nach 1.1 §13**, Grundriss, Mockup-Maße | migriert |
 | `docs/screenshots/` | **Trainings-Screen bei 390 px** für den Design-Review | neu |
 | `src/fonts/` | **woff2 (latin) + SIL-OFL-Lizenzen** | neu |
 | `public/sw.js` | **Service Worker** (offline) | neu |
@@ -217,16 +233,61 @@ additiv, aber sein Default ist bewusst kein konstanter: fehlt das Feld,
 entscheidet die Vorgeschichte. Wer schon geübt hat (irgendein Versuch > 0), gilt
 als vollständig eingeführt; ein Stand ohne einen einzigen Versuch fängt vorn an.
 
+## 3b. Die Marke — was jetzt gilt und wer gewinnt
+
+**Rangfolge.** Führend ist
+[`docs/brand/Morse_Lab_Brand_Guidelines_1.1.html`](./docs/brand/Morse_Lab_Brand_Guidelines_1.1.html).
+[`docs/CI.md`](./docs/CI.md) ist die deutsche Kurzfassung und nachrangig; sie
+trägt einen Kopf, der die drei Stellen benennt, an denen sie überholt ist
+(Token-Namen, Bildmarke, Rampe). Beides steht auch in CLAUDE.md §2.9.
+
+**Drei Addenda von Fable gehen 1.1 vor** (Notion-Log #41):
+
+- **(a) Kein Live-Sync im Standard-Hörtraining.** Der „visuelle Zwilling" aus
+  1.1 §12 ist **nicht gebaut** und soll es hier auch nicht werden — er
+  widerspräche CLAUDE.md §2.2. Er kommt später als opt-in „Visual practice".
+  Damit bleibt die Barrierefreiheits-Zusage aus §12 vorerst offen; das ist eine
+  bewusste Schuld, keine vergessene.
+- **(b) `#92400e`** ist kein Token aus §13, sondern der interne
+  hover/active-Shade von Amber (`--amber-deep`), nie eine eigene Fläche.
+- **(c) Der Play-Kreis bleibt während der Wiedergabe bedienbar** — er hat gar
+  keinen `disabled`-Zustand mehr.
+
+**Das Logo ist gerechnet, nicht gezeichnet.**
+[`docs/brand/logo.py`](./docs/brand/logo.py) hält die Zahlen aus §3 als
+Konstanten und leitet den Rest ab; es druckt beim Lauf die Gegenproben mit
+(Knopf 20,695 über dem Lager, gedrehte Hebellänge exakt 92,000). Wer die Marke
+ändern will, ändert die Konstanten und lässt neu bauen — nicht umgekehrt.
+
+Das Favicon ist bewusst **nicht** der Taster, sondern die Fallback-Marke: unter
+24 px zerfällt er, und ein Favicon ist 16–32 px groß (§3).
+
+**Die eine Regel, die am leichtesten bricht:** Amber nie zweimal in einer View.
+Sie ist deshalb nicht nur beschrieben, sondern geprüft — siehe §4.
+
 ## 4. Was nachgewiesen ist (und wie)
 
 - **`npm test` → 101/101 grün** (74 vorher, 27 neu für den Lernmodus). Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
   prüft weiter gegen den Standard, nicht gegen die Implementierung. Die
   Wachstums-Tests kippen jede Bedingung einzeln; Zufall kommt überall als
   Parameter herein.
-- **`npm run build` → sauber.** Bundle **169,97 kB roh / 54,42 kB gzip**
-  (vorher 161,86 / 52,63), CSS **7,35 kB / 2,09 kB** (vorher 6,88 / 2,01).
-  Der Lernmodus kostet also +8,1 kB roh und +1,8 kB gzip. Dazu unverändert
-  einmalig 129 kB woff2 und 14 kB Icons. **Keine neue Abhängigkeit.**
+- **`npm run build` → sauber.** Bundle **170,10 kB roh / 54,47 kB gzip**
+  (vor der Marken-Runde 169,97 / 54,43), CSS **8,16 kB / 2,25 kB** (vorher
+  7,35 / 2,09). Die ganze Marken-Runde kostet also +0,13 kB JS und +0,81 kB
+  CSS. Dazu unverändert einmalig 129 kB woff2 und die neu gezeichneten Icons.
+  **Keine neue Abhängigkeit.**
+- **Amber nie zweimal in einer View (1.1 §4) — 12 von 12 Ansichten.** Geprüft
+  wird am *gerenderten* Ergebnis, nicht am Stylesheet: das Skript geht jedes
+  sichtbare Element durch und zählt Fläche, Rahmen und Text in `--amber` oder
+  `--amber-deep`, verschachtelte Treffer zusammengefasst. Abgedeckt sind beide
+  Intro-Schritte, die Lernkarte mit laufendem und mit beendetem Ton, der
+  Echo-Check in drei Phasen, das Training in vier Phasen und die
+  Wiederholen-Auswahl. Der Lauf hat dabei zwei echte Doppelbelegungen gefunden,
+  bevor sie gefixt waren.
+- **Der Play-Kreis füllt sich und bleibt bedienbar** — im Browser nachgemessen:
+  vor dem Ton transparent mit ink-Rand, während des Tons `rgb(180, 83, 9)` in
+  Fläche und Rand mit paper-Dreieck, danach zurück; Übergang 0,15 s;
+  `disabled` durchgehend `false`.
 - **Wachstum im Browser durchgespielt:** Stand präpariert, dem genau eine
   richtige Antwort fehlt → Ankündigung erscheint („The set grows: P joins from
   the next round."), Gitter wächst auf 7, `activeCharacters` enthält P,
@@ -303,7 +364,7 @@ bevorzugte Weg hat also geklappt; Direct Upload war nicht nötig.
 
 **Auf Produktion geprüft** (Playwright gegen die echte URL, Chrome):
 
-- **Seite rendert** — `h1` „Projekt Morse", Antwort-Gitter mit 6 Tasten.
+- **Seite rendert** — `h1` „Morse Lab", Antwort-Gitter mit 6 Tasten.
 - **Schriften lokal** — kein einziger Fremd-Origin-Request auf der ganzen
   Seite. Genutzt und geladen werden Newsreader (h1) und IBM Plex Sans 400
   (Fließtext), beide von `projekt-morse.pages.dev`. Die Schnitte 500/600
@@ -333,6 +394,35 @@ aus dem neuen Cache. Damit ist der Pfad nicht mehr nur lokal, sondern auf der
 echten Auslieferung belegt. Die Vorbedingung dafür bleibt sichtbar in den
 Headern: Cloudflare liefert `sw.js` und das HTML mit
 `cache-control: public, max-age=0, must-revalidate`.
+
+### Custom Domain `morse-lab.com` — ein Handgriff fehlt
+
+Die Domain ist **an das Pages-Projekt gebunden** (`status: pending`,
+HTTP-Validierung) und liegt bei Cloudflare mit Cloudflare-Nameservern
+(`dion` / `paige`), Zone `2bef7122ee328f9197516d727b9929a2`, aktiv. Also kein
+fremdes DNS — die Auskunft aus der Aufgabenstellung trifft hier nicht zu.
+
+Trotzdem ist sie **noch nicht erreichbar**: die Zone hat keinen einzigen
+DNS-Eintrag, und die vorhandene wrangler-Anmeldung darf keinen anlegen — ihre
+Scopes enthalten `zone:read`, aber kein `dns_records:write`. Anlegen muss ihn
+also jemand mit DNS-Rechten:
+
+| Feld | Wert |
+|---|---|
+| Typ | `CNAME` |
+| Name | `morse-lab.com` (Apex, im Dashboard `@`) |
+| Ziel | `projekt-morse.pages.dev` |
+| Proxy | **an** (orange Wolke) — für Pages-Domains nötig |
+| TTL | Auto |
+
+Cloudflare flacht den Apex-CNAME selbst ab; ein A-Record ist nicht nötig.
+Sobald der Eintrag steht, validiert Pages von selbst und stellt das Zertifikat
+aus (wenige Minuten). `projekt-morse.pages.dev` bleibt daneben bestehen.
+
+Wer `www` auch will, legt denselben CNAME für `www` an — das war nicht
+gefordert und ist deshalb nicht passiert.
+
+### Cache-Wechsel
 
 **Beim Lernmodus-Deploy wiederholt** (Routine): `projekt-morse-112cb6b729ee` →
 `projekt-morse-cd711867d85c`, wieder genau ein Cache am Ende, der alte
@@ -395,6 +485,35 @@ sichtbare Zeile zurück.
    die Regel aus CLAUDE.md 6 ist also gewahrt — die Hausregel ist es strenger
    gelesen nicht mehr.
 
+## 5d. Wo Umsetzung und 1.1 auseinandergehen — vier Punkte für Fable
+
+Gefunden beim Umsetzen, **nicht** eigenmächtig geändert: alle vier liegen außerhalb
+der zehn Aufgabenpunkte, und drei davon würden Maße anfassen, die Fable im
+Mockup selbst gesetzt hat.
+
+1. **Der Strich ist 52 px breit, 1.1 §8 sagt 48.** Die Richtlinie definiert den
+   Strich als `3 u × 1 u` bei `u` = Punktdurchmesser; bei `u = 16` sind das
+   48 × 16. Implementiert sind 52 × 16 — so stand es in den verbindlichen
+   Mockup-Werten der Politur-Runde. Eine Zeile CSS, aber es ändert das
+   Erscheinungsbild jedes Musters.
+2. **Der Lernkarten-Buchstabe hat Gewicht 500, 1.1 §5 sagt Light 300.** Größe
+   (64 px) und Familie stimmen. 300 wäre deutlich zarter.
+3. **Die Abstände liegen teilweise neben der Skala aus 1.1 §6**
+   (4/8/12/16/24/32/48/64): der Screen hat 26 px seitliches Padding, 36 px
+   zwischen den Blöcken, 28 px unten, und die Tasten sind 60 px hoch. Auch das
+   sind Mockup-Werte. Die Token-Skala selbst ist inzwischen sauber (8/16/24).
+4. **Das Antwort-Gitter bleibt sichtbar-deaktiviert, während der Ton läuft** —
+   1.1 §7 sagt „no disabled-gray ghost rows — hide what can't be used". Auf der
+   Lernkarte habe ich das umgesetzt („Try it" erscheint erst nach dem Ton); beim
+   Antwort-Gitter wäre es ein Eingriff in den Kernloop: das Gitter ist der
+   Kontext der Frage, nicht eine abgeblendete Werkzeugleiste. Bewusst gelassen.
+
+Dazu eine Beobachtung ohne Handlungsbedarf: der Trainings-Screen hat in Ruhe
+**gar kein** Amber mehr — Fortschritt ist ink, die Punkte sind ink, der
+Play-Kreis wird erst beim Klingen amber. Das ist die Folge von „Amber ist
+rationiert" und liest sich sehr ruhig; falls dort dauerhaft ein Akzent stehen
+soll, ist das eine Design-Entscheidung, keine Korrektur.
+
 ## 5. Entscheidungen: gefallen und offen
 
 **Gefallen und umgesetzt:** Zeichen-für-Zeichen, retrieval-only, EN-first,
@@ -454,16 +573,20 @@ npm run preview    # dist ausliefern -- hier laesst sich die PWA testen
 
 ## 8. Nächster Schritt
 
-1. **Review durch Fable** — gegen
-   [`docs/screenshots/training-390.png`](./docs/screenshots/training-390.png)
-   und [`learn-card-390.png`](./docs/screenshots/learn-card-390.png), dazu die
-   Abweichungen in §5b und die zwei Fragen in §5c.
-2. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Gebaut wird er als
+1. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a. Danach ist
+   die Marken-Runde wirklich fertig.
+2. **Review durch Fable** — gegen die drei Screenshots in
+   [`docs/screenshots/`](./docs/screenshots/) (Training, Lernkarte, Intro),
+   dazu §5b, §5c und die vier Punkte in §5d.
+3. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Gebaut wird er als
    reine Engine-Logik (`src/engine/`), Persistenz additiv. Der Tages-Eimer aus
    dieser Runde ist bewusst *keine* Historie: er hält nur den laufenden Tag.
    Wer eine Reihe über Tage braucht, legt sie daneben — und sollte dabei
    entscheiden, ob der Eimer darin aufgeht.
-3. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
-   Telefon. Alles unverändert offen und weiterhin die wichtigsten Prüfungen.
-4. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
+4. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
+   Telefon — jetzt auch: sieht das neue Icon auf einem echten Homescreen gut
+   aus? Alles unverändert offen.
+5. **„Visual practice"** als opt-in-Modus — die offene Zusage aus 1.1 §12,
+   siehe Addendum (a) in §3b.
+6. Danach die offenen Produktfragen aus §5 — Reihenfolge ist eine
    Notion-Entscheidung, nicht eine des Codes.
