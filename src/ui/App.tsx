@@ -62,9 +62,12 @@ import {
   type DayStats,
 } from '../engine/stats';
 import { computeTiming } from '../engine/timing';
+import { About } from './About';
 import { Intro } from './Intro';
 import { Learn, ReviewPicker } from './Learn';
+import { AppHeader, MenuPanel, type MenuLocation } from './Menu';
 import { Pattern } from './Pattern';
+import { ProgressScreen } from './Progress';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { todayISO } from './today';
 
@@ -85,6 +88,23 @@ export function App() {
   const [learn, setLearn] = useState<LearnState | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [tonePlaying, setTonePlaying] = useState(false);
+
+  /**
+   * Das Gehäuse um den Loop: welcher Ort gerade gezeigt wird und ob das Menü
+   * offen ist. Bewusst ein useState statt Router oder URL — vier Orte, kein
+   * Verlauf, keine neue Abhängigkeit (CLAUDE.md 3). Die Sitzung läuft dabei
+   * unberührt weiter; Progress und About lesen nur.
+   */
+  const [view, setView] = useState<'practice' | 'progress' | 'about'>('practice');
+  const [menuOpen, setMenuOpen] = useState(false);
+  /** Der Menü-Trigger — Fokusziel nach dem Schließen ohne Ortswechsel. */
+  const menuTriggerRef = useRef<HTMLButtonElement>(null);
+  /**
+   * Nach X oder Esc gehört der Fokus zurück auf den Trigger (CLAUDE.md 6),
+   * nicht auf das, was der Screen sonst fokussieren würde. Ein Ref statt
+   * State: der Merker soll den Fokus-Effekt lenken, nicht ihn auslösen.
+   */
+  const focusMenuTrigger = useRef(false);
 
   const playerRef = useRef<MorsePlayer | null>(null);
   /** Das Element, das in der aktuellen Phase den Fokus tragen soll. */
@@ -135,9 +155,19 @@ export function App() {
   // Loop kein Phasenwechsel ist: die Sitzung stand die ganze Zeit auf 'ready'.
   // Ohne das bliebe der Fokus nach "Begin" auf dem verschwundenen Knopf, also
   // bei <body> -- und man muesste sich neu hineintabben.
+  // `view`, `reviewing` und `menuOpen` haengen mit drin, seit es das Gehaeuse
+  // gibt: auch ein Ortswechsel ist ein Moduswechsel (CLAUDE.md 6). Solange das
+  // Menue offen ist, setzt das Panel seinen Fokus selbst; nach X oder Esc
+  // gewinnt der Trigger (focusMenuTrigger), sonst das Ziel des neuen Screens.
   useEffect(() => {
+    if (menuOpen) return;
+    if (focusMenuTrigger.current) {
+      focusMenuTrigger.current = false;
+      menuTriggerRef.current?.focus();
+      return;
+    }
     focusRef.current?.focus();
-  }, [session.phase, session.round, session.progress.introSeen]);
+  }, [session.phase, session.round, session.progress.introSeen, view, reviewing, menuOpen]);
 
   const play = useCallback(async () => {
     playerRef.current ??= new MorsePlayer();
@@ -216,8 +246,13 @@ export function App() {
    * unterbricht: seine Karte kommt vor der *naechsten*, so wie vorgesehen.
    */
   const pending = pendingIntroductions(session.progress);
+  // `view` und `menuOpen` gehoeren in die Bedingung, seit es das Gehaeuse
+  // gibt: ein Lauf, der startet, waehrend jemand auf Progress oder im Menue
+  // steht, spielte seinen Karten-Ton in einen fremden Screen hinein.
   const learnDue =
     session.progress.introSeen &&
+    view === 'practice' &&
+    !menuOpen &&
     !reviewing &&
     learn === null &&
     pending.length > 0 &&
@@ -307,6 +342,30 @@ export function App() {
     );
   }, []);
 
+  // --- Gehäuse: Menü und Orte ---------------------------------------------
+
+  /** Der Ort fürs Menü: die Klang-Auswahl zählt als eigener ('learn'). */
+  const menuLocation: MenuLocation = reviewing ? 'learn' : view;
+
+  const dismissMenu = useCallback(() => {
+    focusMenuTrigger.current = true;
+    setMenuOpen(false);
+  }, []);
+
+  const navigateTo = useCallback(
+    (target: MenuLocation) => {
+      setMenuOpen(false);
+      if (target === menuLocation) {
+        // Kein Ortswechsel, also auch kein neues Fokusziel: zurück zum Trigger.
+        focusMenuTrigger.current = true;
+        return;
+      }
+      setReviewing(target === 'learn');
+      setView(target === 'learn' ? 'practice' : target);
+    },
+    [menuLocation],
+  );
+
   // Tippen statt Zielen: die Buchstaben des Zeichensatzes beantworten direkt.
   useEffect(() => {
     if (session.phase !== 'answering') return undefined;
@@ -326,6 +385,19 @@ export function App() {
   const attempt = session.lastAttempt;
   const summary = summarize(session);
 
+  /**
+   * Der Start-Screen: Runde 1, noch nichts gespielt. Nur hier (und auf den
+   * Screens des Gehäuses) steht die Kopfzeile mit dem Menü — mitten in einer
+   * Sitzung wäre sie eine Ablenkung, im Lernmodus und in der Einführung auch.
+   */
+  const onStartScreen =
+    session.progress.introSeen && learn === null && session.phase === 'ready' && session.round === 1;
+  const headerShown =
+    !menuOpen &&
+    session.progress.introSeen &&
+    learn === null &&
+    (view !== 'practice' || reviewing || onStartScreen);
+
   return (
     <main className="shell">
       {/*
@@ -340,7 +412,13 @@ export function App() {
         while the tone plays — recognising the sound is the whole exercise.
       </p>
 
-      {!session.progress.introSeen ? (
+      {headerShown && (
+        <AppHeader triggerRef={menuTriggerRef} onOpenMenu={() => setMenuOpen(true)} />
+      )}
+
+      {menuOpen ? (
+        <MenuPanel location={menuLocation} onNavigate={navigateTo} onDismiss={dismissMenu} />
+      ) : !session.progress.introSeen ? (
         <Intro onDone={finishIntro} />
       ) : learn !== null ? (
         <Learn
@@ -354,6 +432,10 @@ export function App() {
           onAdvance={() => setLearn((c) => (c === null ? null : advanceEcho(c, Math.random)))}
           onSkip={reviewing ? undefined : skipLearn}
         />
+      ) : view === 'progress' ? (
+        <ProgressScreen progress={session.progress} today={session.today} headingRef={focusTarget} />
+      ) : view === 'about' ? (
+        <About headingRef={focusTarget} />
       ) : reviewing ? (
         <ReviewPicker
           characters={session.pool}
@@ -424,29 +506,17 @@ export function App() {
           )}
 
           {/*
-            Der leise Weg zurueck zu den Klaengen -- nur auf dem Start-Screen,
-            also vor der ersten Runde. Mitten in der Sitzung waere er eine
-            Ablenkung, und nach jeder Runde eine Wiederholung.
+            Einmalig, beim ersten Aktivwerden von Variabilitaets-Stufe 1:
+            eine leise Zeile, kein Dialog. Danach traegt das Eyebrow die
+            jeweils echte Tonhoehe, und die Zeile kommt nie wieder
+            (progress.variabilityNoticeSeen). Der fruehere Link "Review the
+            sounds" stand hier daneben; sein Einstieg heisst jetzt "Learn the
+            sounds" und wohnt im Menue -- ein Weg statt zwei.
           */}
-          {session.round === 1 && session.phase === 'ready' && (
-            <>
-              {/*
-                Einmalig, beim ersten Aktivwerden von Variabilitaets-Stufe 1:
-                eine leise Zeile, kein Dialog. Danach traegt das Eyebrow die
-                jeweils echte Tonhoehe, und die Zeile kommt nie wieder
-                (progress.variabilityNoticeSeen).
-              */}
-              {session.showVariabilityNotice && (
-                <p className="variability-note">
-                  From here on, the pitch varies between sessions — real signals do.
-                </p>
-              )}
-              <div className="learn-skip">
-                <button type="button" className="skip" onClick={() => setReviewing(true)}>
-                  Review the sounds
-                </button>
-              </div>
-            </>
+          {session.round === 1 && session.phase === 'ready' && session.showVariabilityNotice && (
+            <p className="variability-note">
+              From here on, the pitch varies between sessions — real signals do.
+            </p>
           )}
 
           <Footer day={dayFor(session.progress, session.today)} done={session.attempts.length} />

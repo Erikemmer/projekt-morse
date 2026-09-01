@@ -287,6 +287,10 @@ function Echo({
 /**
  * Das freie Wiederholen: ein Gitter der aktiven Zeichen im Stil der
  * Antwort-Tasten. Ein Tipp oeffnet die Karte -- ohne Pflicht-Echo-Check.
+ *
+ * Heisst seit der Menue-Runde "Learn the sounds" (vorher "Review the
+ * sounds"): der Menue-Eintrag ist jetzt der einzige Einstieg, und er soll
+ * auch fuer den Erstkontakt nicht nach Wiederholung klingen.
  */
 export function ReviewPicker({
   characters,
@@ -302,8 +306,8 @@ export function ReviewPicker({
   return (
     <section className="learn" aria-labelledby="review-heading">
       <div className="stage">
-        <h2 id="review-heading" className="review-heading" ref={headingRef} tabIndex={-1}>
-          Review the sounds
+        <h2 id="review-heading" className="screen-heading" ref={headingRef} tabIndex={-1}>
+          Learn the sounds
         </h2>
         <p className="learn-copy">Pick a character to hear it again.</p>
       </div>

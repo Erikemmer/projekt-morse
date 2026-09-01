@@ -36,6 +36,21 @@ function injectServiceWorkerPrecache(): Plugin {
         throw new Error('sw.js: Marker fuer den Vorab-Cache nicht gefunden');
       }
       writeFileSync(swPath, injected);
+
+      // Dieselbe Version noch einmal, fuer Menschen: der About-Screen liest
+      // sie aus <meta name="build"> (Platzhalter "dev" in index.html). Kein
+      // eigener Mechanismus -- Build-Kennung und SW-Cache-Name bleiben so
+      // per Konstruktion dieselbe Zahl.
+      const htmlPath = join(dist, 'index.html');
+      const html = readFileSync(htmlPath, 'utf8');
+      const stamped = html.replace(
+        /<meta name="build" content="dev"\s*\/?>/,
+        `<meta name="build" content="${version}" />`,
+      );
+      if (stamped === html) {
+        throw new Error('index.html: Build-Marker (<meta name="build">) nicht gefunden');
+      }
+      writeFileSync(htmlPath, stamped);
     },
   };
 }

@@ -12,6 +12,14 @@
     <!-- Schriften liegen als woff2 im Repo (@font-face in styles.css) -- kein Fremdabruf. -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#f6f1e8" />
+    <!--
+      Die Build-Kennung fuer den About-Screen. Der Produktionsbuild ersetzt
+      "dev" durch die Asset-Version aus vite.config.ts -- dieselbe, die den
+      Service-Worker-Cache benennt. Bewusst kein Datum und kein Commit: die
+      Kennung haengt nur am Inhalt, ein Doku-Deploy aendert sie nicht (und
+      erzeugt damit weiter keinen Cache-Wechsel).
+    -->
+    <meta name="build" content="dev" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>Morse Lab</title>
   </head>

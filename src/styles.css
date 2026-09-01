@@ -565,7 +565,10 @@ button:disabled {
   justify-content: center;
 }
 
-.review-heading {
+/* Die Ueberschrift eines Gehaeuse-Screens (Klang-Auswahl, Progress, About).
+ * Hiess .review-heading, solange die Klang-Auswahl der einzige solche Screen
+ * war -- das Gehaeuse ist der zweite Bedarf (CLAUDE.md 4). */
+.screen-heading {
   margin: 0;
   font-family: var(--font-serif);
   font-size: 26px;
@@ -573,7 +576,9 @@ button:disabled {
   line-height: 1.3;
 }
 
-.review-heading:focus {
+/* Der Fokus springt auf die Ueberschrift, damit sie vorgelesen wird -- ohne
+ * dass dabei ein Rahmen um eine reine Textzeile steht. */
+.screen-heading:focus {
   outline: none;
 }
 
@@ -595,10 +600,12 @@ button:disabled {
   flex-direction: column;
   justify-content: center;
   gap: 24px;
-  animation: intro-fade var(--dur-layout) ease-out both;
+  animation: fade-in var(--dur-layout) ease-out both;
 }
 
-@keyframes intro-fade {
+/* Hiess intro-fade; seit auch das Menue-Panel einblendet, ist es das
+ * allgemeine Einblenden (zweiter Bedarf, CLAUDE.md 4). */
+@keyframes fade-in {
   from {
     opacity: 0;
   }
@@ -683,6 +690,254 @@ button:disabled {
 .button-go:hover {
   background: var(--amber-deep);
   border-color: var(--amber-deep);
+}
+
+/* --- Gehaeuse: Kopfzeile, Menue, Progress, About --- */
+
+.app-header {
+  flex: none;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* Die Wortmarke: Newsreader Regular, sentence case, nie gesperrt, nie
+ * Versalien (1.1 §2). */
+.wordmark {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* Menue-Trigger und X: nur das Icon (24er-Raster, 1.5px Strich, runde
+ * Kappen -- 1.1 §8), kein Rahmen, aber die volle 44er-Zielflaeche
+ * (WCAG 2.5.5). Der negative Rand rueckt das Icon optisch an die
+ * Inhaltskante, die die 44er-Flaeche sonst verschoebe. */
+.icon-button {
+  width: var(--tap);
+  height: var(--tap);
+  min-height: 0;
+  padding: 0;
+  margin-right: -10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+}
+
+.icon-button:hover {
+  color: var(--amber-deep);
+}
+
+/*
+ * Das Menue: ein Vollbild-Panel auf paper -- kein Overlay. App.tsx rendert
+ * derweil nichts anderes, also gibt es dahinter nichts Fokussierbares und
+ * keine nachgebaute Fokus-Falle (CLAUDE.md 6). Einblenden ueber die
+ * Layoutdauer (1.1 §9); der reduced-motion-Block unten legt es still.
+ */
+.menu {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  animation: fade-in var(--dur-layout) ease-out both;
+}
+
+.menu-head {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.menu-nav {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  /* Optischer Ausgleich fuer die X-Zeile oben: sonst haengt die Liste tief. */
+  padding-bottom: 48px;
+}
+
+/* Eintraege als reine Textzeilen in Newsreader -- keine Rahmen, keine
+ * Flaechen (1.1 §7: Linien tragen die Oberflaeche). */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  padding: 0;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink);
+  background: transparent;
+  border: none;
+  text-align: left;
+}
+
+.menu-item:hover {
+  color: var(--amber-deep);
+}
+
+/* Der Ortsmarker: bei jedem Eintrag im Layout (sonst spraenge der Text),
+ * gefuellt nur am aktuellen Ort -- das eine Amber der Menue-View (1.1 §4).
+ * An- oder abwesend ist eine Form, nicht nur eine Farbe (CLAUDE.md 6);
+ * aria-current sagt dasselbe fuer Screenreader. */
+.menu-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.menu-dot[data-current='true'] {
+  background: var(--amber);
+}
+
+/* Der Grundriss eines Gehaeuse-Screens (Progress, About): eine linksbuendige
+ * Spalte, oben beginnend -- gelesen wird hier, nicht geuebt. */
+.screen {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* --- Progress: Zahlen mit Beschriftung, durch Haarlinien getrennt (1.1 §7:
+ * keine Balken, keine Gauges, keine Medaillen) --- */
+
+.stat-lines {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 12px 0;
+  border-bottom: var(--hairline);
+}
+
+.stat-line dt {
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.stat-line dd {
+  margin: 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.char-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Spaltenkoepfe im Label-Stil aus 1.1 §5 (11px, 500, Versalien, +0.18em). */
+.char-table th[scope='col'] {
+  padding: 8px 0;
+  border-bottom: var(--hairline);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--gray);
+  text-align: right;
+}
+
+.char-table th[scope='col']:first-child {
+  text-align: left;
+}
+
+.char-table td {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--edge-soft);
+  font-size: 15px;
+  text-align: right;
+}
+
+/* Das Zeichen selbst in Newsreader -- es ist der Gegenstand der Zeile,
+ * die Zahlen daneben sind sein Protokoll. */
+.char-cell {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--edge-soft);
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  text-align: left;
+}
+
+/* Die Fussnote unter der Tabelle: die Reaktionszeit ist ein Naeherungswert
+ * und wird als solcher benannt (CLAUDE.md 2.6). */
+.footnote {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
+/* Leerer Zustand: eine Zeile, die sagt, was hier erscheinen wird (1.1 §11). */
+.empty-note {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
+/* --- About: primaeres Lockup, ein Satz, Fakten --- */
+
+/* Marke links der Wortmarke (1.1 §3). Der Abstand wirkt groesser als der
+ * gap, weil die Freiflaeche der Marke schon im SVG-Ausschnitt steckt. */
+.about-lockup {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.about-mark {
+  width: 90px;
+  height: auto;
+}
+
+.about-wordmark {
+  font-size: 28px;
+}
+
+.about-line {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
+.about-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.about-facts li {
+  padding: 12px 0;
+  border-bottom: var(--hairline);
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--gray);
+  font-variant-numeric: tabular-nums;
 }
 
 /* --- Sekundaeres --- */
