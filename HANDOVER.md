@@ -1,34 +1,29 @@
-# Übergabe — Stand nach der Marken-Runde: Morse Lab
+# Übergabe — Stand nach Klang-Variabilität und Review-6-Fixes
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** `main` @ `915eb83`. Fünf Commits aus der Marken-Runde:
+**Stand:** `main` @ `8d35159` (Marken-Runde). Darauf aufbauend Branch
+`claude/morse-handover-alignment-nbkk6o` mit drei Commits — zu reviewen (Fable)
+und dann nach `main` zu mergen; erst der Merge deployt sie auf Produktion:
 
-1. `e819703` — Guidelines 1.1 ins Repo, Rangfolge und die drei Addenda
-2. `05b5166` — Token-Migration auf 1.1 §13
-3. `958a427` — das neue Logo (der Morsetaster), Favicon und App-Icons
-4. `126b6f2` — Umbenennung auf **Morse Lab**
-5. `915eb83` — die Komponenten auf 1.1-Stand (Block B)
+1. `09c5ca2` — **Klang-Variabilität in Stufen** (HVPT; Aufgabe 1 dieser Runde)
+2. `5193d22` — **Metrik-Fixes aus Review 6** (Notion-Log #43; Aufgabe 2)
+3. (dieser Doku-Commit, mit den neu gezogenen Screenshots)
 
-Davor: `88100e8`/`2cd1c58` (Lernmodus), `8183ff1`/`a101c6a`/`e790d15`
-(Politur und Einführung), `0261303`/`2c84cfa` (Übergaben).
-
-Die Streak-Runde ist weiterhin **nicht** gelaufen — sie wurde bewusst hinter
-den Lernmodus gestellt und bleibt der nächste Schritt (§8). Die Historie
-bleibt linear.
+Die Streak-Runde ist weiterhin **bewusst nicht** gelaufen (§8).
 
 **Produktions-URL: https://projekt-morse.pages.dev** — live auf Cloudflare
 Pages, mit Git-Anbindung an dieses Repo. Jeder Push auf `main` baut und
-deployt von selbst.
+deployt von selbst; dieser Branch deployt erst mit dem Merge.
 
 **`morse-lab.com` ist an das Projekt gebunden, aber noch nicht erreichbar** —
-es fehlt ein DNS-Eintrag, den ich nicht anlegen darf. Der genaue Eintrag steht
-in §5a; es ist ein Handgriff.
+es fehlt der eine DNS-Eintrag aus §5a.
 
-**Datum:** 2026-09-01
+**Datum:** 2026-09-01 (zweite Runde dieses Tages)
 
 Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
-[FINDINGS.md](./FINDINGS.md) — Einträge 1 und 2 sind inzwischen entschieden und
-behoben, die Begründungen stehen dort.
+[FINDINGS.md](./FINDINGS.md) — Einträge 1 und 2 sind entschieden und behoben;
+**Eintrag 3 ist neu** (Maße neben den Guidelines, die Review 6 *nicht* geregelt
+hat) und wartet auf das nächste Review.
 
 ---
 
@@ -39,7 +34,11 @@ live und sieht jetzt aus wie das Mockup. Unverändert gilt: der Zeichensatz
 wächst von selbst (§3), die App ist eine offline nutzbare PWA ohne jeden
 Fremdabruf, `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde: das Projekt heißt Morse Lab und sieht danach aus.**
+**Neu aus dieser Runde: der Klang variiert in Stufen (§3c), und die vier
+Punkte aus §5d sind durch Review 6 entschieden und umgesetzt (§5d).**
+
+Aus der Marken-Runde davor gilt weiter: das Projekt heißt Morse Lab und sieht
+danach aus.
 Die Marken-Richtlinie 1.1 liegt im Repo und führt (§3b). Die Tokens tragen ihre
 Namen, das Logo ist der Morsetaster, und die Komponenten folgen den Regeln aus
 §7 und §4 — allen voran der harten: **Amber steht nie zweimal in einer View.**
@@ -78,7 +77,8 @@ Fables Urteil.
 | `src/engine/settings.ts` | Tempo, Tonhöhe, Start-Satz, Kandidatenreihe, **Gruppengröße** | erweitert |
 | `src/engine/stats.ts` | Statistik, Wachstum, Tag/Sitzung/Intro, **eingeführte Zeichen** | erweitert |
 | `src/engine/growth.ts` | Die Wachstumsregel | unverändert |
-| `src/engine/learn.ts` | **Der Lernmodus**: Karte, Echo-Check | neu, getestet |
+| `src/engine/learn.ts` | Der Lernmodus: Karte, Echo-Check | unverändert |
+| `src/engine/variability.ts` | **Klang-Variabilität in Stufen (HVPT)** | neu, getestet |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
 | `src/engine/session.ts` | Loop-Zustandsautomat; Pool = aktiver Satz | angepasst |
 | `src/audio/player.ts` | Wiedergabe mit Audio-Uhr nach außen | unverändert |
@@ -95,12 +95,12 @@ Fables Urteil.
 | `src/ui/today.ts` | **Kalendertag** für die Engine (die bleibt ohne Uhr) | neu |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, **plus Sofort-Schreiber** | erweitert |
 | `src/styles.css` | **Tokens nach 1.1 §13**, Grundriss, Mockup-Maße | migriert |
-| `docs/screenshots/` | **Trainings-Screen bei 390 px** für den Design-Review | neu |
+| `docs/screenshots/` | Intro, Lernkarte, Training bei 390 px | **neu gezogen** |
 | `src/fonts/` | **woff2 (latin) + SIL-OFL-Lizenzen** | neu |
 | `public/sw.js` | **Service Worker** (offline) | neu |
 | `public/manifest.webmanifest`, `public/icons/` | **PWA-Manifest, Icons** | neu |
 | `vite.config.ts` | + Plugin: injiziert Precache-Liste in `dist/sw.js` | erweitert |
-| `src/engine/*.test.ts` | **101 Tests** (16 Grundgerüst, 42 Loop, 16 Wachstum, 27 Lernmodus) | grün |
+| `src/engine/*.test.ts` | **114 Tests** (16 Grundgerüst, 42 Loop, 16 Wachstum, 27 Lernmodus, 13 Variabilität) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die Engine
 kennt niemanden, die UI rechnet nicht.
@@ -265,17 +265,70 @@ Das Favicon ist bewusst **nicht** der Taster, sondern die Fallback-Marke: unter
 **Die eine Regel, die am leichtesten bricht:** Amber nie zweimal in einer View.
 Sie ist deshalb nicht nur beschrieben, sondern geprüft — siehe §4.
 
+## 3c. Die Klang-Variabilität — erst stabil, dann variabel
+
+**Warum:** HVPT (high variability phonetic training) — wer immer denselben
+620-Hz-Ton hört, lernt Kategorien, die im Funkalltag nicht generalisieren.
+**Aber:** Variabilität erst, wenn der Grundstock sitzt. Die Stufe leitet sich
+deshalb rein aus dem Fortschritt ab (Größe des aktiven Zeichensatzes), wie die
+Wachstumsregel; alles in `engine/variability.ts`, Zufall als Parameter, Werte
+als benannte Konstanten.
+
+- **Stufe 0** (bis 7 aktive Zeichen): fest 620 Hz — exakt wie vorher, kein
+  Würfeln.
+- **Stufe 1** (ab 8): Tonhöhe **einmal pro Sitzung** aus 560–680 Hz, dann fest.
+- **Stufe 2** (ab 12): Tonhöhe **pro Abfrage** aus 520–720 Hz; zusätzlich
+  variiert das Gesamttempo pro Sitzung um ±10 % um den Sollwert.
+- **Stufe 3** (Timing-Imperfektion, QRN): **nicht gebaut**, nur als Konstante
+  mit Kommentar vorgesehen. Schwelle und Ausgestaltung sind offene
+  Notion-Entscheidungen — nicht hier erfinden.
+
+Fünf Regeln, alle getestet:
+
+1. **Das Zeichentempo bleibt immer 20 WPM.** Variieren dürfen nur die
+   Farnsworth-Pausen. `SessionSound` führt bewusst kein `characterWpm` — was
+   es nicht gibt, kann niemand versehentlich variieren.
+2. **Das Eyebrow zeigt immer die echte Tonhöhe der laufenden Abfrage**
+   (CLAUDE.md 2.6), im Training wie im Echo-Check.
+3. **Lernkarten und Echo-Check spielen immer den Sitzungs-Ton** — kein
+   Prompt-Jitter beim Erstkontakt; ein neuer Klang braucht einen Anker.
+4. **Eine Wiederholung derselben Abfrage behält ihren Ton**: gezogen wird pro
+   Prompt, nicht pro Abspielen. „Noch mal hören" wiederholt dasselbe Signal.
+5. **Statistik und Wachstumsregel sehen von alledem nichts**: gleicher
+   Antwortverlauf ergibt byte-gleichen Fortschritt, egal bei welchem Klang.
+
+Beim ersten Aktivwerden von Stufe 1 steht **einmalig** eine leise Zeile auf dem
+Start-Screen („From here on, the pitch varies between sessions — real signals
+do."). Das Flag (`variabilityNoticeSeen`, additiv) wird **sofort** geschrieben,
+wie `introSeen` — der Leerlauf-Schreiber käme bei einem schnellen Reload zu
+spät.
+
+Der Player nimmt dafür eine optionale Frequenz **pro Wiedergabe** entgegen;
+das Timing entsteht pro Sitzung statt als Modul-Konstante. An der Audio-Uhr
+und am Planer hat sich nichts geändert.
+
 ## 4. Was nachgewiesen ist (und wie)
 
-- **`npm test` → 101/101 grün** (74 vorher, 27 neu für den Lernmodus). Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
+- **`npm test` → 114/114 grün** (101 vorher, 13 neu für die Variabilität:
+  Bandgrenzen direkt angefahren statt statistisch getroffen, Stufenwechsel,
+  Konstanz über Runden, Byte-Gleichheit des Fortschritts bei verschiedenen
+  Klängen). Die ARRL-Referenz („PARIS bei 5 WpM = 12 s")
   prüft weiter gegen den Standard, nicht gegen die Implementierung. Die
   Wachstums-Tests kippen jede Bedingung einzeln; Zufall kommt überall als
   Parameter herein.
-- **`npm run build` → sauber.** Bundle **170,10 kB roh / 54,47 kB gzip**
-  (vor der Marken-Runde 169,97 / 54,43), CSS **8,16 kB / 2,25 kB** (vorher
-  7,35 / 2,09). Die ganze Marken-Runde kostet also +0,13 kB JS und +0,81 kB
-  CSS. Dazu unverändert einmalig 129 kB woff2 und die neu gezeichneten Icons.
-  **Keine neue Abhängigkeit.**
+- **`npm run build` → sauber.** Bundle **171,30 kB roh / 54,92 kB gzip**
+  (vorher 170,10 / 54,47), CSS 8,26 kB / 2,28 kB. **Keine neue Abhängigkeit.**
+- **Die Variabilität ist im Browser durchgespielt** (instrumentierte
+  Oszillatoren): Stufe 0 unverändert 620 Hz ohne Zeile; Stufe 1 zeigt die
+  Zeile genau einmal, hält den Ton über die Runden (Oszillator-Frequenz ==
+  Eyebrow, 667 Hz) und zieht in der nächsten Sitzung neu (642 Hz); Stufe 2
+  zieht pro Abfrage (4 Runden, 4 verschiedene Töne, Oszillatoren decken sich
+  mit dem Eyebrow). Beim „einmalig" der Zeile gilt für künftige Tests: ein
+  `addInitScript`-Seed läuft bei **jeder** Navigation, auch beim Reload — wer
+  das vergisst, testet seinen eigenen Seed statt der App.
+- **Die Review-6-Maße sind im Browser nachgemessen:** Antworttasten 64 px,
+  Shell-Padding `32/24/28`, Strich-Pille 48×16, Lernkarten-Buchstabe in
+  Weight 300 (Screenshot). Screenshots in `docs/screenshots/` neu gezogen.
 - **Amber nie zweimal in einer View (1.1 §4) — 12 von 12 Ansichten.** Geprüft
   wird am *gerenderten* Ergebnis, nicht am Stylesheet: das Skript geht jedes
   sichtbare Element durch und zählt Fläche, Rahmen und Text in `--amber` oder
@@ -485,7 +538,15 @@ sichtbare Zeile zurück.
    die Regel aus CLAUDE.md 6 ist also gewahrt — die Hausregel ist es strenger
    gelesen nicht mehr.
 
-## 5d. Wo Umsetzung und 1.1 auseinandergehen — vier Punkte für Fable
+## 5d. Wo Umsetzung und 1.1 auseinandergingen — durch Review 6 entschieden
+
+**Alle vier Punkte sind mit Review 6 (Notion-Log #43) geregelt und in
+`5193d22` umgesetzt:** (1) Strich 48×16 statt 52×16, (2) Lernkarten-Buchstabe
+Weight 300, (3) Seitenpadding 24, Blockabstand 32, Antworttasten 64,
+(4) das sichtbar-deaktivierte Antwort-Gitter bleibt — als **dokumentierte
+Ausnahme von §7**, der Kommentar steht am Gitter selbst (`App.tsx`, `Answers`)
+und an der CSS-Regel. Benachbarte, *nicht* geregelte Maße stehen in
+FINDINGS.md 3. Der ursprüngliche Wortlaut der vier Punkte folgt als Kontext:
 
 Gefunden beim Umsetzen, **nicht** eigenmächtig geändert: alle vier liegen außerhalb
 der zehn Aufgabenpunkte, und drei davon würden Maße anfassen, die Fable im
@@ -573,11 +634,12 @@ npm run preview    # dist ausliefern -- hier laesst sich die PWA testen
 
 ## 8. Nächster Schritt
 
-1. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a. Danach ist
+1. **Review durch Fable und Merge nach `main`** — die drei Commits dieser
+   Runde (`09c5ca2`, `5193d22`, Doku). Erst der Merge deployt sie. Zum Review
+   gehören: die neu gezogenen Screenshots, §3c (Variabilität), die
+   FINDINGS.md-3-Maße, dazu weiterhin §5b und §5c.
+2. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a. Danach ist
    die Marken-Runde wirklich fertig.
-2. **Review durch Fable** — gegen die drei Screenshots in
-   [`docs/screenshots/`](./docs/screenshots/) (Training, Lernkarte, Intro),
-   dazu §5b, §5c und die vier Punkte in §5d.
 3. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Gebaut wird er als
    reine Engine-Logik (`src/engine/`), Persistenz additiv. Der Tages-Eimer aus
    dieser Runde ist bewusst *keine* Historie: er hält nur den laufenden Tag.
