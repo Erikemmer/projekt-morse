@@ -21,6 +21,7 @@
  */
 
 import { STARTING_CHARACTERS } from './settings';
+import { emptyStreak, parseStreak, type Streak } from './streak';
 
 /** Wie viele Reaktionszeiten je Zeichen aufgehoben werden. */
 export const RECENT_SAMPLES = 10;
@@ -112,6 +113,13 @@ export interface Progress {
    * fuer sie ist das genauso das erste Mal.
    */
   variabilityNoticeSeen: boolean;
+  /**
+   * Der Streak mit Freeze-Gnade (engine/streak.ts). Additiv mit Default:
+   * ein Stand von vor dieser Regel faengt bei "noch kein geuebter Tag" an --
+   * eine Reihe rueckwirkend zu behaupten, waere eine erfundene Zahl
+   * (CLAUDE.md 2.6).
+   */
+  streak: Streak;
 }
 
 export function emptyRecord(): CharacterRecord {
@@ -134,6 +142,7 @@ export function emptyProgress(): Progress {
     introSeen: false,
     introducedCharacters: [],
     variabilityNoticeSeen: false,
+    streak: emptyStreak(),
   };
 }
 
@@ -157,6 +166,22 @@ export function recordFor(progress: Progress, char: string): CharacterRecord {
   return progress.characters[char] ?? emptyRecord();
 }
 
+export interface RecordOptions {
+  /**
+   * Ob die Antwort ins **Wachstumsfenster** zaehlt (`recentAnswers`,
+   * `answersSinceGrowth`). Default true -- der Normalfall ist die normale
+   * Uebung.
+   *
+   * Ein ICR-Drill ("Speed round") setzt das auf false: er fragt gezielt die
+   * paar langsamen Zeichen ab, und ein Fenster aus lauter Problemzeichen
+   * behauptete ein Niveau, das es nicht gab -- die Wachstumsregel liesse den
+   * Zeichensatz danach zu frueh oder gar nicht wachsen. Die Statistik pro
+   * Zeichen wird trotzdem geschrieben: die Antworten sind echt.
+   * (Produktentscheidung, Notion-Log #66; siehe engine/drill.ts.)
+   */
+  readonly countTowardGrowth?: boolean;
+}
+
 /**
  * Verbucht einen Versuch und gibt einen *neuen* Fortschritt zurueck.
  *
@@ -169,7 +194,9 @@ export function recordAttempt(
   correct: boolean,
   reactionSeconds: number,
   today: string,
+  options: RecordOptions = {},
 ): Progress {
+  const countTowardGrowth = options.countTowardGrowth ?? true;
   const previous = recordFor(progress, char);
   const day = dayFor(progress, today);
 
@@ -187,8 +214,10 @@ export function recordAttempt(
         recentReactions,
       },
     },
-    recentAnswers: [...progress.recentAnswers, correct].slice(-RECENT_ANSWER_WINDOW),
-    answersSinceGrowth: progress.answersSinceGrowth + 1,
+    recentAnswers: countTowardGrowth
+      ? [...progress.recentAnswers, correct].slice(-RECENT_ANSWER_WINDOW)
+      : progress.recentAnswers,
+    answersSinceGrowth: progress.answersSinceGrowth + (countTowardGrowth ? 1 : 0),
     day: {
       date: today,
       attempts: day.attempts + 1,
@@ -306,6 +335,7 @@ export function parseProgress(raw: unknown): Progress {
     sessionsStarted: finiteOrZero((raw as { sessionsStarted?: unknown }).sessionsStarted),
     day: parseDay((raw as { day?: unknown }).day),
     introSeen: (raw as { introSeen?: unknown }).introSeen === true,
+    streak: parseStreak((raw as { streak?: unknown }).streak),
     variabilityNoticeSeen: (raw as { variabilityNoticeSeen?: unknown }).variabilityNoticeSeen === true,
     introducedCharacters: parseIntroduced(
       (raw as { introducedCharacters?: unknown }).introducedCharacters,

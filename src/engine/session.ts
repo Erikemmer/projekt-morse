@@ -20,6 +20,7 @@
 import { maybeGrow } from './growth';
 import { pickNext } from './selection';
 import { beginSession, recordAttempt, type Progress } from './stats';
+import { recordPracticeDay } from './streak';
 import { drawPromptTone, drawSessionSound, type SessionSound } from './variability';
 
 export type Phase =
@@ -211,10 +212,25 @@ export function submitAnswer(
  *
  * Nur aus 'feedback' heraus: eine Runde ohne Antwort zu ueberspringen wuerde die
  * Statistik verduennen, ohne dass jemand etwas geuebt haette.
+ *
+ * **Hier faellt der Streak-Tag.** Ein Tag zaehlt als geuebt, sobald an ihm eine
+ * Sitzung *beendet* wurde (Notion-Log #29) -- und beendet ist sie genau an
+ * dieser Kante. Sie liegt in der Engine und nicht in der UI, damit "ein Tag
+ * gilt als geuebt" ohne Browser pruefbar bleibt; der Kalendertag steht als
+ * `state.today` schon fest, eine Uhr braucht es dafuer nicht (CLAUDE.md 4).
  */
 export function advance(state: SessionState, random: () => number): SessionState {
   if (state.phase !== 'feedback') return state;
-  if (state.round >= state.totalRounds) return { ...state, phase: 'finished' };
+  if (state.round >= state.totalRounds) {
+    return {
+      ...state,
+      phase: 'finished',
+      progress: {
+        ...state.progress,
+        streak: recordPracticeDay(state.progress.streak, state.today),
+      },
+    };
+  }
 
   return {
     ...state,

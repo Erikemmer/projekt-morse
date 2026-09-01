@@ -56,9 +56,17 @@
  * - `introSeen` und `variabilityNoticeSeen`: logisches Oder. Wer die Einführung
  *   gesehen hat, hat sie gesehen -- sie ein zweites Mal vorzulegen wäre eine
  *   Rückstufung.
+ *
+ * Der **Streak** folgt derselben Logik, aber mit einer eigenen Uhr: er richtet
+ * sich nach dem *zuletzt geübten Tag* der beiden Stände, nicht nach
+ * `updatedAt`. Ein Kalendertag ist die Einheit, um die es geht — welcher Blob
+ * später geschrieben wurde, sagt darüber nichts. Die Regel steht in
+ * `mergeStreak` (engine/streak.ts): der jüngere Tag führt, und
+ * zurückgestuft wird nie.
  */
 
 import { emptyProgress, recordFor, type CharacterRecord, type Progress } from './stats';
+import { mergeStreak } from './streak';
 
 /**
  * Ein Lernstand mit dem Zeitpunkt seiner letzten Änderung.
@@ -101,6 +109,9 @@ export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
     introSeen: local.progress.introSeen || remote.progress.introSeen,
     variabilityNoticeSeen:
       local.progress.variabilityNoticeSeen || remote.progress.variabilityNoticeSeen,
+    // Eigene Regel, eigene Uhr: der zuletzt geübte Kalendertag entscheidet,
+    // nicht `updatedAt` (siehe Kopf und engine/streak.ts).
+    streak: mergeStreak(local.progress.streak, remote.progress.streak),
   };
 }
 
