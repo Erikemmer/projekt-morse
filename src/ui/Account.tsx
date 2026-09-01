@@ -128,7 +128,15 @@ export function Account({
             const done = await deleteAccount();
             setBusy('idle');
             if (!done) {
-              setMessage('No connection to the server. Nothing was deleted.');
+              /*
+                „Nothing was deleted" ist hier die wichtige Hälfte des Satzes.
+                Der Grund kann kein Netz oder ein klemmender Server sein; was
+                jemand wissen muss, ist in beiden Fällen dasselbe — es ist
+                nicht passiert, und der Weg steht noch offen. Die Bestätigung
+                bleibt deshalb auch stehen (`confirming` wird nicht
+                zurückgesetzt), damit ein zweiter Versuch ein Klick ist.
+              */
+              setMessage('The server did not confirm this. Nothing was deleted.');
               return;
             }
             setConfirming(false);

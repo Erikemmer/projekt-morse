@@ -86,7 +86,18 @@ const MESSAGES = {
   offline: 'No connection to the server. Your progress stays on this device.',
   rejected: 'That passkey did not work here. You can try again.',
   noAccount: 'No account found for that passkey.',
+  unavailable: 'The server is not available right now. Your progress stays on this device.',
 } as const;
+
+/**
+ * Die Zeile zu einem Fehlschlag. An einem Ort, damit kein Aufrufer aus einem
+ * 500 versehentlich "dein Passkey hat nicht funktioniert" macht.
+ */
+function messageFor(failure: Failure): string {
+  if (failure === 'unreachable') return MESSAGES.offline;
+  if (failure === 'unavailable') return MESSAGES.unavailable;
+  return MESSAGES.rejected;
+}
 
 // --- Sitzung ------------------------------------------------------------
 
@@ -111,10 +122,7 @@ export async function createPasskey(): Promise<AccountOutcome & { progress?: Pro
   if (!passkeysAvailable()) return { kind: 'error', message: MESSAGES.unsupported };
 
   const options = await postJson('/api/auth/register/options');
-  if (options === 'unreachable') return { kind: 'error', message: MESSAGES.offline };
-  if (options === 'unauthorised' || options === 'rejected') {
-    return { kind: 'error', message: MESSAGES.rejected };
-  }
+  if (failed(options)) return { kind: 'error', message: messageFor(options) };
 
   let attestation: PublicKeyCredential | null;
   try {
@@ -127,10 +135,7 @@ export async function createPasskey(): Promise<AccountOutcome & { progress?: Pro
   if (attestation === null) return { kind: 'cancelled' };
 
   const verified = await postJson('/api/auth/register/verify', registrationJson(attestation));
-  if (verified === 'unreachable') return { kind: 'error', message: MESSAGES.offline };
-  if (verified === 'rejected' || verified === 'unauthorised') {
-    return { kind: 'error', message: MESSAGES.rejected };
-  }
+  if (failed(verified)) return { kind: 'error', message: messageFor(verified) };
 
   return { kind: 'ok', progress: await syncAfterSignIn() };
 }
@@ -140,10 +145,7 @@ export async function signInWithPasskey(): Promise<AccountOutcome & { progress?:
   if (!passkeysAvailable()) return { kind: 'error', message: MESSAGES.unsupported };
 
   const options = await postJson('/api/auth/login/options');
-  if (options === 'unreachable') return { kind: 'error', message: MESSAGES.offline };
-  if (options === 'unauthorised' || options === 'rejected') {
-    return { kind: 'error', message: MESSAGES.rejected };
-  }
+  if (failed(options)) return { kind: 'error', message: messageFor(options) };
 
   let assertion: PublicKeyCredential | null;
   try {
@@ -156,12 +158,17 @@ export async function signInWithPasskey(): Promise<AccountOutcome & { progress?:
   if (assertion === null) return { kind: 'cancelled' };
 
   const verified = await postJson('/api/auth/login/verify', authenticationJson(assertion));
-  if (verified === 'unreachable') return { kind: 'error', message: MESSAGES.offline };
-  // Ein Passkey, den der Server nicht kennt, ist der eine Fehlerfall, den ein
-  // Nutzer hier wirklich unterscheiden kann -- und der Server antwortet auf ihn
-  // absichtlich wie auf jeden anderen. Also die allgemeinere Zeile.
-  if (verified === 'rejected' || verified === 'unauthorised') {
-    return { kind: 'error', message: MESSAGES.noAccount };
+  if (failed(verified)) {
+    // Ein Passkey, den der Server nicht kennt, ist der eine Fehlerfall, den ein
+    // Nutzer hier wirklich unterscheiden kann -- und der Server antwortet auf
+    // ihn absichtlich wie auf jede andere Ablehnung. Deshalb steht bei einer
+    // Ablehnung "kein Konto"; bei kein Netz oder klemmendem Server aber nicht,
+    // denn dann weiss niemand, ob es das Konto gibt.
+    const message =
+      verified === 'rejected' || verified === 'unauthorised'
+        ? MESSAGES.noAccount
+        : messageFor(verified);
+    return { kind: 'error', message };
   }
 
   return { kind: 'ok', progress: await syncAfterSignIn() };
@@ -179,13 +186,19 @@ export async function signOut(): Promise<void> {
 /**
  * Konto und alle Daten auf dem Server loeschen.
  *
- * Gibt `false` nur zurueck, wenn der Server nicht erreichbar war -- dann ist
- * nichts geloescht, und die UI muss das sagen. Eine Sitzung, die schon weg war
- * (401), gilt als erledigt: der gewuenschte Endzustand ist erreicht.
+ * Gibt `false` zurueck, wenn **nicht belegt ist, dass geloescht wurde** -- kein
+ * Netz oder ein klemmender Server (5xx). Dann darf die UI keinen Erfolg melden
+ * und der lokale Merker nicht weg: sonst sieht jemand "abgemeldet" und glaubt,
+ * seine Daten seien vom Server verschwunden, obwohl sie liegen bleiben. Das
+ * waere die schaedlichste falsche Behauptung, die dieser Screen machen kann
+ * (CLAUDE.md 2.6).
+ *
+ * Eine Sitzung, die schon weg war (401), gilt dagegen als erledigt: der
+ * gewuenschte Endzustand ist erreicht.
  */
 export async function deleteAccount(): Promise<boolean> {
   const result = await request('/api/account', { method: 'DELETE' });
-  if (result === 'unreachable') return false;
+  if (result === 'unreachable' || result === 'unavailable' || result === 'rejected') return false;
   saveAccount(SIGNED_OUT);
   return true;
 }
@@ -249,7 +262,7 @@ export async function pushProgress(progress: Progress): Promise<void> {
     saveAccount(SIGNED_OUT);
     return;
   }
-  if (result === 'unreachable' || result === 'rejected') return;
+  if (failed(result)) return;
 
   saveAccount({ linked: true, lastSyncedAt: Date.now() });
 }
@@ -260,7 +273,7 @@ async function push(progress: Progress): Promise<boolean> {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ blob: progress, updatedAt: loadProgressStamp() || Date.now() }),
   });
-  return result !== 'unreachable' && result !== 'rejected' && result !== 'unauthorised';
+  return !failed(result);
 }
 
 interface PulledProgress {
@@ -270,8 +283,11 @@ interface PulledProgress {
 
 async function pull(): Promise<PulledProgress | 'unreachable' | 'unauthorised'> {
   const result = await request('/api/progress', { method: 'GET' });
-  if (result === 'unreachable' || result === 'unauthorised') return result;
-  if (result === 'rejected' || result === null) return 'unreachable';
+  if (result === 'unauthorised') return result;
+  // Alles, was kein brauchbarer Rumpf ist, heisst hier "nicht erreichbar": ob
+  // das Netz fehlte, der Server klemmte oder der Rumpf Muell war, aendert fuer
+  // den Abgleich nichts -- es gibt keinen Stand zum Zusammenlegen.
+  if (failed(result) || result === null) return 'unreachable';
 
   const body = result as { blob?: unknown; updatedAt?: unknown };
   return {
@@ -282,14 +298,42 @@ async function pull(): Promise<PulledProgress | 'unreachable' | 'unauthorised'> 
 
 // --- fetch, einmal umwickelt -------------------------------------------
 
-type RequestResult = unknown | 'unreachable' | 'unauthorised' | 'rejected';
+/**
+ * Wie ein Aufruf schiefgehen kann. Vier Faelle, weil die Aufrufer vier
+ * unterscheiden muessen -- und weil ein falsch zusammengefasster Fall eine
+ * falsche Zeile auf dem Bildschirm ergibt (CLAUDE.md 2.6).
+ */
+type Failure =
+  /** Kein Netz -- fetch selbst ist gescheitert. */
+  | 'unreachable'
+  /**
+   * Der Server ist da, kann aber nicht antworten (5xx). Fuer den Nutzer
+   * dasselbe Ergebnis wie "kein Netz", aber **nicht** dasselbe wie "abgelehnt":
+   * genau dieser Fall tritt ein, solange die D1-Bindung auf Produktion fehlt
+   * (HANDOVER §5e), und "dein Passkey hat nicht funktioniert" waere darauf eine
+   * falsche Antwort.
+   */
+  | 'unavailable'
+  /** Keine gueltige Sitzung (401). */
+  | 'unauthorised'
+  /** Der Server hat die Anfrage abgelehnt (4xx) -- oder der Rumpf war Muell. */
+  | 'rejected';
+
+type RequestResult = unknown | Failure;
+
+const FAILURES: readonly Failure[] = ['unreachable', 'unavailable', 'unauthorised', 'rejected'];
+
+/** Ob ein Ergebnis ein Fehlschlag ist -- statt an vier Stellen vier Vergleiche. */
+function failed(result: RequestResult): result is Failure {
+  return typeof result === 'string' && FAILURES.includes(result as Failure);
+}
 
 /**
  * Ein API-Aufruf, der nie wirft.
  *
- * Drei Ausgaenge, die die Aufrufer unterscheiden muessen: kein Netz
- * (`unreachable`), keine Sitzung (`unauthorised`), abgelehnt (`rejected`).
- * Alles andere ist der geparste Rumpf -- oder `null` bei 204.
+ * Gibt entweder einen `Failure` zurueck oder den geparsten Rumpf -- bzw. `null`
+ * bei 204. **Ein Rumpf ist hier nie ein String**, deshalb ist die
+ * Unterscheidung ueber `failed()` eindeutig.
  */
 async function request(path: string, init: RequestInit): Promise<RequestResult> {
   let response: Response;
@@ -303,6 +347,9 @@ async function request(path: string, init: RequestInit): Promise<RequestResult> 
 
   if (response.status === 401) return 'unauthorised';
   if (response.status === 204) return null;
+  // 5xx vor dem allgemeinen Fall: das ist unser eigener Server, der klemmt,
+  // keine abgelehnte Anfrage.
+  if (response.status >= 500) return 'unavailable';
   if (!response.ok) return 'rejected';
 
   try {

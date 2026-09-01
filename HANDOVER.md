@@ -422,8 +422,8 @@ Deutschland eine mit Rechtsfolgen, also keine, die ein Agent nebenbei schreibt.
   `functions/`). Bundle **187,04 kB roh / 59,06 kB gzip** (vorher 176,26 /
   56,23 — Delta **+10,78 / +2,83**), CSS **11,40 / 2,74** (vorher 10,90 / 2,67).
   `@simplewebauthn/server` ist **nachweislich nicht im Bundle**.
-- **Der ganze Konto-Weg ist im Browser durchgespielt — 43 von 43 Prüfungen**,
-  nach dem #56-Fix noch einmal vollständig wiederholt.
+- **Der ganze Konto-Weg ist im Browser durchgespielt — 49 von 49 Prüfungen**,
+  nach dem #56-Fix und nach den 5xx-Fixes je noch einmal vollständig wiederholt.
   Headless Chromium gegen `wrangler pages dev` mit lokaler D1 (vor dem Lauf
   zurückgesetzt), Passkeys aus dem virtuellen Authenticator (CDP
   `WebAuthn.enable` + `addVirtualAuthenticator`, ctap2/internal/resident).
@@ -467,6 +467,14 @@ Deutschland eine mit Rechtsfolgen, also keine, die ein Agent nebenbei schreibt.
     ruhige Zeile** („No connection to the server. Your progress stays on this
     device.") statt eines Modals — ohne Ausrufezeichen und ohne Schuldton. Kein
     unbehandelter Skriptfehler auf dem ganzen Weg.
+  - **Der klemmende Server (5xx) — genau der Zustand von Produktion, solange
+    die D1-Bindung fehlt:** „Create a passkey" sagt „The server is not
+    available right now. Your progress stays on this device." und **nicht**
+    „dein Passkey hat nicht funktioniert". Und beim Löschen meldet ein 500
+    keinen Erfolg: die Zeile heißt „The server did not confirm this. Nothing was
+    deleted.", der lokale Konto-Merker bleibt stehen, die Sitzung ist noch
+    gültig (also ist das Konto wirklich noch da), und die Bestätigung bleibt
+    offen, damit ein zweiter Versuch ein Klick ist.
   - **Löschen (DSGVO):** die Bestätigung sagt ausdrücklich, dass der lokale
     Stand bleibt; **kein Amber und kein Rot** in der Bestätigung; danach 401,
     der lokale Lernstand ist vollständig erhalten, und mit dem gelöschten
@@ -655,9 +663,14 @@ Produktions-URL zeigen und die vorbereiteten Stände beibehalten. **Ein echter
 Passkey auf Produktion legt ein echtes Konto an**; es gehört am Ende des Laufs
 über „Delete account and data" wieder weg, und der Durchlauf tut das schon.
 
-**Solange das aussteht, ist der Zustand nicht kaputt, sondern der nachgewiesene
-local-first-Fall:** die App läuft vollständig, der Account-Screen sagt ruhig,
-dass kein Server erreichbar ist.
+**Solange das aussteht, ist der Zustand nicht kaputt** — aber er ist nicht
+derselbe wie „offline". Ohne Bindung ist `env.DB` undefiniert, die Function
+läuft auf einen Fehler und Pages antwortet **500**. Genau dafür unterscheidet
+der Client seit dieser Runde 5xx von einer Ablehnung: „Create a passkey" sagt
+dann „The server is not available right now. Your progress stays on this
+device." statt fälschlich den Passkey zu beschuldigen, und ein Löschversuch
+meldet keinen Erfolg. Beides ist im Browser nachgewiesen (§4). Geübt wird
+unterdessen normal weiter.
 
 ### 5f. Die drei Punkte aus Review 9 — zwei geregelt, einer offen
 
@@ -783,6 +796,12 @@ warten weiter auf ein Urteil.
   ausgenommen.**
 - **Ein Test, der offline prüfen will, muss die Seite *nach* der
   Worker-Übernahme neu laden** und vorher auf `controllerchange` warten.
+- **Die lokale D1 nicht unter dem laufenden `wrangler pages dev` wegräumen.**
+  Wer `.wrangler/state/v3/d1` löscht, während der Dev-Server läuft, bekommt
+  danach auf jedem `/api/`-Aufruf einen 500 — der Server hält die gelöschte
+  Datei noch. **Erst stoppen, dann löschen, migrieren, neu starten.** Kostete
+  einen Durchlauf; nebenbei war es die ehrlichste Vorschau auf den Zustand von
+  Produktion ohne D1-Bindung.
 - **`create_repository` schlägt in dieser Umgebung fehl** (403). Zweites Repo:
   den Nutzer anlegen lassen.
 
