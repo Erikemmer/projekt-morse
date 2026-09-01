@@ -94,6 +94,17 @@ export interface Progress {
   day: DayStats;
   /** Ob die Einfuehrung schon gelaufen ist. Default false: neue Staende sehen sie. */
   introSeen: boolean;
+  /**
+   * Zeichen, die im Lernmodus vorgestellt wurden -- in der Reihenfolge, in der
+   * das passiert ist.
+   *
+   * Der Unterschied zu `activeCharacters` ist der ganze Sinn: aktiv heisst
+   * "wird abgefragt", eingefuehrt heisst "wurde einmal als Klang gezeigt". Was
+   * aktiv, aber nicht eingefuehrt ist, steht zur Einfuehrung an -- das gilt
+   * fuer den Erstlauf genauso wie fuer ein Zeichen, das die Wachstumsregel
+   * gerade dazugelegt hat. Ein Ort, zwei Einstiegspunkte.
+   */
+  introducedCharacters: string[];
 }
 
 export function emptyRecord(): CharacterRecord {
@@ -114,7 +125,23 @@ export function emptyProgress(): Progress {
     sessionsStarted: 0,
     day: emptyDay(),
     introSeen: false,
+    introducedCharacters: [],
   };
+}
+
+/**
+ * Was abgefragt wird, aber noch nie als Klang gezeigt wurde -- in der
+ * Reihenfolge des aktiven Satzes.
+ */
+export function pendingIntroductions(progress: Progress): string[] {
+  return progress.activeCharacters.filter((c) => !progress.introducedCharacters.includes(c));
+}
+
+/** Merkt, dass Zeichen vorgestellt wurden. Additiv, ohne Dubletten. */
+export function markIntroduced(progress: Progress, characters: readonly string[]): Progress {
+  const added = characters.filter((c) => !progress.introducedCharacters.includes(c));
+  if (added.length === 0) return progress;
+  return { ...progress, introducedCharacters: [...progress.introducedCharacters, ...added] };
 }
 
 /** Liest den Datensatz zu einem Zeichen -- fehlt er, kommt ein leerer zurueck. */
@@ -271,7 +298,39 @@ export function parseProgress(raw: unknown): Progress {
     sessionsStarted: finiteOrZero((raw as { sessionsStarted?: unknown }).sessionsStarted),
     day: parseDay((raw as { day?: unknown }).day),
     introSeen: (raw as { introSeen?: unknown }).introSeen === true,
+    introducedCharacters: parseIntroduced(
+      (raw as { introducedCharacters?: unknown }).introducedCharacters,
+      characters,
+      activeCharacters,
+    ),
   };
+}
+
+/**
+ * Welche Zeichen als vorgestellt gelten.
+ *
+ * Fehlt das Feld, entscheidet die Vorgeschichte: **wer schon geuebt hat, kennt
+ * seine Zeichen.** Diesen Staenden den Lernmodus aufzuzwingen waere kein
+ * Fortschritt, sondern eine Bevormundung -- sie gelten deshalb als vollstaendig
+ * eingefuehrt. Ein Stand ohne einen einzigen Versuch ist dagegen ein Anfang;
+ * dort steht die Einfuehrung noch aus (leere Liste).
+ *
+ * Das ist der additive Default aus CLAUDE.md 4, nur eben kein konstanter: der
+ * richtige Wert haengt davon ab, was schon dasteht.
+ */
+function parseIntroduced(
+  raw: unknown,
+  characters: Record<string, CharacterRecord>,
+  activeCharacters: string[],
+): string[] {
+  if (Array.isArray(raw)) {
+    const seen = new Set<string>();
+    for (const c of raw) if (typeof c === 'string' && c.length === 1) seen.add(c);
+    return [...seen];
+  }
+
+  const hasPractised = Object.values(characters).some((record) => record.attempts > 0);
+  return hasPractised ? [...activeCharacters] : [];
 }
 
 /**
