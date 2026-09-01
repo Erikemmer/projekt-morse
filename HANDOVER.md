@@ -1,39 +1,50 @@
-# Übergabe — Stand nach Runde B (Accounts: Passkeys, D1, Sync)
+# Übergabe — Stand nach Runde F1 (Streak, Settings, Speed round)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** **Runde B ist gemergt.** `main` trägt jetzt Backend, Sync und den
-Account-Screen; Review 9 (Fable) ist bestanden, das Ruling Notion-Log #56 ist
-umgesetzt. Die Commits der Runde:
+**Stand:** **Runde F1 liegt auf `claude/morse-handover-alignment-nbkk6o`** und
+wartet auf das Review (Fable). Sie baut auf `main` nach Runde B auf; an Backend,
+Sync und Konto ist **nichts** angefasst worden. Die Commits der Runde:
 
-1. `bc16dd3` — **Merge-Semantik in der Engine, Backend für Passkeys und Sync**
-2. `f52c775` — **Account-Zeile im Menü, Account-Screen, Sync am Sitzungsende**
-3. `6deea18` — **Fix: „jünger" heißt gelernt, nicht gespeichert** (Fund aus dem
-   Browser-Durchlauf)
-4. `b0bc074` — Übergabe mit Screenshots
-5. `3608ae5` — **Fix aus Review 9 (#56): aktiver Zeichensatz ist die
-   Vereinigung, Wachstum ist monoton**
-6. `afa5715` — Übergabe auf den Abschluss der Runde (hier wurde nach `main`
-   gemergt)
-7. `3fd06d3` — **Fix: 5xx ist nicht „abgelehnt"** — zwei falsche Behauptungen
-   für genau den Zustand, in dem Produktion mit diesem Merge live geht (§5e)
-8. `403602b` — Übergabe: Commit-Liste vervollständigt
+1. `f4cf2ae` — **Streak mit Freeze-Gnade in der Engine** (Notion-Log #29)
+2. `65c6584` — **Die eine leise Zeile** auf Start- und Abschluss-Screen
+3. `9e19530` — **Settings: Tonhöhe und Lautstärke**, gerätespezifisch (Log #66)
+4. `bfe1ef9` — **ICR-Drills: die Speed round** (Log #66)
+5. (dieser Commit) — **Fix aus dem Browser-Durchlauf** (die Ergebniszeile des
+   Drills verschwand genau dann, wenn er geholfen hatte — §4), Screenshots und
+   diese Übergabe
 
-**Nachträge nach Runde B:**
+**Kontext dieser Runde:** drei Features nach Notion-Log #29 und #66. Alles
+davon ist local-first und ohne Konto vollständig: der Streak liegt im
+Lernstand, die Einstellungen liegen bewusst **daneben** und gehen nie zum
+Konto, der Drill ist reine Engine-Logik.
 
-9. `e192f6d` — **D1 auf Produktion ist verdrahtet** (Notion-Log #60): die echte
-   `database_id` steht in `wrangler.toml`, die Bindung `DB` setzt der Git-Deploy
-   per config-as-code aus dieser Datei. → §5e
-10. (dieser Commit) — **§3f geschlossen** (Notion-Log #61): die Bildmarke war
-    nie abweichend, die Vermessung belegt es. → §3f
-
-Commit 9 ist inzwischen **auf `main` gemergt** — der Deploy daraus setzt die
-D1-Bindung. Die Commits 7 und 8 waren direkt auf `main` entstanden.
-
-**Kontext dieser Runde:** Runde B nach Notion-Log #48–51, abgeschlossen mit dem
-Ruling #56. Leitplanke über allem war **local-first**, und sie hält: die App ist
-ohne Konto und offline exakt so vollständig wie vorher, das Konto ist ein
-Sync-Ziel und nie eine Voraussetzung. Kein Feature liegt hinter einem Login.
-Nachgewiesen, nicht behauptet — siehe §4.
+> ### Zwei Produktfragen, die diese Runde aufgeworfen hat — für Fable
+>
+> Beides ist **umgesetzt wie spezifiziert** und nicht still verändert worden.
+> Beides braucht trotzdem eine Entscheidung, bevor die Runde nach `main` geht:
+>
+> 1. **Bei genau zwei langsamen Zeichen wechselt der Drill streng ab.** Die
+>    normale Übungsregel „nie zweimal dasselbe Zeichen hintereinander"
+>    (`selection.ts`) lässt bei einem Zwei-Zeichen-Satz keine Wahl: es kommt
+>    R U R U R U … Im Durchlauf gemessen — die zehn Runden waren `RURURURURU`.
+>    Wer das merkt, muss nicht mehr hinhören, und **genau das verbietet
+>    CLAUDE.md 2.2.** Der kleinste Fix wäre, den Kontrast-Zusatz nicht erst bei
+>    *einem*, sondern bei *unter drei* langsamen Zeichen zu ziehen (eine
+>    Konstante in `drill.ts`). Das ist eine Produktentscheidung, deshalb steht
+>    sie hier und nicht im Code.
+> 2. **Der Kontrast-Zweig ist über die UI heute nicht erreichbar.** Die
+>    Einladung erscheint ab **zwei** langsamen Zeichen, der Kontrast greift bei
+>    **genau einem** — dieser Fall kann also nie geklickt werden. Der Code kann
+>    beides (und ist für beides getestet); es fehlt der Weg dorthin. Entweder
+>    lädt die Einladung schon ab einem langsamen Zeichen ein, oder die Speed
+>    round bekommt einen festen Platz (Menü oder Progress-Screen). So oder so:
+>    eine Entscheidung, kein Bug.
+>
+> Dazu eine Kleinigkeit aus der Aufgabenstellung: **das Amber-Budget-Skript
+> existiert im Repo nicht.** Browser-Durchläufe sind hier ad hoc und werden
+> nach jeder Runde weggeräumt (§5d) — der Zähler dieser Runde ist deshalb neu
+> geschrieben und steht in §4 als Regel beschrieben. Wenn er bleiben soll, ist
+> „ein committetes Prüfskript" eine eigene, kleine Aufgabe.
 
 > ### Was noch offen ist — zwei Handgriffe, beide außerhalb des Repos
 >
@@ -75,7 +86,8 @@ hängen an der Domain, unter der sie angelegt wurden (§3e), und die
 Rate-Limit-Regel lässt sich nach meinem Verständnis nur auf einer eigenen Zone
 anlegen, nicht auf `*.pages.dev` (§5h).
 
-**Datum:** 2026-09-01 (fünfte Runde dieses Tages; §3f-Nachtrag nach Log #61)
+**Datum:** 2026-09-01 (Runde F1; die Angaben zu Backend, Domain und Deploy
+stammen unverändert aus der Runde davor und sind hier nicht neu geprüft worden)
 
 Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
 [FINDINGS.md](./FINDINGS.md) — alle drei Einträge sind entschieden und behoben.
@@ -89,7 +101,32 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde: die App kann ein Konto haben — und braucht keins.**
+**Neu aus dieser Runde (F1): drei Features, alle drei leise.**
+
+- **Streak mit Freeze-Gnade.** Ein Tag zählt als geübt, sobald an ihm eine
+  Sitzung beendet wurde. Ein einzelner verpasster Tag verbraucht den Freeze
+  (Vorrat höchstens einer, fällt nach sieben geübten Tagen in Folge wieder an);
+  zwei oder mehr beenden den Streak. Angezeigt wird **eine** graue Zeile auf
+  Start- und Abschluss-Screen — „Day 6 — freeze ready.", „Day 7 — freeze used
+  yesterday.", neutral „Starting fresh." Kein Konfetti, keine Animation, kein
+  Schuldton.
+- **Settings (Ruhe-Stil).** Tonhöhe (500–800 Hz, Default 620) und Lautstärke,
+  dazu ein Probeton auf Geste — **kein Autoplay**. Beides liegt unter einem
+  eigenen localStorage-Schlüssel und geht **nie zum Konto**: Lautstärke ist
+  eine Eigenschaft des Geräts, nicht der Person. Die Tonhöhe trägt
+  Variabilitäts-Stufe 0; ab Stufe 1 haben die HVPT-Bänder Vorrang, und die UI
+  sagt das in einer Zeile.
+- **ICR-Drills („Speed round").** Ein Zeichen gilt als langsam bei mindestens
+  fünf Reaktions-Samples **und** Trefferquote ab 80 % **und** Median über
+  2,0 s. Ab zwei solchen Zeichen lädt der Start-Screen leise ein; der Drill
+  sind zehn Abfragen nur aus diesen Zeichen. **Seine Antworten verändern die
+  Statistik pro Zeichen, aber nicht das Wachstumsfenster** (§3h).
+
+Screenshots:
+[`docs/screenshots/settings-390.png`](./docs/screenshots/settings-390.png),
+[`docs/screenshots/speed-round-invite-390.png`](./docs/screenshots/speed-round-invite-390.png).
+
+**Aus Runde B gilt weiter: die App kann ein Konto haben — und braucht keins.**
 
 - **Passkeys statt Passwörtern.** Einen Passkey anzulegen *ist* das Anlegen des
   Kontos. Keine E-Mail, kein Passwort, kein Name. Anmelden geht ohne Kennung
@@ -103,9 +140,10 @@ von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
   „Delete account and data". Screenshots:
   [`docs/screenshots/account-signed-out-390.png`](./docs/screenshots/account-signed-out-390.png),
   [`docs/screenshots/account-signed-in-390.png`](./docs/screenshots/account-signed-in-390.png).
-- **Das Menü hat jetzt fünf Einträge** (Practice · Learn the sounds · Progress ·
-  Account · About). In Runde A war die Account-Zeile bewusst weggelassen, weil
-  es kein Backend gab (1.1 §7).
+- **Das Menü hat jetzt sechs Einträge** (Practice · Learn the sounds ·
+  Progress · Account · **Settings** · About). In Runde A war die Account-Zeile
+  bewusst weggelassen, weil es kein Backend gab (1.1 §7); Settings steht
+  dahinter, weil es dem Gerät gehört und nicht dem Üben.
 
 Aus Runde A gilt weiter: das Gehäuse (Kopfzeile, Vollbild-Menü,
 Progress-Screen, About-Screen). Aus den Runden davor: Klang-Variabilität in
@@ -118,34 +156,34 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `src/engine/alphabet.ts` | Morse-Alphabet nach ITU-R M.1677-1 | unverändert |
 | `src/engine/timing.ts` | Farnsworth-Timing nach ARRL | unverändert |
 | `src/engine/schedule.ts` | Text → Zeitachse | unverändert |
-| `src/engine/settings.ts` | Tempo, Tonhöhe, Start-Satz, Kandidatenreihe | unverändert |
-| `src/engine/stats.ts` | Statistik, Tag/Sitzung/Intro, eingeführte Zeichen | unverändert |
+| `src/engine/settings.ts` | Tempo, Start-Satz, Kandidatenreihe, **Spannen für Ton und Lautstärke** | erweitert |
+| `src/engine/stats.ts` | Statistik, Tag/Sitzung/Intro, **Streak-Feld, `RecordOptions`** | erweitert |
 | `src/engine/growth.ts` | Die Wachstumsregel | unverändert |
 | `src/engine/learn.ts` | Der Lernmodus: Karte, Echo-Check | unverändert |
-| `src/engine/variability.ts` | Klang-Variabilität in Stufen (HVPT) | unverändert |
+| `src/engine/variability.ts` | Klang-Variabilität in Stufen (HVPT), **Heimton auf Stufe 0** | erweitert |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
-| `src/engine/session.ts` | Loop-Zustandsautomat | unverändert |
-| **`src/engine/sync.ts`** | **Merge zweier Lernstände; Lern-Kennung** | **neu, getestet** |
-| `src/audio/player.ts` | Wiedergabe mit Audio-Uhr nach außen | unverändert |
-| **`functions/_lib/`** | **Env, HTTP, Relying Party, Sitzungen** | **neu** |
-| **`functions/api/auth/`** | **Register/Login (Options + Verify), Logout** | **neu** |
-| **`functions/api/progress.ts`** | **GET/PUT — die ganze Sync-API** | **neu** |
-| **`functions/api/account.ts`** | **DELETE — Konto und Daten löschen** | **neu** |
-| **`functions/tsconfig.json`** | **Worker-Typen, getrennt von den DOM-Typen** | **neu** |
-| **`migrations/0001_accounts.sql`** | **users, credentials, sessions, progress** | **neu** |
-| **`wrangler.toml`** | **D1-Bindung `DB`; echte `database_id` (config-as-code)** | **neu** |
-| `src/ui/App.tsx` | Lernloop-Screen, View-State, **Push am Sitzungsende** | erweitert |
-| **`src/ui/Account.tsx`** | **Der Account-Screen, drei Zustände** | **neu** |
-| **`src/ui/account.ts`** | **Passkeys, Sitzung, Abgleich — rechnet nichts** | **neu** |
-| `src/ui/Menu.tsx` | Kopfzeile und Menü, **jetzt mit Account-Zeile** | erweitert |
-| `src/ui/progressStorage.ts` | localStorage rein/raus, **plus Lern-Zeitstempel** | erweitert |
-| `src/ui/About.tsx` | About-Screen, **Datenschutz-Zeile korrigiert** | angepasst |
+| `src/engine/session.ts` | Loop-Zustandsautomat, **Drill-Art, Pool, `retuneHomeTone`, Streak-Tag** | erweitert |
+| `src/engine/sync.ts` | Merge zweier Lernstände; Lern-Kennung, **plus Streak** | erweitert |
+| **`src/engine/streak.ts`** | **Streak mit Freeze-Gnade, Kalenderarithmetik, Merge** | **neu, getestet** |
+| **`src/engine/drill.ts`** | **Langsame Zeichen, Drill-Satz, ehrlicher Vergleich** | **neu, getestet** |
+| **`src/engine/deviceSettings.ts`** | **Tonhöhe und Lautstärke als reine Daten** | **neu, getestet** |
+| `src/audio/player.ts` | Wiedergabe mit Audio-Uhr, **Lautstärke veränderlich** | erweitert |
+| `functions/_lib/`, `functions/api/` | Env, HTTP, Passkeys, Sitzungen, Sync-API | unverändert |
+| `migrations/0001_accounts.sql` | users, credentials, sessions, progress | unverändert |
+| `wrangler.toml` | D1-Bindung `DB`; echte `database_id` (config-as-code) | unverändert |
+| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, **Streak-Zeile, Settings, Drill** | erweitert |
+| `src/ui/Account.tsx`, `src/ui/account.ts` | Account-Screen und Passkeys | unverändert |
+| **`src/ui/Settings.tsx`** | **Zwei Regler, ein Probeton, eine ehrliche Zeile** | **neu** |
+| **`src/ui/deviceStorage.ts`** | **Eigener localStorage-Schlüssel, nie im Sync** | **neu** |
+| `src/ui/Menu.tsx` | Kopfzeile und Menü, **jetzt mit Settings-Zeile** | erweitert |
+| `src/ui/progressStorage.ts` | localStorage rein/raus, plus Lern-Zeitstempel | unverändert |
+| `src/ui/About.tsx` | About-Screen | unverändert |
 | `src/ui/Progress.tsx`, `Intro.tsx`, `Learn.tsx`, `Pattern.tsx` | — | unverändert |
-| `src/styles.css` | Tokens nach 1.1 §13, **plus Account-Rollen** | erweitert |
-| `public/sw.js` | Service Worker, **`/api/` ausgenommen** | angepasst |
-| `docs/brand/logo.py` | **Konstruktions-Doku, nicht mehr Quelle** (#53/54) | angepasst |
-| `docs/screenshots/` | Intro, Lernkarte, Training, Menü, Progress, **Account ×2** | erweitert |
-| `src/engine/*.test.ts` | **146 Tests** (114 vorher, 32 neu für den Sync) | grün |
+| `src/styles.css` | Tokens nach 1.1 §13, **plus Regler- und Zeilen-Rollen** | erweitert |
+| `public/sw.js` | Service Worker, `/api/` ausgenommen | unverändert |
+| `docs/brand/logo.py` | Konstruktions-Doku, nicht mehr Quelle (#53/54) | unverändert |
+| `docs/screenshots/` | …, **Settings, Speed-round-Einladung** | erweitert |
+| `src/engine/*.test.ts` | **221 Tests** (146 vorher, **75 neu** in dieser Runde) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die
 Engine kennt niemanden, die UI rechnet nicht. **Neu dazu: der Server rechnet
@@ -426,9 +464,141 @@ Datenschutzerklärung. Der Inhalt steht praktisch schon in diesem Abschnitt, abe
 sie zu formulieren (und zu verlinken) ist eine Aufgabe für sich — und in
 Deutschland eine mit Rechtsfolgen, also keine, die ein Agent nebenbei schreibt.
 
+## 3h. Runde F1 — was man wissen muss, um die drei Features zu lesen
+
+**Der Streak rechnet nie mit einer Uhr.** `src/engine/streak.ts` bekommt den
+Kalendertag als `YYYY-MM-DD` herein, wie alles in dieser Engine. Der Tag fällt
+in `advance()`, wenn die Sitzung auf `finished` geht — nicht in der UI, nicht
+über einen Timer. Zwei Funktionen, die man auseinanderhalten muss:
+
+- `recordPracticeDay(streak, today)` **verbucht** einen geübten Tag.
+- `streakStanding(streak, today)` sagt, **wie er heute dasteht**. Der
+  gespeicherte Stand beschreibt den letzten geübten Tag; was daraus geworden
+  ist, hängt an den seither vergangenen Tagen. Ohne diese Umrechnung stünde
+  nach einer Woche Pause noch „Day 12" auf dem Schirm — eine Zahl, die niemand
+  mehr hat (CLAUDE.md 2.6).
+
+**Der Streak-Merge hat eine eigene Uhr.** Alle anderen Momentaufnahmen kommen
+vom Stand mit dem jüngeren `updatedAt`; der Streak richtet sich nach dem
+jüngeren **zuletzt geübten Kalendertag**. Welcher Blob später geschrieben
+wurde, sagt über Kalendertage nichts. Und er stuft nicht zurück: der ältere
+Streak wird einmal auf den jüngsten geübten Tag fortgeschrieben und dann das
+Maximum genommen. Lebte er da noch, zählt er weiter; war er tot, kommt 1 heraus
+— **ein toter Streak lebt durch einen Merge nicht wieder auf.** Beide Kanten
+sind getestet.
+
+Zwei Setzungen, die die Vorgabe nicht nennt (beide in `streak.ts` begründet):
+ein **beendeter Streak kostet den Vorrat nicht** (zwei verpasste Tage haben den
+Streak gekostet, das genügt als Folge), und ein **Tag vor dem zuletzt geübten
+ändert nichts** (zurückgestellte Uhr, Zeitzonensprung).
+
+**Die Einstellungen sind die Grenze des Syncs, nicht eine Lücke darin.** Sie
+liegen unter `projekt-morse:device`, nicht in `Progress` — und `pushProgress`
+schickt `Progress`. Damit ist „geht nicht zum Konto" keine Regel, an die sich
+jemand erinnern muss, sondern eine Eigenschaft der Datenstruktur. Im Durchlauf
+gegengelesen: der Lernstand enthält weder `toneHz` noch `volume`.
+
+Die Tonhöhe gilt auf Variabilitäts-Stufe 0 — und damit auch für die Lernkarten,
+die immer den Sitzungs-Ton spielen. **Ab Stufe 1 haben die HVPT-Bänder
+Vorrang**, und die Einstellung verschiebt sie *nicht*: ein Band, das der Nutzer
+mitbewegen kann, wäre kein Trainingsband mehr. `retuneHomeTone()` zieht eine
+laufende Stufe-0-Sitzung nach, damit das Eyebrow keine Tonhöhe behauptet, die
+gar nicht gespielt wird; ab Stufe 1 tut es bewusst nichts.
+
+**Der Drill fasst das Wachstumsfenster nicht an — und das braucht zwei
+Riegel.** Der erste ist `RecordOptions.countTowardGrowth` (stats.ts):
+`recentAnswers` und `answersSinceGrowth` bleiben stehen. Der zweite ist, dass
+`submitAnswer` bei einem Drill `maybeGrow` gar nicht erst fragt. Der zweite ist
+nicht überflüssig: ein Drill ändert auch Versuche und Trefferquote je Zeichen,
+und das sind die Bedingungen (b) und (c) der Wachstumsregel — ohne den zweiten
+Riegel könnte mitten in einer Therapiesitzung ein neues Zeichen dazukommen.
+Über Wachstum entscheidet die normale Übung; die nächste normale Antwort holt
+es nach.
+
+Ein durchgezogener Drill zählt als **geübter Tag** (er ist eine beendete
+Sitzung) und als Sitzung im Zähler. Der Streak misst Kontinuität, nicht
+Pflichterfüllung — das ist eine Setzung, keine Vorgabe.
+
+**Die Ergebniszeile vergleicht nur Vergleichbares.** Gemessen wird der Median
+der *langsamen* Zeichen — die Kontrast-Zeichen (bei nur einem langsamen) sind
+schnell und zögen ihn nach unten, ohne dass jemand etwas gelernt hätte.
+„down from" steht nur da, wenn es wirklich schneller wurde; ein Rückschritt
+bekommt keine Zeile.
+
 ## 4. Was nachgewiesen ist (und wie)
 
-**Aus dieser Runde:**
+**Aus Runde F1:**
+
+- **`npm test` → 221/221 grün** (146 vorher, **75 neu**): 37 für den Streak,
+  17 für die Einstellungen und den Heimton, 21 für den Drill. Kein einziger
+  davon stellt eine Uhr — Monatswechsel, Jahreswechsel und der 29. Februar sind
+  gewöhnliche Eingaben. Beim Drill sind die beiden Zusagen der Runde einzeln
+  geprüft: das Wachstumsfenster bleibt stehen, **und** der Zeichensatz wächst
+  nicht, obwohl die Regel in dem präparierten Stand sonst gegriffen hätte
+  (Gegenprobe: die normale Sitzung tut beides weiterhin).
+- **`npm run build` → sauber.** Bundle **195,07 kB roh / 61,57 kB gzip**
+  (vorher 187,04 / 59,06 — Delta **+8,03 / +2,51**), CSS **11,96 / 2,86**
+  (vorher 11,40 / 2,74 — Delta **+0,56 / +0,12**). Keine neue Abhängigkeit.
+- **Browser-Durchlauf: 44 von 44 Prüfungen** (headless Chromium gegen den
+  Dev-Server, 390 px, präparierte Stände im Init-Script). Abgedeckt:
+
+  - **Streak:** „Day 6 — freeze ready." bei einem Stand von gestern; „Day 7 —
+    freeze used yesterday." nach verbrauchtem Freeze; nach zehn Tagen Pause
+    **„Starting fresh."** statt einer alten Zahl. Danach eine **ganze echte
+    Sitzung** (20 Runden, echte Töne, echte Antworten): die Zeile steht auf
+    „Day 7", und im localStorage steht der heutige Tag.
+  - **Timing-Budget unberührt:** 53 Töne geplant, **keiner in der
+    Vergangenheit**, kleinster Vorlauf 0,080 s. Player und Engine-Timing sind
+    nicht angefasst; die Lautstärke ist der einzige veränderliche Wert und
+    liegt in der Hüllkurve, nicht im Raster.
+  - **Settings:** Menü mit sechs Einträgen in der richtigen Reihenfolge, Fokus
+    landet auf der Überschrift, Regler 500–800 Hz mit Default 620, die ehrliche
+    Zeile steht wörtlich da. **Kein Autoplay** (nach dem Schieben beider Regler:
+    null Töne). Der Probeton spielt **instrumentiert nachgemessen** 760 Hz bei
+    Lautstärke 0,5. Danach ins Training zurück: Eyebrow **„Ready · 760 Hz"**,
+    und der gespielte Ton ist auch 760 Hz.
+  - **Die Sync-Grenze, negativ geprüft:** `projekt-morse:device` trägt die
+    Werte, und der Lernstand enthält weder `toneHz` noch `volume`.
+  - **Speed round:** Einladung „U and R are still slow to land." (langsamstes
+    zuerst), Kopfzeile „Speed round · Round 1 / 10", Antwort-Gitter nur aus
+    U und R, **kein Menü mitten im Drill**, Fokus liegt nach dem Start auf dem
+    Play-Kreis. Nach zehn Runden: „Speed round done", **keine zwei
+    verschiedenen Zahlen namens „Median"**, Ergebniszeile im erlaubten Format.
+    Gegengelesen im localStorage: `recentAnswers` (30 Einträge) und
+    `answersSinceGrowth` (12) **unverändert**, Zeichensatz unverändert, die
+    Statistik von R und U dagegen um je zehn Versuche gewachsen, und der Tag
+    ist verbucht.
+  - **Amber-Budget je View ≤ 1**, am gerenderten Ergebnis gezählt: Start-Screen
+    0 (mit und ohne Einladung), Abschluss-Screen 1 (`button-primary`), Menü 1
+    (der aktuelle Punkt), Settings 1 (der Probeton-Knopf), Drill-Abschluss 1.
+    **Gezählt wird pro Element**, wenn Fläche, Rahmen **oder** eigene
+    Textfarbe `--amber` bzw. `--amber-deep` trägt; der Fokusring bleibt draussen
+    (er ist ein Zustand, keine Fläche, und WCAG verlangt ihn). Der Zeiger muss
+    dabei geparkt sein — die Hover-Fallgrube aus §7 hat auch in dieser Runde
+    einmal zugeschlagen und eine Menü-Zählung auf 2 gebracht.
+  - **Kein unbehandelter Skriptfehler** auf keinem der Wege.
+- **Ein Fehler, den erst der Durchlauf gezeigt hat — und der Fix:** die
+  Ergebniszeile des Drills verschwand **genau dann, wenn der Drill geholfen
+  hatte.** Sie fragte am Ende neu, welche Zeichen langsam sind — und wenn die
+  Übung gewirkt hatte, war die Antwort „keine", also gab es nichts zu
+  berichten. Die gedrillten Zeichen und ihr Vorher-Median werden jetzt **beim
+  Start** festgehalten (`DrillTarget` in App.tsx). Vitest hätte das nicht
+  gefunden: die Zeile entsteht in der UI, und ihr Fehler war eine Frage der
+  Reihenfolge, nicht der Rechnung.
+
+**Nicht nachgewiesen, ehrlich benannt (F1):**
+
+- **Nichts davon ist auf Produktion geprüft** — die Umgebung kommt dort nicht
+  hin (§5e), und diese Runde hat den Deploy nicht angefasst.
+- **Der Sync ist mit den neuen Feldern nicht im Browser durchgespielt.** Die
+  Merge-Regel des Streaks ist als reine Funktion getestet (beide Richtungen,
+  Idempotenz, toter Streak, fehlender Stand), aber ein Zwei-Geräte-Durchlauf
+  wie in Runde B stand diesmal nicht an. Alte Stände ohne `streak` laden
+  weiter — der Default ist additiv und getestet.
+- **Kein Hörtest mit Menschen.** Ob 500 Hz auf einem Telefonlautsprecher noch
+  trägt und ob 5 % Lautstärke leise genug sind, weiss hier niemand.
+
+**Aus Runde B (unverändert gültig):**
 
 - **`npm test` → 146/146 grün** (114 vorher, **32 neu** für den Sync). Darunter
   die drei Kanten aus der Vorgabe (frisches Gerät + volles Konto, voller lokaler
@@ -766,12 +936,10 @@ eigene Aufgabe.
 
 **Gefallen und umgesetzt:** Zeichen-für-Zeichen, retrieval-only, EN-first,
 Design „Ruhe", Wachstumsregel, PWA mit selbst gehosteten Schriften, das
-Gehäuse, Accounts.
+Gehäuse, Accounts — **und seit Runde F1 der Streak mit Freeze-Gnade, die
+Einstellungen und die Speed round.**
 
-**Beschlossen, aber nicht gebaut:** **Streak mit Freeze-Gnade**
-(CLAUDE.md §2.8). Die Persistenz ist dafür vorbereitet.
-
-**Offen, bewusst nicht angefasst:** kein Einstellungsdialog; nur Einzelzeichen
+**Offen, bewusst nicht angefasst:** nur Einzelzeichen
 (keine Fünfergruppen, kein Klartext); kein Dark Mode (Rollen stehen, kein
 `prefers-color-scheme`-Block); Satzzeichen fehlen in `CHARACTER_ORDER`;
 Variabilitäts-Stufe 3 (QRN) nicht gebaut; „Visual practice" als opt-in-Modus
@@ -830,8 +998,13 @@ warten weiter auf ein Urteil.
 
 ## 7. Nächster Schritt
 
-**Die offenen Punkte brauchen Cloudflare-Zugang**, den diese Umgebung nicht
-hat. Sie stehen deshalb oben.
+**Zuerst die zwei Produktfragen dieser Runde** (ganz oben): der streng
+abwechselnde Zwei-Zeichen-Drill und der über die UI unerreichbare
+Kontrast-Zweig. Beides sind Entscheidungen für Fable, beides ändert eine
+Konstante oder einen Einstiegspunkt — kein Umbau.
+
+**Die übrigen offenen Punkte brauchen Cloudflare-Zugang**, den diese Umgebung
+nicht hat. Sie stehen deshalb oben.
 
 1. **Den Deploy nachsehen** (§5e). Der Merge ist erfolgt, die D1-Bindung liegt
    in `wrangler.toml` und kommt mit dem Deploy aus `main`. Danach das kleine
@@ -847,10 +1020,14 @@ hat. Sie stehen deshalb oben.
 3. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a, **nachdem**
    §3e entschieden ist (Passkeys hängen an der Domain). Danach greift auch die
    Rate-Limit-Regel, falls der Vorbehalt aus §5h zutrifft.
-4. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Reine Engine-Logik,
-   Persistenz additiv. Der Tages-Eimer ist bewusst *keine* Historie.
-5. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
-   Telefon — **und jetzt neu: ein Passkey auf echter Hardware**, mit einem Blick
+4. ~~**Streak mit Freeze-Gnade**~~ **erledigt in dieser Runde** (§3h), zusammen
+   mit Settings und den ICR-Drills. Der Tages-Eimer ist dabei geblieben, was er
+   war: kein Verlauf. Der Streak führt fünf Zahlen mit, keine Liste — nichts
+   wächst unbegrenzt (CLAUDE.md 7).
+5. **Menschliche Prüfungen:** Hörtest — **jetzt auch an den Rändern der neuen
+   Tonhöhen-Spanne (500 und 800 Hz) und bei 5 % Lautstärke** —, Screenreader
+   (die zwei neuen Regler und die Streak-Zeile), PWA-Installation auf dem
+   Telefon — **und ein Passkey auf echter Hardware**, mit einem Blick
    darauf, wie der Systemdialog das Konto benennt (§5f.3). Das ist die
    Vorbedingung für die letzte offene Design-Entscheidung dieser Runde.
 6. **Vor echten Nutzern: eine Datenschutzerklärung** (§3g). Der Inhalt steht

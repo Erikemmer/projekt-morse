@@ -21,6 +21,10 @@ Fehlerquote und Reaktionszeit pro Zeichen. Der Fortschritt liegt im localStorage
 Startzeichensatz K M R S U A, 20 WPM Zeichentempo bei 10 WPM Gesamttempo
 (Farnsworth). Die Oberfläche ist auf Englisch.
 
+Dazu: ein Streak, der einen verpassten Tag verzeiht statt ihn zu bestrafen;
+Tonhöhe und Lautstärke einstellbar (gerätespezifisch, nie im Konto); und eine
+kurze „Speed round" für Zeichen, die zwar sitzen, aber zu lange brauchen.
+
 ## Loslegen
 
 ```bash
@@ -39,6 +43,9 @@ npm run build    # Typprüfung + Produktionsbuild
 | `src/engine/schedule.ts` | Text → Zeitachse aus Tönen (reine Datenstruktur) |
 | `src/engine/settings.ts` | Tempo, Tonhöhe, Startzeichensatz — als benannte Konstanten |
 | `src/engine/stats.ts` | Statistik pro Zeichen, plus das Lesen alter Stände |
+| `src/engine/streak.ts` | Der Streak mit Freeze-Gnade — Kalendertage, keine Uhr |
+| `src/engine/drill.ts` | Langsame Zeichen und der Satz einer „Speed round" |
+| `src/engine/deviceSettings.ts` | Tonhöhe und Lautstärke dieses Geräts |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche und die Ziehung daraus |
 | `src/engine/session.ts` | Der Loop als reiner Zustandsautomat |
 | `src/audio/player.ts` | Wiedergabe über die Web Audio API |
