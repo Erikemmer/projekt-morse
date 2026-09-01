@@ -1,4 +1,25 @@
 """
+NICHT MEHR DIE QUELLE DER BILDMARKE (Notion-Log #53/54).
+
+Quelle sind seit dieser Entscheidung ausschliesslich die drei Owner-Dateien
+(morse-lab-mark.svg, morse-lab-mark-inverse.svg, morse-lab-appicon.svg), die
+unveraendert als kanonische Originale in `docs/brand/assets/` liegen sollen.
+Favicon, App-Icons und das About-Lockup werden aus **diesen** Dateien
+abgeleitet, nicht mehr aus der Konstruktion unten.
+
+Zum Zeitpunkt dieses Kommentars liegen die drei Dateien noch **nicht** im
+Repo -- die Session, die den Hinweis eingetragen hat, hatte keinen Zugriff
+darauf. Siehe HANDOVER.md, Abschnitt "Die Bildmarke".
+
+Dieses Skript bleibt als **Konstruktions-Dokumentation** liegen: es zeigt, wie
+die Zahlen aus 1.1 §3 zusammenhaengen, und ist damit die Erklaerung der Marke,
+nicht ihre Herkunft. Wer die Marke aendern will, aendert die Owner-Dateien.
+
+Der Punkt+Pille-Fallback fuer Groessen unter 24 px (public/favicon.svg) bleibt
+davon unberuehrt.
+
+---
+
 Baut die Marke "der Morsetaster" exakt nach Guidelines 1.1 §3.
 
 Die Zahlen der Richtlinie stehen oben als Konstanten; alles andere wird

@@ -11,12 +11,13 @@
  */
 
 import { emptyProgress, parseProgress, type Progress } from '../engine/stats';
+import { learningRevision } from '../engine/sync';
 
 const STORAGE_KEY = 'projekt-morse:progress';
 
 /**
- * Wann der Stand zuletzt geschrieben wurde -- ein eigener Eintrag, nicht ein
- * Feld in `Progress`.
+ * Wann dieses Geraet zuletzt **etwas gelernt** hat -- ein eigener Eintrag,
+ * nicht ein Feld in `Progress`.
  *
  * Der Grund ist der Sync: `mergeProgress` (engine/sync.ts) braucht den
  * Zeitstempel, um zu entscheiden, welcher von zwei Staenden der juengere ist.
@@ -24,11 +25,28 @@ const STORAGE_KEY = 'projekt-morse:progress';
  * Server geht -- dort fuehrt die Datenbank ihren eigenen `updated_at`. Zwei
  * Uhren in einem Objekt waeren zwei Wahrheiten.
  *
+ * **"Gelernt", nicht "geschrieben".** Der Eintrag traegt neben der Zeit die
+ * Lern-Kennung aus `learningRevision`; die Zeit wird nur nachgezogen, wenn
+ * sich die Kennung geaendert hat. Schon das Oeffnen der App schreibt (die
+ * Sitzung wird gezaehlt, der Tages-Eimer springt um) -- wuerde das den
+ * Zeitstempel hochsetzen, waere jedes gerade geoeffnete Geraet automatisch das
+ * "juengere" und ueberschriebe mit seinem alten Zeichensatz ein Konto, an dem
+ * woanders gerade gearbeitet wurde. Der Browser-Durchlauf hat genau das
+ * gezeigt, bevor diese Unterscheidung da war.
+ *
  * Fehlt der Eintrag, ist der Stand "nie geschrieben" (0). Zusammen mit der
  * Regel aus sync.ts (ein Stand ohne Versuche ist nie der juengere) ist das
  * genau der Fall "frisches Geraet".
  */
 const STAMP_KEY = 'projekt-morse:progress-at';
+
+interface Stamp {
+  /** Millisekunden seit Epoch, 0 = noch nie. */
+  readonly at: number;
+  readonly rev: string;
+}
+
+const NO_STAMP: Stamp = { at: 0, rev: '' };
 
 /**
  * Laedt den Fortschritt. Jeder Fehler endet in einem leeren Stand statt in einer
@@ -60,23 +78,29 @@ export function saveProgressNow(progress: Progress): void {
 }
 
 /**
- * Der Zeitstempel des letzten Schreibvorgangs, in Millisekunden -- oder 0.
+ * Wann zuletzt gelernt wurde, in Millisekunden -- oder 0.
  *
- * Nur der Sync liest ihn (siehe STAMP_KEY). Die App selbst rechnet nie mit ihm;
+ * Nur der Sync liest das (siehe STAMP_KEY). Die App selbst rechnet nie damit;
  * "heute" kommt weiterhin aus `today.ts`, damit die Engine ohne Uhr bleibt.
  */
 export function loadProgressStamp(): number {
+  return readStamp().at;
+}
+
+function readStamp(): Stamp {
   try {
     const raw = window.localStorage.getItem(STAMP_KEY);
-    const value = raw === null ? 0 : Number(raw);
-    return Number.isFinite(value) && value > 0 ? value : 0;
+    if (raw === null) return NO_STAMP;
+    const parsed = JSON.parse(raw) as Partial<Stamp>;
+    const at = typeof parsed.at === 'number' && Number.isFinite(parsed.at) && parsed.at > 0 ? parsed.at : 0;
+    return { at, rev: typeof parsed.rev === 'string' ? parsed.rev : '' };
   } catch {
-    return 0;
+    return NO_STAMP;
   }
 }
 
 /**
- * Ein Schreibvorgang: Stand und Zeitstempel.
+ * Ein Schreibvorgang: Stand und -- nur wenn wirklich gelernt wurde -- Zeit.
  *
  * Der Zeitstempel wird *nach* dem Stand geschrieben. Bricht es dazwischen ab
  * (voller Speicher), steht ein neuer Stand mit einem alten Zeitstempel da --
@@ -86,8 +110,13 @@ export function loadProgressStamp(): number {
  */
 function write(progress: Progress): void {
   try {
+    const rev = learningRevision(progress);
+    const previous = readStamp();
+    // Gleiche Lern-Kennung -> die alte Zeit bleibt stehen (siehe STAMP_KEY).
+    const at = rev === previous.rev && previous.at > 0 ? previous.at : Date.now();
+
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-    window.localStorage.setItem(STAMP_KEY, String(Date.now()));
+    window.localStorage.setItem(STAMP_KEY, JSON.stringify({ at, rev }));
   } catch {
     // Voller oder gesperrter Speicher darf die laufende Sitzung nicht stoeren.
   }

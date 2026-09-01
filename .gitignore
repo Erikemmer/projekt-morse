@@ -1,5 +1,8 @@
 node_modules/
 dist/
+# Lokaler Zustand von wrangler (u.a. die lokale D1-Datenbank fuer
+# `wrangler pages dev`). Reine Entwicklungsdaten, gehoert niemandem.
+.wrangler/
 .DS_Store
 *.local
 __pycache__/

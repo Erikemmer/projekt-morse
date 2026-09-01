@@ -25,7 +25,14 @@
  * eine noetige Suffix-Regel fuer die Preview-Deploys von Pages
  * (`<hash>.projekt-morse.pages.dev`).
  */
-const EXACT_HOSTS: readonly string[] = ['localhost', '127.0.0.1', 'morse-lab.com', 'www.morse-lab.com'];
+/*
+ * `127.0.0.1` steht hier bewusst **nicht**, obwohl der Browser es als sichere
+ * Herkunft behandelt: eine RP ID muss ein Domainname sein, eine IP-Adresse
+ * lehnt der Browser ab. Sie zu erlauben liefe auf Optionen hinaus, die
+ * garantiert scheitern -- der Entwicklungs-Server ist unter `localhost` zu
+ * erreichen. Genau so beim ersten Browser-Durchlauf aufgefallen.
+ */
+const EXACT_HOSTS: readonly string[] = ['localhost', 'morse-lab.com', 'www.morse-lab.com'];
 const HOST_SUFFIXES: readonly string[] = ['.pages.dev'];
 
 export interface RelyingParty {

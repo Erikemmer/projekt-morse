@@ -17,7 +17,7 @@ import {
   type CharacterRecord,
   type Progress,
 } from './stats';
-import { emptySnapshot, mergeProgress, type Snapshot } from './sync';
+import { emptySnapshot, learningRevision, mergeProgress, type Snapshot } from './sync';
 
 function record(attempts: number, hits: number, reactions: number[] = [1]): CharacterRecord {
   return { attempts, hits, recentReactions: reactions };
@@ -265,6 +265,48 @@ describe('Der Merge ist eine reine Funktion', () => {
   it('ist idempotent: derselbe Stand zweimal ergibt denselben Stand', () => {
     const only: Snapshot = { progress: fullProgress(), updatedAt: 3_000 };
     expect(mergeProgress(only, only)).toEqual(only.progress);
+  });
+});
+
+describe('learningRevision -- was als "gelernt" zaehlt', () => {
+  const base = fullProgress();
+
+  it('ändert sich, wenn geantwortet wurde', () => {
+    const answered = progress({
+      ...base,
+      characters: { ...base.characters, K: record(41, 39, [0.9, 1.1]) },
+    });
+    expect(learningRevision(answered)).not.toBe(learningRevision(base));
+  });
+
+  it('ändert sich, wenn der Zeichensatz gewachsen ist', () => {
+    const grown = progress({ ...base, activeCharacters: [...base.activeCharacters, 'L'] });
+    expect(learningRevision(grown)).not.toBe(learningRevision(base));
+  });
+
+  it('ändert sich, wenn ein Zeichen eingeführt wurde', () => {
+    const introduced = progress({
+      ...base,
+      introducedCharacters: [...base.introducedCharacters, 'L'],
+    });
+    expect(learningRevision(introduced)).not.toBe(learningRevision(base));
+  });
+
+  it('ändert sich NICHT, wenn nur die Sitzung gezählt wurde', () => {
+    // Genau das passiert bei jedem Öffnen der App (beginSession). Zählte es
+    // als "gelernt", wäre jedes geöffnete Gerät automatisch das jüngere.
+    const opened = progress({ ...base, sessionsStarted: base.sessionsStarted + 1 });
+    expect(learningRevision(opened)).toBe(learningRevision(base));
+  });
+
+  it('ändert sich NICHT, wenn nur der Tages-Eimer umgesprungen ist', () => {
+    const nextDay = progress({ ...base, day: emptyDay('2026-09-02') });
+    expect(learningRevision(nextDay)).toBe(learningRevision(base));
+  });
+
+  it('ändert sich NICHT, wenn nur ein Einmal-Merker umklappt', () => {
+    const seen = progress({ ...base, introSeen: true, variabilityNoticeSeen: true });
+    expect(learningRevision(seen)).toBe(learningRevision(base));
   });
 });
 

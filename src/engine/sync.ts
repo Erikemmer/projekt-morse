@@ -101,6 +101,37 @@ function mergeCharacters(
 }
 
 /**
+ * Ein Kennzeichen dafuer, *wieviel gelernt* ist -- und nur dafuer.
+ *
+ * Es aendert sich, wenn jemand geantwortet hat (Versuche), wenn der
+ * Zeichensatz gewachsen ist oder wenn ein Zeichen eingefuehrt wurde. Es
+ * aendert sich **nicht**, wenn nur der Sitzungszaehler hochgeht, der
+ * Tages-Eimer auf ein neues Datum springt oder ein Einmal-Merker umklappt.
+ *
+ * Wozu: der Zeitstempel eines Standes (`Snapshot.updatedAt`) soll sagen, wann
+ * dieses Geraet zuletzt *etwas gelernt* hat -- nicht, wann zuletzt etwas
+ * geschrieben wurde. Der Unterschied ist der ganze Punkt, denn schon das
+ * Oeffnen der App schreibt (die Sitzung wird gezaehlt). Ohne diese
+ * Unterscheidung waere jedes gerade geoeffnete Geraet automatisch das
+ * "juengere" und wuerde mit seinem alten Zeichensatz ein Konto ueberschreiben,
+ * an dem woanders gerade gearbeitet wurde. Genau so im Browser-Durchlauf
+ * aufgefallen (Pruefung 20 fiel durch, bevor es diese Funktion gab).
+ *
+ * Ein String und keine Zahl: es wird nur auf Gleichheit geprueft, nie
+ * gerechnet, und so bleibt lesbar, was drinsteht.
+ */
+export function learningRevision(progress: Progress): string {
+  let attempts = 0;
+  for (const record of Object.values(progress.characters)) attempts += record.attempts;
+
+  return [
+    attempts,
+    progress.activeCharacters.length,
+    progress.introducedCharacters.length,
+  ].join('/');
+}
+
+/**
  * Ob dieser Stand ueberhaupt schon geuebt hat.
  *
  * Dieselbe Unterscheidung, die `parseProgress` beim Auffuellen von
