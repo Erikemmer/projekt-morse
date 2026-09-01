@@ -77,7 +77,7 @@ export function Learn({
       {onSkip !== undefined && (
         <div className="learn-skip">
           <button type="button" className="skip" onClick={onSkip}>
-            Skip for now
+            Skip
           </button>
         </div>
       )}
@@ -126,7 +126,7 @@ function Card({
         <button
           type="button"
           className="play"
-          disabled={playing}
+          data-sounding={playing}
           onClick={onPlay}
           aria-label={`Play ${char} again`}
         >
@@ -144,17 +144,24 @@ function Card({
         </p>
       </div>
 
-      <div className="actions">
-        <button
-          ref={buttonRef as React.RefObject<HTMLButtonElement>}
-          type="button"
-          className="button-next"
-          disabled={!heard}
-          onClick={onContinue}
-        >
-          {requireEcho ? 'Try it' : 'Done'}
-        </button>
-      </div>
+      {/*
+        Erst nach dem Ton -- und dann sichtbar statt deaktiviert: 1.1 §7 sagt
+        "hide what can't be used", und solange der Ton der Karte laeuft, ist
+        der Play-Kreis amber. Ein gefuellter Amber-Primary daneben waere das
+        zweite Amber der View (1.1 §4).
+      */}
+      {heard && (
+        <div className="actions">
+          <button
+            ref={buttonRef as React.RefObject<HTMLButtonElement>}
+            type="button"
+            className="button-go"
+            onClick={onContinue}
+          >
+            {requireEcho ? 'Try it' : 'Done'}
+          </button>
+        </div>
+      )}
     </>
   );
 }
@@ -197,7 +204,7 @@ function Echo({
             ref={state.phase !== 'echo-feedback' ? (buttonRef as React.RefObject<HTMLButtonElement>) : undefined}
             type="button"
             className="play"
-            disabled={playing}
+            data-sounding={playing}
             onClick={onPlay}
             aria-label="Play the character"
           >
@@ -237,6 +244,7 @@ function Echo({
               type="button"
               className="answer"
               data-mark={mark}
+              data-tone={mark === 'correct' && attempt !== null && !attempt.correct ? 'amber' : undefined}
               disabled={state.phase !== 'echo-answering'}
               onClick={() => onAnswer(option)}
             >
@@ -306,7 +314,7 @@ export function ReviewPicker({
       </div>
 
       <div className="actions">
-        <button type="button" className="button-next" onClick={onClose}>
+        <button type="button" className="button-go" onClick={onClose}>
           Back to practice
         </button>
       </div>

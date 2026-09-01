@@ -12,6 +12,13 @@
  *   weiter. Jede Wiedergabe ist eine Nutzergeste. Damit ist die zeitgesteuerte
  *   Darbietung von vornherein auch die selbstgesteuerte (CLAUDE.md 6) -- und
  *   nebenbei die Bedingung dafuer, dass Browser ueberhaupt Ton erlauben.
+ *
+ *   **Eine Ausnahme, und nur eine:** die Einfuehrungskarte des Lernmodus
+ *   spielt ihren Ton beim Oeffnen einmal von selbst ab (Produktentscheidung,
+ *   Notion-Log #33). Ausgeloest hat ihn trotzdem eine Geste -- der Klick, der
+ *   die Karte geoeffnet hat -- und der Play-Kreis daneben bleibt der
+ *   selbstgesteuerte Weg. Kein Timer ist im Spiel, und im Training gilt die
+ *   Regel unveraendert.
  * - **Waehrend des Tons ist der Bildschirm leer.** Kein Muster, kein Zaehler.
  *   Wer mitlesen kann, zaehlt Elemente statt zu hoeren (CLAUDE.md 2.2). Nach der
  *   Antwort darf das Muster gezeigt werden -- da ist es Erklaerung, keine Kruecke.
@@ -352,7 +359,7 @@ export function App() {
             ) : (
               <PlayCircle
                 buttonRef={focusTarget}
-                disabled={session.phase === 'listening'}
+                sounding={session.phase === 'listening'}
                 replay={session.phase === 'answering'}
                 onPlay={play}
               />
@@ -480,12 +487,12 @@ function SessionHeader({
  */
 function PlayCircle({
   buttonRef,
-  disabled,
+  sounding,
   replay,
   onPlay,
 }: {
   buttonRef: (element: HTMLElement | null) => void;
-  disabled: boolean;
+  sounding: boolean;
   replay: boolean;
   onPlay: () => void;
 }) {
@@ -494,7 +501,7 @@ function PlayCircle({
       ref={buttonRef}
       type="button"
       className="play"
-      disabled={disabled}
+      data-sounding={sounding}
       onClick={onPlay}
       aria-label={replay ? 'Play the character again' : 'Play the character'}
     >
@@ -576,7 +583,7 @@ function Answers({
 }: {
   pool: readonly string[];
   enabled: boolean;
-  attempt: { char: string; answer: string } | null;
+  attempt: { char: string; answer: string; correct: boolean } | null;
   onAnswer: (choice: string) => void;
 }) {
   return (
@@ -597,6 +604,9 @@ function Answers({
             type="button"
             className="answer"
             data-mark={mark}
+            /* Amber nur auf der richtigen Antwort, und nur wenn danebengegriffen
+               wurde -- sonst bleibt es beim ruhigen ink-Haekchen (1.1 §4). */
+            data-tone={mark === 'correct' && attempt !== null && !attempt.correct ? 'amber' : undefined}
             disabled={!enabled}
             onClick={() => onAnswer(char)}
           >
