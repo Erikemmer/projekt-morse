@@ -18,16 +18,16 @@ umgesetzt. Die Commits der Runde:
    für genau den Zustand, in dem Produktion mit diesem Merge live geht (§5e)
 8. `403602b` — Übergabe: Commit-Liste vervollständigt
 
-**Nachtrag nach Runde B** (eigener Anlass, Notion-Log #60):
+**Nachträge nach Runde B:**
 
-9. (dieser Commit) — **D1 auf Produktion ist verdrahtet:** die echte
+9. `e192f6d` — **D1 auf Produktion ist verdrahtet** (Notion-Log #60): die echte
    `database_id` steht in `wrangler.toml`, die Bindung `DB` setzt der Git-Deploy
    per config-as-code aus dieser Datei. → §5e
+10. (dieser Commit) — **§3f geschlossen** (Notion-Log #61): die Bildmarke war
+    nie abweichend, die Vermessung belegt es. → §3f
 
-Die Commits 7 und 8 liegen **direkt auf `main`**, nicht mehr auf dem
-Arbeitsbranch: sie sind nach dem Merge entstanden. Commit 9 liegt wieder auf
-`claude/morse-handover-alignment-nbkk6o` und wartet auf den Merge — **erst der
-bringt die D1-Bindung auf Produktion**, denn der Git-Deploy baut aus `main`.
+Commit 9 ist inzwischen **auf `main` gemergt** — der Deploy daraus setzt die
+D1-Bindung. Die Commits 7 und 8 waren direkt auf `main` entstanden.
 
 **Kontext dieser Runde:** Runde B nach Notion-Log #48–51, abgeschlossen mit dem
 Ruling #56. Leitplanke über allem war **local-first**, und sie hält: die App ist
@@ -35,20 +35,27 @@ ohne Konto und offline exakt so vollständig wie vorher, das Konto ist ein
 Sync-Ziel und nie eine Voraussetzung. Kein Feature liegt hinter einem Login.
 Nachgewiesen, nicht behauptet — siehe §4.
 
-> ### Die drei offenen Punkte — einer ist erledigt, zwei stehen noch
+> ### Was noch offen ist — zwei Handgriffe, beide außerhalb des Repos
 >
-> Runde B endete mit drei Blockaden, die kein Code lösen konnte. Stand jetzt:
+> Runde B endete mit drei Blockaden, die kein Code lösen konnte. Zwei sind
+> inzwischen geschlossen:
 >
-> 1. **Die Bildmarke aus den Owner-Dateien** (Log #53/54) — **offen, dritter
->    Anlauf ohne Dateien.** Der Nachtrag hat sie als Anhang angekündigt; an
->    dieser Session lag keiner an (`/mnt/attach` leer, kein Treffer im
->    Dateisystem, nichts Neues im Repo). Nichts ersatzweise konstruiert. → §3f
+> 1. ~~**Die Bildmarke aus den Owner-Dateien**~~ **Geschlossen** (Log #61).
+>    Fable hat die Owner-Renderings pixelgenau vermessen: Knopf/Basis 0,249
+>    bei Soll 0,250, Balkenhöhe/Basis 0,0668 bei Soll 0,0667. Die
+>    Owner-Dateien und die im Repo aus 1.1 §3 konstruierte Bildmarke sind
+>    **geometrisch identisch** — ein Dateitransfer entfällt, es war nie eine
+>    Abweichung, nur zwei Wege zur selben Geometrie. → §3f
 > 2. ~~**D1 auf Produktion.**~~ **Erledigt.** Die Datenbank `morse-lab` (WEUR)
 >    existiert im Account des Owners, Migration `0001` ist samt Journal
 >    angewandt (Fable über den Cloudflare-Connector, Log #60), und
->    `wrangler.toml` trägt seit diesem Commit die echte `database_id`. → §5e
-> 3. **Die WAF-Rate-Limit-Regel** (Ruling #56) — **offen.** Die exakten
->    Dashboard-Schritte stehen dokumentiert. → §5h
+>    `wrangler.toml` trägt die echte `database_id`. → §5e
+>
+> Offen bleiben zwei Handgriffe, die beide **nicht im Repo** liegen:
+>
+> - **Der DNS-Eintrag für `morse-lab.com`** — ein CNAME. → §5a
+> - **Die WAF-Rate-Limit-Regel** (Ruling #56) — die exakten Dashboard-Schritte
+>   stehen dokumentiert. → §5h
 >
 > Nichts davon ist geraten oder ersatzweise gebaut.
 
@@ -68,7 +75,7 @@ hängen an der Domain, unter der sie angelegt wurden (§3e), und die
 Rate-Limit-Regel lässt sich nach meinem Verständnis nur auf einer eigenen Zone
 anlegen, nicht auf `*.pages.dev` (§5h).
 
-**Datum:** 2026-09-01 (fünfte Runde dieses Tages)
+**Datum:** 2026-09-01 (fünfte Runde dieses Tages; §3f-Nachtrag nach Log #61)
 
 Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
 [FINDINGS.md](./FINDINGS.md) — alle drei Einträge sind entschieden und behoben.
@@ -319,54 +326,43 @@ früher Konten. **Entscheidung offen, gehört vor den DNS-Eintrag.**
 sein, eine IP-Adresse lehnt der Browser ab. Beim ersten Browser-Durchlauf
 aufgefallen.
 
-### 3f. Die Bildmarke — Schritt 1 ist NICHT erledigt (dritter Anlauf)
+### 3f. Die Bildmarke — GESCHLOSSEN (Notion-Log #61)
 
-> **Nachtrag, Stand dieser Session:** die Aufgabe hat die drei SVGs als
-> **Anhang** angekündigt („falls angehängt"). **Es lag keiner an.** Geprüft,
-> nicht vermutet: `/mnt/attach` ist leer, `docs/brand/assets/` existiert nicht,
-> eine Suche über das Dateisystem nach `morse-lab-mark*` / `*appicon*` bleibt
-> ohne Treffer, und das Repo trägt unverändert nur die fünf SVGs unter
-> `public/`. Also wieder: nichts geraten, nichts ersatzweise konstruiert. Der
-> Schritt bleibt genau so offen, wie er unten beschrieben ist — er ist klein,
-> sobald die Dateien wirklich da sind.
+**Der Punkt ist erledigt, und zwar ohne Dateitransfer.** Fable hat die
+Owner-Renderings pixelgenau vermessen und gegen die Sollwerte aus
+Guidelines 1.1 §3 gehalten:
 
-**Was gefordert war** (Notion-Log #53/54): die drei Owner-Dateien aus
-`~/Downloads/assets/` (`morse-lab-mark.svg`, `morse-lab-mark-inverse.svg`,
-`morse-lab-appicon.svg`) unverändert nach `docs/brand/assets/` übernehmen und
-Favicon, App-Icons (192/512/maskable/apple-touch) und das About-Lockup aus
-**diesen** Dateien ableiten statt aus der `logo.py`-Konstruktion.
+| Verhältnis | Gemessen (Owner) | Soll (1.1 §3) |
+|---|---|---|
+| Knopf / Basis | 0,249 | 0,250 |
+| Balkenhöhe / Basis | 0,0668 | 0,0667 |
 
-**Warum es nicht passiert ist — zum zweiten Mal:** der Ordner existiert in
-dieser Umgebung nicht. Beide Sessions dieser Runde liefen in einem flüchtigen
-Remote-Container, in dem nur das Repo liegt. Geprüft, nicht vermutet:
-`$HOME` ist `/root` und enthält kein `Downloads`; eine Suche über das gesamte
-Dateisystem nach den drei Dateinamen blieb ohne Treffer; und `mount` zeigt
-keinen eingebundenen Ordner des Host-Rechners (nur `/`, die Skill-Images und
-das Claude-Code-Verzeichnis).
+**Ergebnis: die Owner-Dateien und die im Repo aus §3 konstruierte Bildmarke
+sind geometrisch identisch.** Die Abweichung, die drei Sessions lang als
+Blockade geführt wurde, war keine — es sind zwei Wege zu derselben Geometrie.
+Damit entfällt der Dateitransfer, und Favicon, App-Icons und das About-Lockup
+im Repo sind bereits richtig; sie werden nicht neu gerendert.
 
-**Das ist wichtig für die nächste Runde:** die Aufgabenstellung beschrieb diese
-Session als „lokale Session". Sie war es nicht. Solange sie im Remote-Container
-läuft, ist ein Pfad auf dem Rechner des Owners kein gültiger Weg, Dateien
-hereinzugeben — **der einzige Weg ist, sie ins Repo zu legen** (Commit, oder
-Anhang, den eine Session ins Repo schreibt).
+**Was das für `docs/brand/logo.py` heißt:** das Skript beschreibt die
+Konstruktion, die nachweislich der Marke entspricht. Sein Kopfkommentar sagt
+noch, es sei „nicht mehr die Quelle" und die Owner-Dateien fehlten im Repo —
+das ist mit diesem Ruling überholt. **Bewusst nicht mitgeändert** (CLAUDE.md 5:
+die Aufgabe war die Dokumentation, nicht das Skript); wer als Nächstes an der
+Marke arbeitet, zieht den Kopf in einer Zeile nach.
 
-**Was stattdessen getan wurde:** nichts geraten und nichts ersatzweise
-konstruiert. `docs/brand/logo.py` sagt jetzt in der ersten Zeile, dass es nicht
-mehr die Quelle der Bildmarke ist, wer es ist, und dass die Dateien noch
-fehlen. Favicon und Icons stehen unverändert auf dem alten Stand; der
-Punkt+Pille-Fallback für < 24 px ist ohnehin unberührt.
+**Optionaler Rest, kein Blocker:** die drei Original-SVGs
+(`morse-lab-mark.svg`, `morse-lab-mark-inverse.svg`, `morse-lab-appicon.svg`)
+irgendwann als Referenz nach `docs/brand/assets/` legen. Das wäre Archiv, nicht
+Korrektur — die gerenderten Assets ändern sich dadurch nicht.
 
-**Was fehlt, wenn die Dateien da sind** — eine kleine, klar umrissene Aufgabe:
-
-1. Die drei SVGs unverändert nach `docs/brand/assets/` legen (kanonische
-   Originale, nicht anfassen).
-2. `public/logo-key.svg` (About-Lockup) und die Icons unter `public/icons/`
-   daraus rendern — Chromium wie gehabt, `icon-192`, `icon-512`,
-   `icon-maskable-512`, `apple-touch-icon`.
-3. **Maskable mit Safe-Zone prüfen:** der sichtbare Inhalt muss innerhalb des
-   inneren Kreises von 80 % Kantenlänge liegen, sonst beschneidet Android.
-4. Das Favicon bleibt der Punkt+Pille-Fallback (unter 24 px zerfällt der
-   Taster, 1.1 §3) — das ist eine bestehende Entscheidung, keine offene Frage.
+**Was aus den drei Anläufen bleibt** — nicht als Vorwurf, sondern als Regel für
+die nächste Runde: diese Sessions laufen in einem flüchtigen Remote-Container,
+in dem nur das Repo liegt. Ein Pfad auf dem Rechner des Owners
+(`~/Downloads/…`) ist von hier aus kein gültiger Weg, Dateien hereinzugeben;
+der einzige Weg ist, sie ins Repo zu legen. Geprüft war das jedes Mal, nicht
+vermutet — und in keinem der drei Anläufe wurde ersatzweise etwas konstruiert.
+Rückblickend war genau das richtig: die Konstruktion im Repo war die ganze Zeit
+korrekt.
 
 ## 3g. Backend & Datenschutz — was gespeichert wird, und was nicht
 
@@ -794,7 +790,9 @@ warten weiter auf ein Urteil.
   die einen Pfad auf dem Rechner des Owners nennt: **erst nachsehen, dann
   planen** (`ls`, `mount`). Zweimal an derselben Aufgabe verloren (§3f).
 - **`~/Downloads/` gibt es hier nicht.** Wer Owner-Dateien braucht, braucht sie
-  im Repo oder gar nicht (§3f).
+  im Repo oder gar nicht (§3f). Im konkreten Fall hat sich die Frage erledigt:
+  die Vermessung zeigte, dass die Konstruktion im Repo bereits korrekt war
+  (Log #61) — die Regel bleibt trotzdem gültig.
 - **Cloudflare ist vom Egress-Proxy gesperrt** — `api.cloudflare.com` und
   `dash.cloudflare.com` antworten mit `connect_rejected`. Alles, was über die
   Cloudflare-API läuft (D1 anlegen, WAF-Regeln, DNS), ist von hier aus
@@ -832,12 +830,12 @@ warten weiter auf ein Urteil.
 
 ## 7. Nächster Schritt
 
-**Die offenen Punkte brauchen etwas, das der Code nicht liefern kann** —
-Dateien im Repo oder Cloudflare-Zugang. Sie stehen deshalb oben.
+**Die offenen Punkte brauchen Cloudflare-Zugang**, den diese Umgebung nicht
+hat. Sie stehen deshalb oben.
 
-1. **Diesen Branch nach `main` mergen und den Deploy nachsehen** (§5e). Die D1
-   steht, die Bindung liegt in `wrangler.toml`, aber sie greift erst mit dem
-   Deploy aus `main`. Danach das kleine Signal prüfen — `/api/progress` ohne
+1. **Den Deploy nachsehen** (§5e). Der Merge ist erfolgt, die D1-Bindung liegt
+   in `wrangler.toml` und kommt mit dem Deploy aus `main`. Danach das kleine
+   Signal prüfen — `/api/progress` ohne
    Sitzung muss **401** antworten, nicht 500 —, und erst dann den Konto-Weg auf
    Produktion nachweisen (Register → Sitzung → Push → Login im zweiten Kontext
    → Merge → Löschen). **Von dieser Umgebung aus nicht machbar** (Cloudflare
@@ -846,19 +844,16 @@ Dateien im Repo oder Cloudflare-Zugang. Sie stehen deshalb oben.
    Gleiche Voraussetzung. **Bitte dabei den Vorbehalt in §5h klären** — ob die
    Regel für `*.pages.dev` überhaupt anlegbar ist, konnte ich nicht belegen
    (Cloudflare-Doku ist hier gesperrt).
-3. **Die Bildmarke aus den Owner-Dateien** (§3f). Braucht nur die drei Dateien
-   **im Repo** — ein Pfad auf dem Rechner des Owners genügt nicht, siehe §6,
-   und ein angekündigter Anhang, der nicht ankommt, auch nicht (dritter Anlauf).
-4. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a, **nachdem**
+3. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a, **nachdem**
    §3e entschieden ist (Passkeys hängen an der Domain). Danach greift auch die
    Rate-Limit-Regel, falls der Vorbehalt aus §5h zutrifft.
-5. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Reine Engine-Logik,
+4. **Streak mit Freeze-Gnade** — die Runde steht noch aus. Reine Engine-Logik,
    Persistenz additiv. Der Tages-Eimer ist bewusst *keine* Historie.
-6. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
+5. **Menschliche Prüfungen:** Hörtest, Screenreader, PWA-Installation auf dem
    Telefon — **und jetzt neu: ein Passkey auf echter Hardware**, mit einem Blick
    darauf, wie der Systemdialog das Konto benennt (§5f.3). Das ist die
    Vorbedingung für die letzte offene Design-Entscheidung dieser Runde.
-7. **Vor echten Nutzern: eine Datenschutzerklärung** (§3g). Der Inhalt steht
+6. **Vor echten Nutzern: eine Datenschutzerklärung** (§3g). Der Inhalt steht
    dort praktisch fertig; formulieren und verlinken ist eine eigene Aufgabe mit
    Rechtsfolgen.
 8. Danach die offenen Produktfragen aus §5i — Reihenfolge ist eine
