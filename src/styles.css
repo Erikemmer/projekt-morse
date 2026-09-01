@@ -696,6 +696,19 @@ button:disabled {
   text-align: center;
 }
 
+/*
+ * Die einmalige Zeile zur Klang-Variabilitaet (Stufe 1 wird aktiv): leise,
+ * zentriert, gray -- eine Information, kein Ereignis. Sie erscheint genau
+ * einmal auf dem Start-Screen und nie wieder (engine/session.ts).
+ */
+.variability-note {
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  text-align: center;
+  color: var(--gray);
+}
+
 /* Ankuendigung eines neuen Zeichens: eine Zeile, kein Konfetti. */
 .unlock {
   margin: 0;

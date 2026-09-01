@@ -14,12 +14,12 @@ import {
   currentCharacter,
   type LearnState,
 } from '../engine/learn';
-import { DEFAULT_TONE_HZ } from '../engine/settings';
 import { Pattern } from './Pattern';
 
 export function Learn({
   state,
   playing,
+  toneHz,
   onPlay,
   onBeginEcho,
   onNextCard,
@@ -29,6 +29,8 @@ export function Learn({
 }: {
   state: LearnState;
   playing: boolean;
+  /** Der Sitzungs-Ton in Hz -- Lernkarten und Echo-Check spielen immer ihn. */
+  toneHz: number;
   onPlay: () => void;
   onBeginEcho: () => void;
   onNextCard: () => void;
@@ -71,7 +73,7 @@ export function Learn({
           onContinue={state.requireEcho ? onBeginEcho : onNextCard}
         />
       ) : (
-        <Echo state={state} playing={playing} buttonRef={focusRef} onPlay={onPlay} onAnswer={onAnswer} onAdvance={onAdvance} />
+        <Echo state={state} playing={playing} toneHz={toneHz} buttonRef={focusRef} onPlay={onPlay} onAnswer={onAnswer} onAdvance={onAdvance} />
       )}
 
       {onSkip !== undefined && (
@@ -174,6 +176,7 @@ function Card({
 function Echo({
   state,
   playing,
+  toneHz,
   buttonRef,
   onPlay,
   onAnswer,
@@ -181,6 +184,7 @@ function Echo({
 }: {
   state: LearnState;
   playing: boolean;
+  toneHz: number;
   buttonRef: { current: HTMLElement | null };
   onPlay: () => void;
   onAnswer: (choice: string) => void;
@@ -192,7 +196,7 @@ function Echo({
   return (
     <>
       <div className="stage learn-stage">
-        <p className="eyebrow">{`${playing ? 'Now playing' : 'Your turn'} · ${DEFAULT_TONE_HZ} Hz`}</p>
+        <p className="eyebrow">{`${playing ? 'Now playing' : 'Your turn'} · ${toneHz} Hz`}</p>
 
         {attempt !== null ? (
           <>

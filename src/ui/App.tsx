@@ -52,13 +52,7 @@ import {
   summarize,
   type SessionState,
 } from '../engine/session';
-import {
-  CHARACTER_WPM,
-  DEFAULT_TONE_HZ,
-  ROUNDS_PER_GROUP,
-  ROUNDS_PER_SESSION,
-  STARTING_EFFECTIVE_WPM,
-} from '../engine/settings';
+import { CHARACTER_WPM, ROUNDS_PER_GROUP, ROUNDS_PER_SESSION } from '../engine/settings';
 import {
   dayAccuracy,
   dayFor,
@@ -73,11 +67,6 @@ import { Learn, ReviewPicker } from './Learn';
 import { Pattern } from './Pattern';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { todayISO } from './today';
-
-const TIMING = computeTiming({
-  characterWpm: CHARACTER_WPM,
-  effectiveWpm: STARTING_EFFECTIVE_WPM,
-});
 
 export function App() {
   const [session, setSession] = useState<SessionState>(() =>
@@ -108,13 +97,32 @@ export function App() {
     focusRef.current = element;
   }, []);
 
-  const schedule = useMemo(() => buildSchedule(session.prompt, TIMING), [session.prompt]);
+  /**
+   * Das Timing der Sitzung. Das Zeichentempo ist immer CHARACTER_WPM -- was
+   * ab Variabilitaets-Stufe 2 atmet, sind nur die Farnsworth-Pausen
+   * (engine/variability.ts).
+   */
+  const timing = useMemo(
+    () => computeTiming({ characterWpm: CHARACTER_WPM, effectiveWpm: session.sound.effectiveWpm }),
+    [session.sound.effectiveWpm],
+  );
+  const schedule = useMemo(() => buildSchedule(session.prompt, timing), [session.prompt, timing]);
 
   // Beim Verlassen der Seite nicht weiterpiepen.
   useEffect(() => () => playerRef.current?.stop(), []);
 
   // Fortschritt sichern, sobald er sich geaendert hat -- ausserhalb des Eingabepfads.
   useEffect(() => saveProgressWhenIdle(session.progress), [session.progress]);
+
+  // Das Einmal-Flag der Variabilitaets-Zeile sofort schreiben, wie introSeen:
+  // wer direkt nach dem Sitzungsstart neu laedt, soll die Zeile kein zweites
+  // Mal sehen. Der Leerlauf-Schreiber oben kaeme dafuer zu spaet -- genau so
+  // im Browser-Durchlauf passiert. Absichtlich nur vom Flag abhaengig: ein
+  // synchroner Schreiber pro Sitzungsstart, keiner auf dem Eingabepfad.
+  useEffect(() => {
+    if (session.showVariabilityNotice) saveProgressNow(session.progress);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session.showVariabilityNotice]);
 
   // Bei jedem Phasenwechsel wandert der Fokus auf das, was jetzt dran ist.
   //
@@ -137,18 +145,22 @@ export function App() {
     // Muss in der Klick-Geste passieren, sonst bleibt Audio stumm.
     await player.resume();
 
-    const handle = player.play(schedule, (elapsed) => {
-      // Der Ton ist durch, sobald die Audio-Uhr das Ende der Zeitachse erreicht.
-      // Das kommt aus dem rAF-Takt, ist also auf ~16 ms genau -- und unabhaengig
-      // davon, wann der Planer das Ende bemerkt.
-      if (elapsed >= schedule.duration) setSession(promptFinished);
-    });
+    const handle = player.play(
+      schedule,
+      (elapsed) => {
+        // Der Ton ist durch, sobald die Audio-Uhr das Ende der Zeitachse erreicht.
+        // Das kommt aus dem rAF-Takt, ist also auf ~16 ms genau -- und unabhaengig
+        // davon, wann der Planer das Ende bemerkt.
+        if (elapsed >= schedule.duration) setSession(promptFinished);
+      },
+      session.promptToneHz,
+    );
     setSession((current) => beginPlayback(current, handle.endTime));
 
     // Rueckfall, falls es keinen rAF-Takt gab (Tab im Hintergrund).
     await handle.finished;
     setSession(promptFinished);
-  }, [schedule]);
+  }, [schedule, session.promptToneHz]);
 
   /**
    * Ein einzelnes Zeichen abspielen und warten, bis es durch ist.
@@ -156,18 +168,26 @@ export function App() {
    * Der Lernmodus misst keine Reaktionszeit -- er braucht das Ende des Tons
    * nur, um weiterzuschalten. Deshalb genuegt hier das Versprechen des
    * Players; die rAF-genaue Uhr aus dem Training ist dafuer nicht noetig.
+   *
+   * Gespielt wird immer der *Sitzungs*-Ton, nie ein Prompt-Jitter: der
+   * Erstkontakt mit einem Zeichen braucht einen festen Anker
+   * (engine/variability.ts, SessionSound.sessionToneHz).
    */
-  const playCharacter = useCallback(async (char: string) => {
-    playerRef.current ??= new MorsePlayer();
-    const player = playerRef.current;
-    await player.resume();
-    setTonePlaying(true);
-    try {
-      await player.play(buildSchedule(char, TIMING), () => {}).finished;
-    } finally {
-      setTonePlaying(false);
-    }
-  }, []);
+  const learnToneHz = session.sound.sessionToneHz;
+  const playCharacter = useCallback(
+    async (char: string) => {
+      playerRef.current ??= new MorsePlayer();
+      const player = playerRef.current;
+      await player.resume();
+      setTonePlaying(true);
+      try {
+        await player.play(buildSchedule(char, timing), () => {}, learnToneHz).finished;
+      } finally {
+        setTonePlaying(false);
+      }
+    },
+    [timing, learnToneHz],
+  );
 
   const answer = useCallback((choice: string) => {
     const at = playerRef.current?.currentTime ?? 0;
@@ -326,6 +346,7 @@ export function App() {
         <Learn
           state={learn}
           playing={tonePlaying}
+          toneHz={learnToneHz}
           onPlay={learn.phase === 'card' || learn.phase === 'card-heard' ? replayCard : playEcho}
           onBeginEcho={() => setLearn((c) => (c === null ? null : beginEcho(c)))}
           onNextCard={() => setLearn((c) => (c === null ? null : nextCard(c)))}
@@ -352,7 +373,7 @@ export function App() {
           />
 
           <section className="stage">
-            <p className="eyebrow">{eyebrowFor(session.phase)}</p>
+            <p className="eyebrow">{eyebrowFor(session.phase, session.promptToneHz)}</p>
 
             {session.phase === 'feedback' && attempt !== null ? (
               <Reveal char={attempt.char} />
@@ -408,11 +429,24 @@ export function App() {
             Ablenkung, und nach jeder Runde eine Wiederholung.
           */}
           {session.round === 1 && session.phase === 'ready' && (
-            <div className="learn-skip">
-              <button type="button" className="skip" onClick={() => setReviewing(true)}>
-                Review the sounds
-              </button>
-            </div>
+            <>
+              {/*
+                Einmalig, beim ersten Aktivwerden von Variabilitaets-Stufe 1:
+                eine leise Zeile, kein Dialog. Danach traegt das Eyebrow die
+                jeweils echte Tonhoehe, und die Zeile kommt nie wieder
+                (progress.variabilityNoticeSeen).
+              */}
+              {session.showVariabilityNotice && (
+                <p className="variability-note">
+                  From here on, the pitch varies between sessions — real signals do.
+                </p>
+              )}
+              <div className="learn-skip">
+                <button type="button" className="skip" onClick={() => setReviewing(true)}>
+                  Review the sounds
+                </button>
+              </div>
+            </>
           )}
 
           <Footer day={dayFor(session.progress, session.today)} done={session.attempts.length} />
@@ -428,8 +462,10 @@ export function App() {
  * (CLAUDE.md 2.6). Die Tonhoehe steht immer daneben; sie ist zugleich der
  * sichtbare Hinweis darauf, dass dieser Modus ueber die Ohren geht.
  */
-function eyebrowFor(phase: SessionState['phase']): string {
-  const hz = `${DEFAULT_TONE_HZ} Hz`;
+function eyebrowFor(phase: SessionState['phase'], toneHz: number): string {
+  // Immer die *echte* Tonhoehe der laufenden Abfrage (CLAUDE.md 2.6) -- ab
+  // Variabilitaets-Stufe 1 ist sie nicht mehr die Konstante von frueher.
+  const hz = `${toneHz} Hz`;
   if (phase === 'listening') return `Now playing · ${hz}`;
   if (phase === 'answering') return `Your turn · ${hz}`;
   if (phase === 'feedback') return `Answer · ${hz}`;

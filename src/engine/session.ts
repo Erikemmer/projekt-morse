@@ -20,6 +20,7 @@
 import { maybeGrow } from './growth';
 import { pickNext } from './selection';
 import { beginSession, recordAttempt, type Progress } from './stats';
+import { drawPromptTone, drawSessionSound, type SessionSound } from './variability';
 
 export type Phase =
   /** Zeichen steht bereit, wurde aber noch nicht abgespielt. */
@@ -70,6 +71,20 @@ export interface SessionState {
    * gelesen: die Engine bleibt ohne Uhr und ohne DOM (CLAUDE.md 4).
    */
   readonly today: string;
+  /** Der Klang dieser Sitzung: Stufe, Sitzungs-Ton, Gesamttempo (variability.ts). */
+  readonly sound: SessionSound;
+  /**
+   * Die Tonhoehe der laufenden Abfrage. Unter Stufe 2 immer der Sitzungs-Ton;
+   * ab Stufe 2 pro Abfrage gezogen. Eine Wiederholung derselben Abfrage
+   * behaelt sie -- "noch mal hoeren" wiederholt dasselbe Signal.
+   */
+  readonly promptToneHz: number;
+  /**
+   * Ob diese Sitzung die einmalige Variabilitaets-Zeile auf dem Start-Screen
+   * zeigt. Nur beim ersten Aktivwerden von Stufe 1 true; das Merken uebernimmt
+   * `progress.variabilityNoticeSeen`.
+   */
+  readonly showVariabilityNotice: boolean;
 }
 
 export interface SessionOptions {
@@ -92,7 +107,17 @@ export function createSession(options: SessionOptions): SessionState {
 
   // Die Sitzung wird beim Beginn gezaehlt, und der Tages-Eimer zieht auf heute
   // nach -- sonst stuende morgen noch die Quote von gestern unter "Today".
-  const progress = beginSession(options.progress, options.today);
+  let progress = beginSession(options.progress, options.today);
+
+  // Der Klang der Sitzung: einmal gezogen, dann fest (variability.ts).
+  const sound = drawSessionSound(progress, options.random);
+
+  // Die einmalige Zeile beim ersten Aktivwerden der Variabilitaet. Das Flag
+  // wird sofort gesetzt und mit dem normalen Speichern persistiert; gezeigt
+  // wird die Zeile ueber showVariabilityNotice auf dem Start-Screen dieser
+  // einen Sitzung.
+  const showVariabilityNotice = sound.stage >= 1 && !progress.variabilityNoticeSeen;
+  if (showVariabilityNotice) progress = { ...progress, variabilityNoticeSeen: true };
 
   return {
     pool,
@@ -107,6 +132,9 @@ export function createSession(options: SessionOptions): SessionState {
     introduced: null,
     progress,
     today: options.today,
+    sound,
+    promptToneHz: drawPromptTone(sound, options.random),
+    showVariabilityNotice,
   };
 }
 
@@ -196,6 +224,8 @@ export function advance(state: SessionState, random: () => number): SessionState
     promptEndsAt: null,
     replays: 0,
     introduced: null,
+    // Pro Abfrage, nicht pro Abspielen: Wiederholungen behalten den Ton.
+    promptToneHz: drawPromptTone(state.sound, random),
   };
 }
 

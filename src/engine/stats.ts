@@ -105,6 +105,13 @@ export interface Progress {
    * gerade dazugelegt hat. Ein Ort, zwei Einstiegspunkte.
    */
   introducedCharacters: string[];
+  /**
+   * Ob die einmalige Zeile zur Klang-Variabilitaet schon gezeigt wurde
+   * ("From here on, the pitch varies between sessions"). Additiv mit Default
+   * false: Bestandsnutzer sehen sie beim ersten Aktivwerden von Stufe 1 --
+   * fuer sie ist das genauso das erste Mal.
+   */
+  variabilityNoticeSeen: boolean;
 }
 
 export function emptyRecord(): CharacterRecord {
@@ -126,6 +133,7 @@ export function emptyProgress(): Progress {
     day: emptyDay(),
     introSeen: false,
     introducedCharacters: [],
+    variabilityNoticeSeen: false,
   };
 }
 
@@ -298,6 +306,7 @@ export function parseProgress(raw: unknown): Progress {
     sessionsStarted: finiteOrZero((raw as { sessionsStarted?: unknown }).sessionsStarted),
     day: parseDay((raw as { day?: unknown }).day),
     introSeen: (raw as { introSeen?: unknown }).introSeen === true,
+    variabilityNoticeSeen: (raw as { variabilityNoticeSeen?: unknown }).variabilityNoticeSeen === true,
     introducedCharacters: parseIntroduced(
       (raw as { introducedCharacters?: unknown }).introducedCharacters,
       characters,

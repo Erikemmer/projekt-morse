@@ -87,8 +87,17 @@ export class MorsePlayer {
     if (this.context.state === 'suspended') await this.context.resume();
   }
 
-  /** Spielt `schedule` ab. Eine laufende Wiedergabe wird vorher abgebrochen. */
-  play(schedule: Schedule, onProgress?: (elapsedSeconds: number) => void): PlaybackHandle {
+  /**
+   * Spielt `schedule` ab. `frequencyHz` ueberschreibt die Tonhoehe fuer diese
+   * eine Wiedergabe -- die Klang-Variabilitaet (engine/variability.ts) zieht
+   * pro Sitzung bzw. pro Abfrage, und der Player soll dafuer nicht jedes Mal
+   * neu gebaut werden (der AudioContext haengt an ihm).
+   */
+  play(
+    schedule: Schedule,
+    onProgress?: (elapsedSeconds: number) => void,
+    frequencyHz?: number,
+  ): PlaybackHandle {
     this.stop();
 
     const context = this.context;
@@ -114,7 +123,7 @@ export class MorsePlayer {
         const tone = schedule.tones[nextIndex];
         const toneStart = startTime + tone.start;
         if (toneStart > horizon) break;
-        this.scheduleTone(context, master, toneStart, tone.duration);
+        this.scheduleTone(context, master, toneStart, tone.duration, frequencyHz ?? this.frequency);
         nextIndex += 1;
       }
     };
@@ -176,6 +185,7 @@ export class MorsePlayer {
     destination: GainNode,
     startTime: number,
     duration: number,
+    frequencyHz: number,
   ): void {
     // Die Rampen muessen in den Ton passen, sonst ueberlappen sie sich.
     const ramp = Math.min(this.rampSeconds, duration / 3);
@@ -183,7 +193,7 @@ export class MorsePlayer {
 
     const oscillator = context.createOscillator();
     oscillator.type = 'sine';
-    oscillator.frequency.value = this.frequency;
+    oscillator.frequency.value = frequencyHz;
 
     const envelope = context.createGain();
     envelope.gain.setValueAtTime(0, startTime);
