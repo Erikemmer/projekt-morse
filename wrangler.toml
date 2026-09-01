@@ -1,0 +1,42 @@
+# Cloudflare Pages -- Bindungen fuer die Functions in ./functions.
+#
+# Die Seite selbst braucht das nicht: `npm run build` und das Ausliefern von
+# `dist/` laufen unveraendert weiter, auch ohne diese Datei. Sie sagt nur, dass
+# die Functions eine D1-Datenbank unter dem Namen `DB` erwarten.
+#
+# ## Lokal
+#
+#   npx wrangler d1 migrations apply morse-lab --local
+#   npm run build && npx wrangler pages dev dist
+#
+# Lokal legt Wrangler die Datenbank in `.wrangler/state/` an -- `database_id`
+# spielt dabei keine Rolle, ein Login auch nicht.
+#
+# ## Produktion -- einmalig, braucht Cloudflare-Rechte
+#
+#   npx wrangler login                       # oder CLOUDFLARE_API_TOKEN
+#   npx wrangler d1 create morse-lab         # gibt die echte database_id aus
+#   # -> unten eintragen, committen
+#   npx wrangler d1 migrations apply morse-lab --remote
+#
+# Danach im Pages-Projekt `projekt-morse` die D1-Bindung `DB` auf die Datenbank
+# `morse-lab` setzen (Settings -> Functions -> D1 database bindings) -- fuer
+# Production **und** Preview. Bei Git-Anbindung liest Pages diese Datei nicht
+# fuer die Bindung; das Dashboard entscheidet.
+#
+# `database_id` steht bis dahin auf dem Platzhalter unten. Das ist Absicht und
+# kein vergessener Wert: die Session, die diese Runde gebaut hat, hatte keine
+# Cloudflare-Anmeldung (`wrangler whoami`: nicht authentifiziert), und ein
+# geratener Wert waere schlimmer als ein sichtbarer Platzhalter. Solange er
+# dort steht, laeuft die App vollstaendig -- nur `/api/*` antwortet nicht, und
+# genau das ist der Fall, der als "local-first" nachgewiesen ist.
+
+name = "projekt-morse"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "morse-lab"
+database_id = "PLACEHOLDER-run-wrangler-d1-create-morse-lab"
+migrations_dir = "migrations"

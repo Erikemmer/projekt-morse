@@ -75,6 +75,15 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
+  /*
+   * /api/ fasst der Worker gar nicht an. Diese Antworten haengen an einer
+   * Sitzung -- eine davon im Cache waere ein fremder Lernstand, den der
+   * naechste Aufruf ausliefert. Offline schlagen die Aufrufe damit fehl, und
+   * genau so ist es gedacht: der Client rechnet damit und uebt weiter (der
+   * Account ist ein Sync-Ziel, keine Voraussetzung).
+   */
+  if (url.pathname.startsWith('/api/')) return;
+
   if (request.mode === 'navigate') {
     event.respondWith(networkFirstNavigation(request));
     return;

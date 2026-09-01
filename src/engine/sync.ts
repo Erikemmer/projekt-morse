@@ -1,0 +1,117 @@
+/**
+ * Das Zusammenlegen zweier Lernstaende -- lokal und aus dem Konto.
+ *
+ * Reine Funktion, kein DOM, kein fetch (CLAUDE.md 4). Wer *wann* synchronisiert,
+ * entscheidet die UI; *was* dabei herauskommt, entscheidet hier.
+ *
+ * **Lokal bleibt die Quelle.** Das Konto ist ein Sync-Ziel, keine Voraussetzung.
+ * Deshalb gewinnt bei jedem Gleichstand der lokale Stand -- der Merge darf ein
+ * Gerät nie stiller machen, als es war.
+ *
+ * Die Regeln kommen aus der Produktentscheidung (Notion-Log #49) und sind
+ * bewusst je Feld verschieden, weil die Felder Verschiedenes bedeuten:
+ *
+ * - **Pro Zeichen gewinnt der Datensatz mit mehr `attempts`.** Versuche sind
+ *   gelebte Uebung; der Stand mit mehr davon weiss mehr ueber das Zeichen. Der
+ *   Datensatz wandert dabei *ganz* (Versuche, Treffer, Reaktionszeiten), nie
+ *   feldweise gemischt: `hits` aus einem und `attempts` aus einem anderen Stand
+ *   ergaeben eine Trefferquote, die nie jemand erlebt hat (CLAUDE.md 2.6).
+ * - **`recentAnswers`, `day`, `answersSinceGrowth` und der aktive Zeichensatz
+ *   kommen vom jüngeren Stand** (`updatedAt`). Das sind Momentaufnahmen eines
+ *   Verlaufs, keine Summen: das rollierende Fenster der Wachstumsregel darf
+ *   nicht aus zwei Geräten zusammengeschnitten werden, sonst behauptet es eine
+ *   Serie, die es nicht gab.
+ * - **`introducedCharacters` ist die Vereinigung.** Was einmal als Klang
+ *   vorgestellt wurde, wurde vorgestellt -- ein Merge darf niemanden zurück in
+ *   den Lernmodus schicken.
+ *
+ * Drei Felder nennt die Vorgabe nicht; sie müssen trotzdem einen Wert haben,
+ * weil ein `Progress` vollständig ist. Beide Regeln folgen "Persistenz verliert
+ * keine Nutzerdaten" (CLAUDE.md 4) und sind in HANDOVER.md als Setzung
+ * ausgewiesen, nicht als Vorgabe:
+ *
+ * - `sessionsStarted`: das Maximum. Ein monoton wachsender Zähler darf durch
+ *   einen Merge nicht sinken; die Summe wäre falsch, weil beide Stände dieselbe
+ *   Vorgeschichte enthalten können.
+ * - `introSeen` und `variabilityNoticeSeen`: logisches Oder. Wer die Einführung
+ *   gesehen hat, hat sie gesehen -- sie ein zweites Mal vorzulegen wäre eine
+ *   Rückstufung.
+ */
+
+import { emptyProgress, recordFor, type CharacterRecord, type Progress } from './stats';
+
+/**
+ * Ein Lernstand mit dem Zeitpunkt seiner letzten Änderung.
+ *
+ * `updatedAt` sind Millisekunden seit Epoch. `0` heisst "nie geschrieben" und
+ * ist damit immer der ältere Stand -- genau richtig für ein frisches Gerät.
+ */
+export interface Snapshot {
+  readonly progress: Progress;
+  readonly updatedAt: number;
+}
+
+/**
+ * Legt lokalen und entfernten Stand zusammen.
+ *
+ * Reihenfolge der Argumente ist Bedeutung, nicht Geschmack: bei Gleichstand
+ * gewinnt `local`.
+ */
+export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
+  // Bei gleichem Zeitstempel gewinnt der lokale Stand -- "lokal bleibt Quelle".
+  const younger = remote.updatedAt > local.updatedAt ? remote.progress : local.progress;
+
+  return {
+    version: 1,
+    characters: mergeCharacters(local.progress, remote.progress),
+    activeCharacters: [...younger.activeCharacters],
+    recentAnswers: [...younger.recentAnswers],
+    answersSinceGrowth: younger.answersSinceGrowth,
+    day: { ...younger.day, characters: [...younger.day.characters] },
+    introducedCharacters: union(
+      local.progress.introducedCharacters,
+      remote.progress.introducedCharacters,
+    ),
+    sessionsStarted: Math.max(local.progress.sessionsStarted, remote.progress.sessionsStarted),
+    introSeen: local.progress.introSeen || remote.progress.introSeen,
+    variabilityNoticeSeen:
+      local.progress.variabilityNoticeSeen || remote.progress.variabilityNoticeSeen,
+  };
+}
+
+/**
+ * Pro Zeichen der Datensatz mit mehr Versuchen -- als Ganzes. Bei Gleichstand
+ * (auch bei zwei leeren Datensätzen) der lokale.
+ */
+function mergeCharacters(
+  local: Progress,
+  remote: Progress,
+): Record<string, CharacterRecord> {
+  const merged: Record<string, CharacterRecord> = {};
+
+  for (const char of union(Object.keys(local.characters), Object.keys(remote.characters))) {
+    const mine = recordFor(local, char);
+    const theirs = recordFor(remote, char);
+    const winner = theirs.attempts > mine.attempts ? theirs : mine;
+    merged[char] = { ...winner, recentReactions: [...winner.recentReactions] };
+  }
+
+  return merged;
+}
+
+/** Vereinigung zweier Listen, Reihenfolge der ersten zuerst, ohne Dubletten. */
+function union(first: readonly string[], second: readonly string[]): string[] {
+  const result = [...new Set(first)];
+  for (const item of second) if (!result.includes(item)) result.push(item);
+  return result;
+}
+
+/**
+ * Der Stand eines frischen Geräts: leer und älter als alles andere.
+ *
+ * Steht hier und nicht in der UI, damit der Fall "erstes Login auf einem neuen
+ * Gerät" in den Tests dieselbe Eingabe hat wie im Betrieb.
+ */
+export function emptySnapshot(): Snapshot {
+  return { progress: emptyProgress(), updatedAt: 0 };
+}

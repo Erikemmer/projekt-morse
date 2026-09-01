@@ -1,0 +1,23 @@
+{
+  // Eigene Konfiguration, weil die Functions in einer anderen Welt laufen als
+  // src/: dort gibt es window und document, hier D1Database und PagesFunction.
+  // Beide Typenbaeume in einem Projekt zu mischen liesse Code kompilieren, der
+  // zur Laufzeit auf eine Wand laeuft (z.B. localStorage in einer Function).
+  //
+  // `npm run build` prueft beide Projekte -- siehe package.json.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "types": ["@cloudflare/workers-types"]
+  },
+  "include": ["."]
+}

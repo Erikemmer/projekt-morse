@@ -5,16 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && tsc -p functions --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@simplewebauthn/server": "^13.3.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260901.1",
     "@types/node": "^26.4.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
