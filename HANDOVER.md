@@ -12,7 +12,16 @@ umgesetzt. Die Commits der Runde:
 4. `b0bc074` — Übergabe mit Screenshots
 5. `3608ae5` — **Fix aus Review 9 (#56): aktiver Zeichensatz ist die
    Vereinigung, Wachstum ist monoton**
-6. (dieser Doku-Commit)
+6. `afa5715` — Übergabe auf den Abschluss der Runde (hier wurde nach `main`
+   gemergt)
+7. `3fd06d3` — **Fix: 5xx ist nicht „abgelehnt"** — zwei falsche Behauptungen
+   für genau den Zustand, in dem Produktion mit diesem Merge live geht (§5e)
+8. (dieser Doku-Commit)
+
+Die Commits 7 und 8 liegen **direkt auf `main`**, nicht mehr auf dem
+Arbeitsbranch: sie sind nach dem Merge entstanden. Der Branch
+`claude/morse-handover-alignment-nbkk6o` ist auf denselben Stand nachgezogen,
+damit beide dasselbe zeigen.
 
 **Kontext dieser Runde:** Runde B nach Notion-Log #48–51, abgeschlossen mit dem
 Ruling #56. Leitplanke über allem war **local-first**, und sie hält: die App ist
