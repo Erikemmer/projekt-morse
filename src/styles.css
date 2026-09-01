@@ -645,8 +645,13 @@ button:disabled {
 }
 
 /* "Skip intro" ist eine Textzeile, kein Knopf mit Rahmen: erreichbar, aber
- * leise -- es soll nicht mit "Begin" um Aufmerksamkeit ringen. */
-.skip {
+ * leise -- es soll nicht mit "Begin" um Aufmerksamkeit ringen.
+ *
+ * `.quiet-action` ist dieselbe Form fuer den umgekehrten Fall: die Einladung
+ * zur Speed round. Zwei Namen, weil sie Verschiedenes tun; eine Regel, weil sie
+ * gleich leise sein sollen (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf). */
+.skip,
+.quiet-action {
   padding: 0.5rem 0;
   min-height: var(--tap);
   font-size: 13px;
@@ -655,8 +660,22 @@ button:disabled {
   border: none;
 }
 
-.skip:hover {
+.skip:hover,
+.quiet-action:hover {
   color: var(--amber-deep);
+}
+
+/*
+ * Die Einladung zum Drill: eine Feststellung, darunter die Frage als leiser
+ * Textknopf. Kein Amber, kein Rahmen, keine eigene Flaeche -- sie soll
+ * erreichbar sein und sonst nichts (CLAUDE.md 2.8). Der Knopf steht auf einer
+ * eigenen Zeile, damit er die Zielgroesse aus WCAG 2.5.5 wirklich hat.
+ */
+.drill-invite {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 /*

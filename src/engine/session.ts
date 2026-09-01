@@ -35,6 +35,16 @@ export type Phase =
   /** Alle Runden durch. */
   | 'finished';
 
+/**
+ * Was fuer ein Lauf das ist.
+ *
+ * `practice` ist die normale Sitzung ueber den aktiven Zeichensatz.
+ * `drill` ist die "Speed round" (engine/drill.ts): dieselben Uebungsregeln,
+ * aber ein eigener, kleiner Zeichensatz -- und **ausserhalb des
+ * Wachstumsfensters**. Siehe `submitAnswer`.
+ */
+export type SessionKind = 'practice' | 'drill';
+
 export interface Attempt {
   /** Das gesendete Zeichen. */
   char: string;
@@ -51,6 +61,8 @@ export interface Attempt {
 }
 
 export interface SessionState {
+  /** Normale Sitzung oder Drill -- die Unterschiede stehen bei `SessionKind`. */
+  readonly kind: SessionKind;
   /** Die geuebten Zeichen: der aktive Satz aus dem Fortschritt, waechst mit ihm. */
   readonly pool: readonly string[];
   readonly totalRounds: number;
@@ -101,14 +113,23 @@ export interface SessionOptions {
    * Fehlt er, bleibt es bei DEFAULT_TONE_HZ.
    */
   homeToneHz?: number;
+  /** Normale Sitzung (Default) oder Drill. */
+  kind?: SessionKind;
+  /**
+   * Ein **abweichender** Zeichensatz. Nur der Drill setzt ihn (er uebt gezielt
+   * ein paar Zeichen, engine/drill.ts); ohne Angabe bleibt es beim aktiven
+   * Satz aus dem Fortschritt. Es gibt bewusst keinen dritten Weg, an einen
+   * Pool zu kommen.
+   */
+  pool?: readonly string[];
 }
 
 /**
- * Beginnt eine Sitzung. Geuebt wird der aktive Zeichensatz aus dem Fortschritt --
- * es gibt bewusst keinen zweiten Ort, an dem ein Pool herkommen koennte.
+ * Beginnt eine Sitzung. Geuebt wird der aktive Zeichensatz aus dem Fortschritt
+ * -- oder, nur beim Drill, der mitgegebene kleine Satz (engine/drill.ts).
  */
 export function createSession(options: SessionOptions): SessionState {
-  const pool = options.progress.activeCharacters;
+  const pool = options.pool ?? options.progress.activeCharacters;
   if (pool.length === 0) throw new RangeError('Der Zeichensatz darf nicht leer sein');
   if (options.totalRounds < 1) throw new RangeError('Eine Sitzung braucht mindestens eine Runde');
 
@@ -127,6 +148,7 @@ export function createSession(options: SessionOptions): SessionState {
   if (showVariabilityNotice) progress = { ...progress, variabilityNoticeSeen: true };
 
   return {
+    kind: options.kind ?? 'practice',
     pool,
     totalRounds: options.totalRounds,
     round: 1,
@@ -192,6 +214,19 @@ export function submitAnswer(
     replays: state.replays,
   };
 
+  /*
+   * Ein Drill verbucht die Antwort ganz normal beim Zeichen -- sie ist echt --,
+   * aber **nicht** im Wachstumsfenster, und er laesst den Zeichensatz nicht
+   * wachsen (Produktentscheidung, Notion-Log #66).
+   *
+   * Beides zusammen ist noetig. Das Fenster fernzuhalten reicht nicht: ein
+   * Drill aendert auch Versuche und Trefferquote je Zeichen, und das sind die
+   * Bedingungen (b) und (c) der Wachstumsregel -- ein neues Zeichen koennte
+   * also mitten in einer Therapiesitzung dazukommen. Ueber Wachstum
+   * entscheidet die normale Uebung; die naechste normale Antwort holt es nach.
+   */
+  const drill = state.kind === 'drill';
+
   // Erst verbuchen, dann die Wachstumsregel fragen -- diese Antwort zaehlt mit.
   const recorded = recordAttempt(
     state.progress,
@@ -199,8 +234,11 @@ export function submitAnswer(
     correct,
     attempt.reactionSeconds,
     state.today,
+    { countTowardGrowth: !drill },
   );
-  const growth = maybeGrow(recorded);
+  const growth = drill
+    ? { progress: recorded, introduced: null as string | null }
+    : maybeGrow(recorded);
 
   return {
     ...state,
@@ -221,7 +259,9 @@ export function submitAnswer(
  *
  * **Hier faellt der Streak-Tag.** Ein Tag zaehlt als geuebt, sobald an ihm eine
  * Sitzung *beendet* wurde (Notion-Log #29) -- und beendet ist sie genau an
- * dieser Kante. Sie liegt in der Engine und nicht in der UI, damit "ein Tag
+ * dieser Kante. Ein durchgezogener Drill zaehlt dabei mit: er ist eine
+ * beendete Sitzung, und der Streak misst Kontinuitaet, nicht Pflichterfuellung
+ * (CLAUDE.md 2.8). Sie liegt in der Engine und nicht in der UI, damit "ein Tag
  * gilt als geuebt" ohne Browser pruefbar bleibt; der Kalendertag steht als
  * `state.today` schon fest, eine Uhr braucht es dafuer nicht (CLAUDE.md 4).
  */

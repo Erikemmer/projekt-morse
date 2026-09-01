@@ -43,6 +43,14 @@ import {
   type LearnState,
 } from '../engine/learn';
 import { withToneHz, withVolume, type DeviceSettings } from '../engine/deviceSettings';
+import {
+  DRILL_INVITATION_MIN_SLOW,
+  DRILL_ROUNDS,
+  attemptMedianOver,
+  drillPool,
+  slowCharacters,
+  storedMedianOver,
+} from '../engine/drill';
 import { buildSchedule } from '../engine/schedule';
 import {
   advance,
@@ -52,6 +60,7 @@ import {
   retuneHomeTone,
   submitAnswer,
   summarize,
+  type SessionKind,
   type SessionState,
 } from '../engine/session';
 import { CHARACTER_WPM, ROUNDS_PER_GROUP, ROUNDS_PER_SESSION } from '../engine/settings';
@@ -102,6 +111,14 @@ export function App() {
    * derweil unberuehrt auf Runde 1. `null` heisst, es laeuft gerade keiner.
    */
   const [learn, setLearn] = useState<LearnState | null>(null);
+  /**
+   * Der Median der langsamen Zeichen, **bevor** der Drill lief -- sonst gaebe
+   * es am Ende nichts, womit man ehrlich vergleichen koennte. Er wird beim
+   * Start des Drills festgehalten, weil die Antworten des Drills danach in
+   * genau diese Messreihe laufen. `null` heisst: kein Drill, oder es gab
+   * nichts zu vergleichen.
+   */
+  const [drillBefore, setDrillBefore] = useState<number | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [tonePlaying, setTonePlaying] = useState(false);
 
@@ -194,6 +211,10 @@ export function App() {
   // Loop kein Phasenwechsel ist: die Sitzung stand die ganze Zeit auf 'ready'.
   // Ohne das bliebe der Fokus nach "Begin" auf dem verschwundenen Knopf, also
   // bei <body> -- und man muesste sich neu hineintabben.
+  // `session.kind` haengt mit drin, seit es Drills gibt: der Start einer Speed
+  // round wechselt weder Phase noch Runde (beide bleiben "Runde 1, bereit"),
+  // aber die Einladung, auf der der Fokus gerade stand, verschwindet dabei --
+  // ohne dieses Nachziehen fiele er auf <body>.
   // `view`, `reviewing` und `menuOpen` haengen mit drin, seit es das Gehaeuse
   // gibt: auch ein Ortswechsel ist ein Moduswechsel (CLAUDE.md 6). Solange das
   // Menue offen ist, setzt das Panel seinen Fokus selbst; nach X oder Esc
@@ -206,7 +227,15 @@ export function App() {
       return;
     }
     focusRef.current?.focus();
-  }, [session.phase, session.round, session.progress.introSeen, view, reviewing, menuOpen]);
+  }, [
+    session.phase,
+    session.round,
+    session.kind,
+    session.progress.introSeen,
+    view,
+    reviewing,
+    menuOpen,
+  ]);
 
   /**
    * Der Player dieser Seite -- einer, sein Leben lang.
@@ -302,6 +331,9 @@ export function App() {
   // steht, spielte seinen Karten-Ton in einen fremden Screen hinein.
   const learnDue =
     session.progress.introSeen &&
+    // Nicht in einen Drill hinein: der uebt gezielt ein paar Zeichen, und eine
+    // Lernkarte mitten darin waere ein zweiter Modus im ersten.
+    session.kind === 'practice' &&
     view === 'practice' &&
     !menuOpen &&
     !reviewing &&
@@ -383,6 +415,7 @@ export function App() {
   }, [session.progress.introducedCharacters]);
 
   const restart = useCallback(() => {
+    setDrillBefore(null);
     setSession((current) =>
       createSession({
         totalRounds: current.totalRounds,
@@ -393,6 +426,32 @@ export function App() {
       }),
     );
   }, [device.toneHz]);
+
+  /**
+   * Die "Speed round": ein kurzer Lauf nur aus den langsamen Zeichen
+   * (engine/drill.ts). Dieselben Uebungsregeln wie sonst -- nichts laeuft von
+   * allein, waehrend des Tons steht nichts auf dem Schirm, die Reaktionszeit
+   * liegt auf der Audio-Uhr.
+   */
+  const startDrill = useCallback(() => {
+    const pool = drillPool(session.progress);
+    if (pool.length === 0) return;
+
+    // Der Vergleichswert gilt den *langsamen* Zeichen, nicht den Kontrasten:
+    // verglichen wird, was vergleichbar ist (CLAUDE.md 2.6).
+    setDrillBefore(storedMedianOver(session.progress, slowCharacters(session.progress)));
+    setSession((current) =>
+      createSession({
+        totalRounds: DRILL_ROUNDS,
+        progress: current.progress,
+        random: Math.random,
+        today: todayISO(),
+        homeToneHz: device.toneHz,
+        kind: 'drill',
+        pool,
+      }),
+    );
+  }, [session.progress, device.toneHz]);
 
   /**
    * Ein Abgleich mit dem Konto hat einen neuen Stand ergeben.
@@ -510,7 +569,21 @@ export function App() {
    * Sitzung wäre sie eine Ablenkung, im Lernmodus und in der Einführung auch.
    */
   const onStartScreen =
-    session.progress.introSeen && learn === null && session.phase === 'ready' && session.round === 1;
+    session.progress.introSeen &&
+    learn === null &&
+    // Ein Drill sieht in Runde 1 aus wie ein Start-Screen, ist aber keiner:
+    // dort gehoert weder das Menue hin noch eine Einladung zum Drill.
+    session.kind === 'practice' &&
+    session.phase === 'ready' &&
+    session.round === 1;
+
+  /*
+   * Die langsamen Zeichen fuer die Einladung -- nur auf dem Start-Screen
+   * berechnet. Waehrend einer Uebung hat diese Rechnung nichts zu suchen
+   * (CLAUDE.md 7), und dort wuerde sie auch nichts anzeigen.
+   */
+  const invitation = onStartScreen ? slowCharacters(session.progress) : [];
+
   const headerShown =
     !menuOpen &&
     session.progress.introSeen &&
@@ -574,11 +647,20 @@ export function App() {
           headingRef={focusTarget}
         />
       ) : session.phase === 'finished' ? (
-        <Summary summary={summary} streak={streak} onRestart={restart} headingRef={focusTarget} />
+        <Summary
+          kind={session.kind}
+          summary={summary}
+          streak={streak}
+          drillResult={drillResult(session, drillBefore)}
+          onRestart={restart}
+          headingRef={focusTarget}
+        />
       ) : (
         <>
           <SessionHeader
-            sessionNumber={session.progress.sessionsStarted}
+            label={
+              session.kind === 'drill' ? 'Speed round' : `Session ${session.progress.sessionsStarted}`
+            }
             round={session.round}
             totalRounds={session.totalRounds}
             done={session.attempts.length}
@@ -646,8 +728,7 @@ export function App() {
             steht in genau dieser einen Sitzung nur auf dem Abschluss-Screen
             -- verloren geht er dadurch nicht.
           */}
-          {session.round === 1 &&
-            session.phase === 'ready' &&
+          {onStartScreen &&
             (session.showVariabilityNotice ? (
               <p className="variability-note">
                 From here on, the pitch varies between sessions — real signals do.
@@ -655,6 +736,21 @@ export function App() {
             ) : (
               <p className="streak-note">{streakLine(streak)}</p>
             ))}
+
+          {/*
+            Die Einladung zum Drill -- eine Feststellung und eine Frage, kein
+            Ausrufezeichen und kein Amber (CLAUDE.md 2.8). Sie erscheint erst
+            ab zwei langsamen Zeichen: fuer ein einzelnes lohnt der eigene Modus
+            nicht, das regelt die Gewichtung nebenbei mit.
+          */}
+          {invitation.length >= DRILL_INVITATION_MIN_SLOW && (
+            <div className="drill-invite">
+              <p className="streak-note">{slowSentence(invitation)}</p>
+              <button type="button" className="quiet-action" onClick={startDrill}>
+                Try a speed round?
+              </button>
+            </div>
+          )}
 
           <Footer day={dayFor(session.progress, session.today)} done={session.attempts.length} />
         </>
@@ -677,6 +773,47 @@ function eyebrowFor(phase: SessionState['phase'], toneHz: number): string {
   if (phase === 'answering') return `Your turn · ${hz}`;
   if (phase === 'feedback') return `Answer · ${hz}`;
   return `Ready · ${hz}`;
+}
+
+/**
+ * Die Einladung zum Drill, als Satz.
+ *
+ * Hoechstens drei Zeichen werden genannt; der Rest wird gezaehlt. Eine Zeile
+ * mit acht Buchstaben waere keine Einladung mehr, sondern eine Maengelliste
+ * -- und der Ton dieser Zeile ist die halbe Entscheidung (CLAUDE.md 2.8).
+ * Weniger als zwei kommen hier nie an (DRILL_INVITATION_MIN_SLOW), also ist
+ * der Plural immer richtig.
+ */
+function slowSentence(characters: readonly string[]): string {
+  const named: string[] = [...characters.slice(0, 3)];
+  const rest = characters.length - named.length;
+  if (rest > 0) named.push(`${rest} more`);
+
+  const list = `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
+  return `${list} are still slow to land.`;
+}
+
+/**
+ * Die Ergebniszeile eines Drills -- und **nur, was stimmt** (CLAUDE.md 2.6).
+ *
+ * Verglichen wird der Median der geuebten langsamen Zeichen mit dem Median
+ * derselben Zeichen von vor dem Drill. Der Zusatz "down from" steht nur da,
+ * wenn es wirklich schneller wurde; ein Rueckschritt bekommt keine Zeile
+ * (kein Schuldton, CLAUDE.md 2.8), und ohne eine einzige richtige Antwort
+ * gibt es nichts zu berichten.
+ *
+ * Zehn Abfragen sind ausserdem eine kleine Stichprobe -- der Satz behauptet
+ * deshalb ein Ergebnis dieses Laufs, kein neues Koennen.
+ */
+function drillResult(session: SessionState, before: number | null): string | null {
+  if (session.kind !== 'drill') return null;
+
+  const drilled = slowCharacters(session.progress);
+  const now = attemptMedianOver(session.attempts, drilled);
+  if (now === null) return null;
+
+  const line = `Median ${now.toFixed(1)} s`;
+  return before !== null && now < before ? `${line} — down from ${before.toFixed(1)} s.` : `${line}.`;
 }
 
 /**
@@ -720,12 +857,13 @@ function patternOf(char: string): string {
  * und genau den soll dieses Produkt nicht erzeugen (CLAUDE.md 2.8).
  */
 function SessionHeader({
-  sessionNumber,
+  label,
   round,
   totalRounds,
   done,
 }: {
-  sessionNumber: number;
+  /** Was links steht: "Session 12" -- oder "Speed round", wenn es einer ist. */
+  label: string;
   round: number;
   totalRounds: number;
   done: number;
@@ -733,7 +871,7 @@ function SessionHeader({
   return (
     <header className="masthead">
       <div className="masthead-row">
-        <span>Session {sessionNumber}</span>
+        <span>{label}</span>
         <span>
           Round {Math.min(round, totalRounds)} / {totalRounds}
         </span>
@@ -911,16 +1049,22 @@ function Answers({
 }
 
 function Summary({
+  kind,
   summary,
   streak,
+  drillResult,
   onRestart,
   headingRef,
 }: {
+  kind: SessionKind;
   summary: ReturnType<typeof summarize>;
   streak: StreakStanding;
+  /** Die Ergebniszeile eines Drills, oder null (auch bei normalen Sitzungen). */
+  drillResult: string | null;
   onRestart: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
+  const drill = kind === 'drill';
   return (
     <section className="stage" aria-labelledby="summary-heading">
       {/*
@@ -934,7 +1078,7 @@ function Summary({
         ref={headingRef}
         tabIndex={-1}
       >
-        Session done
+        {drill ? 'Speed round done' : 'Session done'}
       </h2>
 
       <dl className="facts">
@@ -944,15 +1088,24 @@ function Summary({
             {summary.hits} of {summary.rounds}
           </dd>
         </div>
-        <div>
-          <dt>Median response</dt>
-          <dd>
-            {summary.medianReactionSeconds === null
-              ? '—'
-              : `${summary.medianReactionSeconds.toFixed(1)} s`}
-          </dd>
-        </div>
+        {/*
+          Im Drill steht der Median in der Zeile darunter, und zwar nur ueber
+          die geuebten langsamen Zeichen. Beides zugleich zu zeigen hiesse,
+          zwei verschiedene Zahlen "Median" zu nennen (CLAUDE.md 2.6).
+        */}
+        {!drill && (
+          <div>
+            <dt>Median response</dt>
+            <dd>
+              {summary.medianReactionSeconds === null
+                ? '—'
+                : `${summary.medianReactionSeconds.toFixed(1)} s`}
+            </dd>
+          </div>
+        )}
       </dl>
+
+      {drillResult !== null && <p className="note">{drillResult}</p>}
 
       {/*
         Die Streak-Zeile steht *unter* den Zahlen, nicht ueber ihnen: geuebt
@@ -977,7 +1130,7 @@ function Summary({
 
       <div className="actions">
         <button type="button" className="button-primary" onClick={onRestart}>
-          Practise again
+          {drill ? 'Back to practice' : 'Practise again'}
         </button>
       </div>
     </section>
