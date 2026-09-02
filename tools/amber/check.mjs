@@ -312,7 +312,15 @@ const VIEWS = [
     async reach(page) {
       await page.getByRole('button', { name: 'Menu' }).click();
       await page.waitForSelector('.menu');
-      await page.waitForSelector('button:not([disabled]) >> text=Words & groups');
+      /*
+       * Seit Runde D1 traegt auch die (bei 390 px verborgene) Laptop-Schiene
+       * einen Eintrag desselben Namens -- eine zweite Wahrheit gibt es nicht
+       * (`ENTRIES` in ui/Menu.tsx), nur eine zweite Darstellung. Ein
+       * CSS-Text-Selektor griffe den ersten Treffer in Dokumentreihenfolge,
+       * und das waere die verborgene Schiene. `getByRole` prueft den
+       * Accessibility-Tree und laesst `display:none` dort ohnehin aussen vor.
+       */
+      await page.getByRole('button', { name: 'Words & groups' }).waitFor({ state: 'visible' });
     },
   },
   {
@@ -354,6 +362,33 @@ const VIEWS = [
     seed: progress(),
     async reach(page) {
       await openMenu(page, 'About');
+    },
+  },
+
+  /*
+   * Laptop-Layout ab 900 px (Runde D1, Notion-Log #95/#96, Teil B.5): die
+   * Navigations-Schiene und die Randspalte muessen amberfrei bleiben, auch
+   * wenn der Play-Kreis daneben waehrend der Wiedergabe sein eines Amber
+   * traegt -- genau dafuer stehen diese beiden Ansichten bei 1440x900.
+   * `viewport` ueberschreibt die 390x844-Grundstellung nur hier.
+   */
+  {
+    name: 'Laptop 1440x900, Training Ton läuft',
+    seed: progress({ characters: KEYPAD_LETTERS }),
+    viewport: { width: 1440, height: 900 },
+    async reach(page) {
+      await page.getByRole('button', { name: /^Play the character/ }).click();
+      await page.waitForSelector('.play[data-sounding="true"]', { timeout: 10000 });
+    },
+  },
+  {
+    name: 'Laptop 1440x900, Wort-Training Ton läuft',
+    seed: progress({ characters: WORD_LETTERS }),
+    viewport: { width: 1440, height: 900 },
+    async reach(page) {
+      await navigateRail(page, 'Words & groups');
+      await page.getByRole('button', { name: /^Play the word/ }).click();
+      await page.waitForSelector('.play[data-sounding="true"]', { timeout: 10000 });
     },
   },
 ];
@@ -405,6 +440,18 @@ async function answerPractice(page, { correct }) {
     await page.waitForTimeout(120);
   }
   throw new Error(`Auflösung "${correct ? 'richtig' : 'falsch'}" nicht erreicht`);
+}
+
+/**
+ * Navigiert ueber die Laptop-Schiene statt ueber das Menue -- ab 900 px gibt
+ * es keinen Hamburger mehr, der Ausloeser fuer `openMenu` ist verschwunden
+ * (styles.css, `.app-header`). `getByRole` trifft trotz der (bei 390 px
+ * verborgenen) zweiten Kopie desselben Namens nur den sichtbaren Eintrag --
+ * der Accessibility-Tree laesst `display:none` ohnehin aussen vor.
+ */
+async function navigateRail(page, label) {
+  await page.getByRole('link', { name: label }).or(page.getByRole('button', { name: label })).first().click();
+  await page.waitForTimeout(300);
 }
 
 async function openMenu(page, label) {
@@ -542,7 +589,9 @@ async function main() {
 
   try {
     for (const view of VIEWS) {
-      const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+      const context = await browser.newContext({
+        viewport: view.viewport ?? { width: 390, height: 844 },
+      });
       const page = await context.newPage();
       const consoleErrors = [];
       page.on('pageerror', (error) => consoleErrors.push(String(error)));

@@ -366,10 +366,11 @@ function Keys({
   const positions = keypad ? KEYPAD_LAYOUT : pool;
 
   return (
-    /*
+    <>
+    {/*
       `keypad-typing` senkt die Tastenhoehe -- nur hier, nicht im Training
       (styles.css nennt den Grund, Ruling #94).
-    */
+    */}
     <div className={keypad ? 'keypad keypad-typing' : 'answers'}>
       {positions.map((char) => {
         const active = !keypad || asked.has(char);
@@ -393,6 +394,10 @@ function Keys({
         );
       })}
     </div>
+    {/* Ab 900 px (styles.css, `.keypad-hint`): die physische Tastatur
+        beantwortet schon (useWordKeyboard) -- am Laptop steht es dabei. */}
+    {keypad && <p className="keypad-hint">or just type — the keyboard answers too</p>}
+    </>
   );
 }
 

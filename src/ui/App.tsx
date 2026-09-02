@@ -63,7 +63,7 @@ import {
   type SessionKind,
   type SessionState,
 } from '../engine/session';
-import { CHARACTER_WPM, ROUNDS_PER_GROUP, ROUNDS_PER_SESSION } from '../engine/settings';
+import { CHARACTER_ORDER, CHARACTER_WPM, ROUNDS_PER_GROUP, ROUNDS_PER_SESSION } from '../engine/settings';
 import { resetEffectiveWpm, speedProgressionActive } from '../engine/tempo';
 import {
   advanceWord,
@@ -78,7 +78,6 @@ import {
 } from '../engine/wordSession';
 import { WORDS_MIN_CHARACTERS, wordsUnlocked } from '../engine/words';
 import {
-  dayAccuracy,
   dayFor,
   markIntroSeen,
   markIntroduced,
@@ -94,7 +93,8 @@ import { pushProgress } from './account';
 import { Intro } from './Intro';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 import { Learn, ReviewPicker } from './Learn';
-import { AppHeader, MenuPanel, type MenuLocation } from './Menu';
+import { AppHeader, MenuPanel, NavRail, type MenuLocation } from './Menu';
+import { MarginColumn } from './MarginColumn';
 import { Pattern } from './Pattern';
 import { ProgressScreen } from './Progress';
 import { SessionHeader } from './SessionHeader';
@@ -102,6 +102,7 @@ import { Words, useWordKeyboard } from './Words';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { loadDeviceSettings, saveDeviceSettings } from './deviceStorage';
 import { Settings } from './Settings';
+import { dayQuotaLine, streakLine } from './statusLines';
 import { todayISO } from './today';
 
 export function App() {
@@ -778,8 +779,23 @@ export function App() {
     learn === null &&
     (view !== 'practice' || reviewing || onStartScreen);
 
+  /*
+   * Die Randspalte ab 1280 px (Teil A.3) -- dieselben drei Zahlen wie die
+   * Fusszeile, nur als Randnotiz statt als Zeile unter der Uebung. Sie haengt
+   * an `session.progress` und `session.today`, aendert sich also genau dann,
+   * wenn auch die Fusszeile es taete: beim Aufloesen, nie waehrend eine
+   * Antwort offen ist. Ausserhalb der Einfuehrung berechnet, weil sie vorher
+   * nichts zu zeigen haette.
+   */
+  const marginDay = dayFor(session.progress, session.today);
+  const marginTempoLine =
+    `${session.progress.activeCharacters.length} of ${CHARACTER_ORDER.length} active` +
+    (speedProgressionActive(session.progress) ? ` · ${session.progress.effectiveWpm} wpm` : '');
+
   return (
-    <main className="shell">
+    <div className="app-layout">
+      <NavRail location={menuLocation} locked={menuLocked} onNavigate={navigateTo} />
+      <main className="shell">
       {/*
         Der Name der App steht fuer Screenreader weiter oben in der Struktur,
         auch wenn der Trainings-Screen ihn nicht mehr zeigt (Ruhe-Mockup: die
@@ -980,7 +996,9 @@ export function App() {
           />
         </>
       )}
-    </main>
+      </main>
+      <MarginColumn dayLine={dayQuotaLine(marginDay)} streak={streak} tempoLine={marginTempoLine} />
+    </div>
   );
 }
 
@@ -1062,24 +1080,6 @@ function drillResult(session: SessionState, target: DrillTarget | null): string 
  */
 const PREVIEW_CHARACTER = 'R';
 
-/**
- * Die eine Streak-Zeile (Notion-Log #29).
- *
- * Kein Ausrufezeichen, kein "Don't break it", kein Zaehler, der etwas
- * androht -- die Zeile stellt fest und geht wieder (CLAUDE.md 2.8). Auch
- * "Starting fresh." ist bewusst neutral formuliert: es ist der Zustand nach
- * einer Pause und **kein** Verlust, den jemand zu verantworten haette.
- *
- * Der Freeze wird nur benannt, wenn er wirklich zutrifft: bereitliegend, oder
- * gestern verbraucht. Beides zugleich kann nach einem Merge zweier Geraete
- * dastehen -- dann gilt das Ereignis vor dem Vorrat, weil es das Neue ist.
- */
-function streakLine(streak: StreakStanding): string {
-  if (streak.days === 0) return 'Starting fresh.';
-  if (streak.freezeUsedYesterday) return `Day ${streak.days} — freeze used yesterday.`;
-  if (streak.freezeReady) return `Day ${streak.days} — freeze ready.`;
-  return `Day ${streak.days}.`;
-}
 
 /** Das Muster eines Zeichens -- nur fuers Feedback, nie waehrend des Tons. */
 function patternOf(char: string): string {
@@ -1147,15 +1147,10 @@ function Footer({
   /** Die gerade gefallene Stufe, oder null. */
   speedUp: { readonly from: number; readonly to: number } | null;
 }) {
-  const accuracy = dayAccuracy(day);
-  const characters = day.characters.length;
-
   return (
     <footer className="footer">
       <p className="footer-stats">
-        {accuracy === null
-          ? 'Today — no answers yet'
-          : `Today ${Math.round(accuracy * 100)}% · ${characters} character${characters === 1 ? '' : 's'}`}
+        {dayQuotaLine(day)}
         {speedUp !== null
           ? ` · ${speedUp.from} → ${speedUp.to} wpm`
           : wpm !== null
@@ -1254,6 +1249,7 @@ function Answers({
   const positions = keypad ? KEYPAD_LAYOUT : pool;
 
   return (
+    <>
     <div className={keypad ? 'keypad' : 'answers'}>
       {positions.map((char) => {
         // Ausserhalb des Tastenfelds steht ohnehin nur der Pool da.
@@ -1298,6 +1294,14 @@ function Answers({
         );
       })}
     </div>
+    {/*
+      Ab 900 px, nur beim Tastenfeld (styles.css, `.keypad-hint`): die
+      physische Tastatur beantwortet schon seit Runde U1 direkt (der
+      keydown-Listener oben) -- am Laptop steht jetzt dabei, dass es sie
+      gibt (Ruling Notion-Log #96, Teil B.6).
+    */}
+    {keypad && <p className="keypad-hint">or just type — the keyboard answers too</p>}
+    </>
   );
 }
 

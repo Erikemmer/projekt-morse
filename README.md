@@ -53,6 +53,12 @@ Dazu: ein Streak, der einen verpassten Tag verzeiht statt ihn zu bestrafen;
 Tonhöhe und Lautstärke einstellbar (gerätespezifisch, nie im Konto); und eine
 kurze „Speed round" für Zeichen, die zwar sitzen, aber zu lange brauchen.
 
+**Ab 900 px Breite bekommt der Laptop ein eigenes Layout**, ohne das Handy
+darunter anzufassen: eine offene Navigations-Schiene links statt des
+Hamburger-Menüs, das Tastenfeld als flacher Streifen mit zwölf statt sechs
+Spalten (am Laptop antwortet ohnehin die Tastatur), und ab 1280 px eine
+Randspalte rechts mit denselben drei Tageszahlen wie die Fußzeile.
+
 Neben der App liegt der **Learn-Bereich**: sieben redaktionelle Seiten auf
 Englisch unter `/learn/` und dieselben sieben auf Deutsch unter `/de/lernen/`.
 Sie sind statisch generiert (nicht in der SPA gerendert), tragen dieselben

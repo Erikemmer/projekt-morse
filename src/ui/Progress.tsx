@@ -42,7 +42,7 @@ export function ProgressScreen({
   const practised = progress.activeCharacters.some((char) => recordFor(progress, char).attempts > 0);
 
   return (
-    <section className="screen" aria-labelledby="progress-heading">
+    <section className="screen progress-screen" aria-labelledby="progress-heading">
       <h2 id="progress-heading" className="screen-heading" ref={headingRef} tabIndex={-1}>
         Progress
       </h2>

@@ -269,4 +269,13 @@ Fall ausdrücklich: melden statt schneiden.
 zwischen Bühne und Antwortzeile (32 px `gap`), der Abstand über dem Tastenfeld
 (`margin-top: 32px`) oder die Zeilenhöhe der Auflösungs-Zellen — 6 px an einer
 dieser drei Stellen genügen. Alle drei ändern das Bild auch dort, wo nichts
-scrollt. **Das Laptop-Layout fasst die Fläche ohnehin an.** **Gehört Fable.**
+scrollt. **Das Laptop-Layout fasst die Fläche ohnehin an.**
+
+**Behoben in Runde D1 (Ruling Notion-Log #96, Teil C.10).** Die dritte
+Option: `.solution-cell` von `gap: 4px` auf `2px`, `.solution-typed` von
+`line-height: 1.2` auf `1` — die lokale Lösung, Bühnen-`gap` und
+Tastenfeld-Abstand unberührt. Nachgemessen bei 390 × 844, fünf
+Fehlpositionen: **843 px** (vorher 849). Alle anderen Zustände desselben
+Screens unverändert bei 844 px (Pixeldiff gegen den Stand vor der Runde:
+0 Pixel, bis auf zufälligen Inhalt wie Ton-Hz und die gesendete Folge).
+[`words-solution-wrong-5-390.png`](./docs/screenshots/words-solution-wrong-5-390.png).

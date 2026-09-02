@@ -60,7 +60,12 @@ type MenuEntry =
  * dieser App, sondern ein Weg hinaus. Er steht bei den sekundären Einträgen
  * und direkt vor „About": beides ist Lesestoff, kein Üben (Ruling #83, C).
  */
-const ENTRIES: readonly MenuEntry[] = Object.freeze([
+/**
+ * Exportiert, seit es die Laptop-Schiene gibt (Ruling Notion-Log #95, B.4):
+ * **eine** Navigations-Wahrheit. Die Schiene rendert aus derselben Liste wie
+ * das Menü-Panel -- keine zweite Liste, die auseinanderlaufen könnte.
+ */
+export const ENTRIES: readonly MenuEntry[] = Object.freeze([
   { kind: 'place', location: 'practice', label: 'Practice' },
   { kind: 'place', location: 'learn', label: 'Learn the sounds' },
   { kind: 'place', location: 'words', label: 'Words & groups' },
@@ -113,6 +118,79 @@ export function AppHeader({
         </svg>
       </button>
     </header>
+  );
+}
+
+/**
+ * Die Navigations-Schiene ab 900 px (Runde D1, Notion-Log #95/#96, Teil A.2).
+ *
+ * **Ersetzt nichts, sie steht daneben.** Anders als `MenuPanel` (das den
+ * Screen ersetzt) rendert die Schiene neben der Übungsfläche und bleibt auch
+ * während einer laufenden Übung stehen (Teil B.8) -- Platz ist da, und sie
+ * ist der einzige Ausgang, seit die App-Kopfzeile mit dem Hamburger ab dieser
+ * Breite verschwindet (CSS, `.app-header`).
+ *
+ * **Eine Navigations-Wahrheit** (Teil B.4): sie rendert aus `ENTRIES`, genau
+ * der Liste, aus der auch `MenuPanel` baut. Ortsmarker und Sperre verhalten
+ * sich wie dort -- nur die Form des Markers ist eine andere.
+ *
+ * **Kein Amber** (Teil B.5): der Ortsmarker ist eine kurze Tinten-Linie links
+ * vom aktiven Eintrag (aktiv ink, übrige gray), nicht der gefüllte Punkt aus
+ * `.menu-dot`. Sonst trüge die Übungsfläche daneben zwei Amber, sobald der
+ * Play-Kreis während der Wiedergabe füllt (styles.css, `.nav-rail-item`).
+ */
+export function NavRail({
+  location,
+  locked,
+  onNavigate,
+}: {
+  location: MenuLocation;
+  locked?: Partial<Record<MenuLocation, string>>;
+  onNavigate: (target: MenuLocation) => void;
+}) {
+  return (
+    <nav className="nav-rail" aria-label="Morse Lab">
+      <p className="nav-rail-lockup">
+        <img className="nav-rail-mark" src="/logo-key.svg" alt="" width="24" height="16" />
+        <span className="wordmark nav-rail-wordmark">Morse Lab</span>
+      </p>
+
+      <div className="nav-rail-list">
+        {ENTRIES.map((entry) => {
+          if (entry.kind === 'link') {
+            return (
+              <a key={entry.href} className="nav-rail-item" href={entry.href}>
+                {entry.label}
+              </a>
+            );
+          }
+
+          const current = entry.location === location;
+          const hint = locked?.[entry.location];
+
+          return (
+            <button
+              key={entry.location}
+              type="button"
+              className="nav-rail-item"
+              aria-current={current ? 'page' : undefined}
+              disabled={hint !== undefined}
+              onClick={() => onNavigate(entry.location)}
+            >
+              {entry.label}
+              {hint !== undefined && (
+                <>
+                  <span className="menu-hint" aria-hidden="true">
+                    {hint}
+                  </span>
+                  <span className="visually-hidden">{` — locked, ${hint}`}</span>
+                </>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
 

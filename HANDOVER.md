@@ -1,10 +1,62 @@
-# Übergabe — Stand nach Runde B2 + F3 (die Marke aus den Owner-Dateien, der offene Wort-Modus)
+# Übergabe — Stand nach Runde D1 (das Laptop-Layout)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** **B2, F3 und die Korrektur aus Review 15 sind in `main`.** Basis war
-`main` = `ed83b96` (Runde F2: Wort-Modus, Tempo-Progression, Learn im Menü);
-gearbeitet ist linear, in **drei Commits**, gemergt per Fast-Forward — `main`
-und `claude/morse-handover-alignment-nbkk6o` zeigen auf denselben Stand.
+**Stand:** **B2, F3 und die Korrektur aus Review 15 sind in `main`** (`main` =
+`7d14d67`, drei Commits, per Fast-Forward gemergt). **Runde D1 liegt darauf als
+vierter Commit auf `claude/morse-handover-alignment-nbkk6o`** — noch nicht
+gemergt, Review 16 (Fable) steht aus.
+
+- **D1 setzt Ruling Notion-Log #95/#96 um:** das Laptop-Layout. Ab 900 px
+  öffnet sich eine Navigations-Schiene links statt des Hamburger-Menüs, ab
+  1280 px kommt rechts eine Randspalte mit den drei Tageszahlen dazu. Am
+  Handy (bis 899 px) ändert sich nichts.
+
+An **Backend, Sync-API, Konto, dem Learn-Bereich, der Engine und den
+Testdaten ist nichts angefasst — D1 ist reine Präsentation.** Berührt sind:
+
+| Datei | Warum |
+|---|---|
+| **`src/ui/MarginColumn.tsx`** | **neu:** die Randspalte ab 1280 px — drei Zeilen, kein Amber |
+| **`src/ui/statusLines.ts`** | **neu:** `streakLine`/`dayQuotaLine` aus `App.tsx` herausgezogen, weil Fußzeile und Randspalte sie jetzt teilen |
+| `src/ui/Menu.tsx` | **neu:** `NavRail` — dieselbe `ENTRIES`-Liste wie das Menü-Panel, jetzt exportiert |
+| `src/ui/App.tsx` | rendert `NavRail`/`MarginColumn` im neuen `.app-layout`-Grid; `streakLine` kommt jetzt aus `statusLines.ts` |
+| `src/ui/Words.tsx`, `src/ui/Progress.tsx` | eine Zeile („or just type"), eine Klasse (`.progress-screen`) für die zweispaltige Darstellung |
+| `src/styles.css` | **neu:** der ganze Laptop-Block (zwei `@media`-Stufen), plus eine 6-px-Korrektur an der Wort-Auflösung (FINDINGS #9) |
+| `tools/amber/check.mjs` | zwei neue Ansichten bei 1440×900 (Schiene + Randspalte müssen amberfrei bleiben) |
+
+Dazu fünf Screenshots (drei am Desktop, einer bei 1024 px, einer die
+FINDINGS-#9-Korrektur) und diese Übergabe.
+
+> ### Was Fable an dieser Runde sehen muss
+>
+> 1. **Eine Design-Entscheidung, die von Guidelines 1.1 abweicht, ohne es zu
+>    dürfen — abgewogen, nicht ignoriert.** Der Ortsmarker in der Schiene ist
+>    eine Tinten-Linie, kein gefüllter Punkt wie im Menü-Panel (`.menu-dot`).
+>    Grund: die Schiene steht neben der Übungsfläche, und deren Play-Kreis
+>    trägt während der Wiedergabe schon das eine erlaubte Amber der View
+>    (1.1 §4). Ein zweiter Amber-Punkt daneben wäre die zweite Fläche.
+>    `npm run verify:amber` hält das für beide neuen Laptop-Ansichten fest
+>    (§4).
+> 2. **Das Tastenfeld ist ab 900 px einheitlich 44 px hoch**, unabhängig von
+>    Training oder Wort-Modus. Die Unterscheidung 52/46 px aus Ruling #94
+>    gilt nur unter 900 px — am Laptop antwortet ohnehin die physische
+>    Tastatur (deshalb der neue Hinweis „or just type"), die Fläche ist reine
+>    Übersicht.
+> 3. ~~**FINDINGS #9: die Auflösung einer falschen Antwort scrollte bei
+>    849 px**~~ — **behoben.** Zwei Werte in `.solution-cell`/`.solution-typed`
+>    verkleinert (6 px), Bühnen-Abstand und Tastenfeld unberührt. Gemessen:
+>    **843 px** (§4), alle anderen Zustände desselben Screens unverändert
+>    (Pixeldiff 0 gegen den Stand vor der Runde). Details in
+>    [FINDINGS #9](./FINDINGS.md).
+> 4. **Die Progress-Tabelle bleibt bei ihrer mobilen Breite** (342 px),
+>    obwohl daneben Platz wäre — bei voller Aufteilung liefen die vier
+>    Spaltenköpfe ineinander (nachgemessen, nicht angenommen, CLAUDE.md 7).
+>    180 px für die drei Kennzahlen links, der Rest bleibt Weißraum. Wer das
+>    für zu viel Leerraum hält bei großen Bildschirmen: eine Design-Frage,
+>    kein technischer Zwang.
+
+<details>
+<summary><b>Die Dateien aus Runde B2 + F3 + Commit 3</b> (Basis dieser Runde, unverändert gültig)</summary>
 
 - **B2 setzt Ruling Notion-Log #88 um:** die Bildmarke kommt endgültig aus den
   drei Owner-Dateien; der Rekonstruktions-Zeichner ist gelöscht.
@@ -65,6 +117,8 @@ Dazu drei Screenshots, README und diese Übergabe.
 >    vorher so und stand in keiner Messung; §4 nennt die Zahlen,
 >    [FINDINGS #9](./FINDINGS.md) den Befund. **Nicht mitgeändert** — weniger
 >    Höhe wäre die nächste Gestaltungsfrage, und die entscheidet Fable.
+
+</details>
 
 <details>
 <summary><b>Die Dateien aus Runde F2</b> (Basis dieser Runde, unverändert gültig)</summary>
@@ -1412,7 +1466,128 @@ Wortauswahl, die Wortliste, das Tastenfeld, die Statistik je Zeichen, der
 Merge und das Backend. Die Auflösung sieht aus wie in F2 — Position für
 Position, in ink, mit der getippten Alternative darunter.
 
+## 3m. Runde D1 — das Laptop-Layout, und warum die Schiene kein Amber trägt
+
+**Der Anlass.** Bis zu dieser Runde war Morse Lab ein Handy-Layout, das auch
+auf großen Bildschirmen lief — zentriert, `max-width: 390px`, mit viel
+ungenutzter Fläche daneben. D1 gibt dem Laptop einen eigenen Grundriss, ohne
+das Handy-Layout anzufassen: unter 900 px ist buchstäblich keine Zeile
+Verhalten anders.
+
+**Drei Stufen, zwei Atemzüge.**
+
+- **Bis 899 px:** unverändert das bestehende Ein-Spalten-Layout.
+- **Ab 900 px:** `.app-layout` wird zum zweispaltigen Grid (`240px
+  minmax(0, 1fr)`). Links öffnet sich `NavRail` — eine echte Navigations-
+  Schiene, kein Overlay wie das Menü-Panel. Rechts bleibt `.shell`, jetzt auf
+  `max-width: 600px` statt 390px gedeckelt, damit Zeilenlängen nicht ins
+  Absurde wachsen. Die App-Kopfzeile mit dem Hamburger (`.app-header`)
+  verschwindet — ihr einziger Zweck war, das Menü zu öffnen, und die Schiene
+  ist jetzt selbst der Weg dorthin. Play-Kreis, Frage und Tastenfeld wachsen
+  mit (88→112 px, 26→30 px, 6→12 Spalten).
+- **Ab 1280 px:** eine dritte Spalte kommt dazu, `MarginColumn`, dieselben
+  drei Zahlen wie die Fußzeile (Tagesquote, Streak, aktive Zeichen/Tempo),
+  nur als Randnotiz statt als Zeile unter der Übung.
+
+**Eine Navigations-Wahrheit, nicht zwei.** `NavRail` und `MenuPanel` rendern
+beide aus derselben `ENTRIES`-Liste (`Menu.tsx`, jetzt exportiert). Ein
+gesperrter Eintrag zeigt in beiden denselben leisen Hinweis
+(„from 8 characters"); nur die Form ändert sich — Punkt im Panel, Zeile in
+der Schiene. Zwei Listen, die auseinanderlaufen könnten, wären hier genau der
+Fehler, den CLAUDE.md 4 verbietet.
+
+**Warum der Ortsmarker eine Linie ist, kein Punkt.** Das Menü-Panel markiert
+den aktuellen Ort mit `.menu-dot` — gefüllt in Amber, weil das Panel den
+ganzen Screen ersetzt und sonst nichts Amberes in der View steht. Die Schiene
+ersetzt nichts: sie steht *neben* der Übungsfläche, und deren Play-Kreis
+trägt während der Wiedergabe schon das eine erlaubte Amber (1.1 §4). Ein
+zweiter Amber-Punkt in der Schiene wäre die zweite Fläche, in demselben
+Moment, in dem am häufigsten überhaupt etwas amber ist. Der Marker ist
+deshalb eine 2×16-px-Tinten-Linie links vom aktiven Eintrag
+(`.nav-rail-item::before`) — Form statt Farbe, wie CLAUDE.md 6 es für jede
+Unterscheidung verlangt, die nicht an Farbe hängen darf.
+`npm run verify:amber` prüft das jetzt aktiv: zwei neue Ansichten bei
+1440×900 (Training und Wort-Training, jeweils mit klingendem Play-Kreis)
+zählen höchstens eine Amber-Fläche — die des Kreises, keine in der Schiene
+(§4).
+
+**Das Tastenfeld wird zum flachen Streifen.** Zwölf Spalten statt sechs,
+44 px hoch statt 52/46 — und zwar **einheitlich**, unabhängig davon, ob
+Training oder Wort-Modus die Fläche zeigt. Die Unterscheidung aus Ruling #94
+(52 px Training, 46 px Wort-Modus) galt für ein Handy-Layout, in dem die
+Tastenfeldhöhe über Scrollen entschied; am Laptop ist reichlich Höhe da, und
+die eigentliche Antwort kommt ohnehin über die physische Tastatur (der
+`useWordKeyboard`-Listener existiert unverändert seit Runde U1). Damit das
+sichtbar bleibt, steht unter dem Feld jetzt „or just type — the keyboard
+answers too" (`.keypad-hint`, nur ab 900 px).
+
+**Progress wird zweispaltig, aber nicht hälftig.** Drei Kennzahlen links
+(180 px), die Zeichentabelle rechts. Nachgemessen statt angenommen
+(CLAUDE.md 7): die Tabelle trägt vier Spalten und braucht dafür etwa ihre
+mobile Breite (342 px) wieder — bei einer 50/50-Aufteilung liefen die
+Spaltenköpfe ineinander. Die 180 px links sind bewusst schmal; der Rest ist
+Weißraum, kein zusätzlicher Inhalt, der ihn füllen müsste.
+
+**Eine Korrektur nebenbei, aus FINDINGS #9:** die Auflösung einer falschen
+Wort-Antwort mit fünf Fehlpositionen scrollte bei 390×844 um 5 px (849 statt
+844). Die lokale Lösung — `.solution-cell` `gap` 4→2 px, `.solution-typed`
+`line-height` 1,2→1 — trifft nur diesen einen Zustand; Bühnen-Abstand und
+Tastenfeld-Abstand, die *alle* Zustände desselben Screens verschoben hätten,
+bleiben unberührt. Nachgemessen: **843 px**, und ein Pixel-Vergleich gegen
+den Stand vor der Runde zeigt für jeden anderen Zustand **0 Pixel**
+Abweichung (§4).
+
+### Was nicht angefasst wurde
+
+Die Engine, jede Testdatei, das Backend, die Sync-API, der Learn-Bereich, die
+Bildmarke, die Wortliste, die Tempo-Progression. D1 ist eine reine
+CSS-plus-zwei-Komponenten-Runde — kein Zustand ist neu, nur seine Darstellung
+ab zwei Breakpoints.
+
 ## 4. Was nachgewiesen ist (und wie)
+
+**Aus Runde D1 (das Laptop-Layout, Ruling #95/#96):**
+
+- **`npm test` → 381/381 grün** (unverändert — D1 rührt keine Engine- oder
+  Zustandslogik an, nur Darstellung). **`npm run build`** sauber,
+  **`npm run verify:learn`** unverändert „Alle Pflichten erfüllt: 14 Seiten,
+  Sitemap, Assets, Service Worker".
+- **`npm run verify:amber` → 29 Ansichten, höchstens eine Amber-Fläche je
+  View** (27 vorher, zwei neu: „Laptop 1440×900, Training Ton läuft" und
+  „Laptop 1440×900, Wort-Training Ton läuft" — beide mit klingendem
+  Play-Kreis, beide ohne zweites Amber in der Schiene daneben). Die
+  Navigation zur Wort-Ansicht läuft dabei über die Schiene selbst
+  (`navigateRail`), nicht mehr über das Menü — ab 900 px gibt es den
+  Hamburger nicht mehr, der `openMenu` auslösen könnte.
+- **Bundle-Delta:** JS 209,22 → **211,04 kB** roh / 65,28 → **65,62 kB** gzip
+  (+1,82 kB / +0,34 kB gzip); CSS 14,02 → **16,25 kB** roh / 3,22 →
+  **3,66 kB** gzip (+2,23 kB / +0,44 kB gzip). Ausschließlich der neue
+  Laptop-Block in `styles.css` plus zwei kleine Komponenten — keine neue
+  Abhängigkeit.
+- **FINDINGS #9 nachgemessen behoben:** die Auflösung einer falschen
+  Wort-Antwort mit fünf Fehlpositionen liegt jetzt bei **843 px** (390×844,
+  vorher 849). Alle anderen Zustände desselben Screens: **0 Pixel**
+  Abweichung gegen den Stand vor der Runde (Screenshot-Diff, headless
+  Chromium) — die Korrektur trifft nur den einen Zustand, der über dem
+  Budget lag.
+- **Fünf Screenshots gezogen und geprüft:**
+  [`desktop-rail-1024.png`](./docs/screenshots/desktop-rail-1024.png)
+  (die Schiene knapp über 900 px, „Practice" aktiv mit der Tinten-Linie,
+  „Words & groups" gesperrt mit Hinweis),
+  [`desktop-training-1440.png`](./docs/screenshots/desktop-training-1440.png)
+  (Training bei 1440×900, Randspalte rechts, zwölfspaltiges Tastenfeld),
+  [`desktop-words-1440.png`](./docs/screenshots/desktop-words-1440.png)
+  (Wort-Modus, „Check" bleibt das einzige Amber der View),
+  [`desktop-progress-1440.png`](./docs/screenshots/desktop-progress-1440.png)
+  (zweispaltiges Progress, Tabelle bei mobiler Breite),
+  [`desktop-keypad-1280.png`](./docs/screenshots/desktop-keypad-1280.png)
+  (das flache Tastenfeld samt „or just type"-Hinweis).
+  Nachgemessen statt vermutet: der Play-Kreis-Rahmen ist bei 1440×900 im
+  Ruhezustand `rgb(34, 29, 22)` — `--ink`, kein Amber; auf dem Screenshot
+  wirkt die dünne Linie durch Kantenglättung bräunlicher, als sie berechnet
+  ist.
+- **Timing-Budget: unberührt.** Kein Ton-, Zeitachsen- oder Player-Code
+  angefasst.
 
 **Aus Commit 3 (Ruling #94: 46 px im Wort-Modus, `summarizeWords` gelöscht):**
 
@@ -2321,31 +2496,32 @@ ist offline, die Artikel sind eine Website.
 
 ## 7. Nächster Schritt
 
-**Review 15 ist durch, B2, F3 und die Korrektur daraus sind in `main`** —
-drei Commits, per Fast-Forward gemergt (Notion-Log #92–94). Die Messungen
-stehen in §4, die Begründungen in §3f (Marke) und §3l (offener Wort-Modus,
-Tastenhöhe). Laut Plan folgt jetzt das **Laptop-Layout** und erst dann **F4
-(Sende-Training)** — in dieser Reihenfolge, weil sonst die Oberfläche des
-Sende-Trainings zweimal gebaut wird.
+**Runde D1 (das Laptop-Layout) liegt auf dem Branch und wartet auf Review 16**
+— vierter Commit, nicht gemergt. Die Messungen stehen in §4, die
+Begründungen in §3m. **Laut Plan folgt jetzt F4 (Sende-Training)** — genau in
+der Reihenfolge, die vermeiden sollte, dass dessen Oberfläche zweimal gebaut
+wird.
 
-**Zwei Dinge aus dieser Runde brauchen ein Urteil:**
+**Eine Sache aus D1 braucht ein Urteil:**
 
-1. ~~**Der Wort-Screen scrollt um 30 px**~~ — **erledigt durch Ruling #94.**
-   Die Tasten sind im Wort-Modus 46 px hoch, der Screen misst wieder 844 px
-   ohne Scrollen (§3l, §4). **Offen bleibt ein Zustand:** die Auflösung einer
-   **falschen** Antwort steht bei 849 px, war vorher 891 und ist in F3 nie
-   gemessen worden. Weiter beschneiden wäre eine Gestaltungsfrage — sie liegt
-   bei Fable, mit Maßen in [FINDINGS #9](./FINDINGS.md). **Das Laptop-Layout
-   wird die Fläche ohnehin anfassen** (dort wird das Tastenfeld zum flachen
-   Streifen); dann ist auch zu entscheiden, ob die 46 px dort mitkommen.
-2. **Zwei Zahlen der Vorgabe zu #88 sind korrigiert** (§3f): Textbreite
+1. **Die Progress-Tabelle bleibt bei 342 px, obwohl ab 900 px Platz für mehr
+   wäre** (§3m, §4). Nachgemessen: eine hälftige Aufteilung ließe die vier
+   Spaltenköpfe ineinanderlaufen. Der Weißraum rechts ist eine bewusste
+   Leere, keine vergessene Gestaltung — aber ob das für große Bildschirme das
+   richtige Bild ist, ist eine Design-Frage.
+
+**Aus Runde B2 + F3 offen** — eine Sache, der Rest hat sich erledigt:
+
+1. **Zwei Zahlen der Vorgabe zu #88 sind korrigiert** (§3f): Textbreite
    209,45 statt 209,44 px, Sicherheitszone 182,7 statt 166,5 px. Beides ohne
    Folge für die Entscheidung — aber beides gehört gesehen, bevor es jemand
    aus der Übergabe abschreibt.
-3. ~~**`summarizeWords` hat keinen Aufrufer in der UI mehr**~~ — **erledigt
-   durch Ruling #94:** gelöscht, samt ihrer zwei Testfälle. Soll die
-   Positionsquote je wieder auf den Schirm, ist sie neu zu schreiben — dann
-   mit einem Namen, der sagt, worüber sie spricht (§3l).
+2. ~~**Der Wort-Screen scrollt um 30 px**~~ — erledigt durch Ruling #94
+   (46 px Tasten im Wort-Modus). ~~**Ein Zustand blieb bei 849 px**~~ (die
+   Auflösung einer falschen Antwort) — **jetzt ebenfalls erledigt, durch D1**
+   (§3m, §4): **843 px**, [FINDINGS #9](./FINDINGS.md) als gelöst markiert.
+3. ~~**`summarizeWords` hat keinen Aufrufer in der UI mehr**~~ — erledigt
+   durch Ruling #94: gelöscht, samt ihrer zwei Testfälle.
 
 **Aus Runde F2 offen** — vier Dinge, von denen zwei die Zeit überholt hat:
 
@@ -2366,6 +2542,15 @@ Sende-Trainings zweimal gebaut wird.
 
 **Menschliche Prüfung, die von hier aus nicht geht:**
 
+- **Neu aus D1: ein echter Laptop, nicht nur ein 1440×900-Viewport.** Trackpad
+  statt Maus über die Schiene, ein Fenster, das der Nutzer selbst verkleinert
+  (springt das Layout beim Überschreiten von 900 px oder 1280 px sauber, oder
+  ruckelt etwas dazwischen?), und ein Blick, ob 600 px `.shell`-Breite auf
+  einem breiten Monitor immer noch zentriert und nicht verloren wirkt.
+- **Screenreader über die Schiene.** `aria-current="page"` sitzt am aktiven
+  Eintrag, aber ob die Reihenfolge Logo → Liste → Übungsfläche → Randspalte
+  sich beim Durchtabben sinnvoll anfühlt, entscheidet ein Mensch mit
+  Screenreader — nicht diese Übergabe.
 - **Neu aus F3: der offene Modus auf einem echten Telefon.** Zwei Fragen. Erstens
   die Tasten: 46 px statt 52 — trifft der Daumen die unterste Reihe (0–9) noch
   sicher, und wirkt das Feld dabei enger oder einfach ruhiger? Zweitens die

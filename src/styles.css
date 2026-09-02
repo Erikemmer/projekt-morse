@@ -679,11 +679,20 @@ button:disabled {
   gap: var(--space-1);
 }
 
+/*
+ * Zeilenhoehe um 6 px verringert (Ruling Notion-Log #96, Teil C.10 --
+ * FINDINGS #9): die Aufloesung einer falschen Antwort mit fuenf
+ * Fehlpositionen lag bei 849 px, 5 ueber dem Budget. Die lokale Loesung --
+ * `gap` hier und `line-height` unten, nicht die Buehnen-`gap` und nicht der
+ * Tastenfeld-Abstand (die traefen alle Zustaende, und nur dieser eine lag
+ * ueber der Grenze). Nachgemessen bei 390 x 844: **843 px** (§4 der
+ * Uebergabe).
+ */
 .solution-cell {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   min-width: 40px;
 }
 
@@ -709,7 +718,7 @@ button:disabled {
 .solution-typed {
   font-family: var(--font-sans);
   font-size: 13px;
-  line-height: 1.2;
+  line-height: 1;
   color: var(--gray);
 }
 
@@ -1461,4 +1470,243 @@ a.menu-item {
   --edge: #3a3128;
   --edge-soft: #2a231b;
   --card: #1e1913;
+}
+
+/* ==========================================================================
+   Laptop-Layout ab 900 px (Runde D1, Notion-Log #89/#95/#96)
+   ==========================================================================
+   Bis 899 px bleibt alles oben unveraendert -- diese Regeln stehen
+   ausschliesslich in den beiden Breakpoints oder sind (wie die Grundstellung
+   "verborgen" fuer die zwei neuen Flaechen) am Handy wirkungslos, weil sie
+   nichts anzeigen, das vorher da war (Notion-Log #89, Teil A.1).
+
+   Drei Stufen:
+   - Bis 899 px: das bestehende Ein-Spalten-Layout, Kopfzeile mit Hamburger.
+   - Ab 900 px: eine offene Navigations-Schiene links (240 px), die
+     Uebungsflaeche in der Mitte, groesser als am Handy.
+   - Ab 1280 px: zusaetzlich eine amberfreie Randspalte rechts (240 px).
+*/
+
+.nav-rail,
+.margin-column {
+  display: none;
+}
+
+.keypad-hint {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  /*
+   * Die App-Kopfzeile mit dem Hamburger verschwindet: die Schiene ist ab
+   * hier der Navigations-Weg, und das Menue-Panel oeffnet hier nie (Teil
+   * A.2) -- der Ausloeser dafuer ist ja verschwunden.
+   */
+  .app-header {
+    display: none;
+  }
+
+  /*
+   * Grundriss: Schiene | Uebungsflaeche. `.shell` bleibt die zweite Spalte
+   * und behaelt seinen eigenen Innenaufbau (flex-column) unveraendert --
+   * hier aendert sich nur, wie breit die Spalte ist und wer daneben steht.
+   */
+  .app-layout {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    align-items: start;
+    min-height: 100dvh;
+  }
+
+  .shell {
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* --- Die Navigations-Schiene --- */
+
+  .nav-rail {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    padding: 32px 24px;
+    gap: 40px;
+    border-right: var(--hairline);
+  }
+
+  .nav-rail-lockup {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .nav-rail-mark {
+    width: 24px;
+    height: auto;
+  }
+
+  .nav-rail-wordmark {
+    font-size: 18px;
+  }
+
+  .nav-rail-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /*
+   * Eintraege als Fliesstext, keine Knopf-Optik: Rahmen, Fuellung und
+   * Mindestbreite der globalen `button`-Regel werden zurueckgenommen (1.1
+   * §7: Linien tragen die Oberflaeche, keine Flaechen).
+   */
+  .nav-rail-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: var(--tap);
+    padding: 0 0 0 16px;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    color: var(--gray);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    text-align: left;
+    text-decoration: none;
+  }
+
+  .nav-rail-item:hover:not(:disabled) {
+    color: var(--ink);
+  }
+
+  /*
+   * Der Ortsmarker: eine kurze Tinten-Linie links vom aktiven Eintrag, kein
+   * Punkt und kein Amber (Teil B.5) -- die Schiene steht neben einer
+   * Uebungsflaeche, deren Play-Kreis waehrend der Wiedergabe schon das eine
+   * Amber der View traegt.
+   */
+  .nav-rail-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 16px;
+    background: transparent;
+  }
+
+  .nav-rail-item[aria-current='page'] {
+    color: var(--ink);
+  }
+
+  .nav-rail-item[aria-current='page']::before {
+    background: var(--ink);
+  }
+
+  /* Der stille Hinweis am gesperrten Eintrag -- dieselbe Regel wie im Menue. */
+  .nav-rail-item .menu-hint {
+    margin-left: var(--space-1);
+  }
+
+  /* --- Die Uebungsflaeche, groesser --- */
+
+  .play {
+    width: 112px;
+    height: 112px;
+  }
+
+  .play-mark {
+    margin-left: 5px;
+    border-top-width: 17px;
+    border-bottom-width: 17px;
+    border-left-width: 28px;
+  }
+
+  .question {
+    font-size: 30px;
+  }
+
+  /* --- Das Tastenfeld: zwoelf Spalten statt sechs (Teil B.6, #75) --- */
+
+  .keypad {
+    grid-template-columns: repeat(12, 1fr);
+    gap: 6px;
+  }
+
+  /*
+   * Eine Hoehe fuer beide Modi -- die Unterscheidung 52/46 px (Ruling #94)
+   * gilt nur unter 900 px (Teil B.6). Deshalb beide Selektoren, gleiche
+   * Spezifitaet wie unten: die Reihenfolge im Quelltext entscheidet.
+   */
+  .keypad .answer,
+  .keypad.keypad-typing .answer {
+    height: 44px;
+  }
+
+  .keypad-hint {
+    display: block;
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.65;
+    text-align: center;
+    color: var(--gray);
+  }
+
+  /*
+   * Progress: darf zweispaltig werden (Teil A.7) -- die drei Kennzahlen links,
+   * schmal, die Tabelle rechts. **Nicht hälftig:** die Tabelle trägt vier
+   * Spalten und braucht dafür etwa ihre mobile Breite (342 px) wieder, sonst
+   * laufen die Spaltenköpfe ineinander -- gemessen, nicht angenommen
+   * (CLAUDE.md 7). 180 px links lassen der Tabelle rechts genug Raum.
+   */
+  .progress-screen {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    gap: var(--space-3) var(--space-2);
+    align-items: start;
+  }
+
+  .progress-screen .screen-heading {
+    grid-column: 1 / -1;
+  }
+
+  .progress-screen .stat-lines {
+    grid-column: 1;
+  }
+
+  .progress-screen .char-table,
+  .progress-screen .footnote,
+  .progress-screen .empty-note {
+    grid-column: 2;
+  }
+}
+
+@media (min-width: 1280px) {
+  .app-layout {
+    grid-template-columns: 240px minmax(0, 1fr) 240px;
+  }
+
+  /* --- Die Randspalte: Tagesquote, Streak, Tempo/Zeichenzahl --- */
+
+  .margin-column {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    align-items: flex-end;
+    padding: 32px 24px;
+    gap: 16px;
+    text-align: right;
+    border-left: var(--hairline);
+  }
+
+  .margin-line {
+    margin: 0;
+    max-width: 192px;
+    font-family: var(--font-serif);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--gray);
+  }
 }
