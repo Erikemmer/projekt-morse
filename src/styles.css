@@ -649,20 +649,41 @@ button:disabled {
  *
  * `.quiet-action` ist dieselbe Form fuer den umgekehrten Fall: die Einladung
  * zur Speed round. Zwei Namen, weil sie Verschiedenes tun; eine Regel, weil sie
- * gleich leise sein sollen (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf). */
+ * gleich leise sein sollen (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
+ *
+ * `.quiet-link` ist dieselbe Form noch einmal fuer einen echten Link -- den
+ * Weg in den Learn-Bereich auf dem About-Screen. Er verlaesst die App, deshalb
+ * ein `<a>` und kein Knopf; leise sein soll er genauso. */
 .skip,
-.quiet-action {
+.quiet-action,
+.quiet-link {
   padding: 0.5rem 0;
   min-height: var(--tap);
   font-size: 13px;
   color: var(--gray);
   background: transparent;
   border: none;
+  text-decoration: none;
 }
 
 .skip:hover,
-.quiet-action:hover {
+.quiet-action:hover,
+.quiet-link:hover {
   color: var(--amber-deep);
+}
+
+/* Beim Link zwei Zusaetze. Erstens die Unterstreichung im Hover: bei einem Wort
+ * in warmgrau traegt die Farbe allein die Erkennbarkeit nicht (CLAUDE.md 6).
+ * Zweitens `inline-flex` -- ein `<a>` ist von sich aus `inline`, und dort
+ * greift `min-height` nicht. Ohne das waere die Zielflaeche 33 px hoch statt
+ * der 44 aus 1.1 §6 (gemessen, nicht geschaetzt). */
+.quiet-link {
+  display: inline-flex;
+  align-items: center;
+}
+
+.quiet-link:hover {
+  text-decoration: underline;
 }
 
 /*
@@ -957,6 +978,12 @@ button:disabled {
   line-height: 1.65;
   color: var(--gray);
   font-variant-numeric: tabular-nums;
+}
+
+/* Der Weg in den Learn-Bereich steht unter den Fakten, nicht zwischen ihnen:
+ * er ist kein Fakt ueber die App, sondern ein Angebot. */
+.about-more {
+  margin: 0;
 }
 
 /* --- Account: eine Aussage, zwei Wege, kein Druck ---

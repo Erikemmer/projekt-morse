@@ -1,7 +1,54 @@
-# Übergabe — Stand nach Runde F1 (Streak, Settings, Speed round)
+# Übergabe — Stand nach Runde L1 (der Learn-Bereich)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** **Runde F1 ist gemergt.** Review 11 (Fable) ist bestanden, das
+**Stand:** **Runde L1 liegt auf dem Branch
+`claude/morse-handover-alignment-nbkk6o`** und wartet auf das Review von Fable
+— über das Repo und danach live auf `morse-lab.com/learn/`. Sie baut auf `main`
+nach Runde F1 auf. An **Engine, Audio, Backend, Sync und Konto ist nichts
+angefasst**; von der App selbst sind vier Dateien berührt, und jede aus einem
+benannten Grund:
+
+| Datei | Warum |
+|---|---|
+| `public/sw.js` | Learn-Seiten nicht vorab cachen — und die Falle darunter (§3i) |
+| `src/ui/About.tsx` | der eine leise Link „Learn more about Morse" |
+| `src/styles.css` | `.quiet-link` und `.about-more` für genau diesen Link |
+| `vite.config.ts` | die Generator-Tests in `include` aufnehmen |
+
+Alles andere ist neu: `content/learn/` (die 14 Texte von Fable, unverändert),
+`tools/learn/` (Generator, Stylesheet, Tests, Prüfskript),
+`docs/CONCEPT-LEARN.md`, `public/og-morse-lab.png` und acht Screenshots.
+
+**Was die Runde liefert:** sieben redaktionelle Seiten auf Englisch unter
+`/learn/` und dieselben sieben auf Deutsch unter `/de/lernen/` — statisch
+generiert, mit vollständigem Head (canonical, hreflang wechselseitig, OG,
+JSON-LD Article), `sitemap.xml`, eigenem Stylesheet aus denselben Tokens und
+einem Weg zurück in die App auf jeder Seite.
+
+> ### Zwei Konflikte im Inhalt — Entscheidung liegt bei Fable
+>
+> Beide sind gefunden, gemessen und **nicht** still aufgelöst: die Texte werden
+> laut Aufgabe nicht umgeschrieben, und beides wäre Umschreiben.
+>
+> 1. **Fünf `metaTitle` liegen über den 60 Zeichen aus CONCEPT-LEARN §4.**
+>    `beyond-the-koch-method.en` 69, `morsealphabet.de` 64,
+>    `geschichte-des-morsecodes.de` 62, `how-to-learn-morse-code.en` 62,
+>    `morse-code-in-amateur-radio.en` 62. Google schneidet in der Trefferliste
+>    bei etwa 600 px ab — betroffen ist jeweils das Ende, also der Zusatz
+>    „| Morse Lab". Der Titel *wirkt* dadurch nicht falsch, er ist nur kürzer
+>    als gedacht. Dazu drei `metaDescription` über 160 Zeichen (163, 167, 161).
+>    `npm run verify:learn` listet alle acht als „Bericht", nicht als Fehler.
+> 2. **Der Pillar verlinkt nicht auf alle anderen** (§2 fordert das). In beiden
+>    Sprachen fehlen dieselben zwei: Geschichte und Amateurfunk. Verlinkt sind
+>    Alphabet, Koch und Lernforschung. Die Gegenrichtung stimmt vollständig —
+>    jede der sechs Seiten zeigt zurück auf den Pillar und in die App, und der
+>    Hub listet alle sechs. Der Graph ist also zusammenhängend; es fehlen zwei
+>    Kanten, keine Seite.
+>
+> Beides ist ein Satz Arbeit, sobald Fable die Formulierung liefert. Bis dahin
+> ist es dokumentiert und nicht angerührt.
+
+**Runde davor (F1) — gemergt.** Review 11 (Fable) ist bestanden, das
 Ruling Notion-Log #69 umgesetzt; `main` trägt Streak, Settings und die Speed
 round, und der Deploy daraus bringt sie live. Sie baut auf `main` nach Runde B
 auf; an Backend, Sync und Konto ist **nichts** angefasst worden. Die Commits
@@ -20,7 +67,7 @@ der Runde:
    langsamen Zeichen, Avoid-Repeat unverändert
 9. (dieser Commit) — Übergabe: Ruling und die erledigte Infrastruktur
 
-**Kontext dieser Runde:** drei Features nach Notion-Log #29 und #66. Alles
+**Kontext der Runde F1:** drei Features nach Notion-Log #29 und #66. Alles
 davon ist local-first und ohne Konto vollständig: der Streak liegt im
 Lernstand, die Einstellungen liegen bewusst **daneben** und gehen nie zum
 Konto, der Drill ist reine Engine-Logik.
@@ -111,7 +158,35 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde (F1): drei Features, alle drei leise.**
+**Neu aus dieser Runde (L1): der Learn-Bereich.**
+
+- **14 statische Seiten**, sieben je Sprache: Hub, Anleitung (Pillar), Alphabet,
+  Geschichte, Amateurfunk, Koch-Methode, Lernforschung. URLs flach und
+  wechselseitig gepaart — `/learn/…/` und `/de/lernen/…/` (CONCEPT-LEARN §2).
+- **Fertiges HTML für Suchmaschinen**, nicht in der SPA gerendert: ein
+  Node-Skript (`tools/learn/build.mjs`) rendert die Markdown-Dateien beim Bauen.
+  Head vollständig — `canonical` auf sich, `hreflang` en/de/x-default in beide
+  Richtungen, Open Graph mit dem Marken-Lockup als PNG, JSON-LD `Article`,
+  genau eine `<h1>`. Dazu `sitemap.xml` mit der Wurzel und allen 14 Adressen.
+- **„Ruhe editorial" aus denselben Tokens.** 680-px-Lesespalte, Newsreader für
+  Überschriften, IBM Plex Sans 17 px bei 1,65 für den Fließtext,
+  Hairline-Tabellen, ein gefüllter Amber-Knopf pro Seite (der CTA) und **genau
+  ein** Trennornament: `−− ·−··` — echter Code, „ML" (1.1 §8). Der Farbblock
+  ist nicht verdoppelt, sondern wird beim Bauen aus `src/styles.css`
+  eingesetzt (§3i).
+- **Der Service Worker fasst die Seiten nicht vorab an** — und, wichtiger, er
+  legt sie nicht mehr als App-Shell ab. Das war eine echte Falle, siehe §3i.
+- **Ein leiser Weg hinein:** der About-Screen trägt unten
+  „Learn more about Morse" → `/learn/`. Kein Amber, kein Knopf.
+
+Screenshots:
+[`docs/screenshots/learn-hub-390.png`](./docs/screenshots/learn-hub-390.png),
+[`learn-hub-1280.png`](./docs/screenshots/learn-hub-1280.png),
+[`learn-pillar-390.png`](./docs/screenshots/learn-pillar-390.png),
+[`learn-pillar-1280.png`](./docs/screenshots/learn-pillar-1280.png),
+dazu die Alphabet-Seite (die Tabellen) und der deutsche Hub in beiden Breiten.
+
+**Aus Runde F1 gilt weiter: drei Features, alle drei leise.**
 
 - **Streak mit Freeze-Gnade.** Ein Tag zählt als geübt, sobald an ihm eine
   Sitzung beendet wurde. Ein einzelner verpasster Tag verbraucht den Freeze
@@ -187,13 +262,20 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | **`src/ui/deviceStorage.ts`** | **Eigener localStorage-Schlüssel, nie im Sync** | **neu** |
 | `src/ui/Menu.tsx` | Kopfzeile und Menü, **jetzt mit Settings-Zeile** | erweitert |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, plus Lern-Zeitstempel | unverändert |
-| `src/ui/About.tsx` | About-Screen | unverändert |
 | `src/ui/Progress.tsx`, `Intro.tsx`, `Learn.tsx`, `Pattern.tsx` | — | unverändert |
-| `src/styles.css` | Tokens nach 1.1 §13, **plus Regler- und Zeilen-Rollen** | erweitert |
-| `public/sw.js` | Service Worker, `/api/` ausgenommen | unverändert |
+| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, **`.quiet-link`** | erweitert |
+| **`content/learn/*.md`** | **Die 14 Texte des Learn-Bereichs (Fable), unverändert** | **neu** |
+| **`tools/learn/pages.mjs`** | **Frontmatter, Markdown, Head-Tags, Sitemap — reine Funktionen** | **neu, getestet** |
+| **`tools/learn/build.mjs`** | **Ein- und Ausgabe: schreibt nach `dist/`, prüft die Paare** | **neu** |
+| **`tools/learn/learn.css`** | **Stylesheet der Learn-Seiten; Tokens setzt der Build ein** | **neu** |
+| **`tools/learn/verify.mjs`** | **Die SEO-Gegenprobe an den gebauten Dateien** | **neu** |
+| `public/sw.js` | Service Worker, `/api/` ausgenommen, **Learn-Pfade ausgenommen** | erweitert |
+| `src/ui/About.tsx` | About-Screen, **plus Link in den Learn-Bereich** | erweitert |
+| `public/og-morse-lab.png` | Das Lockup als OG-Bild, 1200 × 630 (§3i) | neu |
+| `docs/CONCEPT-LEARN.md` | Fables Konzept — die verbindliche Vorgabe dieser Runde | neu |
 | `docs/brand/logo.py` | Konstruktions-Doku, nicht mehr Quelle (#53/54) | unverändert |
-| `docs/screenshots/` | …, **Settings, Speed-round-Einladung** | erweitert |
-| `src/engine/*.test.ts` | **221 Tests** (146 vorher, **75 neu** in dieser Runde) | grün |
+| `docs/screenshots/` | …, **acht Learn-Screenshots (390 und 1280 px)** | erweitert |
+| `src/engine/*.test.ts`, `tools/learn/pages.test.mjs` | **271 Tests** (221 vorher, **50 neu** in dieser Runde) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die
 Engine kennt niemanden, die UI rechnet nicht. **Neu dazu: der Server rechnet
@@ -535,7 +617,196 @@ schnell und zögen ihn nach unten, ohne dass jemand etwas gelernt hätte.
 „down from" steht nur da, wenn es wirklich schneller wurde; ein Rückschritt
 bekommt keine Zeile.
 
+## 3i. Runde L1 — die Entscheidungen hinter dem Learn-Bereich
+
+**Statisch, weil der Zweck es verlangt.** Der Bereich soll organischen
+Suchverkehr bringen (CONCEPT-LEARN §1). Ein Crawler, der `/learn/` als
+SPA-Route bekommt, sieht ein leeres `<div id="root">`; also rendert ein
+Node-Skript die Markdown-Dateien beim Bauen zu fertigen Seiten. Es läuft
+**nach** `vite build` und nicht davor — Vite räumt `dist/` beim Bauen aus und
+hätte die Seiten sonst gleich wieder mitgenommen. Deshalb hängt
+`build:learn` in `npm run build` hinten dran.
+
+**`marked` als einzige neue Abhängigkeit** (devDependency, in §3 des Konzepts
+ausdrücklich genehmigt). Ein handgerollter Markdown-Parser wäre die
+fehleranfälligere Wahl gewesen — die Inhalte nutzen Tabellen, Listen, Links,
+fett und kursiv. Sie landet nicht im App-Bundle: sie läuft im Build.
+
+**Drei Eingriffe in das, was `marked` liefert** — mehr nicht, und keiner davon
+ändert Text:
+
+1. **Tabellen ohne echte Kopfzeile bekommen kein leeres `<thead>`.** Die
+   Alphabet-Tabellen sind Gitter aus selbsterklärenden Zellen („A ·−"), keine
+   Datentabellen mit Spaltentiteln. Die Satzzeichen-Tabelle *hat* Titel und
+   behält sie.
+2. **Die letzte Zeile wird zum CTA.** Im Markdown steht
+   `*Start hearing it → [Open Morse Lab](/)*`; auf der Seite ist das der eine
+   gefüllte Amber-Primary (1.1 §7, Konzept §5). Der Wortlaut ist unverändert,
+   nur die Form ist ein Knopf statt Kursivschrift. Fehlt die Zeile in einer
+   Datei, entsteht kein Knopf **und kein Ornament** — es trennte sonst ins Leere.
+3. **Ein ganz kursiver Absatz sonst wird zur Randnotiz** (`.aside`). Das
+   betrifft genau eine Zeile: den Sprachhinweis auf dem Hub. Und weil der immer
+   in der *anderen* Sprache steht, bekommt er ein `lang`-Attribut — ohne das
+   liest ein Screenreader „Diese Seiten gibt es auch auf Deutsch" mit
+   englischer Aussprache vor (CLAUDE.md 6). Die Regel prüft dafür nicht den
+   Text, sondern wohin die Links zeigen.
+
+**Die Farben stehen weiter nur an einer Stelle.** `tools/learn/learn.css` hat
+keinen eigenen Token-Block, sondern die Marker-Zeile `/* @tokens */`; der Build
+ersetzt sie durch den `:root`-Block aus `src/styles.css`, Kommentare inklusive.
+Fehlt Marker oder Block, bricht der Build ab — dieselbe Haltung wie beim
+SW-Marker in `vite.config.ts`. Damit gilt CLAUDE.md 2.9 („kein Farbliteral
+außerhalb der Token-Definition") auch für die Learn-Seiten, und `verify:learn`
+prüft es am gelieferten CSS nach.
+
+**Das Amber-Budget, und die eine Abweichung, die ein Ruling braucht.** Den
+einen gefüllten Amber trägt der CTA am Seitenende — genau wie in der App
+(`.button-begin`: `--paper` auf `--amber`). Fließtext-Links stehen dagegen in
+`--amber-deep`, nicht in `--amber`. Gemessen: **`--amber` auf `--paper` ergibt
+4,46:1** und liegt damit unter den 4,5:1, die WCAG AA für Text dieser Größe
+verlangt; `--amber-deep` liegt bei **6,30:1**. Die App trifft diese Wahl für
+Amber-Text schon (`.unlock strong`, die richtige Antwort im Feedback), und
+Addendum (b) im Notion-Log #41 nennt `#92400e` genau dafür — als internen
+Shade, nie als eigenständige Fläche. Als Textfarbe ist er keine Fläche.
+**Trotzdem sagt Konzept §5 „Links in Amber", und das hier ist die dunklere
+Stufe davon — wenn Fable das anders will, ist es eine Zeile in `learn.css`.**
+Die Unterstreichung kommt wie vorgegeben erst im Hover.
+
+**Das Ornament ist echter Code und steht genau einmal.** `−− ·−··` ist „ML",
+in den Proportionen aus 1.1 §8 (Punkt ⌀ 1 u, Strich 3 u × 1 u, Lücke im
+Zeichen 1 u, zwischen den Buchstaben 3 u; hier u = 6 px). Dekorativer
+Fake-Code ist verboten, also steht dort wirklich ML. Es trennt den Artikel von
+der Einladung am Ende — „zwischen Artikelabschnitten, wo es passt" (§5), und
+zwischen jeder Überschrift wäre es Dekoration. Für Screenreader ist es
+`aria-hidden`: die Buchstabenfolge erklärt nichts, was nicht schon dasteht.
+
+**Der Service Worker: die Falle war nicht der Vorab-Cache.** Das Konzept sagt,
+die Learn-Seiten sollen **nicht** vorab gecacht werden — das allein wäre ein
+Nichtstun gewesen. Der eigentliche Fehler saß in `networkFirstNavigation`: die
+Funktion legt **jede** erfolgreiche Navigation unter dem Schlüssel `'/'` ab,
+weil bisher jede Navigation dieselbe App-Shell war. Mit dem Learn-Bereich
+stimmt das nicht mehr: ein Besuch auf `/learn/` hätte den Artikel als App-Shell
+gecacht, und die App wäre offline als Artikel gestartet. Die Navigation für
+Learn-Pfade geht deshalb über `staleWhileRevalidate` — ausdrücklich erlaubt
+(„stale-while-revalidate genügt"), mit dem Pfad als Schlüssel statt `'/'`. Die
+Learn-Assets unter `/learn/assets/` laufen ohnehin dort, nicht über den
+`cache-first`-Zweig für `/assets/`: sie sind nicht inhaltsgehasht.
+
+**Die Schriften liegen zweimal in `dist/` — mit Absicht.** Vite hasht die vier
+woff2-Dateien in `dist/assets/`; ein Generator außerhalb von Vite kennt diese
+Namen nicht. Der Learn-Bereich bekommt deshalb dieselben vier Dateien noch
+einmal unter `/learn/assets/`. Kosten: 129 kB statisch, einmal geladen und dann
+im Browser-Cache. Der Preis für einen eigenen Hash-Mechanismus wäre höher als
+129 kB, und ein Fremdabruf ist ausgeschlossen (CLAUDE.md 2.5).
+
+**Das OG-Bild ist ein abgeleitetes Asset.** `og:image` braucht ein Rasterbild —
+SVG rendern die Plattformen nicht. `public/og-morse-lab.png` (1200 × 630) ist
+deshalb einmal erzeugt worden: die Geometrie aus `public/logo-key.svg` plus die
+Wortmarke in echtem Newsreader, auf Papier, primäres Lockup nach 1.1 §3. Es ist
+kein Original: **kommen die drei Owner-Dateien ins Repo (§3f), gehört es aus
+ihnen neu erzeugt.**
+
+**JSON-LD `Article` auch auf dem Hub.** Konzept §4 fordert es „pro Seite", und
+der Hub ist eine redaktionelle Seite mit Text und Liste — deshalb wörtlich
+umgesetzt. Erfunden wird nichts: kein `author` (es gibt keinen benannten),
+kein FAQ-Schema (es gibt keine FAQ), keine `priority` und `changefreq` in der
+Sitemap (Suchmaschinen ignorieren beide, und eine erfundene Zahl ist hier so
+unehrlich wie überall — CLAUDE.md 2.6).
+
+**`robots.txt` ist unverändert — nämlich nicht vorhanden.** Das Konzept sagt
+„unverändert offen"; ohne Datei ist alles erlaubt, und das Anlegen einer wäre
+eine Änderung. Wer die Sitemap dort eintragen will (`Sitemap:`-Zeile), kann das
+tun — es ist eine eigene, kleine Entscheidung, keine Voraussetzung: die
+Sitemap lässt sich in der Search Console direkt einreichen.
+
+**Die Tests liegen bei ihrem Gegenstand.** `tools/learn/pages.test.mjs` läuft
+im normalen `npm test`; `vite.config.ts` nimmt dafür `tools/**/*.test.mjs` in
+`include` auf. Der Generator ist kein Teil der App — er läuft im Build —, also
+gehört er nicht nach `src/engine/`; geprüft wird er trotzdem, und mit denselben
+fixture-basierten Fällen wie die Engine: die letzten sieben Tests fahren die
+**echten 14 Dateien** durch den Generator, nicht eine Testvorlage.
+
 ## 4. Was nachgewiesen ist (und wie)
+
+**Aus Runde L1 (Learn-Bereich):**
+
+- **`npm test` → 271/271 grün** (221 vorher, **50 neu**). Die neuen liegen in
+  `tools/learn/pages.test.mjs`: Frontmatter (auch die fünf Abbruchfälle),
+  Adressen, genau eine H1 als H1-Regel, CTA-Erkennung, Tabelle ohne leeres
+  `thead`, der Kopf einer Seite Zeile für Zeile — und zum Schluss **sieben
+  Fälle gegen die echten 14 Dateien**, keine Testvorlage: Paarigkeit,
+  Head-Pflichten je Datei, interne Links nur auf existierende Adressen,
+  Rückweg zum Pillar, Hub-Vollständigkeit, Sitemap.
+- **`npm run build` → sauber**, inklusive der 14 Seiten. Bundle-Delta der App
+  ist klein, weil an ihr fast nichts geändert wurde: JS **195,45 kB roh /
+  61,61 kB gzip** (vorher 195,32 / 61,57 — Delta **+0,13 / +0,04**), CSS
+  **12,12 / 2,92** (vorher 11,96 / 2,88 — Delta **+0,17 / +0,05**). `marked`
+  läuft im Build und landet in keinem Bundle.
+- **Der Learn-Bereich selbst:** 14 Seiten zusammen **112 kB HTML** (Hub 4,9 kB
+  / 1,6 kB gzip; Pillar 8,4 / 3,2; Alphabet 9,5 / 2,7), `learn.css` **9,5 kB /
+  4,0 kB gzip**, dazu die vier woff2 mit **132 kB**. Sitemap 6,3 kB.
+- **`npm run verify:learn` → „Alle Pflichten erfüllt: 14 Seiten, Sitemap,
+  Assets, Service Worker."** Das Skript liest die **gebauten** Dateien und
+  prüft je Seite: genau eine `<h1>`, `lang`, `canonical` auf sich selbst,
+  `hreflang` für beide Sprachen plus `x-default`, Open Graph vollständig
+  (inklusive: das OG-Bild liegt wirklich in `dist/`), JSON-LD parsebar und
+  Feld für Feld gegen das Frontmatter, keine Überschriftensprünge. Dazu die
+  Sitemap (15 `<loc>`, jede zeigt auf eine existierende Datei), das Stylesheet
+  (Token-Block eingesetzt, **kein Farbliteral außerhalb**) und der Service
+  Worker. Die acht Berichte sind die Titel- und Beschreibungslängen aus dem
+  Kopf dieser Übergabe — Fehler sind es nicht.
+- **hreflang-Gegenprobe in beide Richtungen, auf der Platte.** Für jede der 14
+  Seiten folgt `verify.mjs` dem `hreflang`-Verweis bis zu der Datei, die dort
+  wirklich liegt, und liest deren Verweis zurück — plus die Bedingung, dass
+  beide dasselbe `x-default` nennen (immer die englische Fassung, EN-first).
+  Ein Generator, der sich konsequent irrt, fällt einem Test über seine eigenen
+  Funktionen nicht auf; dieser Probe schon. 14 von 14 stimmen in beide
+  Richtungen.
+- **Browser-Durchlauf, alle 14 Seiten** (headless Chromium gegen `dist/`,
+  390 px): Status 200, **genau eine `<h1>`**, **genau eine gefüllte
+  Amber-Fläche** (der CTA — das Amber-Budget aus 1.1 §4 hält auf jeder Seite),
+  **kein horizontales Scrollen**, beide Schriftfamilien wirklich geladen
+  (`document.fonts.check`), **keine Konsolenfehler und kein fehlgeschlagener
+  Abruf**. Bei 1280 px ist die Lesespalte **exakt 680 px** (1.1 §6), die
+  Fließtext-Linkfarbe `rgb(146, 64, 14)` = `--amber-deep`.
+- **Der Service Worker, verhaltensweise geprüft** — das ist der Nachweis, der
+  zählt, nicht der Blick in die Datei:
+
+  1. Der Worker kontrolliert die App; der Vorab-Cache enthält `/`, Manifest,
+     Icon und die gehashten Assets — **keine Learn-Adresse**.
+  2. Unter `'/'` liegt die App-Shell (enthält `id="root"`).
+  3. **Nach einem Besuch auf `/learn/`**: unter `'/'` liegt weiterhin die
+     App-Shell, **nicht** der Artikel; die Learn-Seite liegt unter ihrem
+     eigenen Schlüssel `/learn/` (stale-while-revalidate), dazu `learn.css` und
+     die zwei tatsächlich benutzten Schriftschnitte. Das ist genau die Falle
+     aus §3i, und sie ist zu.
+  4. **Offline** liefert die Wurzel weiter die App (Status 200, `#root`
+     gerendert).
+- **Der Weg aus der App hinein:** About-Screen, „Learn more about Morse" →
+  `/learn/`, Zielfläche gemessen **142 × 44 px** (die 44 aus 1.1 §6 — ein `<a>`
+  ist `inline`, dort greift `min-height` nicht; mit `inline-flex` schon).
+  Farbe `--gray`, keine gefüllte Amber-Fläche in dieser View. Screenshot:
+  [`docs/screenshots/about-learn-link-390.png`](./docs/screenshots/about-learn-link-390.png).
+- **Kontraste gerechnet, nicht geschätzt** (WCAG-Formel, sRGB): `--ink` auf
+  `--paper` **14,87:1**, `--gray` **5,14:1**, `--amber-deep` **6,30:1**,
+  `--amber` **4,46:1** (deshalb steht Fließtext-Amber auf der dunkleren Stufe,
+  §3i), `--paper` auf `--amber` **4,46:1** für die CTA-Beschriftung — dieselbe
+  Kombination wie die Primär-Knöpfe der App.
+- **Glyphenabdeckung der Inhalte geprüft:** alle Zeichen der 14 Dateien liegen
+  in den vier woff2-Subsets — **außer `→`** (U+2192) in der CTA-Zeile. Details
+  und Folgen: FINDINGS §4.
+- **Screenshots** (Hub und Pillar in 390 und 1280 px, wie in §7 des Konzepts
+  gefordert; dazu die Alphabet-Seite mit den Tabellen und der deutsche Hub):
+  `learn-hub-390/1280`, `learn-pillar-390/1280`, `learn-alphabet-390/1280`,
+  `learn-hub-de-390/1280` in [`docs/screenshots/`](./docs/screenshots/).
+
+**Was nicht nachgewiesen ist:** **Lighthouse ist in dieser Umgebung nicht
+gelaufen.** CONCEPT-LEARN §7 lässt dafür ausdrücklich die „gleichwertige
+Prüfung der Head-Tags" zu — das ist `verify:learn` plus der Browser-Durchlauf
+oben. Ein Lighthouse-Lauf auf der Live-Seite bleibt eine sinnvolle Gegenprobe
+nach dem Deploy. Ebenfalls offen und menschlich: **Screenreader über die
+Alphabet-Tabelle** (siehe FINDINGS §5) und die Darstellung der OG-Karte, wenn
+jemand einen Link teilt.
 
 **Aus Runde F1:**
 
@@ -952,8 +1223,8 @@ eigene Aufgabe.
 
 **Gefallen und umgesetzt:** Zeichen-für-Zeichen, retrieval-only, EN-first,
 Design „Ruhe", Wachstumsregel, PWA mit selbst gehosteten Schriften, das
-Gehäuse, Accounts — **und seit Runde F1 der Streak mit Freeze-Gnade, die
-Einstellungen und die Speed round.**
+Gehäuse, Accounts, seit Runde F1 der Streak mit Freeze-Gnade, die
+Einstellungen und die Speed round — **und seit L1 der Learn-Bereich.**
 
 **Offen, bewusst nicht angefasst:** nur Einzelzeichen
 (keine Fünfergruppen, kein Klartext); kein Dark Mode (Rollen stehen, kein
@@ -964,6 +1235,36 @@ Variabilitäts-Stufe 3 (QRN) nicht gebaut; „Visual practice" als opt-in-Modus
 Die drei Abweichungen vom Mockup und die zwei Lernmodus-Fragen aus den
 Vorrunden stehen unverändert in der Übergabe der Runde davor (Git-Verlauf) und
 warten weiter auf ein Urteil.
+
+### 5j. Der Learn-Bereich im Deploy (neu in L1)
+
+**Es ist nichts zu konfigurieren.** Cloudflare Pages baut mit `npm run build`
+und liefert `dist/` aus — der Generator hängt in diesem Skript, also entstehen
+die Seiten beim Deploy von selbst. Pages liefert für `/learn/` das
+`index.html` des Verzeichnisses; es braucht kein `_redirects` und keine
+Function. Die Functions in `functions/api/` sind unberührt.
+
+Nach dem ersten Deploy, in dieser Reihenfolge:
+
+1. **Die Adressen stichprobenweise abrufen** — `/learn/`, `/de/lernen/`, je ein
+   Artikel, `/sitemap.xml`, `/learn/assets/learn.css`, `/og-morse-lab.png`.
+   Lokal gegen `dist/` sind alle sechs 200 (§4).
+2. **`sitemap.xml` in der Search Console einreichen** (und in Bing Webmaster
+   Tools, falls gewünscht). Das ist der Schritt, der den Bereich überhaupt
+   findbar macht — ohne ihn liegt er nur da. Es gibt keine `robots.txt`, also
+   auch keine `Sitemap:`-Zeile; siehe §3i.
+3. **Den Cache-Wechsel des Service Workers nachsehen** wie nach jedem Deploy
+   mit geänderten Assets (§5a): genau ein Cache am Ende, der neue.
+4. **Lighthouse einmal auf `morse-lab.com/learn/how-to-learn-morse-code/`** —
+   die Gegenprobe, die in dieser Umgebung nicht möglich war (§4).
+5. **Eine OG-Karte teilen** und ansehen (Slack, Signal oder der
+   Facebook-Sharing-Debugger). Das Bild liegt als PNG 1200 × 630 bereit; ob es
+   gut *aussieht*, ist eine Design-Frage und gehört Fable.
+
+**Der Bereich ist nicht Teil der Offline-App.** Wer offline `/learn/` aufruft,
+ohne die Seite vorher besucht zu haben, bekommt die Netzwerkfehlerseite des
+Browsers. Das ist so entschieden (CONCEPT-LEARN §3) und kein Fehler: die App
+ist offline, die Artikel sind eine Website.
 
 ## 6. Fallgruben
 
@@ -1011,10 +1312,51 @@ warten weiter auf ein Urteil.
   Produktion ohne D1-Bindung.
 - **`create_repository` schlägt in dieser Umgebung fehl** (403). Zweites Repo:
   den Nutzer anlegen lassen.
+- **Vite räumt `dist/` aus.** Wer einen Generator vor `vite build` laufen
+  lässt, sieht sein Ergebnis nie. `build:learn` hängt deshalb hinten (§3i) —
+  und `npm run build:learn` allein setzt einen vorangegangenen Vite-Build
+  voraus.
+- **`min-height` greift nicht auf einem `inline`-Element.** Der Link im
+  About-Screen war damit 33 px hoch statt 44 — sichtbar wurde das erst beim
+  Messen der Zielfläche, nicht im Screenshot (§4). Bei jedem `<a>`, der eine
+  Zielgröße einhalten soll: `inline-flex` oder `inline-block`.
+- **Die Navigationsstrategie des Service Workers cacht unter `'/'`, nicht
+  unter dem Pfad.** Das war richtig, solange jede Seite die App-Shell war. Wer
+  ein zweites Dokument an derselben Herkunft ausliefert, muss diesen Zweig
+  anfassen — sonst startet die App offline als dieses Dokument (§3i). Und
+  geprüft wird das im Browser, nicht durch Lesen: erst nach einem echten
+  Besuch der neuen Adresse zeigt der Cache, was er hält.
+- **`document.fonts.check` will die volle Deskriptor-Angabe** —
+  `check('500 34px Newsreader')`, nicht `check('Newsreader')`. Ohne Gewicht und
+  Größe antwortet es unbrauchbar.
+- **Der Zeichensatz der Schriften ist kein Selbstverständnis.** Vor jedem neuen
+  Textkorpus die cmap gegen die Zeichen prüfen (hier fiel `→` auf, FINDINGS §4).
+  Ein fehlendes Zeichen bricht nichts — es sieht nur aus einer anderen Schrift
+  aus, und das merkt man auf einem Screenshot kaum.
 
 ## 7. Nächster Schritt
 
-**Die beiden Produktfragen dieser Runde sind entschieden** (Ruling
+**Diese Runde wartet auf Fables Review** — über das Repo (Screenshots und
+Prüfausgaben stehen in §4) und danach live auf `morse-lab.com/learn/`. Drei
+Dinge brauchen dabei ein Urteil, keines davon blockiert den Deploy:
+
+1. **Die fünf zu langen `metaTitle` und drei zu langen `metaDescription`**
+   (Kopf dieser Übergabe, Konflikt 1). Texte werden hier nicht umgeschrieben;
+   sobald Fable kürzere Fassungen liefert, ist es je eine Zeile Frontmatter.
+2. **Die zwei fehlenden Kanten vom Pillar** auf Geschichte und Amateurfunk
+   (Konflikt 2). Auch das ist ein Satz Text, nicht Code.
+3. **Fließtext-Links in `--amber-deep` statt `--amber`** — begründet in §3i
+   (4,46:1 gegen 4,5:1 gefordert). Will Fable das reine Amber trotzdem, ist es
+   eine Zeile in `tools/learn/learn.css`; dann steht in FINDINGS eine
+   Kontrast-Abweichung mehr.
+
+**Danach, in dieser Reihenfolge:** der Deploy und die fünf Handgriffe aus §5j
+(Adressen abrufen, Sitemap einreichen, Cache-Wechsel, Lighthouse, OG-Karte
+ansehen).
+
+**Der Stand aus der Runde davor, zum Nachlesen:**
+
+**Die beiden Produktfragen der Runde F1 sind entschieden** (Ruling
 Notion-Log #69) und umgesetzt: der Drill-Pool wird immer auf mindestens drei
 Zeichen aufgefüllt (`DRILL_MIN_POOL`, langsame plus die schnellsten sicheren
 als Kontrast), und schon **ein** langsames Zeichen lädt ein
@@ -1036,7 +1378,7 @@ zwei Handgriffe außerhalb des Repos; Fable hat beide per Chrome erledigt:
 nachsehen (genau ein Cache am Ende, der neue — §5a). Das ist die übliche
 Gegenprobe nach einem Deploy mit geänderten Assets, keine Blockade.
 
-1. **Den Deploy nachsehen** (§5e) — dieser Merge bringt F1 live. Danach das
+1. **Den Deploy nachsehen** (§5e) — der Merge von F1 hat sie live gebracht. Danach das
    kleine Signal prüfen: `/api/progress` ohne Sitzung muss **401** antworten,
    nicht 500. Und erst dann den Konto-Weg auf Produktion nachweisen
    (Register → Sitzung → Push → Login im zweiten Kontext → Merge → Löschen).
@@ -1044,7 +1386,7 @@ Gegenprobe nach einem Deploy mit geänderten Assets, keine Blockade.
    sind gesperrt); übernommen hat es Fable.
 2. ~~**Die Rate-Limit-Regel anlegen**~~ **erledigt** (siehe oben, §5h).
 3. ~~**`morse-lab.com` erreichbar machen**~~ **erledigt** (siehe oben, §5a).
-4. ~~**Streak mit Freeze-Gnade**~~ **erledigt in dieser Runde** (§3h), zusammen
+4. ~~**Streak mit Freeze-Gnade**~~ **erledigt in Runde F1** (§3h), zusammen
    mit Settings und den ICR-Drills. Der Tages-Eimer ist dabei geblieben, was er
    war: kein Verlauf. Der Streak führt fünf Zahlen mit, keine Liste — nichts
    wächst unbegrenzt (CLAUDE.md 7).

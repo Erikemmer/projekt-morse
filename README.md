@@ -25,14 +25,25 @@ Dazu: ein Streak, der einen verpassten Tag verzeiht statt ihn zu bestrafen;
 Tonhöhe und Lautstärke einstellbar (gerätespezifisch, nie im Konto); und eine
 kurze „Speed round" für Zeichen, die zwar sitzen, aber zu lange brauchen.
 
+Neben der App liegt der **Learn-Bereich**: sieben redaktionelle Seiten auf
+Englisch unter `/learn/` und dieselben sieben auf Deutsch unter `/de/lernen/`.
+Sie sind statisch generiert (nicht in der SPA gerendert), tragen dieselben
+Tokens und verlinken zurück in die App. Konzept und Vorgaben:
+[`docs/CONCEPT-LEARN.md`](./docs/CONCEPT-LEARN.md).
+
 ## Loslegen
 
 ```bash
 npm install
-npm run dev      # Entwicklungsserver
-npm test         # Engine-Tests (Vitest)
-npm run build    # Typprüfung + Produktionsbuild
+npm run dev      # Entwicklungsserver (nur die App, ohne /learn/)
+npm test         # Engine- und Generator-Tests (Vitest)
+npm run build    # Typprüfung + Produktionsbuild + Learn-Seiten
+npm run preview  # dist/ ausliefern -- so ist auch /learn/ zu sehen
 ```
+
+Der Learn-Bereich ist statisches HTML und entsteht erst im Build. Wer nur an ihm
+arbeitet: `npm run build:learn` (setzt einen Vite-Build voraus, weil er nach
+`dist/` schreibt) und `npm run verify:learn` für die SEO-Gegenprobe.
 
 ## Aufbau
 
@@ -50,6 +61,8 @@ npm run build    # Typprüfung + Produktionsbuild
 | `src/engine/session.ts` | Der Loop als reiner Zustandsautomat |
 | `src/audio/player.ts` | Wiedergabe über die Web Audio API |
 | `src/ui/` | React-Oberfläche |
+| `content/learn/` | Die Texte des Learn-Bereichs (Markdown mit Frontmatter) |
+| `tools/learn/` | Der statische Generator, sein Stylesheet und die Prüfung |
 
 `src/engine/` ist DOM-frei und ohne Browser testbar. Der Player kennt die Engine,
 die Engine kennt den Player nicht.
@@ -75,6 +88,11 @@ umlernen muss.
 Formel und Herleitung: Jon Bloom, *A Standard for Morse Timing Using the Farnsworth
 Technique*, ARRL QEX, April 1990. Der Test `PARIS dauert bei 5 WpM genau 12 Sekunden`
 prüft gegen diese Referenz, nicht gegen die eigene Implementierung.
+
+**Der Learn-Bereich ist keine SPA-Route.** Suchmaschinen sollen fertiges HTML
+bekommen, nicht ein leeres `<div id="root">`. Also rendert ein Node-Skript die
+Markdown-Dateien beim Bauen zu statischen Seiten, und der Service Worker fasst
+sie nicht vorab an: die App ist offline, die Artikel sind eine Website.
 
 ## Mitarbeit
 

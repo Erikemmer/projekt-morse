@@ -59,6 +59,9 @@ export default defineConfig({
   plugins: [react(), injectServiceWorkerPrecache()],
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    // Die Engine, und dazu der Learn-Generator: der ist kein Teil der App
+    // (er laeuft im Build), liegt deshalb in tools/ -- geprueft wird er
+    // trotzdem, und mit demselben Laeufer.
+    include: ['src/**/*.test.ts', 'tools/**/*.test.mjs'],
   },
 });

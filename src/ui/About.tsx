@@ -48,6 +48,19 @@ export function About({ headingRef }: { headingRef: (element: HTMLElement | null
           Your practice data stays on this device unless you create an account to sync it.
         </li>
       </ul>
+
+      {/*
+        Der eine leise Weg in den Learn-Bereich (CONCEPT-LEARN §2). Ein echter
+        Link, keine Screen-Navigation: /learn/ ist statisches HTML neben der
+        App, nicht einer ihrer Screens. `.quiet-link` ist dieselbe Regel wie
+        `.skip` — erreichbar und sonst nichts. Amber bleibt in dieser View der
+        Amber-Knopf des Tasters oben (1.1 §4).
+      */}
+      <p className="about-more">
+        <a className="quiet-link" href="/learn/">
+          Learn more about Morse
+        </a>
+      </p>
     </section>
   );
 }

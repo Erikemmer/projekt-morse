@@ -85,3 +85,46 @@ statt still mitrepariert (CLAUDE.md §5):
 
 **Was es kosten würde:** je ein Einzeiler. Es sind Design-Entscheidungen
 (Fable), keine technischen — gehören ins nächste Review, nicht in diesen Commit.
+
+## 4. `→` (U+2192) fehlt in allen vier selbstgehosteten Schriftschnitten
+
+**Gefunden:** 02.09.2026, beim Bauen des Learn-Bereichs.
+
+Die CTA-Zeile aller 14 Learn-Seiten heißt „Start hearing it → Open Morse Lab"
+bzw. „Fang an zu hören → Morse Lab öffnen". Der Pfeil steht in keinem der vier
+woff2-Subsets in `src/fonts/` — geprüft über die cmap-Tabellen; alle anderen
+Zeichen der Inhalte (inklusive `·`, `−` U+2212, `„`, Umlaute) sind drin. Der
+Browser holt den Pfeil deshalb aus dem Fallback-Stack.
+
+**Folge:** sichtbar, aber nicht aus derselben Familie — auf dem Prüfrechner
+kommt er aus DejaVu Sans. Auf iOS, Android, Windows und macOS existiert das
+Zeichen überall, es bricht also nichts; nur die Zeichnung passt nicht exakt
+zur Wortmarke daneben.
+
+**Was es kosten würde:** die beiden Familien mit U+2192 im Subset neu erzeugen
+(latin-Subset plus dieses eine Zeichen). Das sind die Marken-Schriftdateien —
+Sache des Design-Owners, kein Einzeiler unterwegs. Alternative ohne neue
+Dateien: den Pfeil in der CTA durch eine Form ersetzen. Das wäre eine Änderung
+an Fables Text und deshalb ausdrücklich nicht hier entschieden.
+
+## 5. Die Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen
+
+**Gefunden:** 02.09.2026, gleiche Aufgabe.
+
+Die Alphabet-Tabelle liefert die Muster als Text mit `·` (U+00B7) und `−`
+(U+2212) — so gibt es CONCEPT-LEARN §5 vor („als Text mit · und − in ink,
+Monospace unnötig"). Vorgelesen wird daraus im besten Fall „A Mittelpunkt
+Minus", und bei der verbreiteten Einstellung *Satzzeichen: keine* gar nichts:
+die Zelle heißt dann nur noch „A".
+
+**Warum es hier nicht behoben wurde:** die App kennt die Lösung schon —
+`spellPattern` in `src/ui/Pattern.tsx` macht daraus „dit dah" für
+Screenreader. Für die Tabelle hieße das, in jede Zelle einen unsichtbaren
+Zusatztext zu generieren. Das ist keine Umformulierung, aber es ist Text, den
+Fable nicht geschrieben hat, in Inhalten, die laut Aufgabe unverändert
+bleiben. Deshalb Bericht statt Eingriff (CLAUDE.md §5, §2.9).
+
+**Was es kosten würde:** rund zehn Zeilen im Generator: Zellen der Form
+`**X** ·−` erkennen und das Muster zusätzlich als `<span class="visually-hidden">`
+in der vorgelesenen Form ausgeben. Braucht eine Freigabe von Fable, weil es
+den vorgelesenen Inhalt der Seite ändert.

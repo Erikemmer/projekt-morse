@@ -76,7 +76,15 @@ Nicht still auflösen.
   - `src/engine/` — Alphabet, Farnsworth-Timing, Zeitachse. **DOM-frei, rein, testbar.**
   - `src/audio/` — Web-Audio-Wiedergabe. Kennt die Engine, nicht die UI.
   - `src/ui/` — React-Komponenten. Rendern Zustand, enthalten keine Logik.
+  - `content/learn/` — die Texte des Learn-Bereichs (Markdown mit Frontmatter).
+  - `tools/learn/` — der statische Generator daraus, sein Stylesheet, seine Tests.
+    Läuft im Build, nicht in der App.
+- **Der Learn-Bereich ist redaktioneller Inhalt, kein Code.** Die Texte in
+  `content/learn/` gehören dem Konzept-Owner (Fable). Sie werden **nicht
+  umgeschrieben** — echte Tippfehler ausgenommen, und die werden gemeldet.
+  Struktur, IA und SEO-Pflichten stehen in [`docs/CONCEPT-LEARN.md`](./docs/CONCEPT-LEARN.md).
 - **Abhängigkeiten:** möglichst null neue. Jede neue braucht eine Begründung im PR.
+  Bisher genehmigt: `marked` als devDependency für den Learn-Generator.
 
 ## 4. Architekturregeln
 

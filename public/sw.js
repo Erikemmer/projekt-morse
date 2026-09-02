@@ -18,6 +18,12 @@
  *   inhaltlich -- sie werden nur beim Versionswechsel aufgeraeumt.
  * - Rest gleicher Herkunft (Icons, Manifest): Cache zuerst, im Hintergrund
  *   auffrischen (stale-while-revalidate).
+ * - **Der Learn-Bereich** (/learn/, /de/lernen/): stale-while-revalidate wie
+ *   der Rest, aber ausdruecklich *nicht* im Vorab-Cache (CONCEPT-LEARN §3).
+ *   Zwei Gruende, und der zweite ist der wichtigere: die redaktionellen Seiten
+ *   sind nicht Teil der Offline-App, und ihr HTML ist **nicht die App-Shell**.
+ *   Die Navigationsbehandlung legt jede Seite unter '/' ab -- eine Learn-Seite
+ *   dort hiesse, dass die App offline als Artikel startet.
  *
  * Fremde Herkuenfte fasst er nicht an -- es gibt keine (CLAUDE.md 2.5).
  *
@@ -41,8 +47,16 @@ const CACHE = `projekt-morse-${VERSION}`;
 /** Siehe Kopfkommentar: Vary ignorieren, der Pfad ist hier der Schluessel. */
 const MATCH_OPTIONS = { ignoreVary: true };
 
-/** Was schon beim Installieren hineingehoert: die Startseite, ihr Rahmen, ihre Assets. */
+/** Was schon beim Installieren hineingehoert: die Startseite, ihr Rahmen, ihre Assets.
+ * Der Learn-Bereich gehoert bewusst nicht dazu (siehe Kopfkommentar). */
 const PRECACHE = ['/', '/manifest.webmanifest', '/icons/icon-192.png', ...BUILD_ASSETS];
+
+/** Die zwei Wurzeln des Learn-Bereichs (CONCEPT-LEARN §2). */
+const LEARN_PREFIXES = ['/learn/', '/de/lernen/'];
+
+function isLearnPath(pathname) {
+  return LEARN_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -85,7 +99,16 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api/')) return;
 
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirstNavigation(request));
+    /*
+     * Learn-Seiten sind eigene Dokumente und nicht die App-Shell -- sie
+     * duerfen deshalb nicht durch networkFirstNavigation laufen, die alles
+     * unter '/' ablegt. Sie nehmen denselben Weg wie die uebrigen statischen
+     * Dateien: aus dem Cache, wenn es einen Eintrag gibt, sonst aus dem Netz,
+     * und im Hintergrund auffrischen (CONCEPT-LEARN §3).
+     */
+    event.respondWith(
+      isLearnPath(url.pathname) ? staleWhileRevalidate(request) : networkFirstNavigation(request),
+    );
     return;
   }
 
@@ -101,7 +124,9 @@ async function networkFirstNavigation(request) {
   const cache = await caches.open(CACHE);
   try {
     const response = await fetch(request);
-    // Jede Seite ist dieselbe App-Shell; gecacht wird sie unter '/'.
+    // Jede Navigation, die hier ankommt, ist dieselbe App-Shell (der
+    // Learn-Bereich nimmt oben schon einen anderen Weg); gecacht wird sie
+    // deshalb unter '/'.
     if (response.ok) cache.put('/', response.clone());
     return response;
   } catch {
