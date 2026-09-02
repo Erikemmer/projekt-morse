@@ -1,9 +1,11 @@
 # Übergabe — Stand nach Runde F1 (Streak, Settings, Speed round)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** **Runde F1 liegt auf `claude/morse-handover-alignment-nbkk6o`** und
-wartet auf das Review (Fable). Sie baut auf `main` nach Runde B auf; an Backend,
-Sync und Konto ist **nichts** angefasst worden. Die Commits der Runde:
+**Stand:** **Runde F1 ist gemergt.** Review 11 (Fable) ist bestanden, das
+Ruling Notion-Log #69 umgesetzt; `main` trägt Streak, Settings und die Speed
+round, und der Deploy daraus bringt sie live. Sie baut auf `main` nach Runde B
+auf; an Backend, Sync und Konto ist **nichts** angefasst worden. Die Commits
+der Runde:
 
 1. `f4cf2ae` — **Streak mit Freeze-Gnade in der Engine** (Notion-Log #29)
 2. `65c6584` — **Die eine leise Zeile** auf Start- und Abschluss-Screen
@@ -12,35 +14,39 @@ Sync und Konto ist **nichts** angefasst worden. Die Commits der Runde:
 5. `8615559` — **Fix aus dem Browser-Durchlauf**: die Ergebniszeile des Drills
    verschwand genau dann, wenn er geholfen hatte (§4)
 6. `e49ef35` — Übergabe und Screenshots
-7. (dieser Commit) — Übergabe: **der Sync ist mit den neuen Feldern
-   durchgespielt**, zwei Geräte gegen lokale D1 (§4)
+7. `bb1e335` — Übergabe: **der Sync ist mit den neuen Feldern durchgespielt**,
+   zwei Geräte gegen lokale D1 (§4)
+8. **Ruling #69 umgesetzt** — `DRILL_MIN_POOL = 3`, Einladung ab einem
+   langsamen Zeichen, Avoid-Repeat unverändert
+9. (dieser Commit) — Übergabe: Ruling und die erledigte Infrastruktur
 
 **Kontext dieser Runde:** drei Features nach Notion-Log #29 und #66. Alles
 davon ist local-first und ohne Konto vollständig: der Streak liegt im
 Lernstand, die Einstellungen liegen bewusst **daneben** und gehen nie zum
 Konto, der Drill ist reine Engine-Logik.
 
-> ### Zwei Produktfragen, die diese Runde aufgeworfen hat — für Fable
+> ### Die zwei Produktfragen der Runde — entschieden (Ruling Notion-Log #69)
 >
-> Beides ist **umgesetzt wie spezifiziert** und nicht still verändert worden.
-> Beides braucht trotzdem eine Entscheidung, bevor die Runde nach `main` geht:
+> Beide Fragen sind beantwortet und umgesetzt; die Beschreibung bleibt stehen,
+> weil sie erklärt, *warum* die Konstanten so stehen:
 >
-> 1. **Bei genau zwei langsamen Zeichen wechselt der Drill streng ab.** Die
+> 1. **Bei genau zwei langsamen Zeichen wechselte der Drill streng ab.** Die
 >    normale Übungsregel „nie zweimal dasselbe Zeichen hintereinander"
->    (`selection.ts`) lässt bei einem Zwei-Zeichen-Satz keine Wahl: es kommt
+>    (`selection.ts`) liess bei einem Zwei-Zeichen-Satz keine Wahl: es kam
 >    R U R U R U … Im Durchlauf gemessen — die zehn Runden waren `RURURURURU`.
 >    Wer das merkt, muss nicht mehr hinhören, und **genau das verbietet
->    CLAUDE.md 2.2.** Der kleinste Fix wäre, den Kontrast-Zusatz nicht erst bei
->    *einem*, sondern bei *unter drei* langsamen Zeichen zu ziehen (eine
->    Konstante in `drill.ts`). Das ist eine Produktentscheidung, deshalb steht
->    sie hier und nicht im Code.
-> 2. **Der Kontrast-Zweig ist über die UI heute nicht erreichbar.** Die
->    Einladung erscheint ab **zwei** langsamen Zeichen, der Kontrast greift bei
->    **genau einem** — dieser Fall kann also nie geklickt werden. Der Code kann
->    beides (und ist für beides getestet); es fehlt der Weg dorthin. Entweder
->    lädt die Einladung schon ab einem langsamen Zeichen ein, oder die Speed
->    round bekommt einen festen Platz (Menü oder Progress-Screen). So oder so:
->    eine Entscheidung, kein Bug.
+>    CLAUDE.md 2.2.** **Entschieden:** `DRILL_MIN_POOL = 3` — der Pool wird
+>    immer auf drei Zeichen aufgefüllt, langsame zuerst, dann die schnellsten
+>    sicheren als Kontrast. Avoid-Repeat bleibt und hat mit drei Zeichen wieder
+>    eine echte Wahl.
+> 2. **Der Kontrast-Zweig war über die UI nicht erreichbar.** Die Einladung
+>    erschien ab **zwei** langsamen Zeichen, der Kontrast griff bei **genau
+>    einem** — dieser Fall konnte nie geklickt werden. **Entschieden:**
+>    `DRILL_INVITATION_MIN_SLOW = 1`. Schon ein langsames Zeichen lädt ein; dass
+>    daraus kein Ein-Zeichen-Drill wird, regelt `DRILL_MIN_POOL`.
+>
+> Mitgezogen, weil es sonst gebrochen wäre: der Einladungssatz stand nur im
+> Plural. Ab einem Zeichen heisst es jetzt „R is still slow to land."
 >
 > Dazu eine Kleinigkeit aus der Aufgabenstellung: **das Amber-Budget-Skript
 > existiert im Repo nicht.** Browser-Durchläufe sind hier ad hoc und werden
@@ -48,10 +54,10 @@ Konto, der Drill ist reine Engine-Logik.
 > geschrieben und steht in §4 als Regel beschrieben. Wenn er bleiben soll, ist
 > „ein committetes Prüfskript" eine eigene, kleine Aufgabe.
 
-> ### Was noch offen ist — zwei Handgriffe, beide außerhalb des Repos
+> ### Die Blockaden sind abgearbeitet — die Infrastruktur steht
 >
-> Runde B endete mit drei Blockaden, die kein Code lösen konnte. Zwei sind
-> inzwischen geschlossen:
+> Runde B endete mit drei Blockaden, die kein Code lösen konnte. Alle drei
+> sind geschlossen:
 >
 > 1. ~~**Die Bildmarke aus den Owner-Dateien**~~ **Geschlossen** (Log #61).
 >    Fable hat die Owner-Renderings pixelgenau vermessen: Knopf/Basis 0,249
@@ -63,12 +69,14 @@ Konto, der Drill ist reine Engine-Logik.
 >    existiert im Account des Owners, Migration `0001` ist samt Journal
 >    angewandt (Fable über den Cloudflare-Connector, Log #60), und
 >    `wrangler.toml` trägt die echte `database_id`. → §5e
+> 3. ~~**DNS und WAF.**~~ **Erledigt** (Fable per Chrome, heute):
+>    `morse-lab.com` ist live (CNAME `@` → `projekt-morse.pages.dev`), und die
+>    Rate-Limit-Regel `auth-rate-limit` läuft mit **4 Anfragen / 10 s / IP** auf
+>    `/api/auth/`. → §5a, §5h
 >
-> Offen bleiben zwei Handgriffe, die beide **nicht im Repo** liegen:
->
-> - **Der DNS-Eintrag für `morse-lab.com`** — ein CNAME. → §5a
-> - **Die WAF-Rate-Limit-Regel** (Ruling #56) — die exakten Dashboard-Schritte
->   stehen dokumentiert. → §5h
+> **Damit ist nichts mehr außerhalb des Repos offen.** Was bleibt, ist der
+> fachliche Nachweis auf Produktion (§5e) und die Routine-Gegenprobe des
+> Cache-Wechsels nach dem nächsten Deploy (§5b) — beides steht in §7.
 >
 > Nichts davon ist geraten oder ersatzweise gebaut.
 
@@ -522,7 +530,7 @@ Sitzung) und als Sitzung im Zähler. Der Streak misst Kontinuität, nicht
 Pflichterfüllung — das ist eine Setzung, keine Vorgabe.
 
 **Die Ergebniszeile vergleicht nur Vergleichbares.** Gemessen wird der Median
-der *langsamen* Zeichen — die Kontrast-Zeichen (bei nur einem langsamen) sind
+der *langsamen* Zeichen — die Kontrast-Zeichen (aufgefüllt bis `DRILL_MIN_POOL`) sind
 schnell und zögen ihn nach unten, ohne dass jemand etwas gelernt hätte.
 „down from" steht nur da, wenn es wirklich schneller wurde; ein Rückschritt
 bekommt keine Zeile.
@@ -746,23 +754,22 @@ bei 44,1 kHz, Budget < 1 ms).
 Production-Branch `main`, Build `npm run build`, Output `dist`, keine
 Umgebungsvariablen, Preview-Deployments für alle Branches.
 
-**Custom Domain `morse-lab.com` — ein Handgriff fehlt.** Die Domain ist an das
-Pages-Projekt gebunden (`status: pending`, HTTP-Validierung), liegt bei
-Cloudflare mit Cloudflare-Nameservern, Zone
-`2bef7122ee328f9197516d727b9929a2`, aktiv. Die Zone hat keinen einzigen
-DNS-Eintrag, und die frühere wrangler-Anmeldung durfte keinen anlegen
-(`zone:read`, kein `dns_records:write`):
+**Custom Domain `morse-lab.com` — live.** Fable hat den fehlenden DNS-Eintrag
+per Chrome angelegt (heute); die Domain validiert und liefert aus. Zone
+`2bef7122ee328f9197516d727b9929a2`, Cloudflare-Nameserver. Der Eintrag:
 
 | Feld | Wert |
 |---|---|
 | Typ | `CNAME` |
 | Name | `morse-lab.com` (Apex, im Dashboard `@`) |
 | Ziel | `projekt-morse.pages.dev` |
-| Proxy | **an** (orange Wolke) — für Pages-Domains nötig |
+| Proxy | an (orange Wolke) — für Pages-Domains nötig |
 | TTL | Auto |
 
-Cloudflare flacht den Apex-CNAME selbst ab; ein A-Record ist nicht nötig.
-**Vor diesem Schritt bitte §3e lesen** (Passkeys und Domainwechsel).
+Cloudflare flacht den Apex-CNAME selbst ab; ein A-Record war nicht nötig.
+`projekt-morse.pages.dev` bleibt daneben erreichbar. **Für Passkeys ist ab
+jetzt die Domain maßgeblich, unter der ein Schlüssel angelegt wurde** — was das
+für einen späteren Wechsel heißt, steht unverändert in §3e.
 
 ### 5b. Der SW-Update-Pfad (unverändert belegt)
 
@@ -905,43 +912,34 @@ nächsten Zugriff derselben Sitzung weggeräumt; ein Vollscan auf dem Anfragepfa
 wäre schlimmer. Wenn das Aufräumen gewollt ist, ist ein Cron Trigger der
 richtige Ort — nicht der Request-Pfad.
 
-### 5h. Die Rate-Limit-Regel (Ruling #56) — noch nicht angelegt
+### 5h. Die Rate-Limit-Regel (Ruling #56) — angelegt
 
-**Beschlossen:** 10 Anfragen pro Minute und IP auf `/api/auth/*`, Aktion
-*Block*. **Nicht angelegt**, aus denselben zwei Gründen wie §5e (keine
-Anmeldung, Cloudflare per Egress-Proxy gesperrt).
+**Steht seit heute** (Fable per Chrome, Zone `morse-lab.com`):
 
-> **Ein Vorbehalt, den ich nicht prüfen konnte.** Nach meinem Verständnis sind
-> Rate-Limiting-Regeln ein **Zonen**-Feature: sie hängen an einer Domain im
-> eigenen Cloudflare-Konto. `projekt-morse.pages.dev` liegt in Cloudflares
-> eigener Zone, nicht in der des Owners — dort ließe sich die Regel dann
-> **nicht** anlegen, und sie greift erst, wenn `morse-lab.com` über die Zone
-> läuft (§5a). Ich konnte das **nicht belegen**: `developers.cloudflare.com` ist
-> vom Egress-Proxy gesperrt. Wer die Regel anlegt, sieht in einem Blick, ob im
-> Zonen-Wähler eine Zone für die Pages-Domain auftaucht — bitte diesen Absatz
-> danach korrigieren, in die eine oder andere Richtung.
+| Feld | Wert |
+|---|---|
+| Name | `auth-rate-limit` |
+| Pfad | `/api/auth/` (starts with) |
+| Charakteristik | IP |
+| Schwelle | **4 Anfragen / 10 Sekunden** |
+| Aktion | Block |
 
-**Schritte im Dashboard** (Zone `morse-lab.com`):
+**Der Vorbehalt aus der letzten Übergabe hat sich erledigt:** Rate-Limiting ist
+tatsächlich ein Zonen-Feature, und mit `morse-lab.com` in der eigenen Zone
+(§5a) ließ sich die Regel anlegen. Auf `*.pages.dev` allein wäre sie es nicht
+gewesen — die Reihenfolge DNS-zuerst war also richtig.
 
-1. dash.cloudflare.com → Zone **`morse-lab.com`** wählen.
-2. **Security → WAF → Reiter „Rate limiting rules"** → *Create rule*.
-3. **Rule name:** `api-auth-10-per-minute`
-4. **If incoming requests match:** *Custom filter expression*
-   - Field **URI Path** · Operator **starts with** · Value **`/api/auth/`**
-   - (als Ausdruck: `starts_with(http.request.uri.path, "/api/auth/")`)
-5. **With the same characteristics:** **IP** (IP-Adresse)
-6. **When rate exceeds:** Requests **10** · Period **1 minute**
-7. **Then take action:** **Block** · Mitigation timeout **1 minute**
-8. *Deploy*.
-
-**Zur Zahl 10:** ein vollständiger Anmelde- oder Registriervorgang sind genau
-**zwei** Anfragen (`options` + `verify`). 10 pro Minute lassen also fünf
-Versuche — für eine Person reichlich, für ein Skript nichts. **Der Fall, der
-davon zu Unrecht getroffen werden kann:** viele Nutzer hinter einer IP (Schule,
-Büro, Mobilfunk-NAT). Wenn das je auffällt, ist die Charakteristik das
-Stellrad, nicht die Zahl — mit einer bezahlten Stufe ließe sich statt der IP
-ein JA3/Client-Merkmal nehmen. Für V1 ist die IP richtig, weil es keinen
-Nutzernamen gibt, an dem man drosseln könnte.
+**Zur Schwelle 4/10 s** (das Ruling nannte 10/Minute, angelegt ist die
+schärfere und zugleich mildere Variante): ein vollständiger Anmelde- oder
+Registriervorgang sind genau **zwei** Anfragen (`options` + `verify`). 4 pro
+10 Sekunden lassen also zwei Versuche in schneller Folge — für eine Person
+reichlich, für ein Skript nichts. Über eine Minute gerechnet erlaubt das mehr
+als das Ruling, in einem Burst deutlich weniger; für Credential-Stuffing zählt
+der Burst. **Der Fall, der davon zu Unrecht getroffen werden kann:** viele
+Nutzer hinter einer IP (Schule, Büro, Mobilfunk-NAT). Wenn das je auffällt, ist
+die Charakteristik das Stellrad, nicht die Zahl — mit einer bezahlten Stufe
+ließe sich statt der IP ein Client-Merkmal nehmen. Für V1 ist die IP richtig,
+weil es keinen Nutzernamen gibt, an dem man drosseln könnte.
 
 **Was die Regel nicht löst:** abgelaufene Flow-Zeilen werden nur beim nächsten
 Zugriff derselben Sitzung weggeräumt, nicht global (§5f). Ein Rate-Limit bremst
@@ -1016,28 +1014,36 @@ warten weiter auf ein Urteil.
 
 ## 7. Nächster Schritt
 
-**Zuerst die zwei Produktfragen dieser Runde** (ganz oben): der streng
-abwechselnde Zwei-Zeichen-Drill und der über die UI unerreichbare
-Kontrast-Zweig. Beides sind Entscheidungen für Fable, beides ändert eine
-Konstante oder einen Einstiegspunkt — kein Umbau.
+**Die beiden Produktfragen dieser Runde sind entschieden** (Ruling
+Notion-Log #69) und umgesetzt: der Drill-Pool wird immer auf mindestens drei
+Zeichen aufgefüllt (`DRILL_MIN_POOL`, langsame plus die schnellsten sicheren
+als Kontrast), und schon **ein** langsames Zeichen lädt ein
+(`DRILL_INVITATION_MIN_SLOW = 1`). Avoid-Repeat bleibt. Damit ist auch der
+Zwei-Zeichen-Drill keine strenge Alternation mehr, und der Kontrast-Zweig ist
+über die UI erreichbar. → §3h
 
-**Die übrigen offenen Punkte brauchen Cloudflare-Zugang**, den diese Umgebung
-nicht hat. Sie stehen deshalb oben.
+**Die Infrastruktur ist seit heute vollständig.** DNS und WAF waren die letzten
+zwei Handgriffe außerhalb des Repos; Fable hat beide per Chrome erledigt:
 
-1. **Den Deploy nachsehen** (§5e). Der Merge ist erfolgt, die D1-Bindung liegt
-   in `wrangler.toml` und kommt mit dem Deploy aus `main`. Danach das kleine
-   Signal prüfen — `/api/progress` ohne
-   Sitzung muss **401** antworten, nicht 500 —, und erst dann den Konto-Weg auf
-   Produktion nachweisen (Register → Sitzung → Push → Login im zweiten Kontext
-   → Merge → Löschen). **Von dieser Umgebung aus nicht machbar** (Cloudflare
-   und die Produktions-URL sind gesperrt); übernommen hat es Fable.
-2. **Die Rate-Limit-Regel anlegen** (§5h), 10/Minute/IP auf `/api/auth/*`.
-   Gleiche Voraussetzung. **Bitte dabei den Vorbehalt in §5h klären** — ob die
-   Regel für `*.pages.dev` überhaupt anlegbar ist, konnte ich nicht belegen
-   (Cloudflare-Doku ist hier gesperrt).
-3. **`morse-lab.com` erreichbar machen** — der DNS-Eintrag aus §5a, **nachdem**
-   §3e entschieden ist (Passkeys hängen an der Domain). Danach greift auch die
-   Rate-Limit-Regel, falls der Vorbehalt aus §5h zutrifft.
+- **`morse-lab.com` ist live** — CNAME `@` → `projekt-morse.pages.dev`. Die
+  Domain validiert, das Zertifikat steht. Damit ist auch die Vorbedingung aus
+  §3e erfüllt: Passkeys hängen an der Domain, unter der sie angelegt wurden.
+- **Die Rate-Limit-Regel steht** — `auth-rate-limit`, 4 Anfragen pro 10
+  Sekunden pro IP auf `/api/auth/`. Der Vorbehalt aus §5h hat sich damit
+  erledigt: auf der eigenen Zone ist die Regel anlegbar.
+
+**Routine, kein offener Punkt:** beim nächsten Deploy einmal den Cache-Wechsel
+nachsehen (genau ein Cache am Ende, der neue — §5a). Das ist die übliche
+Gegenprobe nach einem Deploy mit geänderten Assets, keine Blockade.
+
+1. **Den Deploy nachsehen** (§5e) — dieser Merge bringt F1 live. Danach das
+   kleine Signal prüfen: `/api/progress` ohne Sitzung muss **401** antworten,
+   nicht 500. Und erst dann den Konto-Weg auf Produktion nachweisen
+   (Register → Sitzung → Push → Login im zweiten Kontext → Merge → Löschen).
+   **Von dieser Umgebung aus nicht machbar** (Cloudflare und die Produktions-URL
+   sind gesperrt); übernommen hat es Fable.
+2. ~~**Die Rate-Limit-Regel anlegen**~~ **erledigt** (siehe oben, §5h).
+3. ~~**`morse-lab.com` erreichbar machen**~~ **erledigt** (siehe oben, §5a).
 4. ~~**Streak mit Freeze-Gnade**~~ **erledigt in dieser Runde** (§3h), zusammen
    mit Settings und den ICR-Drills. Der Tages-Eimer ist dabei geblieben, was er
    war: kein Verlauf. Der Streak führt fünf Zahlen mit, keine Liste — nichts
