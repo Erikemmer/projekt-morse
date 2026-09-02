@@ -1,6 +1,11 @@
 /**
- * Der Wort-Screen: hoeren -> eintippen -> abschicken -> Feedback (Ruling #83,
- * Teil A).
+ * Der Wort-Screen: hoeren -> eintippen -> abschicken -> Feedback -> weiter
+ * (Ruling #83, Teil A; offen seit Ruling #87).
+ *
+ * **Er hat kein Ende.** Kein Rundenzaehler, kein Fortschrittsbalken, kein
+ * Abschluss. Was oben rechts steht, ist eine Auskunft und keine Forderung:
+ * wie viele Aufgaben heute gelaufen sind. Verlassen wird ueber das Menue --
+ * deshalb steht die App-Kopfzeile hier, anders als im Einzelzeichen-Loop.
  *
  * Rechnet nichts. Was auf welchen Zustand folgt, steht in
  * `engine/wordSession.ts`; was gespielt wird, entscheidet `engine/words.ts`.
@@ -31,9 +36,8 @@
 
 import { useEffect, useRef } from 'react';
 
-import type { WordAttempt, WordSessionState } from '../engine/wordSession';
+import { wordsHeardToday, type WordAttempt, type WordSessionState } from '../engine/wordSession';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
-import { SessionHeader } from './SessionHeader';
 
 export function Words({
   state,
@@ -43,7 +47,6 @@ export function Words({
   onDelete,
   onSubmit,
   onNext,
-  onLeave,
   headingRef,
 }: {
   state: WordSessionState;
@@ -54,25 +57,14 @@ export function Words({
   onDelete: () => void;
   onSubmit: () => void;
   onNext: () => void;
-  onLeave: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
-  if (state.phase === 'finished') {
-    return <WordSummary state={state} onLeave={onLeave} headingRef={headingRef} />;
-  }
-
   const attempt = state.phase === 'feedback' ? state.lastAttempt : null;
   const answering = state.phase === 'answering';
 
   return (
     <>
-      <SessionHeader
-        label="Words & groups"
-        round={state.round}
-        totalRounds={state.totalRounds}
-        done={state.attempts.length}
-        progressLabel="Words answered"
-      />
+      <WordsHeader heard={wordsHeardToday(state)} />
 
       <section className="stage">
         <p className="eyebrow">{eyebrowFor(state)}</p>
@@ -124,11 +116,40 @@ export function Words({
       {attempt !== null && (
         <div className="actions">
           <button ref={headingRef} type="button" className="button-next" onClick={onNext}>
-            {state.round >= state.totalRounds ? 'Finish' : 'Next word'}
+            Next word
           </button>
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Die Kopfzeile dieses Modus: links, wo man ist -- rechts, was heute lief.
+ *
+ * Sie sieht aus wie die `SessionHeader` der runden-basierten Screens, ist aber
+ * bewusst **nicht** dieselbe Komponente: dort steht eine Forderung
+ * ("Round 3 / 10") samt Fortschrittslinie, hier eine Auskunft. Beides in eine
+ * Komponente mit Schaltern zu legen hiesse, den Unterschied zu verstecken, um
+ * den es geht (Ruling #87). Zwei kurze Zeilen Markup sind billiger als eine
+ * Abstraktion, die beide traegt (CLAUDE.md 4).
+ *
+ * **Keine Prozentzahl daneben.** Die Positionsquote steht schon in der
+ * Aufloesung, und zwar an der Aufgabe, um die es gerade geht -- eine zweite,
+ * aggregierte Quote in der Kopfzeile waere dieselbe Auskunft in ungenauer.
+ *
+ * Kein `aria-live`: die Zahl aendert sich genau dann, wenn die Aufloesung
+ * ohnehin schon angesagt wird (`role="status"` an der Frage). Zwei Meldungen
+ * fuer ein Ereignis waeren Laerm, keine Barrierefreiheit.
+ */
+function WordsHeader({ heard }: { heard: number }) {
+  return (
+    <header className="masthead">
+      <div className="masthead-row">
+        <span>Words &amp; groups</span>
+        <span>{heard} heard today</span>
+      </div>
+    </header>
   );
 }
 
@@ -366,67 +387,6 @@ function Keys({
         );
       })}
     </div>
-  );
-}
-
-/**
- * Der Abschluss einer Einheit.
- *
- * Zwei Zahlen, weil sie Verschiedenes sagen (engine/wordSession.ts,
- * `summarizeWords`): ganze Woerter, und darunter die Positionen. Ein einzelner
- * Vertipper kostet ein ganzes Wort -- wer bei fuenf Buchstaben vier trifft, hat
- * mehr gehoert als jemand mit einem Totalausfall, und das zu verschweigen waere
- * keine Ruhe, sondern eine Auslassung (CLAUDE.md 2.6).
- */
-function WordSummary({
-  state,
-  onLeave,
-  headingRef,
-}: {
-  state: WordSessionState;
-  onLeave: () => void;
-  headingRef: (element: HTMLElement | null) => void;
-}) {
-  let positions = 0;
-  let positionHits = 0;
-  for (const attempt of state.attempts) {
-    positions += attempt.marks.length;
-    positionHits += attempt.marks.filter(Boolean).length;
-  }
-  const hits = state.attempts.filter((attempt) => attempt.correct).length;
-
-  return (
-    <section className="stage" aria-labelledby="words-summary-heading">
-      <h2 id="words-summary-heading" className="summary-heading" ref={headingRef} tabIndex={-1}>
-        Words &amp; groups done
-      </h2>
-
-      <dl className="facts">
-        <div>
-          <dt>Whole words</dt>
-          <dd>
-            {hits} of {state.attempts.length}
-          </dd>
-        </div>
-        <div>
-          <dt>Characters</dt>
-          <dd>
-            {positionHits} of {positions}
-          </dd>
-        </div>
-      </dl>
-
-      <p className="note">
-        Every character you heard counts towards its own statistics. Whether the set of characters
-        grows is decided by the single-character practice, not here.
-      </p>
-
-      <div className="actions">
-        <button type="button" className="button-primary" onClick={onLeave}>
-          Back to practice
-        </button>
-      </div>
-    </section>
   );
 }
 

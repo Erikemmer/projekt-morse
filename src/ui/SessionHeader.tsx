@@ -5,12 +5,15 @@
  * Rechts stehen Runden und keine Restzeit: eine mitlaufende Uhr baut Druck auf,
  * und genau den soll dieses Produkt nicht erzeugen (CLAUDE.md 2.8).
  *
- * Sie stand bis Runde F2 in `App.tsx`. Mit dem Wort-Training (Ruling #83) gibt
- * es einen zweiten Uebungs-Screen, der dieselbe Zeile braucht -- **das ist der
- * zweite Bedarf, bei dem verallgemeinert wird** (CLAUDE.md 4). Zwei Kopien
- * derselben `role="progressbar"`-Auszeichnung waeren die schlechtere Wahl: an
- * ihr haengt Barrierefreiheit, und sie soll nicht an zwei Stellen auseinander
- * laufen.
+ * Sie stand bis Runde F2 in `App.tsx` und zog mit dem Wort-Training als
+ * zweitem Uebungs-Screen hier heraus. **Seit Ruling #87 ist sie wieder bei
+ * einem Nutzer**: der Wort-Modus hat keine Runden mehr und traegt seine eigene,
+ * kuerzere Kopfzeile (`ui/Words.tsx`). Sie bleibt trotzdem eine eigene Datei --
+ * Training und Speed round teilen sie sich, und an der
+ * `role="progressbar"`-Auszeichnung haengt Barrierefreiheit, die nicht an zwei
+ * Stellen auseinanderlaufen soll. Die Beschriftung der Linie ist mit dem
+ * zweiten Nutzer wieder fest geworden: eine Einstellmoeglichkeit ohne
+ * Einsteller waere nur Oberflaeche.
  */
 
 export function SessionHeader({
@@ -18,16 +21,13 @@ export function SessionHeader({
   round,
   totalRounds,
   done,
-  progressLabel = 'Rounds answered',
 }: {
-  /** Was links steht: "Session 12", "Speed round", "Words & groups". */
+  /** Was links steht: "Session 12" oder "Speed round". */
   label: string;
   round: number;
   totalRounds: number;
   /** Wie viele Runden beantwortet sind -- der Stand der Linie. */
   done: number;
-  /** Beschriftung der Fortschrittslinie fuer Screenreader. */
-  progressLabel?: string;
 }) {
   return (
     <header className="masthead">
@@ -43,7 +43,7 @@ export function SessionHeader({
         aria-valuemin={0}
         aria-valuemax={totalRounds}
         aria-valuenow={done}
-        aria-label={progressLabel}
+        aria-label="Rounds answered"
       >
         <div className="progress-fill" style={{ width: `${(done / totalRounds) * 100}%` }} />
       </div>

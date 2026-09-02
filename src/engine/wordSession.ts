@@ -1,6 +1,14 @@
 /**
  * Der Wort-Loop als reiner Zustandsautomat: hoeren -> tippen -> abschicken ->
- * Feedback (Ruling #83, Teil A).
+ * Feedback -> naechste Aufgabe (Ruling #83, Teil A; offen seit Ruling #87).
+ *
+ * **Dieser Modus hat kein Ende.** Bis Runde F2 war er eine Einheit aus zehn
+ * Aufgaben mit Fortschrittsbalken und Abschluss-Screen. Das war eine
+ * Forderung, wo eine Einladung hingehoert: wer ueben will, tippt "Next word",
+ * und wer aufhoeren will, hoert auf -- verlassen wird ueber das Menue. Was an
+ * die Stelle der Forderung tritt, ist eine **Auskunft**: wie viele Aufgaben an
+ * diesem Kalendertag gelaufen sind (`wordsHeardToday`). Eine Zahl, die
+ * berichtet, statt eine, die etwas verlangt (CLAUDE.md 2.8).
  *
  * Die Phasen sind dieselben wie im Einzelzeichen-Loop (`engine/session.ts`) und
  * aus denselben Gruenden: waehrend des Tons kann nicht geantwortet werden (eine
@@ -36,10 +44,23 @@
  * Kein DOM, keine Audio-API, keine Uhr. Der Kalendertag kommt herein.
  */
 
-import { dayFor, recordAttempt, type Progress } from './stats';
+import { dayFor, recordAttempt, recordWordPrompt, type Progress } from './stats';
 import { recordPracticeDay } from './streak';
 import { drawPromptTone, drawSessionSound, type SessionSound } from './variability';
-import { PROMPT_MAX_LENGTH, WORDS_ROUNDS, nextPrompt } from './words';
+import { PROMPT_MAX_LENGTH, WORDS_STREAK_MIN_ANSWERS, nextPrompt } from './words';
+
+/**
+ * Wie viele Versuche der Zustand aufhebt.
+ *
+ * Der Modus laeuft jetzt ohne Ende, also waechst `attempts` ohne Ende -- und
+ * unbegrenztes Wachstum ueber eine lange Sitzung ist genau das, was das
+ * Leistungsbudget ausschliesst (CLAUDE.md 7). Fuenfzig, aus demselben Gedanken
+ * wie `RECENT_SAMPLES` in stats.ts: genug, um etwas ueber den aktuellen Stand
+ * zu sagen, und wenig genug, um nicht der Anfaengerzustand von vor einer
+ * Stunde zu sein. Verbucht ist ohnehin alles -- die Statistik je Zeichen
+ * haengt nicht an dieser Liste.
+ */
+export const WORD_ATTEMPTS_KEPT = 50;
 
 export type WordPhase =
   /** Aufgabe steht bereit, wurde aber noch nicht abgespielt. */
@@ -49,9 +70,7 @@ export type WordPhase =
   /** Ton vorbei, Eingabe faellig. */
   | 'answering'
   /** Abgeschickt, Aufloesung sichtbar. */
-  | 'feedback'
-  /** Alle Aufgaben durch. */
-  | 'finished';
+  | 'feedback';
 
 export interface WordAttempt {
   /** Was gesendet wurde -- ein Wort oder eine Gruppe. */
@@ -79,14 +98,12 @@ export interface WordAttempt {
 export interface WordSessionState {
   /** Die Zeichen, aus denen gebaut wird: der aktive Satz aus dem Fortschritt. */
   readonly pool: readonly string[];
-  readonly totalRounds: number;
-  /** Laufende Aufgabe, 1-basiert. */
-  readonly round: number;
   readonly prompt: string;
   readonly phase: WordPhase;
   /** Was bisher getippt ist, hoechstens `PROMPT_MAX_LENGTH` Zeichen. */
   readonly typed: string;
   readonly replays: number;
+  /** Die juengsten Versuche, hoechstens `WORD_ATTEMPTS_KEPT`. */
   readonly attempts: readonly WordAttempt[];
   readonly lastAttempt: WordAttempt | null;
   readonly progress: Progress;
@@ -106,17 +123,15 @@ export interface WordSessionOptions {
   today: string;
   /** Der Heimton dieses Geraets in Hz; gilt auf Variabilitaets-Stufe 0. */
   homeToneHz?: number;
-  /** Aufgaben in dieser Einheit. Default `WORDS_ROUNDS`. */
-  totalRounds?: number;
 }
 
 /**
- * Beginnt eine Einheit.
+ * Beginnt den Modus.
  *
  * **`sessionsStarted` bleibt stehen.** Der Zaehler beschriftet die laufende
- * Sitzung auf dem Trainings-Screen ("Session 12"), und diese Einheit laeuft
- * *neben* ihr, nicht an ihrer Stelle -- ein Drill ersetzt die Sitzung, eine
- * Wort-Einheit nicht. Ihn hier hochzusetzen hiesse, dass die Zeile auf dem
+ * Sitzung auf dem Trainings-Screen ("Session 12"), und dieser Modus laeuft
+ * *neben* ihr, nicht an ihrer Stelle -- ein Drill ersetzt die Sitzung, das
+ * Wort-Training nicht. Ihn hier hochzusetzen hiesse, dass die Zeile auf dem
  * Trainings-Screen nach der Rueckkehr eine andere Zahl traegt, obwohl es
  * dieselbe Sitzung ist (CLAUDE.md 2.6). Der Tages-Eimer zieht dagegen auf
  * heute nach, denn die Antworten von hier zaehlen zum Tag.
@@ -124,9 +139,6 @@ export interface WordSessionOptions {
 export function createWordSession(options: WordSessionOptions): WordSessionState {
   const pool = options.progress.activeCharacters;
   if (pool.length === 0) throw new RangeError('Der Zeichensatz darf nicht leer sein');
-
-  const totalRounds = options.totalRounds ?? WORDS_ROUNDS;
-  if (totalRounds < 1) throw new RangeError('Eine Einheit braucht mindestens eine Aufgabe');
 
   const progress: Progress = {
     ...options.progress,
@@ -136,8 +148,6 @@ export function createWordSession(options: WordSessionOptions): WordSessionState
 
   return {
     pool,
-    totalRounds,
-    round: 1,
     prompt: nextPrompt(progress, { random: options.random }),
     phase: 'ready',
     typed: '',
@@ -231,40 +241,57 @@ export function submitWord(state: WordSessionState): WordSessionState {
     });
   }
 
+  // Die Aufgabe selbst, einmal -- sie traegt die Auskunft in der Kopfzeile und
+  // die Streak-Schwelle (stats.ts, `recordWordPrompt`).
+  progress = recordWordPrompt(progress, state.today);
+
+  /*
+   * **Hier faellt der Streak-Tag**, und nicht mehr am Ende einer Einheit: die
+   * gibt es nicht mehr (Ruling #87). Die Schwelle steht in words.ts. Ein
+   * zweiter Aufruf am selben Tag schreibt nichts doppelt -- `recordPracticeDay`
+   * ist idempotent und gibt denselben Stand zurueck (engine/streak.ts).
+   */
+  if (progress.day.words >= WORDS_STREAK_MIN_ANSWERS) {
+    progress = { ...progress, streak: recordPracticeDay(progress.streak, state.today) };
+  }
+
   return {
     ...state,
     phase: 'feedback',
-    attempts: [...state.attempts, attempt],
+    // Gedeckelt: der Modus laeuft ohne Ende, die Liste darf es nicht.
+    attempts: [...state.attempts, attempt].slice(-WORD_ATTEMPTS_KEPT),
     lastAttempt: attempt,
     progress,
   };
 }
 
 /**
- * Weiter zur naechsten Aufgabe -- oder ans Ende der Einheit.
+ * Wie viele Wort-Aufgaben an **diesem** Kalendertag abgeschickt wurden.
  *
- * **Hier faellt der Streak-Tag**, wie in `session.ts`: ein Tag zaehlt als
- * geuebt, sobald an ihm eine Sitzung beendet wurde, und eine durchgezogene
- * Wort-Einheit ist eine beendete Sitzung. Der Streak misst Kontinuitaet, nicht
- * Pflichterfuellung (CLAUDE.md 2.8) -- dieselbe Setzung wie beim Drill.
+ * Reine Ableitung fuer die Kopfzeile: die UI soll den Tages-Eimer nicht selbst
+ * gegen das Datum halten (CLAUDE.md 4). Steht der Eimer auf einem anderen Tag,
+ * ist die Antwort 0 -- ein Stand von gestern als "heute" auszugeben waere eine
+ * falsch beschriftete Zahl (CLAUDE.md 2.6).
+ */
+export function wordsHeardToday(state: WordSessionState): number {
+  const day = state.progress.day;
+  return day.date === state.today ? day.words : 0;
+}
+
+/**
+ * Weiter zur naechsten Aufgabe. **Immer** -- der Modus endet nicht von selbst
+ * (Ruling #87); wer aufhoeren will, geht ueber das Menue.
+ *
+ * Der Streak-Tag faellt nicht hier, sondern in `submitWord`, sobald an diesem
+ * Tag `WORDS_STREAK_MIN_ANSWERS` Aufgaben abgeschickt sind. Es gibt kein Ende
+ * mehr, an dem er sonst fallen koennte -- und eine einzelne Antwort ist kein
+ * geuebter Tag.
  */
 export function advanceWord(state: WordSessionState, random: () => number): WordSessionState {
   if (state.phase !== 'feedback') return state;
 
-  if (state.round >= state.totalRounds) {
-    return {
-      ...state,
-      phase: 'finished',
-      progress: {
-        ...state.progress,
-        streak: recordPracticeDay(state.progress.streak, state.today),
-      },
-    };
-  }
-
   return {
     ...state,
-    round: state.round + 1,
     prompt: nextPrompt(state.progress, { random, avoid: state.prompt }),
     phase: 'ready',
     typed: '',
@@ -284,13 +311,19 @@ export interface WordSummary {
 }
 
 /**
- * Fasst die Einheit zusammen. Reine Ableitung, kein Zustand.
+ * Fasst die aufgehobenen Versuche zusammen. Reine Ableitung, kein Zustand.
  *
  * Zwei Zahlen statt einer, weil sie Verschiedenes sagen: "4 von 10" zaehlt
  * ganze Woerter, und ein einzelner Vertipper kostet ein ganzes Wort. Wer bei
  * fuenf Buchstaben vier trifft, hat mehr gehoert als jemand mit einem
  * Totalausfall -- das sagt die Positionszahl, und beides zusammen ist keine
  * Beschoenigung, sondern die vollstaendige Auskunft (CLAUDE.md 2.6).
+ *
+ * **Was die Zahlen seit Ruling #87 umfassen:** die letzten
+ * `WORD_ATTEMPTS_KEPT` Aufgaben, nicht "die Einheit" -- die gibt es nicht mehr.
+ * Der Abschluss-Screen, der sie am Ende zeigte, ist weg; die Funktion bleibt,
+ * weil die Positionszahlen die ehrliche Auskunft ueber diesen Modus sind und
+ * niemand sie ein zweites Mal erfinden soll.
  */
 export function summarizeWords(state: WordSessionState): WordSummary {
   let positions = 0;

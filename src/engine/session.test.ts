@@ -444,7 +444,7 @@ describe('Tagesstatistik, Sitzungszaehler, Intro-Merker', () => {
     expect(parsed.characters.K.attempts).toBe(4);
     expect(parsed.sessionsStarted).toBe(0);
     expect(parsed.introSeen).toBe(false);
-    expect(parsed.day).toEqual({ date: '', attempts: 0, hits: 0, characters: [] });
+    expect(parsed.day).toEqual({ date: '', attempts: 0, hits: 0, characters: [], words: 0 });
   });
 
   it('ein Tages-Eimer ohne brauchbares Datum wird verworfen, nicht falsch beschriftet', () => {
@@ -463,6 +463,24 @@ describe('Tagesstatistik, Sitzungszaehler, Intro-Merker', () => {
     expect(parsed.day.hits).toBe(2);
     // Doppelte Zeichen sind kein gueltiger Eimer -- einmal zaehlt einmal.
     expect(parsed.day.characters).toEqual(['K']);
+  });
+
+  it('ein Tages-Eimer von vor dem offenen Wort-Modus zaehlt dort bei null', () => {
+    // Additiv mit Default (Ruling #87): der Rest des Eimers bleibt stehen.
+    const parsed = parseProgress({
+      characters: {},
+      day: { date: MON, attempts: 12, hits: 11, characters: ['K'] },
+    });
+    expect(parsed.day.words).toBe(0);
+    expect(parsed.day.attempts).toBe(12);
+  });
+
+  it('nimmt eine gespeicherte Zahl von Wort-Aufgaben mit', () => {
+    const parsed = parseProgress({
+      characters: {},
+      day: { date: MON, attempts: 12, hits: 11, characters: ['K'], words: 4 },
+    });
+    expect(parsed.day.words).toBe(4);
   });
 });
 

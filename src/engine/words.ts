@@ -48,8 +48,19 @@ import { hitRate, recordFor, type Progress } from './stats';
  */
 export const WORDS_MIN_CHARACTERS = 8;
 
-/** Aufgaben in einer Einheit. Wie beim Drill: kurz genug, um sie zu beenden. */
-export const WORDS_ROUNDS = 10;
+/**
+ * So viele abgeschickte Aufgaben machen den Tag zu einem geuebten Tag
+ * (Ruling #87).
+ *
+ * Der Modus hat kein Ende mehr, an dem der Streak-Tag fallen koennte -- also
+ * braucht er eine Schwelle. Fuenf, weil eine einzelne Antwort kein geuebter Tag
+ * ist: wer den Modus oeffnet, einmal tippt und weggeht, hat nicht geuebt, und
+ * der Streak misst Kontinuitaet, nicht Anwesenheit (CLAUDE.md 2.8). Nach oben
+ * ist die Zahl bewusst klein gehalten: eine Schwelle, die man nur mit
+ * Ausdauer erreicht, waere genau die Erpressung, die dieses Produkt nicht
+ * betreibt.
+ */
+export const WORDS_STREAK_MIN_ANSWERS = 5;
 
 /** Kuerzestes und laengstes Wort der Liste (Ruling: 2-5 Buchstaben). */
 export const WORD_MIN_LENGTH = 2;

@@ -12,6 +12,12 @@ Gestaltung und Sprache richten sich nach
 [`docs/brand/Morse_Lab_Brand_Guidelines_1.1.html`](./docs/brand/Morse_Lab_Brand_Guidelines_1.1.html)
 (führend); [`docs/CI.md`](./docs/CI.md) ist die deutsche Kurzfassung.
 
+Die **Bildmarke** liegt als Original in `docs/brand/assets/` — drei SVGs vom
+Konzept-Owner, byte-identisch. Alles, was ausgeliefert wird (Favicon,
+App-Icons, Lockup, Social-Bild), ist daraus abgeleitet:
+`node tools/brand/derive.mjs` (mit `--check` nur prüfend). Wer die Marke ändern
+will, ändert die Originale — es gibt keinen zweiten Zeichner mehr.
+
 ## Stand
 
 Der Kern-Lernloop läuft: ein Zeichen wird gespielt, man antwortet, man bekommt sofort
@@ -36,9 +42,12 @@ jedem neuen Zeichen eine neue Suche.
 
 Ab acht aktiven Zeichen öffnet sich **„Words & groups"**: ein ganzes Wort oder
 eine Zufallsgruppe als *eine* Zeitachse, danach als Ganzes eingetippt und
-Position für Position aufgelöst. Zehn Aufgaben je Einheit. Die Antworten
-trainieren die Statistik jedes Zeichens mit, lassen das Wachstumsfenster aber
-unberührt — über den nächsten Buchstaben entscheidet der Einzelzeichen-Loop.
+Position für Position aufgelöst. Der Modus ist **offen** — keine Einheit, kein
+Rundenzähler, kein Abschluss: hören, antworten, „Next word", so lange man mag.
+Oben rechts steht still, wie viele Aufgaben heute gelaufen sind; verlassen wird
+über das Menü. Die Antworten trainieren die Statistik jedes Zeichens mit,
+lassen das Wachstumsfenster aber unberührt — über den nächsten Buchstaben
+entscheidet der Einzelzeichen-Loop.
 
 Dazu: ein Streak, der einen verpassten Tag verzeiht statt ihn zu bestrafen;
 Tonhöhe und Lautstärke einstellbar (gerätespezifisch, nie im Konto); und eine
@@ -83,7 +92,7 @@ Abhängigkeit) und den Pfad zu Chromium in `CHROMIUM_PATH`.
 | `src/engine/streak.ts` | Der Streak mit Freeze-Gnade — Kalendertage, keine Uhr |
 | `src/engine/drill.ts` | Langsame Zeichen und der Satz einer „Speed round" |
 | `src/engine/words.ts` | Wortliste und die Auswahl von Wörtern und Gruppen |
-| `src/engine/wordSession.ts` | Der Wort-Loop als reiner Zustandsautomat |
+| `src/engine/wordSession.ts` | Der Wort-Loop als reiner Zustandsautomat — offen, ohne Ende |
 | `src/engine/tempo.ts` | Die Tempo-Progression: wann die Pausen kürzer werden |
 | `src/engine/deviceSettings.ts` | Tonhöhe und Lautstärke dieses Geräts |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche und die Ziehung daraus |

@@ -226,11 +226,15 @@ const VIEWS = [
     },
   },
   /*
-   * Wort-Training (Ruling #83, Teil A). Fuenf Ansichten, weil das Budget hier
-   * an zwei Stellen kippen koennte: der gefuellte "Check" darf nie neben dem
-   * gefuellten Play-Kreis stehen (deshalb erscheint er erst mit der Eingabe),
-   * und die Aufloesung markiert bis zu fuenf Positionen -- in ink, nie in
-   * Amber.
+   * Wort-Training (Ruling #83, Teil A; offen seit Ruling #87). Fuenf Ansichten,
+   * weil das Budget hier an zwei Stellen kippen koennte: der gefuellte "Check"
+   * darf nie neben dem gefuellten Play-Kreis stehen (deshalb erscheint er erst
+   * mit der Eingabe), und die Aufloesung markiert bis zu fuenf Positionen --
+   * in ink, nie in Amber.
+   *
+   * Der frueher hier gezaehlte Abschluss-Screen ist weg: der Modus endet nicht
+   * mehr. Dafuer steht in allen vier Ansichten jetzt die App-Kopfzeile mit --
+   * der Weg hinaus fuehrt ueber das Menue --, und die traegt kein Amber.
    */
   {
     name: 'Wort-Training, Ton läuft (F2)',
@@ -278,28 +282,6 @@ const VIEWS = [
       await playWord(page);
       await page.locator('.answer:not([disabled])').first().click();
       await page.waitForSelector('.keypad');
-    },
-  },
-  {
-    /*
-     * Der Abschluss braucht zehn Aufgaben. Der Stand dafuer ist bewusst der
-     * echte Endzustand -- alle 36 Zeichen aktiv, Tempo am Deckel: dort sind
-     * die Farnsworth-Pausen am kuerzesten, und der Durchlauf dauert Sekunden
-     * statt einer Minute.
-     */
-    name: 'Wort-Training, Abschluss (F2)',
-    seed: progress({ characters: ALL_CHARACTERS, effectiveWpm: 20 }),
-    async reach(page) {
-      await openMenu(page, 'Words & groups');
-      for (let round = 0; round < 10; round += 1) {
-        await playWord(page);
-        await page.locator('.answer:not([disabled])').first().click();
-        await page.getByRole('button', { name: 'Check' }).click();
-        await page.waitForSelector('.solution');
-        await page.getByRole('button', { name: /Next word|Finish/ }).click();
-        await page.waitForTimeout(80);
-      }
-      await page.waitForSelector('.summary-heading');
     },
   },
   {

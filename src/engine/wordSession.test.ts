@@ -1,5 +1,5 @@
 /**
- * Tests fuer den Wort-Loop (Ruling #83, Teil A).
+ * Tests fuer den Wort-Loop (Ruling #83, Teil A; offen seit Ruling #87).
  *
  * Der wichtigste Block steht unten: **was dieser Modus mit der Statistik macht
  * und was nicht.** Punkt A.8 des Rulings ist eine Entscheidung mit Folgen --
@@ -21,6 +21,7 @@ import {
 } from './stats';
 import { streakStanding } from './streak';
 import {
+  WORD_ATTEMPTS_KEPT,
   advanceWord,
   beginWordPlayback,
   createWordSession,
@@ -30,9 +31,10 @@ import {
   summarizeWords,
   typeCharacter,
   wordPromptFinished,
+  wordsHeardToday,
   type WordSessionState,
 } from './wordSession';
-import { PROMPT_MAX_LENGTH, WORDS_ROUNDS } from './words';
+import { PROMPT_MAX_LENGTH, WORDS_STREAK_MIN_ANSWERS } from './words';
 
 const TODAY = '2026-09-02';
 
@@ -47,9 +49,18 @@ function fullProgress(patch: Partial<Progress> = {}): Progress {
   return { ...emptyProgress(), activeCharacters: [...CHARACTER_ORDER], characters, ...patch };
 }
 
-/** Eine Einheit mit fester Zufallsquelle -- hier wird nicht gewuerfelt. */
-function unit(progress = fullProgress(), totalRounds = WORDS_ROUNDS): WordSessionState {
-  return createWordSession({ progress, random: () => 0.5, today: TODAY, totalRounds });
+/** Ein Modus-Zustand mit fester Zufallsquelle -- hier wird nicht gewuerfelt. */
+function unit(progress = fullProgress()): WordSessionState {
+  return createWordSession({ progress, random: () => 0.5, today: TODAY });
+}
+
+/** `n` Aufgaben am Stueck, alle richtig -- der Weg durch den offenen Modus. */
+function playRounds(state: WordSessionState, n: number): WordSessionState {
+  let current = state;
+  for (let round = 0; round < n; round += 1) {
+    current = advanceWord(playCorrect(current), () => 0.5);
+  }
+  return current;
 }
 
 /** Bis zur Eingabe durchschalten: abspielen, Ton durch. */
@@ -72,14 +83,20 @@ function playCorrect(state: WordSessionState): WordSessionState {
   return play(state, state.prompt);
 }
 
-describe('Wort-Einheit: der Anfang', () => {
-  it('steht auf Aufgabe 1, bereit, mit leerer Eingabe', () => {
+describe('Wort-Modus: der Anfang', () => {
+  it('steht bereit, mit leerer Eingabe und ohne Rundenzaehler', () => {
     const state = unit();
-    expect(state.round).toBe(1);
     expect(state.phase).toBe('ready');
     expect(state.typed).toBe('');
     expect(state.prompt.length).toBeGreaterThan(0);
-    expect(state.totalRounds).toBe(WORDS_ROUNDS);
+    // Kein `round`, kein `totalRounds` mehr (Ruling #87). Der Zustand traegt
+    // nur, was der offene Modus braucht.
+    expect(Object.keys(state)).not.toContain('round');
+    expect(Object.keys(state)).not.toContain('totalRounds');
+  });
+
+  it('meldet fuer heute noch nichts gehoert', () => {
+    expect(wordsHeardToday(unit())).toBe(0);
   });
 
   it('uebt den aktiven Zeichensatz', () => {
@@ -93,13 +110,14 @@ describe('Wort-Einheit: der Anfang', () => {
 
   it('zieht den Tages-Eimer auf heute nach', () => {
     const progress = fullProgress({
-      day: { date: '2026-08-30', attempts: 40, hits: 39, characters: ['K'] },
+      day: { date: '2026-08-30', attempts: 40, hits: 39, characters: ['K'], words: 7 },
     });
     expect(unit(progress).progress.day).toEqual({
       date: TODAY,
       attempts: 0,
       hits: 0,
       characters: [],
+      words: 0,
     });
   });
 
@@ -113,9 +131,8 @@ describe('Wort-Einheit: der Anfang', () => {
     expect(unit(progress).sound.effectiveWpm).toBe(STARTING_EFFECTIVE_WPM);
   });
 
-  it('verweigert eine Einheit ohne Zeichen und ohne Aufgaben', () => {
+  it('verweigert einen Modus ohne Zeichen', () => {
     expect(() => unit({ ...fullProgress(), activeCharacters: [] })).toThrow(RangeError);
-    expect(() => unit(fullProgress(), 0)).toThrow(RangeError);
   });
 });
 
@@ -207,7 +224,7 @@ describe('Wort-Einheit: die Aufloesung Position fuer Position', () => {
   });
 
   it('meldet ueberzaehlige Zeichen getrennt, statt sie zu verschlucken', () => {
-    const state = unit(fullProgress(), 1);
+    const state = unit(fullProgress());
     // Die feste Zufallsquelle liefert eine vierstellige Aufgabe -- unter der
     // Eingabegrenze, sonst waere ein ueberzaehliges Zeichen nicht tippbar.
     expect(state.prompt.length).toBeLessThan(PROMPT_MAX_LENGTH);
@@ -283,7 +300,7 @@ describe('Wort-Einheit: was sie mit der Statistik macht', () => {
       answersSinceGrowth: GROWTH_LOCKOUT_ANSWERS,
     };
 
-    let state = unit(growable, 3);
+    let state = unit(growable);
     for (let round = 0; round < 3; round += 1) {
       state = playCorrect(state);
       state = advanceWord(state, () => 0.5);
@@ -301,7 +318,7 @@ describe('Wort-Einheit: was sie mit der Statistik macht', () => {
   });
 });
 
-describe('Wort-Einheit: weiter und Ende', () => {
+describe('Wort-Modus: weiter, ohne Ende (Ruling #87)', () => {
   it('geht nur aus dem Feedback weiter', () => {
     const ready = unit();
     expect(advanceWord(ready, () => 0.5)).toBe(ready);
@@ -309,7 +326,6 @@ describe('Wort-Einheit: weiter und Ende', () => {
 
   it('setzt Eingabe, Wiederholungen und Phase fuer die naechste Aufgabe zurueck', () => {
     const next = advanceWord(playCorrect(unit()), () => 0.5);
-    expect(next.round).toBe(2);
     expect(next.phase).toBe('ready');
     expect(next.typed).toBe('');
     expect(next.replays).toBe(0);
@@ -321,26 +337,80 @@ describe('Wort-Einheit: weiter und Ende', () => {
     expect(next.prompt).not.toBe(feedback.prompt);
   });
 
-  it('ist nach zehn Aufgaben durch', () => {
-    let state = unit();
-    for (let round = 0; round < WORDS_ROUNDS; round += 1) {
-      state = advanceWord(playCorrect(state), () => 0.5);
-    }
-    expect(state.phase).toBe('finished');
-    expect(state.attempts.length).toBe(WORDS_ROUNDS);
+  /*
+   * Der Kern des Rulings: es gibt keine Einheit mehr. Wo frueher nach zehn
+   * Aufgaben 'finished' stand, kommt jetzt wieder 'ready' -- beliebig oft.
+   * Fuenfundzwanzig Durchlaeufe sind mehr als das Doppelte der alten Einheit;
+   * wer hier eine Grenze eingebaut haette, faellt auf.
+   */
+  it('kommt nach 25 Aufgaben in Folge wieder auf "ready"', () => {
+    const state = playRounds(unit(), 25);
+    expect(state.phase).toBe('ready');
+    expect(state.typed).toBe('');
+    expect(state.replays).toBe(0);
+    expect(state.prompt.length).toBeGreaterThan(0);
+    expect(state.lastAttempt).not.toBeNull();
   });
 
-  it('verbucht den Tag als geuebt -- eine durchgezogene Einheit ist eine Sitzung', () => {
-    let state = unit(fullProgress(), 1);
+  it('kennt keine Phase "finished" mehr', () => {
+    let state = unit();
+    for (let round = 0; round < 25; round += 1) {
+      state = playCorrect(state);
+      expect(state.phase).toBe('feedback');
+      state = advanceWord(state, () => 0.5);
+      expect(state.phase).toBe('ready');
+    }
+  });
+
+  /*
+   * CLAUDE.md 7: kein unbegrenztes Speicherwachstum ueber eine lange Sitzung.
+   * Der Modus endet nicht mehr, also muss die Liste enden -- verbucht ist
+   * ohnehin alles in der Statistik je Zeichen, nicht in dieser Liste.
+   */
+  it('haelt die Versuchsliste gedeckelt, egal wie lange geuebt wird', () => {
+    const state = playRounds(unit(), WORD_ATTEMPTS_KEPT + 20);
+    expect(state.attempts.length).toBe(WORD_ATTEMPTS_KEPT);
+    // Gedeckelt wird am Anfang, nicht am Ende: der letzte Versuch bleibt.
+    expect(state.attempts[state.attempts.length - 1]).toEqual(state.lastAttempt);
+  });
+
+  it('verbucht jede Aufgabe im Tagesstand, auch jenseits des Deckels', () => {
+    const state = playRounds(unit(), WORD_ATTEMPTS_KEPT + 20);
+    expect(wordsHeardToday(state)).toBe(WORD_ATTEMPTS_KEPT + 20);
+  });
+});
+
+describe('Wort-Modus: der Streak-Tag faellt nach fuenf Aufgaben', () => {
+  it('zaehlt vier Aufgaben noch nicht als geuebten Tag', () => {
+    const state = playRounds(unit(), WORDS_STREAK_MIN_ANSWERS - 1);
+    expect(wordsHeardToday(state)).toBe(WORDS_STREAK_MIN_ANSWERS - 1);
     expect(streakStanding(state.progress.streak, TODAY).days).toBe(0);
-    state = advanceWord(playCorrect(state), () => 0.5);
-    expect(streakStanding(state.progress.streak, TODAY).days).toBe(1);
+  });
+
+  it('zaehlt die fuenfte -- und zwar schon beim Abschicken, nicht erst danach', () => {
+    // Vier durchgezogen, die fuenfte nur abgeschickt: der Tag steht.
+    const four = playRounds(unit(), WORDS_STREAK_MIN_ANSWERS - 1);
+    const fifth = playCorrect(four);
+    expect(fifth.phase).toBe('feedback');
+    expect(streakStanding(fifth.progress.streak, TODAY).days).toBe(1);
+  });
+
+  it('schreibt am selben Tag nichts doppelt', () => {
+    const five = playRounds(unit(), WORDS_STREAK_MIN_ANSWERS);
+    const streakAfterFive = five.progress.streak;
+    expect(streakStanding(streakAfterFive, TODAY).days).toBe(1);
+
+    // Noch fuenf Aufgaben am selben Tag: der Stand bleibt derselbe -- und zwar
+    // identisch (===), `recordPracticeDay` ist idempotent.
+    const ten = playRounds(five, WORDS_STREAK_MIN_ANSWERS);
+    expect(ten.progress.streak).toBe(streakAfterFive);
+    expect(streakStanding(ten.progress.streak, TODAY).days).toBe(1);
   });
 });
 
 describe('Wort-Einheit: die Zusammenfassung', () => {
   it('zaehlt ganze Aufgaben und einzelne Positionen getrennt', () => {
-    const state = unit(fullProgress(), 2);
+    const state = unit(fullProgress());
     const first = advanceWord(playCorrect(state), () => 0.5);
     // Die zweite Aufgabe an der ersten Position daneben.
     const wrong = (first.prompt[0] === 'K' ? 'M' : 'K') + first.prompt.slice(1);

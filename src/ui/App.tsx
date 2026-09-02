@@ -260,17 +260,19 @@ export function App() {
       return;
     }
     focusRef.current?.focus();
-    // `words.phase` und `words.round` haengen mit drin, seit es das
+    // `words.phase` und `words.prompt` haengen mit drin, seit es das
     // Wort-Training gibt: dort wechselt die Flaeche genauso zwischen
     // Play-Kreis, Aufloesung und Weiter-Taste, und ohne dieses Nachziehen
-    // fiele der Fokus nach jedem Ton auf <body>.
+    // fiele der Fokus nach jedem Ton auf <body>. Die Aufgabe steht dabei fuer
+    // die Runde, die es seit Ruling #87 nicht mehr gibt: sie wechselt genau
+    // dann, wenn die naechste Aufgabe beginnt.
   }, [
     session.phase,
     session.round,
     session.kind,
     session.progress.introSeen,
     words?.phase,
-    words?.round,
+    words?.prompt,
     view,
     reviewing,
     menuOpen,
@@ -408,12 +410,6 @@ export function App() {
 
   const nextWord = useCallback(() => {
     setWords((current) => (current === null ? null : advanceWord(current, Math.random)));
-  }, []);
-
-  /** Der Abschluss-Screen ist verlassen: die Einheit ist damit vorbei. */
-  const leaveWords = useCallback(() => {
-    setWords(null);
-    setView('practice');
   }, []);
 
   // Die physische Tastatur am Schreibtisch (ui/Words.tsx). Sie haengt nur in
@@ -767,22 +763,19 @@ export function App() {
    * Ob die Kopfzeile mit dem Menue dasteht.
    *
    * Sie fehlt **mitten in einer Uebung** -- im Training, im Drill und seit
-   * Ruling #83 auch in einer laufenden Wort-Einheit. Der Grund ist derselbe
-   * wie in Runde A: dort waere sie eine Ablenkung, und der Play-Kreis soll
-   * der einzige naechste Schritt sein. Nebenbei ist sie der Platz, den das
-   * Tastenfeld braucht: mit Kopfzeile ist der Wort-Screen bei 390 x 844
-   * gemessen 888 px hoch, ohne sie passt er (§4 der Uebergabe).
+   * Ruling #83. Der Grund ist derselbe wie in Runde A: dort waere sie eine
+   * Ablenkung, und der Play-Kreis soll der einzige naechste Schritt sein. Der
+   * Weg heraus aus einer angefangenen Runde ist, sie zu Ende zu bringen.
    *
-   * Der Weg heraus aus einer angefangenen Einheit ist damit derselbe wie aus
-   * einer Speed round: sie zu Ende bringen. Auf dem Abschluss-Screen steht die
-   * Kopfzeile wieder -- und "Back to practice" ohnehin.
+   * **Im Wort-Modus gilt das seit Ruling #87 nicht mehr.** Er endet nicht von
+   * selbst, also gaebe es ohne Kopfzeile keinen Weg hinaus -- verlassen wird
+   * ueber das Menue, und dafuer muss der Knopf dafuer da sein. Der Platz, den
+   * das kostet, ist gemessen und in der Uebergabe (§4) genannt.
    */
-  const wordsRunning = view === 'words' && words !== null && words.phase !== 'finished';
   const headerShown =
     !menuOpen &&
     session.progress.introSeen &&
     learn === null &&
-    !wordsRunning &&
     (view !== 'practice' || reviewing || onStartScreen);
 
   return (
@@ -835,7 +828,6 @@ export function App() {
           onDelete={deleteWordCharacter}
           onSubmit={submitWordAnswer}
           onNext={nextWord}
-          onLeave={leaveWords}
           headingRef={focusTarget}
         />
       ) : view === 'progress' ? (

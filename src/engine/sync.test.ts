@@ -44,7 +44,7 @@ function fullProgress(): Progress {
     recentAnswers: [true, true, false, true],
     answersSinceGrowth: 12,
     sessionsStarted: 9,
-    day: { date: '2026-08-30', attempts: 24, hits: 21, characters: ['K', 'M'] },
+    day: { date: '2026-08-30', attempts: 24, hits: 21, characters: ['K', 'M'], words: 3 },
     introSeen: true,
     introducedCharacters: [...STARTING_CHARACTERS, 'P', 'T'],
     variabilityNoticeSeen: true,
@@ -88,7 +88,7 @@ describe('Kante: beide Stände voll', () => {
       recentAnswers: [true, false],
       answersSinceGrowth: 4,
       sessionsStarted: 9,
-      day: { date: '2026-08-30', attempts: 10, hits: 9, characters: ['K'] },
+      day: { date: '2026-08-30', attempts: 10, hits: 9, characters: ['K'], words: 1 },
       introSeen: true,
       introducedCharacters: [...STARTING_CHARACTERS, 'P'],
     },
@@ -102,7 +102,7 @@ describe('Kante: beide Stände voll', () => {
       recentAnswers: [false, true, true],
       answersSinceGrowth: 17,
       sessionsStarted: 4,
-      day: { date: '2026-09-01', attempts: 30, hits: 28, characters: ['M', 'U'] },
+      day: { date: '2026-09-01', attempts: 30, hits: 28, characters: ['M', 'U'], words: 6 },
       introSeen: true,
       introducedCharacters: [...STARTING_CHARACTERS, 'T', 'L'],
     },
@@ -129,6 +129,9 @@ describe('Kante: beide Stände voll', () => {
       attempts: 30,
       hits: 28,
       characters: ['M', 'U'],
+      // Die Wort-Aufgaben des Tages wandern mit dem Eimer, nicht summiert
+      // (Ruling #87): 6 vom juengeren Stand, nicht 1 + 6.
+      words: 6,
     });
   });
 

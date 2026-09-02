@@ -1,16 +1,61 @@
-# Übergabe — Stand nach Runde F2 (Wörter & Gruppen, Tempo, Learn im Menü)
+# Übergabe — Stand nach Runde B2 + F3 (die Marke aus den Owner-Dateien, der offene Wort-Modus)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** **Runde F2 liegt auf dem Branch
-`claude/morse-handover-alignment-nbkk6o`** und wartet auf **Review 14** von
-Fable. Basis ist `main` = `66d0af4` — dort sind die Runden L1 (Learn-Bereich),
-U1 (das feste Tastenfeld) und das Amber-Prüfskript schon drin. Gearbeitet ist
-linear, es wurde **nicht** nach `main` gemergt. F2 setzt **Ruling Fable,
-Notion-Log #83** um: der Wort-Modus, die Tempo-Progression und der
-Learn-Eintrag im Menü.
+**Stand:** **B2 und F3 liegen auf dem Branch
+`claude/morse-handover-alignment-nbkk6o`** und warten auf **Review 15** von
+Fable. Basis ist `main` = `ed83b96` — dort ist Runde F2 (Wort-Modus,
+Tempo-Progression, Learn im Menü) schon drin. Gearbeitet ist linear, in **zwei
+Commits**, es wurde **nicht** nach `main` gemergt.
 
-An **Backend, Sync-API, Konto und dem Learn-Bereich (Inhalte und Generator)
-ist nichts angefasst.** Berührt sind in F2:
+- **B2 setzt Ruling Notion-Log #88 um:** die Bildmarke kommt endgültig aus den
+  drei Owner-Dateien; der Rekonstruktions-Zeichner ist gelöscht.
+- **F3 setzt Ruling Notion-Log #87 um:** „Words & groups" wird offen — keine
+  Einheit, kein Rundenzähler, kein Abschluss.
+
+An **Backend, Sync-API, Konto, dem Learn-Bereich (Inhalte und Generator), dem
+Einzelzeichen-Loop und der Tempo-Progression ist nichts angefasst.** Berührt
+sind in dieser Runde:
+
+| Datei | Warum | Commit |
+|---|---|---|
+| **`docs/brand/assets/*.svg`** | **neu:** die drei Owner-Originale, byte-identisch — ab jetzt die Quelle | B2 |
+| **`tools/brand/derive.mjs`** | **neu:** leitet daraus ab und rendert; zeichnet keine Geometrie | B2 |
+| ~~`docs/brand/logo.py`~~ | **gelöscht:** ein zweiter Zeichner ist eine zweite Wahrheit | B2 |
+| `public/logo-key.svg`, `logo-lockup.svg`, `favicon.svg`, `og-morse-lab.png`, `icons/*` | aus den Originalen neu erzeugt | B2 |
+| **`public/logo-mark-inverse.svg`** | **neu:** die Marke für dunkle Flächen, noch nirgends verwendet | B2 |
+| `index.html`, `src/ui/About.tsx` | ein Kommentar und ein Seitenverhältnis nachgezogen | B2 |
+| `src/engine/words.ts` | `WORDS_ROUNDS` raus, `WORDS_STREAK_MIN_ANSWERS` rein | F3 |
+| `src/engine/wordSession.ts` | kein `round`, kein `totalRounds`, keine Phase `'finished'`; Streak nach fünf Aufgaben; `wordsHeardToday`; Versuchsliste gedeckelt | F3 |
+| `src/engine/stats.ts` | ein additives Feld im Tages-Eimer (`day.words`) und `recordWordPrompt` | F3 |
+| `src/engine/sync.ts` | nur der Kopfkommentar: `day.words` wandert mit dem Eimer | F3 |
+| `src/engine/wordSession.test.ts` | angepasst statt gelöscht: 25 Aufgaben in Folge, Deckel, Streak-Schwelle | F3 |
+| `src/engine/session.test.ts`, `src/engine/sync.test.ts` | das neue Tagesfeld in den Fixtures und im Merge | F3 |
+| `src/ui/Words.tsx` | eigene Kopfzeile, kein Abschluss-Screen, „Next word" statt „Finish" | F3 |
+| `src/ui/SessionHeader.tsx` | wieder ein Nutzer: die Beschriftung der Linie ist wieder fest | F3 |
+| `src/ui/App.tsx` | die App-Kopfzeile steht jetzt auch im Wort-Modus (der Weg hinaus) | F3 |
+| `tools/amber/check.mjs` | Ansichtsliste nachgezogen: der Abschluss-Screen ist weg (27 statt 28) | F3 |
+
+Dazu drei Screenshots, README und diese Übergabe.
+
+> ### Was Fable an dieser Runde sehen muss
+>
+> 1. **Zwei Zahlen der Vorgabe zu #88 sind nachgemessen und weichen ab**
+>    (§3f): die Textbreite der Wortmarke ist **209,45 px** statt 209,44 (also
+>    viewBox-Breite 383,45), und der äußerste Punkt der Zeichnung im App-Icon
+>    liegt **182,7 px** von der Mitte statt 166,5 — beides ohne Folge für die
+>    Entscheidung, aber eine Zahl ist eine Behauptung (CLAUDE.md 2.6).
+> 2. **Der offene Wort-Modus braucht die App-Kopfzeile** — sonst gäbe es
+>    keinen Weg hinaus (Ruling #87 nennt das Menü). Das kostet den Platz, der
+>    bis F2 dafür sorgte, dass der Screen mit Tastenfeld ohne Scrollen passt:
+>    **874 px statt 844** bei 390 × 844. Gemessen, nicht geschätzt; die
+>    Rechnung steht in §4.
+> 3. **`summarizeWords` bleibt, hat aber keinen Aufrufer mehr in der UI.** Das
+>    Ruling sagt ausdrücklich, nur der Abschluss-Screen fällt weg. Die
+>    Funktion ist getestet und beschreibt jetzt die letzten
+>    `WORD_ATTEMPTS_KEPT` (50) Aufgaben statt „die Einheit".
+
+<details>
+<summary><b>Die Dateien aus Runde F2</b> (Basis dieser Runde, unverändert gültig)</summary>
 
 | Datei | Warum |
 |---|---|
@@ -36,7 +81,11 @@ ist nichts angefasst.** Berührt sind in F2:
 
 Dazu vier Screenshots, zwei FINDINGS-Einträge, README und diese Übergabe.
 
+</details>
+
 > ### Drei Setzungen aus F2, die Fable sehen muss
+>
+> *(Stand nach F3: 1 und 2 gelten unverändert, 3 ist von Ruling #87 überholt.)*
 >
 > 1. **„Eingeführt" ist als „im aktiven Satz" gelesen.** Ruling A.1 sagt „ab 8
 >    eingeführten Zeichen", B.9 „wenn alle 36 Zeichen eingeführt sind". Im Code
@@ -52,11 +101,13 @@ Dazu vier Screenshots, zwei FINDINGS-Einträge, README und diese Übergabe.
 >    getippte Alternative tragen die Unterscheidung ohne Farbe. Soll die
 >    verfehlte Position dort amber stehen, ist es eine Zeile — dann muss aber
 >    entschieden werden, welche der fünf.
-> 3. **Während einer laufenden Wort-Einheit fehlt die Kopfzeile** — wie im
->    Training und im Drill. Das ist zugleich die Bedingung dafür, dass der
->    Wort-Screen mit Tastenfeld bei 390 × 844 **ohne Scrollen** passt (mit
->    Kopfzeile gemessen: 888 px, ohne: 844 px). Der Weg aus einer angefangenen
->    Einheit ist damit derselbe wie aus einer Speed round: sie zu Ende bringen.
+> 3. ~~**Während einer laufenden Wort-Einheit fehlt die Kopfzeile**~~ —
+>    **überholt durch Ruling #87.** Der Modus endet nicht mehr von selbst, also
+>    wäre er ohne Kopfzeile eine Sackgasse: verlassen wird über das Menü, und
+>    dafür muss der Knopf dafür sichtbar sein. Der Preis ist gemessen und steht
+>    in §4 — der Screen mit Tastenfeld ist jetzt 874 px hoch bei 390 × 844 und
+>    scrollt um 30 px. Für Training und Speed round gilt die Setzung
+>    unverändert.
 
 > ### Ein Nebenbefund, der zum Ruling gehört — Entscheidung liegt bei Fable
 >
@@ -88,7 +139,9 @@ Getippt wird über dasselbe Tastenfeld wie im Training (ab 13 Zeichen, darunter
 das Dreier-Gitter) plus eine Antwortzeile mit Löschen und „Check" — am Desktop
 über die physische Tastatur, Backspace und Enter. Die Auflösung markiert jede
 Position mit ✓ oder ✗ und zeigt bei einer verfehlten, was stattdessen getippt
-wurde. Zehn Aufgaben je Einheit, Fortschrittsbalken wie im Trainer.
+wurde. **Seit F3 (Ruling #87) läuft der Modus offen** — keine Einheit, kein
+Rundenzähler, kein Fortschrittsbalken, kein Abschluss; oben rechts steht still,
+wie viele Aufgaben heute gelaufen sind (§3l).
 
 **Jede Position verbucht ihr Zeichen — und sonst nichts** (Ruling A.8): Versuche
 und Treffer ja, **keine Reaktionszeit** (eine Wortzeit gehört keiner Position),
@@ -106,11 +159,16 @@ zurücksetzen kann man ihn in den Einstellungen.
 `/learn/` öffnet — ein echter Link, kein Ort der App, deshalb nie mit dem
 Ortsmarker.
 
-Screenshots:
-[`docs/screenshots/words-keypad-390.png`](./docs/screenshots/words-keypad-390.png)
+Screenshots — **aktuell (F3, mit der neuen Kopfzeile):**
+[`words-open-input-390.png`](./docs/screenshots/words-open-input-390.png)
 (Eingabe auf dem Tastenfeld),
+[`words-open-solution-390.png`](./docs/screenshots/words-open-solution-390.png)
+(Auflösung mit „Next word").
+Aus F2 und damit **mit der alten Runden-Kopfzeile**, als Vergleich:
+[`words-keypad-390.png`](./docs/screenshots/words-keypad-390.png),
 [`words-feedback-correct-390.png`](./docs/screenshots/words-feedback-correct-390.png),
-[`words-feedback-wrong-390.png`](./docs/screenshots/words-feedback-wrong-390.png),
+[`words-feedback-wrong-390.png`](./docs/screenshots/words-feedback-wrong-390.png).
+Unverändert gültig:
 [`menu-words-locked-390.png`](./docs/screenshots/menu-words-locked-390.png)
 (Menü mit „Learn" und gesperrtem „Words & groups").
 
@@ -267,12 +325,23 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde (F2): Wörter, Tempo und der Weg in den Learn-Bereich.**
+**Neu aus dieser Runde (B2 + F3):**
 
-- **Der Modus „Words & groups"** — ab acht aktiven Zeichen, zehn Aufgaben je
-  Einheit, ein Wort oder eine Gruppe als eine Zeitachse. Er trainiert das, was
-  der Einzelzeichen-Loop nicht kann: eine Folge halten, samt der Zeichenpause,
-  die man mithören muss, ohne sie zu zählen.
+- **Die Bildmarke kommt aus den Owner-Dateien** (#88). Die im Repo
+  konstruierte Marke war an vier Stellen falsch; Favicon, App-Icons, Lockup
+  und Social-Bild sind aus den Originalen neu erzeugt, der zweite Zeichner ist
+  gelöscht (§3f).
+- **„Words & groups" ist offen** (#87). Keine zehn Aufgaben mehr, kein
+  Fortschrittsbalken, kein Abschluss-Screen: hören, antworten, „Next word", so
+  lange man mag. Statt der Forderung steht rechts oben eine Auskunft, und der
+  Streak-Tag fällt nach fünf abgeschickten Aufgaben (§3l).
+
+**Aus Runde F2 gilt weiter: Wörter, Tempo und der Weg in den Learn-Bereich.**
+
+- **Der Modus „Words & groups"** — ab acht aktiven Zeichen, ein Wort oder eine
+  Gruppe als eine Zeitachse. Er trainiert das, was der Einzelzeichen-Loop nicht
+  kann: eine Folge halten, samt der Zeichenpause, die man mithören muss, ohne
+  sie zu zählen.
 - **Die Tempo-Progression** — erst der volle Zeichensatz, dann schrumpfen die
   Pausen. Ein WPM je Stufe, dieselbe Bedingung und dieselbe Sperre wie beim
   Zeichen-Wachstum, gedeckelt am Zeichentempo, nie automatisch abwärts.
@@ -1038,15 +1107,18 @@ Positionen. Ein daraus gefülltes Dreißiger-Fenster wäre kein Bild der normale
 Übung mehr — und die Wachstumsregel entschiede darauf über den nächsten
 Buchstaben.
 
-### `sessionsStarted` bleibt bei einer Wort-Einheit stehen
+### `sessionsStarted` bleibt im Wort-Modus stehen
 
-Eine Wort-Einheit läuft **neben** der Sitzung her, wie der Lernmodus; ein Drill
-*ersetzt* sie. Zählte sie mit, stünde auf dem Trainings-Screen nach der
+Der Wort-Modus läuft **neben** der Sitzung her, wie der Lernmodus; ein Drill
+*ersetzt* sie. Zählte er mit, stünde auf dem Trainings-Screen nach der
 Rückkehr „Session 13", obwohl es dieselbe Sitzung ist, die vorher „Session 12"
 hieß — eine Zahl, die sich unter dem Nutzer ändert (CLAUDE.md 2.6). Der
 Tages-Eimer zieht dagegen auf heute nach: die Antworten von hier zählen zum
-Tag. Und eine **durchgezogene** Einheit zählt als geübter Tag — dieselbe
-Setzung wie beim Drill, der Streak misst Kontinuität, nicht Pflichterfüllung.
+Tag.
+
+> Der Satz „eine **durchgezogene** Einheit zählt als geübter Tag" stand hier
+> bis F2. Er ist von Ruling #87 überholt: es gibt keine Einheit mehr, und der
+> Streak-Tag fällt jetzt nach fünf abgeschickten Aufgaben (§3l).
 
 ### Die Auswahl leiht sich zwei Schwellen, sie erfindet keine dritte
 
@@ -1196,16 +1268,210 @@ keine Auskunft (CLAUDE.md 6). Den Satz baut `App.tsx` aus
 ### Was nicht gebaut wurde, obwohl naheliegend
 
 Kein Live-Mitschreiben während des Tons (Addendum (a), CLAUDE.md 2.2). Keine
-Kästchen für die Positionen. Kein „noch eine Einheit" auf dem Abschluss-Screen
-— der Weg zurück ist ein Knopf, der Weg hinein zwei Tipps, und das Ruling nennt
-keinen. Keine Wortpausen zwischen zwei Aufgaben (jede Aufgabe ist eine eigene
-Zeitachse). Keine Statistik je Wort (die Statistik gehört den Zeichen). Kein
+Kästchen für die Positionen. (Der Punkt „kein *noch eine Einheit* auf dem
+Abschluss-Screen" hat sich mit #87 erledigt — es gibt keinen Abschluss-Screen
+mehr, und weitermachen ist der Normalfall.) Keine Wortpausen zwischen zwei
+Aufgaben (jede Aufgabe ist eine eigene Zeitachse). Keine Statistik je Wort (die Statistik gehört den Zeichen). Kein
 Tempo-Regler in den Einstellungen: das Tempo ist kein Wert, den man einstellt,
 sondern einer, den man sich erübt — es gibt nur den Stand und den einen Weg
 zurück.
 
+## 3l. Runde F3 — warum der Wort-Modus jetzt offen ist (Ruling #87)
+
+Erik, wörtlich: zehn Aufgaben am Stück sind zu viel, er will „einfach immer
+nur button mit next ohne hohe anforderungen". Genau das ist gebaut.
+
+### Die Einheit war eine Forderung, wo eine Einladung hingehört
+
+Weg sind: `WORDS_ROUNDS`, `totalRounds`, `round`, die Phase `'finished'`, der
+Abschluss-Screen und der Fortschrittsbalken. Der Ablauf ist jetzt Aufgabe →
+Antwort → Auflösung → „Next word" → Aufgabe, ohne Ende. Die Weiter-Taste heißt
+immer „Next word"; ein „Finish" gibt es nicht mehr, weil es nichts zu beenden
+gibt.
+
+Das ist keine Vereinfachung, sondern eine andere Haltung zum selben Modus. Ein
+Fortschrittsbalken sagt „noch sieben", und wer nach dreien aufhört, hat
+abgebrochen. Ohne Balken hat er geübt. CLAUDE.md 2.8 verlangt genau das: kein
+Druckaufbau, kein Fortschritt, der als Druckmittel verloren geht.
+
+**Der Einzelzeichen-Trainer behält seine 20 Runden.** Dort hängt die
+Wachstumsregel dran — der Satz wächst am Ende einer Sitzung, und ein Loop ohne
+Ende hätte keinen Ort dafür. Die Speed round behält ihre zehn aus demselben
+Grund: sie ist ein gezielter Eingriff, kein Aufenthalt.
+
+### Statt der Forderung eine Auskunft: `7 heard today`
+
+Oben rechts steht, wie viele Wort-Aufgaben an **diesem Kalendertag**
+abgeschickt wurden. Links daneben, wo im Trainer die Sitzung steht, der Ort:
+`Words & groups`.
+
+Drei Entscheidungen darin:
+
+- **Es ist eine Zahl, keine Quote.** Keine Prozentangabe daneben — die
+  Positionsquote steht schon in der Auflösung, an der Aufgabe, um die es
+  gerade geht. Eine zweite, aggregierte Quote in der Kopfzeile wäre dieselbe
+  Auskunft in ungenauer, und jede Zahl auf dem Schirm ist eine Behauptung
+  (CLAUDE.md 2.6).
+- **Sie zählt Aufgaben, nicht Positionen.** Eine Aufgabe schreibt bis zu fünf
+  Versuche (einen je Position) und ist trotzdem *eine* Aufgabe. Deshalb ein
+  eigenes Feld `day.words` neben `day.attempts` — und deshalb zählt es
+  `recordWordPrompt`, nicht `recordAttempt`.
+- **Sie steht im bestehenden Tages-Eimer**, additiv mit Default 0. Kein
+  zweiter Eimer mit zweitem Datum: zwei Uhren laufen irgendwann auseinander,
+  und der Tageswechsel ist derselbe (`dayFor`). Im Merge wandert der Eimer als
+  Ganzes vom jüngeren Stand — die Zahl zu summieren hieße, zwei Geräte zu
+  einem Tag zu addieren, den so niemand erlebt hat.
+- **Kein `aria-live`.** Die Zahl ändert sich genau dann, wenn die Auflösung
+  ohnehin angesagt wird (`role="status"` an der Frage). Zwei Meldungen für ein
+  Ereignis wären Lärm, nicht Barrierefreiheit.
+
+### Der Streak-Tag fällt nach fünf Aufgaben, nicht nach einer
+
+`WORDS_STREAK_MIN_ANSWERS = 5` (engine/words.ts). Bis F2 fiel der Tag am Ende
+einer Einheit; das Ende gibt es nicht mehr, also braucht der Modus eine
+Schwelle — sonst wäre eine einzige Antwort ein geübter Tag, und der Streak
+behauptete etwas, das nicht stattgefunden hat.
+
+Er fällt **beim Abschicken** der fünften Aufgabe, nicht erst beim Weiterklicken:
+geübt ist geübt, sobald geantwortet wurde. Ein zweites Mal am selben Tag
+schreibt nichts doppelt — `recordPracticeDay` ist idempotent und gibt denselben
+Stand identisch (`===`) zurück; der Test hält beides fest (4 → nein, 5 → ja,
+10 → immer noch derselbe Stand).
+
+### Die Versuchsliste ist gedeckelt, weil der Modus kein Ende hat
+
+`WORD_ATTEMPTS_KEPT = 50`. Solange der Modus zehn Aufgaben lang war, war
+`attempts` von selbst beschränkt. Offen wäre die Liste unbegrenzt gewachsen,
+und das schließt CLAUDE.md 7 aus. Fünfzig, aus demselben Gedanken wie
+`RECENT_SAMPLES`: genug, um etwas über den aktuellen Stand zu sagen, wenig
+genug, um nicht der Zustand von vor einer Stunde zu sein.
+
+**Verbucht ist trotzdem alles.** Die Statistik je Zeichen und der Tageszähler
+hängen nicht an dieser Liste; der Deckel kostet nur den Rückblick auf sehr
+alte Aufgaben, und den zeigte ohnehin nur der Abschluss-Screen.
+
+`summarizeWords` bleibt (das Ruling sagt: nur der Screen fällt weg). Sie hat
+damit **keinen Aufrufer in der UI mehr** und beschreibt jetzt die letzten 50
+Aufgaben statt „die Einheit" — beides steht in ihrem Kopfkommentar.
+
+### Der Weg hinaus führt über das Menü — und kostet 30 px
+
+Bis F2 war die App-Kopfzeile während einer laufenden Wort-Einheit
+ausgeblendet: der Play-Kreis sollte der einzige nächste Schritt sein, und der
+Weg hinaus war, die Einheit zu Ende zu bringen. **Das geht nicht mehr**, denn
+zu Ende bringen kann man nichts, was nicht endet. Ruling #87 nennt das Menü
+als Weg hinaus, also muss der Knopf dafür sichtbar sein.
+
+Der Preis ist gemessen, nicht geschätzt (§4): der Wort-Screen mit Tastenfeld
+ist bei 390 × 844 jetzt **874 px** hoch statt 844 — er scrollt um 30 px, die
+Auflösung um 13. Das ist die eine Stelle, an der diese Runde etwas
+verschlechtert, und sie ist die Folge der Vorgabe, nicht eine Wahl daneben.
+**Ort und Tageszahl in die App-Kopfzeile zu ziehen würde es nicht lösen**: die
+eigene Kopfzeile misst gemessene 19,8 px, der Screen bliebe also rechnerisch
+bei rund 854 px — immer noch über 844. Was wirklich hilft, wäre weniger Höhe im
+Tastenfeld oder in der Bühne — und das ist eine Gestaltungsfrage, keine
+Aufräumarbeit (CLAUDE.md 5). **Sie gehört ins Review.**
+
+### Was nicht angefasst wurde
+
+Der Einzelzeichen-Loop, die Speed round, die Tempo-Progression, die
+Wortauswahl, die Wortliste, das Tastenfeld, die Statistik je Zeichen, der
+Merge und das Backend. Die Auflösung sieht aus wie in F2 — Position für
+Position, in ink, mit der getippten Alternative darunter.
+
 ## 4. Was nachgewiesen ist (und wie)
 
+**Aus dieser Runde (B2: die Marke; F3: der offene Wort-Modus):**
+
+- **Die drei Owner-Dateien liegen byte-identisch im Repo** — geprüft, nicht
+  behauptet:
+
+  ```
+  399  4e9c317a592ce2ad5175be6880c71b39  docs/brand/assets/morse-lab-mark.svg
+  399  1a3018b9580cad1714081737bb8787e4  docs/brand/assets/morse-lab-mark-inverse.svg
+  530  21b38583a2feb6a53ab3a6750b9fb8c9  docs/brand/assets/morse-lab-appicon.svg
+  ```
+
+- **Keine Datei trägt mehr die alten Werte.**
+  `grep -rn 'y="64"\|rotate(13 108 48)\|cx="18.358"\|r="5"' public docs/brand`
+  findet nichts.
+- **Die Ableitung ist deterministisch:** ein zweiter Lauf von
+  `node tools/brand/derive.mjs` schreibt nichts, `--check` geht mit 0 durch.
+  Die PNG-Farbtiefen entsprechen den vorherigen Dateien (RGBA für die
+  Icons mit Eckenradius, RGB für die randlose maskable-Variante) — die
+  gerundeten Ecken bleiben transparent, statt vom Seitenhintergrund gefüllt zu
+  werden.
+- **Vorher/Nachher der Marke bei 240 px Breite:**
+  [`docs/screenshots/brand-mark-before-after-240.png`](./docs/screenshots/brand-mark-before-after-240.png).
+  Der sichtbare Unterschied ist der Lagerring: in der Rekonstruktion klebt er
+  auf der Hebelspitze, im Original steht er frei daneben.
+- **Die Wortmarke ist gemessen**, mit der Schrift aus dem Repo an einem echten
+  `<text>` über `getComputedTextLength()`: **209,45 px** bei Newsreader
+  Regular 46 px, also viewBox-Breite `12 + 120 + 30 + 209,45 + 12 = 383,45`.
+  **Der äußerste Punkt der Zeichnung im App-Icon** liegt **182,7 px** von der
+  Mitte (am 512er-Pixelbild gemessen, alles außer Papier gezählt) — die
+  maskable-Sicherheitszone erlaubt 204,8. Beide Zahlen weichen von der Vorgabe
+  ab; §3f sagt, warum.
+- **`npm test` → 383/383 grün** (375 vorher). `wordSession.test.ts` ist von 35
+  auf **41** Fälle gewachsen — **angepasst, nicht gelöscht**: wo auf
+  `totalRounds` und `'finished'` geprüft wurde, wird jetzt geprüft, dass nach
+  25 Aufgaben in Folge wieder `'ready'` kommt und der Zustand konsistent
+  bleibt. Dazu: der Deckel der Versuchsliste (70 Aufgaben → 50 Einträge, der
+  letzte Versuch ist der jüngste), der Tageszähler jenseits des Deckels, und
+  die Streak-Schwelle (4 → nein, 5 → ja, 10 → derselbe Stand **identisch**
+  `===`). In `session.test.ts` zwei Fälle für das additive Tagesfeld, in
+  `sync.test.ts` der Beleg, dass `day.words` mit dem Eimer wandert statt
+  summiert zu werden.
+  **Regression:** an Einzelzeichen-Loop, Drill, Tempo, Wachstum, Streak und
+  Merge ist keine Erwartung geändert — nur drei Fixtures und eine
+  `toEqual`-Erwartung haben das neue Tagesfeld dazubekommen, weil ein
+  vollständiges Objekt verglichen wird.
+- **`npm run build` → sauber** (`tsc --noEmit`, dazu `tsc -p functions`).
+  **Bundle-Delta:** JS **209,21 kB roh / 65,27 kB gzip** (vorher 210,32 /
+  65,48 — Delta **−1,11 / −0,21**), CSS **13,98 / 3,20** (unverändert). Der
+  offene Modus ist kleiner als die Einheit, die er ersetzt. **Keine neue
+  Abhängigkeit** — `playwright-core` bleibt ein ad-hoc-Werkzeug.
+  Die statischen Marken-Dateien in `public/` sind zusammen **106 Byte größer**
+  (die neue `logo-mark-inverse.svg` mitgerechnet; die PNG-Icons sind kleiner
+  geworden, das randlose maskable-PNG größer).
+- **`npm run verify:amber` → grün über 27 Ansichten** (28 vorher; der
+  Abschluss-Screen ist weg). Die fünf Wort-Ansichten tragen jetzt zusätzlich
+  die App-Kopfzeile — sie bringt **kein** Amber mit: „Ton läuft" hat genau eine
+  Fläche (der Play-Kreis), „Eingabe offen" und „Tastenfeld" genau eine (der
+  gefüllte „Check"), „Eingabe leer" und „Auflösung" keine.
+- **`npm run verify:learn` → unverändert grün.** Am Learn-Bereich ist keine
+  Zeile geändert.
+- **Browser-Durchlauf gegen `dist/`** (headless Chromium, 390 × 844, Lernstand
+  vorab in localStorage, sechs Aufgaben am Stück):
+
+  | Aufgabe | Weiter-Taste | Kopfzeile rechts | `day.words` | `streak.days` |
+  |---|---|---|---|---|
+  | 1 | „Next word" | `1 heard today` | 1 | 0 |
+  | 2 | „Next word" | `2 heard today` | 2 | 0 |
+  | 3 | „Next word" | `3 heard today` | 3 | 0 |
+  | 4 | „Next word" | `4 heard today` | 4 | 0 |
+  | 5 | „Next word" | `5 heard today` | 5 | **1** |
+  | 6 | „Next word" | `6 heard today` | 6 | 1 |
+
+  Die Taste heißt **immer** „Next word"; ein „Finish" tritt nicht mehr auf.
+  Nach der sechsten Aufgabe steht wieder „Ready when you are." — kein
+  Abschluss-Screen. Der Streak-Tag fällt genau bei fünf und schreibt bei sechs
+  nichts dazu. **Der Weg hinaus über das Menü funktioniert:** Menü →
+  „Practice" landet auf `Session 4 / Round 1 / 20`. **Keine Konsolenfehler.**
+- **Höhe bei 390 × 844 — gemessen, nicht gerechnet:** Wort-Screen mit
+  Tastenfeld **874 px** (Eingabe offen) und **857 px** (Auflösung); das Fenster
+  ist 844 hoch, also scrollen beide (30 bzw. 13 px). Die Rechnung dahinter:
+  App-Kopfzeile 44 + 24 px Abstand, eigene Kopfzeile 19,8 px. **Das ist die
+  Verschlechterung dieser Runde**, und sie folgt direkt aus der Vorgabe
+  „verlassen wird über das Menü" (§3l).
+  Screenshots:
+  [`words-open-input-390.png`](./docs/screenshots/words-open-input-390.png),
+  [`words-open-solution-390.png`](./docs/screenshots/words-open-solution-390.png).
+- **Timing-Budget: unberührt.** An Zeitachse, Timing und Player ist keine Zeile
+  geändert. **Speicher:** die Versuchsliste ist jetzt gedeckelt
+  (`WORD_ATTEMPTS_KEPT = 50`); über 70 Aufgaben in Folge bleibt sie bei 50
+  Einträgen — vorher war sie durch die Einheit begrenzt, jetzt durch den
+  Deckel. Auf dem Eingabepfad ist nichts dazugekommen.
 **Aus Runde F2 (Wörter, Tempo, Menü):**
 
 - **`npm test` → 375/375 grün** (278 vorher, **97 neu**): 29 in
@@ -1260,6 +1526,9 @@ zurück.
      Auflösung falsch), Wort-Screen mit **Tastenfeld 844 px**, Menü **844 px**.
      Mit Kopfzeile wäre der Tastenfeld-Fall **888 px** — das ist der Grund für
      Setzung 3 im Kopf dieser Übergabe.
+     *(Überholt durch F3: der Wort-Screen trägt die Kopfzeile jetzt und misst
+     874 px. Der Wert 888 galt für die Kopfzeile **plus** Fortschrittsbalken,
+     den es nicht mehr gibt. Für Training und Menü gilt der Beleg unverändert.)*
   4. **Die Auflösung markiert wirklich je Position:** Aufgabe `CARD`, getippt
      `K` → `C ✗ K`, `A ✗ –`, `R ✗ –`, `D ✗ –`. Verfehlt heißt „falsch gehört"
      (das getippte Zeichen steht darunter) oder „zu kurz gehört" (ein Strich).
@@ -1279,7 +1548,8 @@ zurück.
      zurückzusetzen).
   9. **Eine ganze Einheit durchgezogen:** zehn Aufgaben, Abschluss-Screen mit
      „Whole words 0 of 10" und „Characters 0 of 31" — die beiden Zahlen sagen
-     Verschiedenes, und beide stimmen.
+     Verschiedenes, und beide stimmen. *(Überholt durch F3: es gibt weder
+     Einheit noch Abschluss-Screen. Der Durchlauf dieser Runde steht oben.)*
   10. **Keine Konsolenfehler** in keinem der Durchläufe.
 - **Timing-Budget: unberührt.** An Zeitachse, Timing und Player ist keine Zeile
   geändert; ein Wort läuft über denselben `buildSchedule`, denselben
@@ -1290,6 +1560,8 @@ zurück.
   Wörter über 230 Einträge, schwache Zeichen über den aktiven Satz) läuft
   **einmal je Aufgabe** beim Weiterschalten, nicht beim Tippen. Über eine
   Sitzung wächst nichts: die Einheit hält höchstens zehn `WordAttempt`.
+  *(Seit F3 hält der offene Modus höchstens `WORD_ATTEMPTS_KEPT` = 50 davon —
+  derselbe Zweck, andere Grenze.)*
 - **Zwei Nebenbefunde, gemessen und nicht mitrepariert**
   ([FINDINGS #7 und #8](./FINDINGS.md)): der **Start-Screen** ist bei 36 aktiven
   Zeichen **890 px** hoch und scrollt damit 46 px — auf `main` genauso, also
@@ -1972,18 +2244,36 @@ ist offline, die Artikel sind eine Website.
 
 ## 7. Nächster Schritt
 
-**Runde F2 wartet auf Review 14** — über das Repo; die vier Screenshots und die
-Messungen stehen in §4, die Begründungen in §3k. **Nicht gemergt**, wie
-beauftragt. Danach ist laut Plan **F4 (Sende-Training)** dran.
+**B2 und F3 warten auf Review 15** — über das Repo, in zwei Commits; die
+Screenshots und die Messungen stehen in §4, die Begründungen in §3f (Marke) und
+§3l (offener Wort-Modus). **Nicht gemergt**, wie beauftragt. Laut Plan folgt
+danach das **Laptop-Layout** und erst dann **F4 (Sende-Training)** — in dieser
+Reihenfolge, weil sonst die Oberfläche des Sende-Trainings zweimal gebaut wird.
 
-Vier Dinge brauchen dabei ein Urteil. Keines blockiert etwas, und keines ist
-still aufgelöst:
+**Drei Dinge aus dieser Runde brauchen ein Urteil:**
+
+1. **Der Wort-Screen scrollt jetzt um 30 px** (§3l, §4). Das ist der Preis
+   dafür, dass der Weg hinaus über das Menü führt — und die einzige Stelle,
+   an der diese Runde etwas verschlechtert. Was wirklich hülfe, wäre weniger
+   Höhe im Tastenfeld oder in der Bühne; das ist eine Gestaltungsfrage und
+   deshalb nicht still mitentschieden. **Das Laptop-Layout wird die Frage
+   ohnehin anfassen** (dort wird das Tastenfeld zum flachen Streifen).
+2. **Zwei Zahlen der Vorgabe zu #88 sind korrigiert** (§3f): Textbreite
+   209,45 statt 209,44 px, Sicherheitszone 182,7 statt 166,5 px. Beides ohne
+   Folge für die Entscheidung — aber beides gehört gesehen, bevor es jemand
+   aus der Übergabe abschreibt.
+3. **`summarizeWords` hat keinen Aufrufer in der UI mehr.** Das Ruling sagt
+   „nur der Abschluss-Screen fällt weg", also ist die Funktion geblieben. Soll
+   die Positionszahl irgendwo wieder auftauchen — etwa als stille Zeile unter
+   der Auflösung —, ist es ein Aufruf; soll sie weg, ist es eine Löschung.
+   Beides ist eine Produktentscheidung, keine Aufräumarbeit.
+
+**Aus Runde F2 offen** — vier Dinge, von denen zwei die Zeit überholt hat:
 
 1. **Die drei Setzungen im Kopf dieser Übergabe** — „eingeführt" als „im
    aktiven Satz" gelesen, kein Amber in der Wort-Auflösung, keine Kopfzeile
-   während einer laufenden Einheit. Die dritte ist zugleich der Grund, warum
-   der Wort-Screen mit Tastenfeld ohne Scrollen passt; sie zurückzunehmen
-   heißt, 44 px woanders zu finden.
+   während einer laufenden Einheit. Die ersten beiden gelten unverändert; die
+   dritte hat Ruling #87 aufgehoben (siehe Punkt 1 oben).
 2. **Bedingung (b) und (c) gelten für die Tempo-Stufe nicht** (§3k). Das Ruling
    nennt das 90-%-Fenster; mit den Zeichen-Bedingungen hielte ein einzelnes
    zähes Zeichen das Tempo auf Dauer fest. Soll die Stufe strenger sein, ist es
@@ -1991,13 +2281,18 @@ still aufgelöst:
 3. **Der Tempo-Reset wirkt lokal, nicht im Konto** (§3k, Kasten). Die Kehrseite
    der Monotonie im Merge. Der Weg, das zu ändern, steht daneben — er hat
    selbst einen Preis.
-4. **Kein „noch eine Einheit" auf dem Abschluss-Screen** des Wort-Modus. Es
-   steht dort genau ein Knopf („Back to practice"), wie beim Drill; das Ruling
-   nennt keinen zweiten. Wer nach zehn Aufgaben weitermachen will, geht zweimal
-   tippen über das Menü.
+4. ~~**Kein „noch eine Einheit" auf dem Abschluss-Screen**~~ — **erledigt
+   durch Ruling #87.** Weitermachen ist jetzt der Normalfall, der
+   Abschluss-Screen ist weg.
 
 **Menschliche Prüfung, die von hier aus nicht geht:**
 
+- **Neu aus F3: der offene Modus auf einem echten Telefon.** Zwei Fragen. Erstens
+  das Scrollen: 30 px sind wenig, aber sie treffen die unterste Tastenreihe
+  (0–9) — reicht ein Daumenwisch, oder fühlt es sich nach „passt nicht" an?
+  Zweitens die Formulierung: `7 heard today` ist bewusst leise. Liest sie
+  jemand als Auskunft — oder doch als Ziel, das man erreichen soll? Genau das
+  wäre die Forderung, die der Modus loswerden sollte.
 - **Der Wort-Modus auf einem echten Telefon.** Reicht die Antwortzeile ohne
   Kästchen, oder verliert man beim vierten Zeichen den Überblick? Ist „Check"
   am rechten Rand der Zeile gut erreichbar, oder gehört er unter das

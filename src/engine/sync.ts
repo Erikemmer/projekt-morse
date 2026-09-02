@@ -20,7 +20,11 @@
  *   Stand** (`updatedAt`). Das sind Momentaufnahmen eines Verlaufs, keine
  *   Summen: das rollierende Fenster der Wachstumsregel darf nicht aus zwei
  *   Geräten zusammengeschnitten werden, sonst behauptet es eine Serie, die es
- *   nicht gab.
+ *   nicht gab. Der Tages-Eimer wandert dabei **ganz**, mit allen Feldern --
+ *   auch mit der Zahl der Wort-Aufgaben (`day.words`, Ruling #87). Sie ist
+ *   Teil desselben Tages und braucht deshalb keine eigene Regel; sie zu
+ *   summieren hiesse, zwei Geräte zu einem Tag zu addieren, den so niemand
+ *   erlebt hat.
  * - **`activeCharacters` und `introducedCharacters` sind die Vereinigung.**
  *   Was einmal als Klang vorgestellt wurde, wurde vorgestellt -- ein Merge darf
  *   niemanden zurück in den Lernmodus schicken. Und **Wachstum ist monoton**:

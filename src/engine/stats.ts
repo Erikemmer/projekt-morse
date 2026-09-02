@@ -49,6 +49,18 @@ export interface DayStats {
   hits: number;
   /** Verschiedene Zeichen, die an diesem Tag drankamen. */
   characters: string[];
+  /**
+   * Abgeschickte Wort-Aufgaben an diesem Tag (Ruling #87).
+   *
+   * Eine eigene Zahl neben `attempts`, weil sie etwas anderes zaehlt: eine
+   * Wort-Aufgabe schreibt bis zu fuenf Versuche (einen je Position), ist aber
+   * *eine* Aufgabe. Sie hier zu fuehren und nicht in einem zweiten Eimer
+   * daneben hat einen Grund: der Tageswechsel ist derselbe, und zwei Eimer
+   * mit zwei Datumsangaben koennten auseinander laufen (`dayFor`).
+   *
+   * Additiv mit Default 0 -- ein Stand von vor dieser Regel hat sie nicht.
+   */
+  words: number;
 }
 
 export interface CharacterRecord {
@@ -144,7 +156,7 @@ export function emptyRecord(): CharacterRecord {
 }
 
 export function emptyDay(date = ''): DayStats {
-  return { date, attempts: 0, hits: 0, characters: [] };
+  return { date, attempts: 0, hits: 0, characters: [], words: 0 };
 }
 
 export function emptyProgress(): Progress {
@@ -261,8 +273,25 @@ export function recordAttempt(
       attempts: day.attempts + 1,
       hits: day.hits + (correct ? 1 : 0),
       characters: day.characters.includes(char) ? day.characters : [...day.characters, char],
+      // Wort-Aufgaben zaehlt `recordWordPrompt`, nicht diese Funktion: eine
+      // Aufgabe schreibt hier mehrere Versuche, waere also mehrfach gezaehlt.
+      words: day.words,
     },
   };
+}
+
+/**
+ * Verbucht **eine abgeschickte Wort-Aufgabe** im Tages-Eimer (Ruling #87).
+ *
+ * Getrennt von `recordAttempt`, weil die beiden Verschiedenes zaehlen: der
+ * Wort-Modus ruft `recordAttempt` je Position auf (bis zu fuenf pro Aufgabe)
+ * und diese Funktion genau einmal. Die Zahl traegt zwei Dinge -- die stille
+ * Auskunft in der Kopfzeile ("7 heard today") und die Schwelle, ab der der Tag
+ * als geuebt gilt (engine/wordSession.ts).
+ */
+export function recordWordPrompt(progress: Progress, today: string): Progress {
+  const day = dayFor(progress, today);
+  return { ...progress, day: { ...day, date: today, words: day.words + 1 } };
 }
 
 /**
@@ -440,6 +469,10 @@ function parseDay(raw: unknown): DayStats {
     attempts,
     hits: Math.min(finiteOrZero(entry.hits), attempts),
     characters,
+    // Additiv mit Default 0 (Ruling #87): ein Stand von vor dem offenen
+    // Wort-Modus kennt das Feld nicht -- das ist kein Fehler, sondern ein
+    // Tag, an dem der Modus noch nicht gezaehlt hat.
+    words: finiteOrZero(entry.words),
   };
 }
 
