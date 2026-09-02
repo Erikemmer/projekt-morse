@@ -1,16 +1,19 @@
 # Übergabe — Stand nach Runde B2 + F3 (die Marke aus den Owner-Dateien, der offene Wort-Modus)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** **B2 und F3 liegen auf dem Branch
-`claude/morse-handover-alignment-nbkk6o`** und warten auf **Review 15** von
-Fable. Basis ist `main` = `ed83b96` — dort ist Runde F2 (Wort-Modus,
-Tempo-Progression, Learn im Menü) schon drin. Gearbeitet ist linear, in **zwei
-Commits**, es wurde **nicht** nach `main` gemergt.
+**Stand:** **B2, F3 und die Korrektur aus Review 15 sind in `main`.** Basis war
+`main` = `ed83b96` (Runde F2: Wort-Modus, Tempo-Progression, Learn im Menü);
+gearbeitet ist linear, in **drei Commits**, gemergt per Fast-Forward — `main`
+und `claude/morse-handover-alignment-nbkk6o` zeigen auf denselben Stand.
 
 - **B2 setzt Ruling Notion-Log #88 um:** die Bildmarke kommt endgültig aus den
   drei Owner-Dateien; der Rekonstruktions-Zeichner ist gelöscht.
 - **F3 setzt Ruling Notion-Log #87 um:** „Words & groups" wird offen — keine
   Einheit, kein Rundenzähler, kein Abschluss.
+- **Commit 3 setzt Ruling Notion-Log #94 um:** die Tasten sind im Wort-Modus
+  46 px hoch statt 52 (nur dort), und `summarizeWords` ist gelöscht. Damit
+  passt der Wort-Screen mit Tastenfeld wieder ohne Scrollen: **844 px** bei
+  390 × 844, gemessen (§4).
 
 An **Backend, Sync-API, Konto, dem Learn-Bereich (Inhalte und Generator), dem
 Einzelzeichen-Loop und der Tempo-Progression ist nichts angefasst.** Berührt
@@ -34,6 +37,10 @@ sind in dieser Runde:
 | `src/ui/SessionHeader.tsx` | wieder ein Nutzer: die Beschriftung der Linie ist wieder fest | F3 |
 | `src/ui/App.tsx` | die App-Kopfzeile steht jetzt auch im Wort-Modus (der Weg hinaus) | F3 |
 | `tools/amber/check.mjs` | Ansichtsliste nachgezogen: der Abschluss-Screen ist weg (27 statt 28) | F3 |
+| `src/styles.css` | **neu:** `.keypad-typing` — 46 px Tastenhöhe, nur im Wort-Modus | Commit 3 |
+| `src/ui/Words.tsx` | eine Klasse mehr am Tastenfeld (`keypad-typing`) | Commit 3 |
+| `src/engine/wordSession.ts` | `summarizeWords` und `WordSummary` gelöscht — ohne Aufrufer, und der Deckel machte aus der Zusammenfassung die letzten 50 Aufgaben | Commit 3 |
+| `src/engine/wordSession.test.ts` | die zwei Fälle dazu gelöscht (381 statt 383) | Commit 3 |
 
 Dazu drei Screenshots, README und diese Übergabe.
 
@@ -44,15 +51,20 @@ Dazu drei Screenshots, README und diese Übergabe.
 >    viewBox-Breite 383,45), und der äußerste Punkt der Zeichnung im App-Icon
 >    liegt **182,7 px** von der Mitte statt 166,5 — beides ohne Folge für die
 >    Entscheidung, aber eine Zahl ist eine Behauptung (CLAUDE.md 2.6).
-> 2. **Der offene Wort-Modus braucht die App-Kopfzeile** — sonst gäbe es
->    keinen Weg hinaus (Ruling #87 nennt das Menü). Das kostet den Platz, der
->    bis F2 dafür sorgte, dass der Screen mit Tastenfeld ohne Scrollen passt:
->    **874 px statt 844** bei 390 × 844. Gemessen, nicht geschätzt; die
->    Rechnung steht in §4.
-> 3. **`summarizeWords` bleibt, hat aber keinen Aufrufer mehr in der UI.** Das
->    Ruling sagt ausdrücklich, nur der Abschluss-Screen fällt weg. Die
->    Funktion ist getestet und beschreibt jetzt die letzten
->    `WORD_ATTEMPTS_KEPT` (50) Aufgaben statt „die Einheit".
+> 2. ~~**Der offene Wort-Modus braucht die App-Kopfzeile und scrollt deshalb**~~
+>    — **geregelt durch Ruling #94.** Die Kopfzeile bleibt (sie ist der Weg
+>    hinaus); den Platz gibt jetzt das Tastenfeld her, 46 px statt 52 und nur
+>    im Wort-Modus. Gemessen bei 390 × 844: **844 px, kein Scrollen** (§4).
+> 3. ~~**`summarizeWords` bleibt, hat aber keinen Aufrufer mehr in der UI**~~ —
+>    **gelöscht durch Ruling #94.** Eine Funktion, die eine Zusammenfassung
+>    behauptet, die sie seit dem Deckel auf 50 nicht mehr ist, ist eine
+>    Behauptung zu viel (CLAUDE.md 2.6).
+> 4. **Neu gemessen und offen: die Auflösung einer falschen Antwort.** Sie ist
+>    der einzige Zustand des Wort-Screens, der weiter scrollt — **849 px**
+>    statt vorher 891. Das ist **keine Folge von Commit 3**, sondern war schon
+>    vorher so und stand in keiner Messung; §4 nennt die Zahlen,
+>    [FINDINGS #9](./FINDINGS.md) den Befund. **Nicht mitgeändert** — weniger
+>    Höhe wäre die nächste Gestaltungsfrage, und die entscheidet Fable.
 
 <details>
 <summary><b>Die Dateien aus Runde F2</b> (Basis dieser Runde, unverändert gültig)</summary>
@@ -104,10 +116,10 @@ Dazu vier Screenshots, zwei FINDINGS-Einträge, README und diese Übergabe.
 > 3. ~~**Während einer laufenden Wort-Einheit fehlt die Kopfzeile**~~ —
 >    **überholt durch Ruling #87.** Der Modus endet nicht mehr von selbst, also
 >    wäre er ohne Kopfzeile eine Sackgasse: verlassen wird über das Menü, und
->    dafür muss der Knopf dafür sichtbar sein. Der Preis ist gemessen und steht
->    in §4 — der Screen mit Tastenfeld ist jetzt 874 px hoch bei 390 × 844 und
->    scrollt um 30 px. Für Training und Speed round gilt die Setzung
->    unverändert.
+>    dafür muss der Knopf dafür sichtbar sein. Der Preis stand kurz in §4 (874
+>    px statt 844) und ist mit Ruling #94 bezahlt: das Tastenfeld ist im
+>    Wort-Modus 46 px hoch, der Screen misst wieder **844 px**. Für Training
+>    und Speed round gilt die Setzung — und die Tastenhöhe 52 — unverändert.
 
 > ### Ein Nebenbefund, der zum Ruling gehört — Entscheidung liegt bei Fable
 >
@@ -1350,27 +1362,48 @@ genug, um nicht der Zustand von vor einer Stunde zu sein.
 hängen nicht an dieser Liste; der Deckel kostet nur den Rückblick auf sehr
 alte Aufgaben, und den zeigte ohnehin nur der Abschluss-Screen.
 
-`summarizeWords` bleibt (das Ruling sagt: nur der Screen fällt weg). Sie hat
-damit **keinen Aufrufer in der UI mehr** und beschreibt jetzt die letzten 50
-Aufgaben statt „die Einheit" — beides steht in ihrem Kopfkommentar.
+**`summarizeWords` ist weg** (Ruling #94, Commit 3). In F3 war sie geblieben,
+weil das Ruling #87 nur den Abschluss-Screen strich — sie hatte damit keinen
+Aufrufer mehr und beschrieb durch denselben Deckel nur noch die letzten 50
+Aufgaben. Eine Funktion, die „die Zusammenfassung" heißt und eine Stichprobe
+ist, behauptet etwas, das nicht stimmt (CLAUDE.md 2.6); tot war sie ohnehin.
+Ihre zwei Testfälle sind mitgegangen. Soll die Positionsquote je wieder auf den
+Schirm, ist sie in zehn Zeilen wieder da — dann aber mit einem Namen, der sagt,
+worüber sie spricht.
 
-### Der Weg hinaus führt über das Menü — und kostet 30 px
+### Der Weg hinaus führt über das Menü — und das Tastenfeld zahlt dafür
 
 Bis F2 war die App-Kopfzeile während einer laufenden Wort-Einheit
 ausgeblendet: der Play-Kreis sollte der einzige nächste Schritt sein, und der
 Weg hinaus war, die Einheit zu Ende zu bringen. **Das geht nicht mehr**, denn
 zu Ende bringen kann man nichts, was nicht endet. Ruling #87 nennt das Menü
-als Weg hinaus, also muss der Knopf dafür sichtbar sein.
+als Weg hinaus, also muss der Knopf dafür sichtbar sein — und Ruling #93 hat
+die Regel dahinter ratifiziert: **ein Modus mit Ende verbirgt die Kopfzeile,
+ein offener zeigt sie.**
 
-Der Preis ist gemessen, nicht geschätzt (§4): der Wort-Screen mit Tastenfeld
-ist bei 390 × 844 jetzt **874 px** hoch statt 844 — er scrollt um 30 px, die
-Auflösung um 13. Das ist die eine Stelle, an der diese Runde etwas
-verschlechtert, und sie ist die Folge der Vorgabe, nicht eine Wahl daneben.
-**Ort und Tageszahl in die App-Kopfzeile zu ziehen würde es nicht lösen**: die
-eigene Kopfzeile misst gemessene 19,8 px, der Screen bliebe also rechnerisch
-bei rund 854 px — immer noch über 844. Was wirklich hilft, wäre weniger Höhe im
-Tastenfeld oder in der Bühne — und das ist eine Gestaltungsfrage, keine
-Aufräumarbeit (CLAUDE.md 5). **Sie gehört ins Review.**
+Der Platz dafür kam in F3 aus dem Scrollen: der Wort-Screen mit Tastenfeld war
+bei 390 × 844 **874 px** hoch. **Ruling #94 löst die Höhe, statt die Regel zu
+biegen** — die Tasten sind im Wort-Modus **46 px** hoch statt 52, sechs Reihen
+sparen 36 px, und der Screen misst wieder **844 px, ohne Scrollen** (§4).
+
+Die Begründung ist keine Platznot, sondern die Rolle der Fläche: **im Training
+ist das Tastenfeld die Antwort** — ein Tipp ist eine Antwort, und auf ihn fällt
+eine gemessene Reaktionszeit. **Im Wort-Modus ist es eine Eingabetastatur** —
+viele Tipps je Antwort. Eine Tastatur darf kompakter sein; 46 px liegen
+weiterhin über den 44 px aus WCAG 2.5.5, die als `min-height` ohnehin darunter
+stehen. **Nur dort:** das Einzelzeichen-Training bleibt bei 52 px, gemessen und
+belegt (§4). Getragen wird das von einer Klasse (`keypad-typing`, styles.css),
+nicht von einer zweiten Tastenordnung — ortsfest bleibt ortsfest.
+
+**Ort und Tageszahl in die App-Kopfzeile zu ziehen hätte es nicht gelöst**: die
+eigene Kopfzeile misst gemessene 19,8 px, der Screen wäre rechnerisch bei rund
+854 px geblieben — immer noch über 844.
+
+**Ein Zustand scrollt weiter:** die Auflösung einer **falschen** Antwort, jetzt
+**849 px** statt 891. Sie war auch vorher zu hoch und stand in keiner Messung
+der Runde F3 — §4 nennt jetzt beide Zahlen, [FINDINGS #9](./FINDINGS.md) den
+Befund. Weiter zu beschneiden wäre eine Gestaltungsfrage, keine Aufräumarbeit
+(CLAUDE.md 5); sie gehört zu Fable, nicht in diesen Commit.
 
 ### Was nicht angefasst wurde
 
@@ -1381,7 +1414,51 @@ Position, in ink, mit der getippten Alternative darunter.
 
 ## 4. Was nachgewiesen ist (und wie)
 
-**Aus dieser Runde (B2: die Marke; F3: der offene Wort-Modus):**
+**Aus Commit 3 (Ruling #94: 46 px im Wort-Modus, `summarizeWords` gelöscht):**
+
+- **`npm test` → 381/381 grün** (383 vorher; die zwei Fälle zu
+  `summarizeWords` sind mit der Funktion gegangen, sonst ist keiner
+  angefasst). **`npm run build`, `npm run verify:amber` (27 Ansichten) und
+  `npm run verify:learn` (14 Seiten) → grün.**
+- **Höhe bei 390 × 844 — gemessen gegen `dist/`** (headless Chromium,
+  Lernstand vorab in localStorage, 15 aktive Zeichen, also Tastenfeld). Die
+  Zahl ist die Seitenhöhe; 844 heißt „passt, kein Scrollen" (das Gehäuse ist
+  `min-height: 100dvh`, die Bühne nimmt den Rest auf). In Klammern die
+  natürliche Höhe des Inhalts, gemessen mit fixierter Bühne:
+
+  | Zustand des Wort-Screens | vor Commit 3 | nach Commit 3 |
+  |---|---|---|
+  | bereit | 873 | **844** (831,4) |
+  | Eingabe leer | 873 | **844** (831,4) |
+  | **Eingabe offen** | **874** | **844** (832,4) |
+  | Auflösung, richtig | 844 | **844** (795,4) |
+  | Auflösung, falsch (5 Positionen daneben) | 891 | **849** |
+  | Einzelzeichen-Training, Runde läuft | 844 | **844** (818,6) |
+
+  **Die Tastenhöhe ist mitgemessen:** 46 px im Wort-Modus, **52 px im
+  Training** — die Trennung hält, sie ist nicht nur behauptet. Keine
+  Konsolenfehler.
+- **Der eine Zustand, der weiter scrollt**, ist die Auflösung einer falschen
+  Antwort: 849 statt 844, also 5 px. Er war vor Commit 3 bei 891 px und stand
+  in **keiner** Messung der Runde F3 (dort war „Auflösung" mit 857 px die
+  *richtige*). Das ist also kein Rückschritt dieses Commits, sondern ein
+  Befund, den erst diese Messung sichtbar macht → [FINDINGS #9](./FINDINGS.md).
+- **`summarizeWords` hat keinen Aufrufer mehr** — `grep -rn 'summarizeWords\|WordSummary' src`
+  findet nichts.
+- **Timing-Budget: unberührt.** An Engine, Zeitachse und Player ist außer der
+  Löschung keine Zeile geändert; die Löschung liegt nicht auf dem Eingabepfad.
+  **Bundle-Delta: +14 Bytes JS, +42 Bytes CSS** (209 208 → 209 222 und
+  13 977 → 14 019). Dass die Löschung nichts spart, ist erwartbar: ohne
+  Aufrufer war `summarizeWords` für den Bundler schon totes Holz; bezahlt wird
+  die zusätzliche Klasse und die CSS-Regel.
+- **Die zwei Screenshots aus F3**
+  ([`words-open-input-390.png`](./docs/screenshots/words-open-input-390.png),
+  [`words-open-solution-390.png`](./docs/screenshots/words-open-solution-390.png))
+  **zeigen den Stand vor Commit 3** — 52-px-Tasten, unterste Reihe angeschnitten.
+  Sie sind bewusst nicht ersetzt: die Aufgabe nennt zwei Änderungen, und Bilder
+  sind keine davon.
+
+**Aus der Runde davor (B2: die Marke; F3: der offene Wort-Modus):**
 
 - **Die drei Owner-Dateien liegen byte-identisch im Repo** — geprüft, nicht
   behauptet:
@@ -2244,29 +2321,31 @@ ist offline, die Artikel sind eine Website.
 
 ## 7. Nächster Schritt
 
-**B2 und F3 warten auf Review 15** — über das Repo, in zwei Commits; die
-Screenshots und die Messungen stehen in §4, die Begründungen in §3f (Marke) und
-§3l (offener Wort-Modus). **Nicht gemergt**, wie beauftragt. Laut Plan folgt
-danach das **Laptop-Layout** und erst dann **F4 (Sende-Training)** — in dieser
-Reihenfolge, weil sonst die Oberfläche des Sende-Trainings zweimal gebaut wird.
+**Review 15 ist durch, B2, F3 und die Korrektur daraus sind in `main`** —
+drei Commits, per Fast-Forward gemergt (Notion-Log #92–94). Die Messungen
+stehen in §4, die Begründungen in §3f (Marke) und §3l (offener Wort-Modus,
+Tastenhöhe). Laut Plan folgt jetzt das **Laptop-Layout** und erst dann **F4
+(Sende-Training)** — in dieser Reihenfolge, weil sonst die Oberfläche des
+Sende-Trainings zweimal gebaut wird.
 
-**Drei Dinge aus dieser Runde brauchen ein Urteil:**
+**Zwei Dinge aus dieser Runde brauchen ein Urteil:**
 
-1. **Der Wort-Screen scrollt jetzt um 30 px** (§3l, §4). Das ist der Preis
-   dafür, dass der Weg hinaus über das Menü führt — und die einzige Stelle,
-   an der diese Runde etwas verschlechtert. Was wirklich hülfe, wäre weniger
-   Höhe im Tastenfeld oder in der Bühne; das ist eine Gestaltungsfrage und
-   deshalb nicht still mitentschieden. **Das Laptop-Layout wird die Frage
-   ohnehin anfassen** (dort wird das Tastenfeld zum flachen Streifen).
+1. ~~**Der Wort-Screen scrollt um 30 px**~~ — **erledigt durch Ruling #94.**
+   Die Tasten sind im Wort-Modus 46 px hoch, der Screen misst wieder 844 px
+   ohne Scrollen (§3l, §4). **Offen bleibt ein Zustand:** die Auflösung einer
+   **falschen** Antwort steht bei 849 px, war vorher 891 und ist in F3 nie
+   gemessen worden. Weiter beschneiden wäre eine Gestaltungsfrage — sie liegt
+   bei Fable, mit Maßen in [FINDINGS #9](./FINDINGS.md). **Das Laptop-Layout
+   wird die Fläche ohnehin anfassen** (dort wird das Tastenfeld zum flachen
+   Streifen); dann ist auch zu entscheiden, ob die 46 px dort mitkommen.
 2. **Zwei Zahlen der Vorgabe zu #88 sind korrigiert** (§3f): Textbreite
    209,45 statt 209,44 px, Sicherheitszone 182,7 statt 166,5 px. Beides ohne
    Folge für die Entscheidung — aber beides gehört gesehen, bevor es jemand
    aus der Übergabe abschreibt.
-3. **`summarizeWords` hat keinen Aufrufer in der UI mehr.** Das Ruling sagt
-   „nur der Abschluss-Screen fällt weg", also ist die Funktion geblieben. Soll
-   die Positionszahl irgendwo wieder auftauchen — etwa als stille Zeile unter
-   der Auflösung —, ist es ein Aufruf; soll sie weg, ist es eine Löschung.
-   Beides ist eine Produktentscheidung, keine Aufräumarbeit.
+3. ~~**`summarizeWords` hat keinen Aufrufer in der UI mehr**~~ — **erledigt
+   durch Ruling #94:** gelöscht, samt ihrer zwei Testfälle. Soll die
+   Positionsquote je wieder auf den Schirm, ist sie neu zu schreiben — dann
+   mit einem Namen, der sagt, worüber sie spricht (§3l).
 
 **Aus Runde F2 offen** — vier Dinge, von denen zwei die Zeit überholt hat:
 
@@ -2288,9 +2367,9 @@ Reihenfolge, weil sonst die Oberfläche des Sende-Trainings zweimal gebaut wird.
 **Menschliche Prüfung, die von hier aus nicht geht:**
 
 - **Neu aus F3: der offene Modus auf einem echten Telefon.** Zwei Fragen. Erstens
-  das Scrollen: 30 px sind wenig, aber sie treffen die unterste Tastenreihe
-  (0–9) — reicht ein Daumenwisch, oder fühlt es sich nach „passt nicht" an?
-  Zweitens die Formulierung: `7 heard today` ist bewusst leise. Liest sie
+  die Tasten: 46 px statt 52 — trifft der Daumen die unterste Reihe (0–9) noch
+  sicher, und wirkt das Feld dabei enger oder einfach ruhiger? Zweitens die
+  Formulierung: `7 heard today` ist bewusst leise. Liest sie
   jemand als Auskunft — oder doch als Ziel, das man erreichen soll? Genau das
   wäre die Forderung, die der Modus loswerden sollte.
 - **Der Wort-Modus auf einem echten Telefon.** Reicht die Antwortzeile ohne
@@ -2327,7 +2406,8 @@ Telefon — trifft der Finger bei 50 × 52 px sicher, und stört das Dimmen der 
 unbenutzten Positionen beim Üben? Dazu ein Screenreader-Durchlauf über die 36
 Tasten: die gedimmten melden sich als „— not in this round", und ob das an
 dieser Stelle hilfreich oder Lärm ist, entscheidet ein Mensch mit Screenreader.
-Der Wort-Modus benutzt dieselbe Fläche, die Frage gilt dort mit.
+Der Wort-Modus benutzt dieselbe Fläche — seit Ruling #94 mit 50 × 46 px, also
+gilt die Frage dort in ihrer eigenen Größe.
 
 **Aus der Runde davor (L1) offen** — über das Repo und danach live auf
 `morse-lab.com/learn/`. Drei Dinge brauchen ein Urteil, keines davon blockiert

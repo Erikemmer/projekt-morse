@@ -208,6 +208,12 @@ Start-Screen weg), oder die Tastenhöhe im Tastenfeld von 52 auf 46 px nehmen
 (bleibt über `--tap`, ändert aber die Formfamilie).
 **Gehört Fable.**
 
+**Nachtrag 02.09.2026 (Ruling #94):** Der dritte Weg ist inzwischen **im
+Wort-Modus** gegangen — dort sind die Tasten 46 px hoch, begründet über die
+Rolle der Fläche (Eingabetastatur statt Antwortfeld). **Für den Start-Screen
+ändert das nichts:** das Einzelzeichen-Training bleibt bei 52 px, und der
+Start-Screen misst unverändert 890 px.
+
 ## 8. ✓ und ✗ fehlen ebenfalls in allen vier Schriftschnitten
 
 **Gefunden:** 02.09.2026, beim Prüfen der cmap-Tabellen für Eintrag 4
@@ -234,3 +240,33 @@ schon tun (1.1 §8: 24er-Raster, 1,5 px Strich). Der zweite Weg braucht keine
 neuen Dateien, ändert aber die Form von Haken und Kreuz — und das ist eine
 Gestaltungsfrage. **Gehört Fable.**
 
+## 9. Die Auflösung einer falschen Antwort scrollt weiter — 849 px
+
+**Gefunden:** 02.09.2026, beim Nachmessen des Wort-Screens für Ruling #94.
+**Nicht neu und nicht von diesem Commit** — vorher waren es 891 px, die 46-px-
+Tasten haben den Zustand um 42 px verbessert, aber nicht unter 844 gebracht.
+
+Bei 390 × 844, mit Tastenfeld und einer Aufgabe, deren **fünf Positionen alle
+daneben** liegen, ist der Wort-Screen **849 px** hoch — er scrollt um 5 px.
+Jede verfehlte Position trägt eine dritte Zeile (den getippten Buchstaben
+darunter), und das ist genau die Auskunft, um die es dort geht. Alle anderen
+Zustände desselben Screens passen seit Ruling #94 (§4 der Übergabe): bereit,
+Eingabe leer, Eingabe offen und die Auflösung einer richtigen Antwort messen
+844 px.
+
+**Warum es zählt:** In der Übergabe der Runde F3 stand für „Auflösung" 857 px —
+gemessen war dort die *richtige* Antwort. Der schlechteste Fall war in keiner
+Messung, und ein Maß, das den schlechtesten Fall auslässt, ist ein
+Näherungswert, der nicht als solcher benannt ist (CLAUDE.md 2.6). Deshalb steht
+er jetzt hier, mit Zahl.
+
+**Warum es hier nicht behoben wurde:** Ruling #94 nennt genau zwei Änderungen,
+und beide sind gemacht. Weiter zu beschneiden wäre keine Aufräumarbeit, sondern
+eine Gestaltungsentscheidung (CLAUDE.md 5) — und der Auftrag sagt für diesen
+Fall ausdrücklich: melden statt schneiden.
+
+**Was es kosten würde:** je eine Zeile, aber je eine Entscheidung. Der Abstand
+zwischen Bühne und Antwortzeile (32 px `gap`), der Abstand über dem Tastenfeld
+(`margin-top: 32px`) oder die Zeilenhöhe der Auflösungs-Zellen — 6 px an einer
+dieser drei Stellen genügen. Alle drei ändern das Bild auch dort, wo nichts
+scrollt. **Das Laptop-Layout fasst die Fläche ohnehin an.** **Gehört Fable.**

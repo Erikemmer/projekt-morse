@@ -21,6 +21,8 @@
  *   `KEYPAD_MIN_CHARACTERS` aktiven Zeichen, darunter das Dreier-Gitter
  *   (Ruling #75, `ui/keypad.ts`). Eine zweite Tastenordnung waere eine zweite
  *   Motorik zum Lernen; ortsfest heisst ortsfest, auch zwischen den Modi.
+ *   **Nur flacher:** 46 px statt 52, weil das Feld hier eine Eingabetastatur
+ *   ist und kein Antwortfeld (Ruling #94, begruendet in styles.css).
  * - **Loeschen und Abschicken erscheinen erst, wenn es etwas zu loeschen und
  *   abzuschicken gibt** (1.1 §7: "hide what can't be used"). Das ist hier
  *   nicht nur Stil: waehrend der Ton laeuft, ist der Play-Kreis gefuellt und
@@ -364,7 +366,11 @@ function Keys({
   const positions = keypad ? KEYPAD_LAYOUT : pool;
 
   return (
-    <div className={keypad ? 'keypad' : 'answers'}>
+    /*
+      `keypad-typing` senkt die Tastenhoehe -- nur hier, nicht im Training
+      (styles.css nennt den Grund, Ruling #94).
+    */
+    <div className={keypad ? 'keypad keypad-typing' : 'answers'}>
       {positions.map((char) => {
         const active = !keypad || asked.has(char);
 

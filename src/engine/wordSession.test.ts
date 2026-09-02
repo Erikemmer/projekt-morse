@@ -28,7 +28,6 @@ import {
   deleteCharacter,
   retuneWordHomeTone,
   submitWord,
-  summarizeWords,
   typeCharacter,
   wordPromptFinished,
   wordsHeardToday,
@@ -405,31 +404,6 @@ describe('Wort-Modus: der Streak-Tag faellt nach fuenf Aufgaben', () => {
     const ten = playRounds(five, WORDS_STREAK_MIN_ANSWERS);
     expect(ten.progress.streak).toBe(streakAfterFive);
     expect(streakStanding(ten.progress.streak, TODAY).days).toBe(1);
-  });
-});
-
-describe('Wort-Einheit: die Zusammenfassung', () => {
-  it('zaehlt ganze Aufgaben und einzelne Positionen getrennt', () => {
-    const state = unit(fullProgress());
-    const first = advanceWord(playCorrect(state), () => 0.5);
-    // Die zweite Aufgabe an der ersten Position daneben.
-    const wrong = (first.prompt[0] === 'K' ? 'M' : 'K') + first.prompt.slice(1);
-    const done = play(first, wrong);
-
-    const summary = summarizeWords(done);
-    expect(summary.rounds).toBe(2);
-    expect(summary.hits).toBe(1);
-    expect(summary.positions).toBe(state.prompt.length + first.prompt.length);
-    expect(summary.positionHits).toBe(summary.positions - 1);
-  });
-
-  it('behauptet ohne Antworten nichts', () => {
-    expect(summarizeWords(unit())).toEqual({
-      rounds: 0,
-      hits: 0,
-      positions: 0,
-      positionHits: 0,
-    });
   });
 });
 

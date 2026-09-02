@@ -300,47 +300,6 @@ export function advanceWord(state: WordSessionState, random: () => number): Word
   };
 }
 
-export interface WordSummary {
-  /** Abgeschickte Aufgaben. */
-  rounds: number;
-  /** Davon ganz richtig. */
-  hits: number;
-  /** Richtige Positionen und Positionen insgesamt -- der ehrlichere Blick. */
-  positions: number;
-  positionHits: number;
-}
-
-/**
- * Fasst die aufgehobenen Versuche zusammen. Reine Ableitung, kein Zustand.
- *
- * Zwei Zahlen statt einer, weil sie Verschiedenes sagen: "4 von 10" zaehlt
- * ganze Woerter, und ein einzelner Vertipper kostet ein ganzes Wort. Wer bei
- * fuenf Buchstaben vier trifft, hat mehr gehoert als jemand mit einem
- * Totalausfall -- das sagt die Positionszahl, und beides zusammen ist keine
- * Beschoenigung, sondern die vollstaendige Auskunft (CLAUDE.md 2.6).
- *
- * **Was die Zahlen seit Ruling #87 umfassen:** die letzten
- * `WORD_ATTEMPTS_KEPT` Aufgaben, nicht "die Einheit" -- die gibt es nicht mehr.
- * Der Abschluss-Screen, der sie am Ende zeigte, ist weg; die Funktion bleibt,
- * weil die Positionszahlen die ehrliche Auskunft ueber diesen Modus sind und
- * niemand sie ein zweites Mal erfinden soll.
- */
-export function summarizeWords(state: WordSessionState): WordSummary {
-  let positions = 0;
-  let positionHits = 0;
-  for (const attempt of state.attempts) {
-    positions += attempt.marks.length;
-    positionHits += attempt.marks.filter(Boolean).length;
-  }
-
-  return {
-    rounds: state.attempts.length,
-    hits: state.attempts.filter((attempt) => attempt.correct).length,
-    positions,
-    positionHits,
-  };
-}
-
 /**
  * Stellt den Heimton einer laufenden Einheit nach -- **nur auf Stufe 0**,
  * genau wie `retuneHomeTone` im Einzelzeichen-Loop und aus demselben Grund:
