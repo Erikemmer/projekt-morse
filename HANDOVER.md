@@ -123,11 +123,12 @@ Konto, der Drill ist reine Engine-Logik.
 > Mitgezogen, weil es sonst gebrochen wäre: der Einladungssatz stand nur im
 > Plural. Ab einem Zeichen heisst es jetzt „R is still slow to land."
 >
-> Dazu eine Kleinigkeit aus der Aufgabenstellung: **das Amber-Budget-Skript
-> existiert im Repo nicht.** Browser-Durchläufe sind hier ad hoc und werden
-> nach jeder Runde weggeräumt (§5d) — der Zähler dieser Runde ist deshalb neu
-> geschrieben und steht in §4 als Regel beschrieben. Wenn er bleiben soll, ist
-> „ein committetes Prüfskript" eine eigene, kleine Aufgabe.
+> Dazu eine Kleinigkeit, die inzwischen erledigt ist: **das Amber-Budget-Skript
+> liegt jetzt im Repo** (Ruling #80) — `npm run verify:amber`,
+> `tools/amber/check.mjs`. Es fährt zwanzig Ansichten an und zählt am
+> gerenderten Bild; vorher wurde der Zähler in jeder Runde neu geschrieben und
+> danach weggeräumt. Es gehört ab sofort in die Selbstprüfung vor jedem
+> Report.
 
 > ### Die Blockaden sind abgearbeitet — die Infrastruktur steht
 >

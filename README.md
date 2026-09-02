@@ -51,6 +51,13 @@ Der Learn-Bereich ist statisches HTML und entsteht erst im Build. Wer nur an ihm
 arbeitet: `npm run build:learn` (setzt einen Vite-Build voraus, weil er nach
 `dist/` schreibt) und `npm run verify:learn` für die SEO-Gegenprobe.
 
+`npm run verify:amber` prüft die Regel „Amber steht nie zweimal in einer View"
+(Guidelines 1.1 §4) am gerenderten Bild: das Skript fährt zwanzig Ansichten in
+einem Browser an und zählt die Flächen. Es setzt einen Build voraus und braucht
+zwei Dinge aus der Umgebung, nicht aus dem Projekt: `playwright-core`
+(`npm i --no-save playwright-core` — ein Werkzeug, keine Abhängigkeit) und den
+Pfad zu Chromium in `CHROMIUM_PATH`.
+
 ## Aufbau
 
 | Pfad | Rolle |

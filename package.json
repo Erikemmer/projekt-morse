@@ -8,6 +8,7 @@
     "build": "tsc --noEmit && tsc -p functions --noEmit && vite build && npm run build:learn",
     "build:learn": "node tools/learn/build.mjs",
     "verify:learn": "node tools/learn/verify.mjs",
+    "verify:amber": "node tools/amber/check.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
