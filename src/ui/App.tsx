@@ -747,9 +747,11 @@ export function App() {
 
           {/*
             Die Einladung zum Drill -- eine Feststellung und eine Frage, kein
-            Ausrufezeichen und kein Amber (CLAUDE.md 2.8). Sie erscheint erst
-            ab zwei langsamen Zeichen: fuer ein einzelnes lohnt der eigene Modus
-            nicht, das regelt die Gewichtung nebenbei mit.
+            Ausrufezeichen und kein Amber (CLAUDE.md 2.8). Sie erscheint schon
+            ab *einem* langsamen Zeichen (Ruling #69): laenger zu warten hiesse,
+            eine Hilfe vorzuenthalten, die schon greifen koennte. Dass ein
+            Ein-Zeichen-Drill nicht zur Tipp-Uebung wird, regelt DRILL_MIN_POOL
+            in der Engine, nicht diese Stelle.
           */}
           {invitation.length >= DRILL_INVITATION_MIN_SLOW && (
             <div className="drill-invite">
@@ -797,13 +799,16 @@ interface DrillTarget {
  * Hoechstens drei Zeichen werden genannt; der Rest wird gezaehlt. Eine Zeile
  * mit acht Buchstaben waere keine Einladung mehr, sondern eine Maengelliste
  * -- und der Ton dieser Zeile ist die halbe Entscheidung (CLAUDE.md 2.8).
- * Weniger als zwei kommen hier nie an (DRILL_INVITATION_MIN_SLOW), also ist
- * der Plural immer richtig.
+ *
+ * Seit Ruling #69 laedt schon ein einzelnes langsames Zeichen ein, also muss
+ * der Satz auch im Singular stimmen ("R is still slow to land.").
  */
 function slowSentence(characters: readonly string[]): string {
   const named: string[] = [...characters.slice(0, 3)];
   const rest = characters.length - named.length;
   if (rest > 0) named.push(`${rest} more`);
+
+  if (named.length === 1) return `${named[0]} is still slow to land.`;
 
   const list = `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
   return `${list} are still slow to land.`;

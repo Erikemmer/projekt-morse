@@ -44,18 +44,32 @@ export const DRILL_SLOW_MEDIAN_SECONDS = 2;
 /** Abfragen in einem Drill. Kürzer als eine Sitzung: er ist eine Zugabe, keine zweite Pflicht. */
 export const DRILL_ROUNDS = 10;
 
-/** Ab so vielen langsamen Zeichen lädt der Start-Screen zum Drill ein. */
-export const DRILL_INVITATION_MIN_SLOW = 2;
+/**
+ * Ab so vielen langsamen Zeichen lädt der Start-Screen zum Drill ein.
+ *
+ * Eins genügt (Ruling Notion-Log #69). Zu warten, bis ein zweites Zeichen
+ * hängt, hiesse dem Nutzer eine Hilfe vorzuenthalten, die schon greifen
+ * könnte — und der Kontrast, der einen Ein-Zeichen-Drill erst zu einer
+ * Erkennungsaufgabe macht, kommt ohnehin über `DRILL_MIN_POOL` dazu.
+ */
+export const DRILL_INVITATION_MIN_SLOW = 1;
 
 /**
- * Wie viele schnelle Zeichen zum Kontrast dazukommen, wenn es nur **ein**
- * langsames gibt.
+ * So viele Zeichen hat ein Drill mindestens — langsame zuerst, aufgefüllt mit
+ * den schnellsten sicheren als Kontrast (Ruling Notion-Log #69).
  *
- * Ohne sie wäre der Drill zehnmal dasselbe Zeichen — dann braucht niemand mehr
- * hinzuhören, und gemessen würde das Tippen (CLAUDE.md 2.2). Zwei schnelle
- * daneben machen aus der Wiederholung wieder eine Erkennungsaufgabe.
+ * Der Grund ist nicht Vollständigkeit, sondern Messbarkeit: ein Drill aus
+ * einem oder zwei Zeichen wird zur Tipp-Übung. Wer weiss, dass gleich fast
+ * sicher dasselbe Zeichen kommt, muss nicht mehr hinhören — und gemessen
+ * würde die Motorik, nicht das Erkennen (CLAUDE.md 2.2). Drei Zeichen halten
+ * die Aufgabe eine Unterscheidung.
+ *
+ * Die Kontrast-Zeichen sind **sicher und schnell**: sie sollen den Drill nicht
+ * um ein Verwechslungsproblem erweitern, das hier gar nicht behandelt wird.
+ * Und sie zählen beim Vergleich am Ende nicht mit (`attemptMedianOver`) — sie
+ * sind Beiwerk, kein Fortschritt.
  */
-export const DRILL_CONTRAST_CHARACTERS = 2;
+export const DRILL_MIN_POOL = 3;
 
 /**
  * Die Zeichen, die zwar sitzen, aber zu lange brauchen — das langsamste zuerst.
@@ -73,15 +87,20 @@ export function slowCharacters(progress: Progress): string[] {
  * Der Zeichensatz eines Drills — oder eine leere Liste, wenn es nichts zu
  * üben gibt.
  *
- * Bei genau einem langsamen Zeichen kommen die schnellsten dazu (siehe
- * `DRILL_CONTRAST_CHARACTERS`).
+ * Die langsamen Zeichen zuerst, danach mit den schnellsten sicheren aufgefüllt,
+ * bis `DRILL_MIN_POOL` erreicht ist (Ruling #69). Gibt es mehr langsame
+ * Zeichen als das Minimum, kommt kein Kontrast dazu — dann ist die Aufgabe
+ * schon eine Unterscheidung.
+ *
+ * Sind gar nicht genug aktive Zeichen da, kommen eben weniger zurück: ein
+ * kurzer Drill ist besser als keiner.
  */
 export function drillPool(progress: Progress): string[] {
   const slow = slowCharacters(progress);
   if (slow.length === 0) return [];
-  if (slow.length > 1) return slow;
+  if (slow.length >= DRILL_MIN_POOL) return slow;
 
-  return [...slow, ...fastestCharacters(progress, slow, DRILL_CONTRAST_CHARACTERS)];
+  return [...slow, ...contrastCharacters(progress, slow, DRILL_MIN_POOL - slow.length)];
 }
 
 /**
@@ -135,21 +154,42 @@ function isSlow(progress: Progress, char: string): boolean {
 }
 
 /**
- * Die schnellsten aktiven Zeichen ausser den ausgeschlossenen.
+ * Die schnellsten **sicheren** Zeichen als Kontrast, ausser den
+ * ausgeschlossenen.
  *
- * Ein Zeichen ohne Messung gilt nicht als schnell -- es gilt als unbekannt und
- * steht deshalb hinten. Sind gar nicht genug Zeichen da, kommen eben weniger
- * zurueck: ein Drill mit zwei Zeichen ist besser als keiner.
+ * "Sicher" heisst: gemessen und mit einer Trefferquote von mindestens
+ * `DRILL_MIN_HIT_RATE` -- dieselbe Schwelle, an der ein langsames Zeichen als
+ * Tempo- und nicht als Verwechslungsfall gilt. Ein wackliges Zeichen als
+ * Kontrast hineinzunehmen hiesse, in einen Tempo-Drill ein
+ * Verwechslungsproblem zu mischen, das er nicht behandelt.
+ *
+ * Reicht das nicht, um `count` zu fuellen, kommen die uebrigen aktiven Zeichen
+ * dahinter -- ein Drill mit weniger perfektem Kontrast ist besser als eine
+ * Wiederholungsuebung. Ein Zeichen ohne Messung gilt dabei nicht als schnell,
+ * sondern als unbekannt, und steht deshalb hinten.
  */
-function fastestCharacters(
+function contrastCharacters(
   progress: Progress,
   exclude: readonly string[],
   count: number,
 ): string[] {
-  return progress.activeCharacters
-    .filter((char) => !exclude.includes(char))
-    .sort((a, b) => (medianOf(progress, a) ?? Infinity) - (medianOf(progress, b) ?? Infinity))
-    .slice(0, count);
+  const candidates = progress.activeCharacters.filter((char) => !exclude.includes(char));
+  const byPace = (a: string, b: string) =>
+    (medianOf(progress, a) ?? Infinity) - (medianOf(progress, b) ?? Infinity);
+
+  const safe = candidates.filter((char) => isSafe(progress, char)).sort(byPace);
+  const rest = candidates.filter((char) => !isSafe(progress, char)).sort(byPace);
+
+  return [...safe, ...rest].slice(0, count);
+}
+
+/** Gemessen und zuverlaessig genug, um als Kontrast zu taugen. */
+function isSafe(progress: Progress, char: string): boolean {
+  const record = recordFor(progress, char);
+  if (record.recentReactions.length === 0) return false;
+
+  const rate = hitRate(record);
+  return rate !== null && rate >= DRILL_MIN_HIT_RATE;
 }
 
 function medianOf(progress: Progress, char: string): number | null {
