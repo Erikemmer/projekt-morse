@@ -57,6 +57,22 @@
  *   gesehen hat, hat sie gesehen -- sie ein zweites Mal vorzulegen wäre eine
  *   Rückstufung.
  *
+ * Das **Tempo-Niveau** (`effectiveWpm`, engine/tempo.ts) folgt der Monotonie
+ * des Wachstums: es kommt als **Maximum** der beiden Staende. Es ist derselbe
+ * Gedanke wie beim aktiven Zeichensatz -- was erreicht ist, ist erreicht, und
+ * ein Merge darf ein Geraet nicht langsamer machen, als es war. Der zugehoerige
+ * Sperr-Zaehler `answersSinceSpeedUp` kommt dagegen vom juengeren Stand: er
+ * beschreibt einen Verlauf, nicht ein Ergebnis, und steht damit bei
+ * `answersSinceGrowth`.
+ *
+ * Der Preis, bewusst bezahlt und in HANDOVER.md ausgewiesen: **ein Reset des
+ * Tempos in den Einstellungen wirkt lokal, nicht im Konto.** Wer auf einem
+ * Geraet auf 10 WpM zurueckstellt und danach ein Geraet mit hoeherem Stand
+ * abgleicht, steht wieder oben. Das ist die Kehrseite der Monotonie und dieselbe
+ * offene Kante, die dieser Kopf beim aktiven Zeichensatz schon nennt: ein Weg
+ * nach unten muesste ausdruecklich und lokal wirken, und ueber diesen Merge geht
+ * er nicht.
+ *
  * Der **Streak** folgt derselben Logik, aber mit einer eigenen Uhr: er richtet
  * sich nach dem *zuletzt geübten Tag* der beiden Stände, nicht nach
  * `updatedAt`. Ein Kalendertag ist die Einheit, um die es geht — welcher Blob
@@ -112,6 +128,10 @@ export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
     // Eigene Regel, eigene Uhr: der zuletzt geübte Kalendertag entscheidet,
     // nicht `updatedAt` (siehe Kopf und engine/streak.ts).
     streak: mergeStreak(local.progress.streak, remote.progress.streak),
+    // Maximum, wie der aktive Satz: Tempo ist Wachstum (siehe Kopf).
+    effectiveWpm: Math.max(local.progress.effectiveWpm, remote.progress.effectiveWpm),
+    // Momentaufnahme eines Verlaufs, wie `answersSinceGrowth`.
+    answersSinceSpeedUp: younger.answersSinceSpeedUp,
   };
 }
 

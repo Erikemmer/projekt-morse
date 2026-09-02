@@ -58,6 +58,8 @@ const STORAGE_KEY = 'projekt-morse:progress';
 
 const LETTERS = 'KMRSUA';
 const KEYPAD_LETTERS = 'KMRSUAPTLOWIN'; // 13 -- ab hier zeigt die App das Tastenfeld
+const WORD_LETTERS = 'KMRSUAPTLO'; // 10 -- Wort-Training offen, noch das Dreier-Gitter
+const ALL_CHARACTERS = 'KMRSUAPTLOWINJEF0YVG5Q9ZH38B427C1D6X'; // alle 36
 
 /**
  * Ein Fortschritt, wie ihn die App nach `parseProgress` erwartet.
@@ -67,7 +69,7 @@ const KEYPAD_LETTERS = 'KMRSUAPTLOWIN'; // 13 -- ab hier zeigt die App das Taste
  * vorfindet. Ein gemeinsamer Baustein würde denselben Fehler auf beiden Seiten
  * machen.
  */
-function progress({ characters = LETTERS, slow = [], sessions = 3 } = {}) {
+function progress({ characters = LETTERS, slow = [], sessions = 3, effectiveWpm } = {}) {
   const active = [...characters];
   const record = (median) => ({
     attempts: 10,
@@ -88,6 +90,10 @@ function progress({ characters = LETTERS, slow = [], sessions = 3 } = {}) {
     introSeen: true,
     introducedCharacters: active,
     variabilityNoticeSeen: true,
+    // Nur wo es gebraucht wird: die Tempo-Progression (Ruling #83, Teil B)
+    // faengt bei STARTING_EFFECTIVE_WPM an, und `parseProgress` setzt genau
+    // das ein, wenn das Feld fehlt.
+    ...(effectiveWpm === undefined ? {} : { effectiveWpm }),
   };
 }
 
@@ -219,6 +225,83 @@ const VIEWS = [
       await answering(page);
     },
   },
+  /*
+   * Wort-Training (Ruling #83, Teil A). Fuenf Ansichten, weil das Budget hier
+   * an zwei Stellen kippen koennte: der gefuellte "Check" darf nie neben dem
+   * gefuellten Play-Kreis stehen (deshalb erscheint er erst mit der Eingabe),
+   * und die Aufloesung markiert bis zu fuenf Positionen -- in ink, nie in
+   * Amber.
+   */
+  {
+    name: 'Wort-Training, Ton läuft (F2)',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Words & groups');
+      await page.getByRole('button', { name: /^Play the word/ }).click();
+      await page.waitForSelector('.play[data-sounding="true"]', { timeout: 10000 });
+    },
+  },
+  {
+    name: 'Wort-Training, Eingabe leer (F2)',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Words & groups');
+      await playWord(page);
+    },
+  },
+  {
+    name: 'Wort-Training, Eingabe offen (F2)',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Words & groups');
+      await playWord(page);
+      await page.locator('.answer:not([disabled])').first().click();
+      await page.waitForSelector('.button-check');
+    },
+  },
+  {
+    name: 'Wort-Training, Auflösung (F2)',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Words & groups');
+      await playWord(page);
+      await page.locator('.answer:not([disabled])').first().click();
+      await page.getByRole('button', { name: 'Check' }).click();
+      await page.waitForSelector('.solution');
+    },
+  },
+  {
+    name: 'Wort-Training, Tastenfeld (F2)',
+    seed: progress({ characters: KEYPAD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Words & groups');
+      await playWord(page);
+      await page.locator('.answer:not([disabled])').first().click();
+      await page.waitForSelector('.keypad');
+    },
+  },
+  {
+    /*
+     * Der Abschluss braucht zehn Aufgaben. Der Stand dafuer ist bewusst der
+     * echte Endzustand -- alle 36 Zeichen aktiv, Tempo am Deckel: dort sind
+     * die Farnsworth-Pausen am kuerzesten, und der Durchlauf dauert Sekunden
+     * statt einer Minute.
+     */
+    name: 'Wort-Training, Abschluss (F2)',
+    seed: progress({ characters: ALL_CHARACTERS, effectiveWpm: 20 }),
+    async reach(page) {
+      await openMenu(page, 'Words & groups');
+      for (let round = 0; round < 10; round += 1) {
+        await playWord(page);
+        await page.locator('.answer:not([disabled])').first().click();
+        await page.getByRole('button', { name: 'Check' }).click();
+        await page.waitForSelector('.solution');
+        await page.getByRole('button', { name: /Next word|Finish/ }).click();
+        await page.waitForTimeout(80);
+      }
+      await page.waitForSelector('.summary-heading');
+    },
+  },
   {
     name: 'Learn the sounds',
     seed: progress(),
@@ -233,6 +316,21 @@ const VIEWS = [
     async reach(page) {
       await page.getByRole('button', { name: 'Menu' }).click();
       await page.waitForSelector('.menu');
+    },
+  },
+  {
+    /*
+     * Zweimal das Menue, weil "Words & groups" darin zwei Zustaende hat: der
+     * Stand oben (sechs Zeichen) zeigt es gesperrt und gedimmt, dieser hier
+     * offen. Der Amber-Punkt am aktuellen Ort ist in beiden Faellen das eine
+     * Amber -- ein gedimmter Eintrag darf keinen zweiten dazustellen.
+     */
+    name: 'Menü offen, Wort-Training frei (F2)',
+    seed: progress({ characters: KEYPAD_LETTERS }),
+    async reach(page) {
+      await page.getByRole('button', { name: 'Menu' }).click();
+      await page.waitForSelector('.menu');
+      await page.waitForSelector('button:not([disabled]) >> text=Words & groups');
     },
   },
   {
@@ -257,6 +355,19 @@ const VIEWS = [
     },
   },
   {
+    /*
+     * Settings mit erhoehtem Tempo: nur dann steht der Reset da (Ruling #83,
+     * B.9). Er ist ein leiser Textknopf, damit das eine Amber dieser View beim
+     * Probeton bleibt.
+     */
+    name: 'Settings mit Tempo-Reset (F2)',
+    seed: progress({ characters: ALL_CHARACTERS, effectiveWpm: 13 }),
+    async reach(page) {
+      await openMenu(page, 'Settings');
+      await page.waitForSelector('.quiet-action');
+    },
+  },
+  {
     name: 'About',
     seed: progress(),
     async reach(page) {
@@ -264,6 +375,21 @@ const VIEWS = [
     },
   },
 ];
+
+/**
+ * Spielt eine Wort-Aufgabe und wartet, bis die Eingabe faellig ist.
+ *
+ * Ein Wort dauert laenger als ein Zeichen (mehrere Zeichen plus die
+ * Farnsworth-Abstaende), deshalb der grosszuegige Zeitrahmen.
+ */
+async function playWord(page) {
+  await page.getByRole('button', { name: /^Play the word/ }).click();
+  await page.waitForFunction(
+    () => document.querySelector('.question')?.textContent?.includes('Type what you heard'),
+    null,
+    { timeout: 40000 },
+  );
+}
 
 /** Wartet, bis der Ton durch ist und die Frage steht. */
 async function answering(page) {

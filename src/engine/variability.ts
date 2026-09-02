@@ -22,7 +22,7 @@
  *   eine Forschungsfrage -- erst mal werden keine Zahlen vermischt.
  */
 
-import { DEFAULT_TONE_HZ, STARTING_EFFECTIVE_WPM } from './settings';
+import { DEFAULT_TONE_HZ } from './settings';
 import type { Progress } from './stats';
 
 /** Ab so vielen aktiven Zeichen streut die Tonhoehe zwischen Sitzungen (Stufe 1). */
@@ -37,7 +37,11 @@ export const SESSION_TONE_HZ = Object.freeze({ min: 560, max: 680 });
 /** Stufe 2: jede Abfrage zieht ihre Tonhoehe aus diesem breiteren Band. */
 export const PROMPT_TONE_HZ = Object.freeze({ min: 520, max: 720 });
 
-/** Stufe 2: das Gesamttempo variiert pro Sitzung um diesen Anteil (+/-10 %). */
+/**
+ * Stufe 2: das Gesamttempo variiert pro Sitzung um diesen Anteil (+/-10 %) --
+ * um das erreichte Tempo-Niveau herum (`progress.effectiveWpm`), nicht um eine
+ * feste Zahl.
+ */
 export const EFFECTIVE_WPM_JITTER = 0.1;
 
 /**
@@ -80,8 +84,10 @@ export function variabilityStage(progress: Progress): VariabilityStage {
 /**
  * Zieht den Klang einer neuen Sitzung.
  *
- * Stufe 0 wuerfelt nicht: fest der Heimton und STARTING_EFFECTIVE_WPM, exakt
- * das Verhalten von vor dieser Mechanik.
+ * Stufe 0 wuerfelt nicht: fest der Heimton und das Tempo-Niveau aus dem
+ * Fortschritt (`progress.effectiveWpm`, engine/tempo.ts) -- exakt das
+ * Verhalten von vor dieser Mechanik, denn bis zur Tempo-Progression *war*
+ * dieses Niveau die Konstante STARTING_EFFECTIVE_WPM.
  *
  * `homeToneHz` ist die Tonhoehe aus den Geraete-Einstellungen
  * (engine/deviceSettings.ts); ohne Angabe bleibt es bei DEFAULT_TONE_HZ. Er
@@ -95,9 +101,12 @@ export function drawSessionSound(
   homeToneHz: number = DEFAULT_TONE_HZ,
 ): SessionSound {
   const stage = variabilityStage(progress);
+  // Das Tempo-Niveau ist die Basis, um die herum ab Stufe 2 gestreut wird --
+  // gestreut wird der *Stand*, nicht eine Konstante von frueher.
+  const base = progress.effectiveWpm;
 
   if (stage === 0) {
-    return { stage, sessionToneHz: homeToneHz, effectiveWpm: STARTING_EFFECTIVE_WPM };
+    return { stage, sessionToneHz: homeToneHz, effectiveWpm: base };
   }
 
   // Ab Stufe 2 kommt auch der Sitzungs-Ton aus dem breiteren Band -- er ist
@@ -106,9 +115,7 @@ export function drawSessionSound(
   const sessionToneHz = drawToneHz(band, random);
 
   const effectiveWpm =
-    stage === 1
-      ? STARTING_EFFECTIVE_WPM
-      : STARTING_EFFECTIVE_WPM * (1 + EFFECTIVE_WPM_JITTER * (2 * random() - 1));
+    stage === 1 ? base : base * (1 + EFFECTIVE_WPM_JITTER * (2 * random() - 1));
 
   return { stage, sessionToneHz, effectiveWpm };
 }

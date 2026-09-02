@@ -1,25 +1,62 @@
-# Übergabe — Stand nach Runde U1 (das feste Tastenfeld)
+# Übergabe — Stand nach Runde F2 (Wörter & Gruppen, Tempo, Learn im Menü)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** **Runde U1 liegt auf dem Branch
-`claude/morse-handover-alignment-nbkk6o`** und wartet auf das Review von
-Fable. Sie baut auf `main` nach Runde L1 auf. Sie ist der UI-Fix aus Eriks
-Eigen-Test (Sitzung 36, 15 aktive Zeichen) nach **Ruling Fable,
-Notion-Log #75**: das Dreier-Antwortgitter skaliert nicht.
+**Stand:** **Runde F2 liegt auf dem Branch
+`claude/morse-handover-alignment-nbkk6o`** und wartet auf **Review 14** von
+Fable. Basis ist `main` = `66d0af4` — dort sind die Runden L1 (Learn-Bereich),
+U1 (das feste Tastenfeld) und das Amber-Prüfskript schon drin. Gearbeitet ist
+linear, es wurde **nicht** nach `main` gemergt. F2 setzt **Ruling Fable,
+Notion-Log #83** um: der Wort-Modus, die Tempo-Progression und der
+Learn-Eintrag im Menü.
 
-An **Engine, Audio, Backend, Sync, Konto und dem Learn-Bereich ist nichts
-angefasst** — das ist reine UI-Schicht. Berührt sind zwei Dateien, dazu eine
-neue und ihr Test:
+An **Backend, Sync-API, Konto und dem Learn-Bereich (Inhalte und Generator)
+ist nichts angefasst.** Berührt sind in F2:
 
 | Datei | Warum |
 |---|---|
-| **`src/ui/keypad.ts`** | **neu:** die Schwelle und die 36 Positionen als benannte Konstanten |
-| **`src/ui/keypad.test.ts`** | **neu:** sieben Fälle darauf, inklusive Gegenprobe gegen `CHARACTER_ORDER` |
-| `src/ui/App.tsx` | `Answers` rendert ab der Schwelle das Tastenfeld statt des Gitters |
-| `src/styles.css` | `.keypad` — Raster, Tastenmaß, der Dimm-Zustand |
+| **`src/engine/words.ts`** | **neu:** Wortliste (230 Einträge) und die Auswahl von Wörtern und Gruppen |
+| **`src/engine/words.test.ts`** | **neu:** 29 Fälle — die Liste gegen ihre Kriterien, die Auswahl mit fester Zufallsfolge |
+| **`src/engine/wordSession.ts`** | **neu:** der Wort-Loop als reiner Zustandsautomat |
+| **`src/engine/wordSession.test.ts`** | **neu:** 35 Fälle, darunter der Beleg für Ruling A.8 |
+| **`src/engine/tempo.ts`** | **neu:** die Tempo-Progression — Bedingung, Sperre, Deckel, Reset |
+| **`src/engine/tempo.test.ts`** | **neu:** 20 Fälle, jede Bedingung einzeln kippbar |
+| `src/engine/stats.ts` | zwei additive Felder (`effectiveWpm`, `answersSinceSpeedUp`); `reactionSeconds` darf `null` sein |
+| `src/engine/session.ts` | die Tempo-Stufe im Loop, `SessionState.speedUp` |
+| `src/engine/variability.ts` | zieht das Tempo aus dem Fortschritt statt aus der Konstante |
+| `src/engine/sync.ts` | Merge-Regel für die zwei neuen Felder |
+| `src/engine/session.test.ts` | +8 Fälle: die Stufe an der Kante zum Loop |
+| `src/engine/sync.test.ts` | +5 Fälle: das Tempo-Niveau im Merge |
+| **`src/ui/Words.tsx`** | **neu:** der Wort-Screen samt Tastatur-Hook |
+| **`src/ui/SessionHeader.tsx`** | **neu:** die Kopfzeile aus `App.tsx` herausgezogen — zweiter Bedarf (§3k) |
+| `src/ui/App.tsx` | der Wort-Modus im Gehäuse, das Tempo in der Fußzeile, der Reset |
+| `src/ui/Menu.tsx` | „Words & groups" (sperrbar) und „Learn" als Link nach draußen |
+| `src/ui/Settings.tsx` | Tempo-Stand und Reset |
+| `src/styles.css` | `.answer-line`, `.button-check`, `.solution*`, `.menu-hint`, `a.menu-item` |
+| `tools/amber/check.mjs` | acht neue Ansichten (28 statt 20) |
 
-Dazu zwei Screenshots (`docs/screenshots/keypad-15-chars-390.png`,
-`keypad-36-chars-390.png`), ein FINDINGS-Eintrag und diese Übergabe.
+Dazu vier Screenshots, zwei FINDINGS-Einträge, README und diese Übergabe.
+
+> ### Drei Setzungen aus F2, die Fable sehen muss
+>
+> 1. **„Eingeführt" ist als „im aktiven Satz" gelesen.** Ruling A.1 sagt „ab 8
+>    eingeführten Zeichen", B.9 „wenn alle 36 Zeichen eingeführt sind". Im Code
+>    gibt es dafür zwei Wörter: `activeCharacters` (wird abgefragt, wächst über
+>    `growth.ts` — dort heißt genau das „Einführung") und
+>    `introducedCharacters` (wurde einmal als Klang gezeigt, Lernmodus).
+>    Entschieden ist der **aktive** Satz, weil der Wort-Modus aus ihm baut: auf
+>    Zeichen freizuschalten, die er nicht verwenden darf, wäre ein leeres
+>    Versprechen. In der Praxis laufen beide Mengen ohnehin zusammen.
+> 2. **Die Wort-Aufloesung trägt kein Amber.** Im Einzelzeichen-Feedback
+>    markiert Amber die *eine* richtige Antwort; bei fünf Positionen wären es
+>    bis zu fünf Flächen, und 1.1 §4 erlaubt eine. Haken, Kreuz und die
+>    getippte Alternative tragen die Unterscheidung ohne Farbe. Soll die
+>    verfehlte Position dort amber stehen, ist es eine Zeile — dann muss aber
+>    entschieden werden, welche der fünf.
+> 3. **Während einer laufenden Wort-Einheit fehlt die Kopfzeile** — wie im
+>    Training und im Drill. Das ist zugleich die Bedingung dafür, dass der
+>    Wort-Screen mit Tastenfeld bei 390 × 844 **ohne Scrollen** passt (mit
+>    Kopfzeile gemessen: 888 px, ohne: 844 px). Der Weg aus einer angefangenen
+>    Einheit ist damit derselbe wie aus einer Speed round: sie zu Ende bringen.
 
 > ### Ein Nebenbefund, der zum Ruling gehört — Entscheidung liegt bei Fable
 >
@@ -38,15 +75,58 @@ Dazu zwei Screenshots (`docs/screenshots/keypad-15-chars-390.png`,
 > Tastenfeld", ist es je eine Zeile: beide Flächen rendern schon dieselbe
 > `.answer`-Taste.
 
-**Was die Runde liefert:** ab **13 aktiven Zeichen** ist die Antwortfläche ein
-festes Tastenfeld — sechs Spalten, A–Z alphabetisch, darunter 0–9, **alle 36
-Positionen immer sichtbar und ortsfest**. Was gerade nicht abgefragt wird,
+**Was die Runde liefert — drei Dinge, alle drei leise:**
+
+**A. „Words & groups".** Ein neuer Übungsmodus im Menü, frei ab **acht aktiven
+Zeichen**; davor steht der Eintrag gedimmt und gesperrt da, mit dem stillen
+Hinweis `from 8 characters`. Eine Aufgabe ist ein englisches Wort (2–5
+Buchstaben) oder eine Zufallsgruppe (3–5 Zeichen, Ziffern erlaubt); gemischt
+wird 70/30, sobald aus dem aktiven Satz mindestens 20 Wörter baubar sind, davor
+gibt es nur Gruppen. Gespielt wird das Ganze als **eine** Zeitachse mit
+korrekten Farnsworth-Abständen; während des Tons steht nichts auf dem Schirm.
+Getippt wird über dasselbe Tastenfeld wie im Training (ab 13 Zeichen, darunter
+das Dreier-Gitter) plus eine Antwortzeile mit Löschen und „Check" — am Desktop
+über die physische Tastatur, Backspace und Enter. Die Auflösung markiert jede
+Position mit ✓ oder ✗ und zeigt bei einer verfehlten, was stattdessen getippt
+wurde. Zehn Aufgaben je Einheit, Fortschrittsbalken wie im Trainer.
+
+**Jede Position verbucht ihr Zeichen — und sonst nichts** (Ruling A.8): Versuche
+und Treffer ja, **keine Reaktionszeit** (eine Wortzeit gehört keiner Position),
+**kein Wachstumsfenster**, **kein Zeichen-Wachstum**. Das ist mit zwei Riegeln
+gebaut und mit Tests belegt (§3k).
+
+**B. Tempo-Progression.** Sind **alle 36 Zeichen aktiv**, steigt das
+Gesamttempo um **1 WPM**, sobald das rollierende 90-%-Fenster der
+Wachstumsregel erfüllt ist — mit einer Sperre von **20 Antworten** je Stufe und
+gedeckelt am Zeichentempo (20 WPM). **Nie automatisch abwärts.** Der Stand
+steht als stille Zahl in der Fußzeile, im Moment der Stufe als `10 → 11 wpm`;
+zurücksetzen kann man ihn in den Einstellungen.
+
+**C. „Learn" im Menü.** Ein Eintrag zwischen „Settings" und „About", der
+`/learn/` öffnet — ein echter Link, kein Ort der App, deshalb nie mit dem
+Ortsmarker.
+
+Screenshots:
+[`docs/screenshots/words-keypad-390.png`](./docs/screenshots/words-keypad-390.png)
+(Eingabe auf dem Tastenfeld),
+[`words-feedback-correct-390.png`](./docs/screenshots/words-feedback-correct-390.png),
+[`words-feedback-wrong-390.png`](./docs/screenshots/words-feedback-wrong-390.png),
+[`menu-words-locked-390.png`](./docs/screenshots/menu-words-locked-390.png)
+(Menü mit „Learn" und gesperrtem „Words & groups").
+
+**Aus Runde U1 gilt weiter:** ab **13 aktiven Zeichen** ist die Antwortfläche
+ein festes Tastenfeld — sechs Spalten, A–Z alphabetisch, darunter 0–9, **alle
+36 Positionen immer sichtbar und ortsfest**. Was gerade nicht abgefragt wird,
 steht gedimmt und nicht bedienbar an seinem Platz. Bis einschließlich zwölf
 Zeichen bleibt alles, wie es war. Zurück geht es nicht: die Entscheidung hängt
 an der Zahl der aktiven Zeichen, und die nimmt nie ab — auch eine Speed round
-mit drei Zeichen bleibt im Tastenfeld (§3j).
+mit drei Zeichen bleibt im Tastenfeld (§3j). Der Wort-Modus benutzt dieselbe
+Fläche und dieselbe Schwelle.
 
-**Runde davor (L1) — auf `main`.** Der Learn-Bereich: sieben redaktionelle
+**Runde davor (U1) — auf `main`.** Das feste Tastenfeld ab 13 aktiven Zeichen,
+mit dem Nebenbefund darüber, der weiter bei Fable liegt.
+
+**Und die davor (L1) — ebenfalls auf `main`.** Der Learn-Bereich: sieben redaktionelle
 Seiten auf Englisch unter `/learn/` und dieselben sieben auf Deutsch unter
 `/de/lernen/` — statisch generiert, mit vollständigem Head (canonical, hreflang
 wechselseitig, OG, JSON-LD Article), `sitemap.xml`, eigenem Stylesheet aus
@@ -187,7 +267,19 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde (U1): die Antwortfläche skaliert.**
+**Neu aus dieser Runde (F2): Wörter, Tempo und der Weg in den Learn-Bereich.**
+
+- **Der Modus „Words & groups"** — ab acht aktiven Zeichen, zehn Aufgaben je
+  Einheit, ein Wort oder eine Gruppe als eine Zeitachse. Er trainiert das, was
+  der Einzelzeichen-Loop nicht kann: eine Folge halten, samt der Zeichenpause,
+  die man mithören muss, ohne sie zu zählen.
+- **Die Tempo-Progression** — erst der volle Zeichensatz, dann schrumpfen die
+  Pausen. Ein WPM je Stufe, dieselbe Bedingung und dieselbe Sperre wie beim
+  Zeichen-Wachstum, gedeckelt am Zeichentempo, nie automatisch abwärts.
+- **„Learn" im Menü** — der redaktionelle Bereich ist jetzt aus der App
+  erreichbar und nicht mehr nur über den About-Screen.
+
+**Aus Runde U1 gilt weiter: die Antwortfläche skaliert.**
 
 - **Ab 13 aktiven Zeichen ein festes Tastenfeld** statt des gewachsenen
   Dreier-Gitters: sechs Spalten, A–Z alphabetisch, darunter 0–9. Die Schwelle
@@ -299,29 +391,35 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `src/engine/timing.ts` | Farnsworth-Timing nach ARRL | unverändert |
 | `src/engine/schedule.ts` | Text → Zeitachse | unverändert |
 | `src/engine/settings.ts` | Tempo, Start-Satz, Kandidatenreihe, **Spannen für Ton und Lautstärke** | erweitert |
-| `src/engine/stats.ts` | Statistik, Tag/Sitzung/Intro, **Streak-Feld, `RecordOptions`** | erweitert |
+| `src/engine/stats.ts` | Statistik, Tag/Sitzung/Intro, Streak-Feld, `RecordOptions`, **Tempo-Niveau, Sperr-Zähler, `reactionSeconds: null`** | erweitert |
 | `src/engine/growth.ts` | Die Wachstumsregel | unverändert |
 | `src/engine/learn.ts` | Der Lernmodus: Karte, Echo-Check | unverändert |
-| `src/engine/variability.ts` | Klang-Variabilität in Stufen (HVPT), **Heimton auf Stufe 0** | erweitert |
+| `src/engine/variability.ts` | Klang-Variabilität in Stufen (HVPT), Heimton auf Stufe 0, **Streuung um das Tempo-Niveau** | erweitert |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
-| `src/engine/session.ts` | Loop-Zustandsautomat, **Drill-Art, Pool, `retuneHomeTone`, Streak-Tag** | erweitert |
-| `src/engine/sync.ts` | Merge zweier Lernstände; Lern-Kennung, **plus Streak** | erweitert |
+| `src/engine/session.ts` | Loop-Zustandsautomat, Drill-Art, Pool, `retuneHomeTone`, Streak-Tag, **Tempo-Stufe (`speedUp`)** | erweitert |
+| `src/engine/sync.ts` | Merge zweier Lernstände; Lern-Kennung, Streak, **plus Tempo-Niveau (Maximum)** | erweitert |
 | **`src/engine/streak.ts`** | **Streak mit Freeze-Gnade, Kalenderarithmetik, Merge** | **neu, getestet** |
 | **`src/engine/drill.ts`** | **Langsame Zeichen, Drill-Satz, ehrlicher Vergleich** | **neu, getestet** |
+| **`src/engine/words.ts`** | **Wortliste (230) und die Auswahl von Wörtern und Gruppen** | **neu, getestet** |
+| **`src/engine/wordSession.ts`** | **Der Wort-Loop als reiner Zustandsautomat** | **neu, getestet** |
+| **`src/engine/tempo.ts`** | **Tempo-Progression: Bedingung, Sperre, Deckel, Reset** | **neu, getestet** |
 | **`src/engine/deviceSettings.ts`** | **Tonhöhe und Lautstärke als reine Daten** | **neu, getestet** |
 | `src/audio/player.ts` | Wiedergabe mit Audio-Uhr, **Lautstärke veränderlich** | erweitert |
 | `functions/_lib/`, `functions/api/` | Env, HTTP, Passkeys, Sitzungen, Sync-API | unverändert |
 | `migrations/0001_accounts.sql` | users, credentials, sessions, progress | unverändert |
 | `wrangler.toml` | D1-Bindung `DB`; echte `database_id` (config-as-code) | unverändert |
-| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, Streak-Zeile, Settings, Drill, **`Answers` mit Tastenfeld** | erweitert |
+| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, Streak-Zeile, Settings, Drill, `Answers` mit Tastenfeld, **Wort-Modus, Tempo in der Fußzeile, Tempo-Reset** | erweitert |
+| **`src/ui/Words.tsx`** | **Der Wort-Screen: Antwortzeile, Tasten, Auflösung, Tastatur-Hook** | **neu** |
+| **`src/ui/SessionHeader.tsx`** | **Die Kopfzeile eines Übungs-Screens — aus `App.tsx` gezogen** | **neu** |
 | **`src/ui/keypad.ts`** | **Schwelle und die 36 Positionen des Tastenfelds — reine Daten** | **neu, getestet** |
 | `src/ui/Account.tsx`, `src/ui/account.ts` | Account-Screen und Passkeys | unverändert |
-| **`src/ui/Settings.tsx`** | **Zwei Regler, ein Probeton, eine ehrliche Zeile** | **neu** |
+| `src/ui/Settings.tsx` | Zwei Regler, ein Probeton, ehrliche Zeilen, **Tempo-Stand und Reset** | erweitert |
 | **`src/ui/deviceStorage.ts`** | **Eigener localStorage-Schlüssel, nie im Sync** | **neu** |
-| `src/ui/Menu.tsx` | Kopfzeile und Menü, **jetzt mit Settings-Zeile** | erweitert |
+| `src/ui/Menu.tsx` | Kopfzeile und Menü, Settings-Zeile, **sperrbare Einträge und ein Link nach draußen** | erweitert |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, plus Lern-Zeitstempel | unverändert |
 | `src/ui/Progress.tsx`, `Intro.tsx`, `Learn.tsx`, `Pattern.tsx` | — | unverändert |
-| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, `.quiet-link`, **`.keypad`** | erweitert |
+| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, `.quiet-link`, `.keypad`, **`.answer-line`, `.button-check`, `.solution*`, `.menu-hint`** | erweitert |
+| `tools/amber/check.mjs` | Das Amber-Budget am gerenderten Bild, **jetzt 28 Ansichten** | erweitert |
 | **`content/learn/*.md`** | **Die 14 Texte des Learn-Bereichs (Fable), unverändert** | **neu** |
 | **`tools/learn/pages.mjs`** | **Frontmatter, Markdown, Head-Tags, Sitemap — reine Funktionen** | **neu, getestet** |
 | **`tools/learn/build.mjs`** | **Ein- und Ausgabe: schreibt nach `dist/`, prüft die Paare** | **neu** |
@@ -333,7 +431,7 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `docs/CONCEPT-LEARN.md` | Fables Konzept — die verbindliche Vorgabe dieser Runde | neu |
 | `docs/brand/logo.py` | Konstruktions-Doku, nicht mehr Quelle (#53/54) | unverändert |
 | `docs/screenshots/` | …, acht Learn-Screenshots, **zwei Tastenfeld-Screenshots** | erweitert |
-| `src/**/*.test.ts`, `tools/learn/pages.test.mjs` | **278 Tests** (271 vorher, **7 neu** in dieser Runde) | grün |
+| `src/**/*.test.ts`, `tools/learn/pages.test.mjs` | **375 Tests** (278 vorher, **97 neu** in dieser Runde) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die
 Engine kennt niemanden, die UI rechnet nicht. **Neu dazu: der Server rechnet
@@ -841,7 +939,316 @@ kein Sortieren nach Schwäche, keine Animation beim Wechsel der Fläche, kein
 Zurückschalten über eine Einstellung. Und der visuelle Zwilling aus 1.1 §12
 bleibt, was Addendum (a) sagt: nicht jetzt.
 
+## 3k. Runde F2 — die Entscheidungen hinter Wörtern, Tempo und Menü
+
+### Der Wort-Loop steht neben dem Einzelzeichen-Loop, nicht in ihm
+
+`engine/wordSession.ts` ist ein **zweiter** Zustandsautomat mit denselben
+Phasen. Das ist Absicht und keine Bequemlichkeit: die Phasen sind gleich, das
+**Antwortmodell** ist es nicht — ein ganzes Wort mit Vertippen, Löschen und
+einem Absenden gegen ein einzelnes Zeichen mit einem Klick. Eine gemeinsame
+Maschine müsste beide auseinanderhalten, und sie wäre genau die, an der
+Statistik und Wachstumsregel hängen. CLAUDE.md 4 sagt „doppelter Code ist hier
+besser als eine spekulative Abstraktion"; hier ist er zusätzlich der
+regressionsfreie Weg — der geprüfte Trainings-Loop bleibt unangetastet.
+
+Was sich geteilt wird, ist geteilt: das Timing (`schedule.ts`, `timing.ts`),
+der Klang (`variability.ts`), die Statistik (`stats.ts`), die Tastenfläche
+(`ui/keypad.ts`) und seit dieser Runde die Kopfzeile (`ui/SessionHeader.tsx`).
+Letztere ist aus `App.tsx` herausgezogen, weil es jetzt **zwei** Übungs-Screens
+gibt, die dieselbe `role="progressbar"`-Auszeichnung brauchen — der zweite
+Bedarf, bei dem verallgemeinert wird (CLAUDE.md 4). Zwei Kopien einer
+Barrierefreiheits-Auszeichnung wären die schlechtere Wahl.
+
+### Warum Wort-Antworten keine Reaktionszeit schreiben
+
+`recordAttempt` nimmt seit dieser Runde `reactionSeconds: number | null`. Der
+Wort-Loop übergibt `null`, und das ist der eigentliche Punkt von Ruling A.8.
+
+Gemessen würde die Zeit für das *ganze* Wort — Hören, Halten, Tippen,
+Nachdenken über bis zu fünf Positionen. Sie einer Position zuzuschreiben wäre
+eine erfundene Zahl (CLAUDE.md 2.6), und sie wäre **sofort im Umlauf**: „ein
+Zeichen ist langsam" (`drill.ts`) und die Gewichtung nach Schwäche
+(`selection.ts`) lesen genau diese Messreihe. Ein Wort-Modus, der jedem Zeichen
+drei Sekunden anschreibt, machte jedes Zeichen zum Drill-Kandidaten und
+verschöbe die Auswahl im Training. Versuche und Treffer sind dagegen echt und
+werden verbucht — sie sagen „an dieser Position stand dieses Zeichen, und es
+wurde erkannt oder nicht".
+
+### Die zwei Riegel gegen das Wachstum sind dieselben wie beim Drill
+
+Erstens `countTowardGrowth: false`: `recentAnswers`, `answersSinceGrowth` **und**
+`answersSinceSpeedUp` bleiben stehen. Zweitens ruft der Wort-Loop `maybeGrow`
+gar nicht auf. Der zweite ist nicht überflüssig — eine Wort-Einheit ändert
+Versuche und Trefferquote je Zeichen, und das sind die Bedingungen (b) und (c)
+der Wachstumsregel; ohne ihn könnte mitten in einer Einheit ein neues Zeichen
+dazukommen, das nie als Klang vorgestellt wurde. Ein Test hält das fest: ein
+Stand, der bei einer normalen Antwort sofort wächst, wächst über drei
+Wort-Aufgaben **nicht**.
+
+Die Zahl dahinter macht es deutlich: zehn Aufgaben ergeben bis zu fünfzig
+Positionen. Ein daraus gefülltes Dreißiger-Fenster wäre kein Bild der normalen
+Übung mehr — und die Wachstumsregel entschiede darauf über den nächsten
+Buchstaben.
+
+### `sessionsStarted` bleibt bei einer Wort-Einheit stehen
+
+Eine Wort-Einheit läuft **neben** der Sitzung her, wie der Lernmodus; ein Drill
+*ersetzt* sie. Zählte sie mit, stünde auf dem Trainings-Screen nach der
+Rückkehr „Session 13", obwohl es dieselbe Sitzung ist, die vorher „Session 12"
+hieß — eine Zahl, die sich unter dem Nutzer ändert (CLAUDE.md 2.6). Der
+Tages-Eimer zieht dagegen auf heute nach: die Antworten von hier zählen zum
+Tag. Und eine **durchgezogene** Einheit zählt als geübter Tag — dieselbe
+Setzung wie beim Drill, der Streak misst Kontinuität, nicht Pflichterfüllung.
+
+### Die Auswahl leiht sich zwei Schwellen, sie erfindet keine dritte
+
+„Schwach" heißt in `words.ts` gemessen und unter `GROWTH_MIN_CHARACTER_ACCURACY`
+(0,75) — genau die Schwelle, an der die Wachstumsregel ein Zeichen als noch
+nicht sitzend ansieht. „Langsam" ist, was `drill.ts` so nennt. Es gab schon
+zwei Begriffe für „das sitzt noch nicht"; ein dritter wäre eine dritte
+Wahrheit.
+
+**Wörter und Gruppen bevorzugen anders, und das hat einen Grund.** Ein Wort
+wird *ausgewählt*: erst die Vorzugsliste (enthält ein schwaches oder langsames
+Zeichen), und ist die leer — alles sitzt —, gleichverteilt aus allen baubaren.
+„Sonst zufällig" heißt genau das. Eine Gruppe wird *gebaut*: dort liegt der
+Vorzug in der Ziehung, Position für Position über `pickNext` — dieselbe
+Gewichtung nach Schwäche, die den Einzelzeichen-Loop steuert. Ein Zeichen mit
+0 % Trefferquote wiegt dort 5, ein sitzendes 1. Der Test dazu ist ein
+Vergleich über 400 Ziehungen mit festem Generator, keine Schwelle.
+
+`avoid` gilt innerhalb einer Gruppe je Position: „SSS" ist keine Übung im
+Trennen, sondern eine im Zählen (CLAUDE.md 2.2).
+
+### Die Wortliste ist eine Konstante, kein Abruf
+
+230 Einträge, 22 zweistellige, 88 dreistellige, 72 vierstellige, 48
+fünfstellige — nach Länge und darin alphabetisch, damit eine Dublette beim
+Lesen auffällt. Rund 1,6 kB Text. Keine neue Abhängigkeit, kein Laden zur
+Laufzeit (CLAUDE.md 2.5, 3). Sechs Tests prüfen **jede Zeile** gegen die
+Kriterien aus dem Ruling — nur a–z, 2 bis 5 Buchstaben, keine Dubletten, die
+Ordnung, jeder Buchstabe des Alphabets mindestens einmal, und jede Zeile
+kürzer als die Eingabegrenze. Eine spätere Ergänzung kann damit nicht still
+daneben liegen.
+
+Wie viele Wörter aus dem aktiven Satz baubar sind, wächst nicht linear
+(gemessen): 8 Zeichen → 10, 10 → 24, 13 → 53, 15 → 90, 20 → 132, 36 → 230. Die
+Schwelle für die Mischung (20) fällt damit **zwischen** acht und zehn aktive
+Zeichen: die ersten Einheiten bestehen aus Gruppen, und das ist der gewünschte
+Verlauf, nicht ein Nebeneffekt.
+
+### Die Eingabe hat eine Grenze, und die Antwortzeile hat keine Kästchen
+
+Getippt werden höchstens `PROMPT_MAX_LENGTH` (5) Zeichen — länger als die
+längste mögliche Aufgabe kann keine richtige Antwort sein, und eine Eingabe
+ohne Ende wäre eine Einladung zum Vertippen.
+
+**Kästchen für die Positionen gibt es bewusst nicht.** Ein Raster aus fünf
+Feldern verriete die Länge der Aufgabe, bevor sie gehört ist — und dass eine
+Folge zu Ende ist, erkennt man daran, dass nichts mehr kommt. Das ist Teil der
+Übung. Also steht dort nur, was getippt ist, auf einer Haarlinie.
+
+### Löschen und „Check" erscheinen erst mit der Eingabe — und das hält das Budget
+
+1.1 §7 sagt „hide what can't be used", und hier ist das nicht nur Stil: solange
+der Ton läuft, ist der Play-Kreis gefüllt und trägt das **eine** Amber der View.
+Ein gleichzeitig sichtbarer gefüllter „Check" wäre das zweite (1.1 §4) — auch
+ausgegraut, denn `button:disabled` nimmt die Deckkraft auf 0,45 und nicht auf
+null. Weil der Knopf erst mit dem ersten getippten Zeichen erscheint, kann der
+Fall nicht eintreten. Das Prüfskript hat dafür eine eigene Ansicht („Eingabe
+leer": 0 Amber).
+
+### Tempo: erst der volle Satz, dann die Pausen
+
+Die Progression beginnt erst, wenn **alle** Zeichen aus `CHARACTER_ORDER` aktiv
+sind. Zwei Gründe, und beide sind Setzungen aus dem Ruling:
+
+1. **Die knappe Ressource zuerst.** Solange Zeichen dazukommen, ist Kopfhören
+   neuer Klänge das Schwere. Ein Tempo, das nebenher steigt, macht jede
+   Einführung schwerer, als sie sein müsste.
+2. **Zwei Wachstumsregeln zugleich wären nicht auseinanderzuhalten.** Welche
+   Stufe hat die Trefferquote gedrückt? Deshalb schließen sie sich aus:
+   `growth.ts` läuft, solange es einen Kandidaten gibt, `tempo.ts` erst, wenn
+   es keinen mehr gibt. Im Code steht das als Kommentar an der einen Stelle, an
+   der beide nacheinander gefragt werden (`submitAnswer`).
+
+Verglichen wird gegen `CHARACTER_ORDER` und nicht gegen die Zahl 36: kommt die
+Reihe je um Satzzeichen erweitert, nimmt diese Regel es automatisch mit statt
+sie zu überholen. Ein Test prüft außerdem **Deckung, nicht Länge** — ein
+Duplikat im aktiven Satz ersetzt kein Zeichen.
+
+**Bedingung und Sperre sind dieselben Konstanten, keine neuen.** Es ist
+derselbe Nachweis „das sitzt gerade" wie beim Zeichen-Wachstum, nur mit einer
+anderen Belohnung: `GROWTH_WINDOW_ACCURACY` (90 % über 30 Antworten) und
+`GROWTH_LOCKOUT_ANSWERS` (20). Die Bedingungen (b) und (c) der Wachstumsregel —
+Mindestversuche und Mindestquote *je Zeichen* — gelten hier **nicht**: das
+Ruling nennt das Fenster, und bei 36 aktiven Zeichen hielte ein einzelnes zähes
+Zeichen das Tempo auf Dauer fest, obwohl die Sitzungen laufen. Das ist eine
+Setzung, keine Vorgabe.
+
+### Eine Stufe wirkt ab der nächsten Aufgabe — und addiert, statt neu zu ziehen
+
+`SessionSound` ist eine einmal gezogene Größe (variability.ts). Fällt mitten in
+einer Sitzung eine Stufe, wird der **gezogene** Wert um den Schritt erhöht,
+nicht neu gezogen: so bleibt die Streuung der Stufe 2 genau die, die diese
+Sitzung bekommen hat. Ein zweites Ziehen wäre ein zweiter Klang derselben
+Sitzung. Wirksam wird es beim nächsten Abspielen — die laufende Aufgabe ist
+schon geplant, und ein Timing unter einer laufenden Messung zu wechseln wäre
+falsch. Ein Test hält beides fest (Jitter ungleich null, danach exakt
+`+1`).
+
+### Die Fußzeile zeigt das Niveau, nicht den gezogenen Wert
+
+`10 → 11 wpm` im Moment der Stufe, danach nur `11 wpm`, und **nur**, solange
+die Progression überhaupt läuft — vorher wäre es eine Zahl ohne Bewegung und
+damit eine Zeile ohne Aussage. Gezeigt wird das Tempo-**Niveau**: ab
+Variabilitäts-Stufe 2 streut die Sitzung um ±10 % darum herum, und diese
+Streuung ist eine Eigenschaft der Sitzung, nicht des Fortschritts. Dass es so
+ist, sagt der Settings-Screen in einem Satz („a single session varies a little
+around this value") statt es zu verschweigen (CLAUDE.md 2.6).
+
+Der Pfeil `→` ist der Wortlaut aus dem Ruling. Er fehlt in allen vier
+Schriftschnitten und kommt aus dem Fallback — [FINDINGS #4](./FINDINGS.md),
+Nachtrag.
+
+### Tempo im Merge: Maximum — mit einer offenen Kante
+
+`effectiveWpm` kommt als **Maximum** beider Stände, wie der aktive Zeichensatz
+und `sessionsStarted`: was erreicht ist, ist erreicht, und ein Merge darf ein
+Gerät nicht langsamer machen, als es war. Der Sperr-Zähler
+`answersSinceSpeedUp` kommt dagegen vom jüngeren Stand — er beschreibt einen
+Verlauf, kein Ergebnis, und steht damit bei `answersSinceGrowth`.
+
+> **Die Kehrseite, bewusst bezahlt und nicht versteckt:** ein **Reset des
+> Tempos wirkt lokal, nicht im Konto.** Wer auf einem Gerät auf 10 WPM
+> zurückstellt und danach ein Gerät mit höherem Stand abgleicht, steht wieder
+> oben. Das ist dieselbe offene Kante, die `sync.ts` beim aktiven Zeichensatz
+> schon nennt (Ruling #56): ein Weg nach unten müsste ausdrücklich und lokal
+> wirken, und über diesen Merge geht er nicht. Der Reset ändert auch die
+> Lern-Kennung nicht — er ist kein Lernfortschritt. **Soll er im Konto
+> ankommen, ist das eine eigene Entscheidung** (die naheliegende: das Tempo
+> vom jüngeren Stand nehmen und `effectiveWpm` in `learningRevision`
+> aufnehmen; damit könnte ein Merge es aber auch senken).
+
+### Das Menü kennt jetzt zwei Sorten Eintrag
+
+Ein **Ort** wird gemeldet und setzt den Ortsmarker; ein **Link** verlässt die
+SPA und kann nie „hier" sein. Deshalb ist „Learn" ein `<a href="/learn/">` und
+kein `<button>`, der navigiert — für Tastatur und Screenreader ist das die
+richtige Rolle, und der Punkt bleibt dort leer. Kein Router, keine
+History-Maschinerie: es ist ein Link auf eine statische Seite.
+
+Ein **gesperrter** Eintrag trägt `disabled` — das Attribut, nicht nur die Optik,
+dieselbe Haltung wie im Tastenfeld (Ruling #75). Der Hinweis `from 8
+characters` steht sichtbar daneben **und** im zugänglichen Namen des Eintrags
+(„Words & groups — locked, from 8 characters"): eine gedimmte Zeile allein ist
+keine Auskunft (CLAUDE.md 6). Den Satz baut `App.tsx` aus
+`WORDS_MIN_CHARACTERS`; `MenuPanel` rechnet nicht.
+
+### Was nicht gebaut wurde, obwohl naheliegend
+
+Kein Live-Mitschreiben während des Tons (Addendum (a), CLAUDE.md 2.2). Keine
+Kästchen für die Positionen. Kein „noch eine Einheit" auf dem Abschluss-Screen
+— der Weg zurück ist ein Knopf, der Weg hinein zwei Tipps, und das Ruling nennt
+keinen. Keine Wortpausen zwischen zwei Aufgaben (jede Aufgabe ist eine eigene
+Zeitachse). Keine Statistik je Wort (die Statistik gehört den Zeichen). Kein
+Tempo-Regler in den Einstellungen: das Tempo ist kein Wert, den man einstellt,
+sondern einer, den man sich erübt — es gibt nur den Stand und den einen Weg
+zurück.
+
 ## 4. Was nachgewiesen ist (und wie)
+
+**Aus Runde F2 (Wörter, Tempo, Menü):**
+
+- **`npm test` → 375/375 grün** (278 vorher, **97 neu**): 29 in
+  `src/engine/words.test.ts`, 35 in `src/engine/wordSession.test.ts`, 20 in
+  `src/engine/tempo.test.ts`, 8 in `session.test.ts`, 5 in `sync.test.ts`.
+  **Regression:** die 278 Fälle davor sind unverändert grün — ohne eine einzige
+  angepasste Erwartung. Das ist der Beleg dafür, dass die neuen Felder wirklich
+  additiv sind: `emptyProgress().effectiveWpm` ist genau die Konstante, die
+  `variability.ts` vorher fest hatte.
+- **Die Fälle, die Ruling A.8 festhalten** (weil es eine Entscheidung mit
+  Folgen ist): Positionen werden je Zeichen verbucht (Versuche **und** Treffer,
+  exakt gezählt — ein Zeichen, das zweimal im Wort steht, bekommt zwei
+  Versuche); `recentReactions` bleibt Zeichen für Zeichen **identisch**;
+  `recentAnswers`, `answersSinceGrowth` und `answersSinceSpeedUp` bleiben
+  stehen; und ein Stand, der bei einer normalen Antwort **sofort wachsen
+  würde**, wächst über drei Wort-Aufgaben nicht.
+- **Referenzwerte statt Selbstbestätigung, wo es geht:** die Schwellen der
+  Tempo-Progression sind gegen die *bestehenden* Konstanten geprüft
+  (`SPEED_LOCKOUT_ANSWERS === GROWTH_LOCKOUT_ANSWERS === 20`,
+  `MAX_EFFECTIVE_WPM === CHARACTER_WPM`), nicht gegen neue Literale; die
+  Schwelle „90 % von 30 sind 27" steht als eigener Fall mit 27 und 26.
+- **`npm run build` → sauber** (`tsc --noEmit`, dazu `tsc -p functions`).
+  **Bundle-Delta:** JS **210,32 kB roh / 65,49 kB gzip** (vorher 195,78 /
+  61,85 — Delta **+14,54 / +3,64**), CSS **13,98 / 3,20** (vorher 12,49 / 2,99
+  — Delta **+1,49 / +0,21**). Zusammen **+3,85 kB gzip**. Davon geht der
+  Löwenanteil auf die Wortliste (230 Einträge, rund 1,6 kB Text) und den
+  zweiten Zustandsautomaten. **Keine neue Abhängigkeit.**
+- **`npm run verify:amber` → grün über 28 Ansichten** (20 vorher, **8 neu**):
+  Wort-Training in fünf Zuständen (Ton läuft, Eingabe leer, Eingabe offen,
+  Auflösung, Tastenfeld), der Abschluss einer Einheit, das Menü mit
+  freigeschaltetem Wort-Modus und Settings mit Tempo-Reset. Gemessen am
+  gerenderten Bild: „Ton läuft" trägt **genau eine** Fläche (der Play-Kreis),
+  „Eingabe offen" **genau eine** (der gefüllte „Check"), „Eingabe leer" und
+  „Auflösung" **keine**. Der Fall „gefüllter Play-Kreis neben gefülltem Check"
+  kann damit nicht eintreten — er hat eine eigene Ansicht.
+- **`npm run verify:learn` → unverändert grün.** Am Learn-Bereich ist keine
+  Zeile geändert; der neue Menü-Eintrag ist ein Link auf `/learn/`.
+- **Browser-Durchlauf gegen `dist/`** (headless Chromium, 390 × 844,
+  `--autoplay-policy=no-user-gesture-required`, Lernstand vorab in
+  localStorage, `Math.random` auf einen festen Wert gesetzt — damit ist die
+  Aufgabe reproduzierbar und die richtige Antwort bekannt):
+
+  1. **Der Modus ist erreichbar und gesperrt, wo er es sein soll.** Bei sechs
+     aktiven Zeichen steht „Words & groups" mit `disabled` und dem Hinweis da;
+     der zugängliche Name lautet **„Words & groups — locked, from 8
+     characters"**. Bei 13 Zeichen ist er offen.
+  2. **„Learn" ist ein echter Link:** `link "Learn" → /learn/` im
+     Rollenbaum, nicht ein Knopf. Der Rollenbaum des Menüs steht mit acht
+     Einträgen in der richtigen Reihenfolge.
+  3. **Kein Scrollen bei 390 × 844** — gemessen, nicht gerechnet:
+     Wort-Screen mit Dreier-Gitter **844 px** (Eingabe offen, Auflösung richtig,
+     Auflösung falsch), Wort-Screen mit **Tastenfeld 844 px**, Menü **844 px**.
+     Mit Kopfzeile wäre der Tastenfeld-Fall **888 px** — das ist der Grund für
+     Setzung 3 im Kopf dieser Übergabe.
+  4. **Die Auflösung markiert wirklich je Position:** Aufgabe `CARD`, getippt
+     `K` → `C ✗ K`, `A ✗ –`, `R ✗ –`, `D ✗ –`. Verfehlt heißt „falsch gehört"
+     (das getippte Zeichen steht darunter) oder „zu kurz gehört" (ein Strich).
+  5. **Die physische Tastatur am Desktop:** `K`, `M` ergeben `K M` in der
+     Antwortzeile, `Backspace` löscht auf `K`, `Enter` schickt ab und die
+     Auflösung steht. Der zugängliche Text der Zeile lautet dabei „Your answer
+     so far: K M".
+  6. **Die Tempo-Stufe fällt und ist zu sehen:** vor der Stufe steht
+     `Today — no answers yet · 10 wpm`, im Moment der Stufe
+     `Today 100% · 1 character · 10 → 11 wpm`, nach dem Weiterschalten
+     `· 11 wpm`. Gespeichert: `effectiveWpm 11`, `answersSinceSpeedUp 0`.
+  7. **Bei 20 aktiven Zeichen steht kein Tempo in der Fußzeile** — die
+     Progression läuft dort nicht, also behauptet die Zeile nichts.
+  8. **Der Reset wirkt und verschwindet:** Settings zeigt
+     „Effective speed 15 wpm" samt der ehrlichen Zeile; nach dem Klick steht
+     `effectiveWpm 10` im Speicher und der Knopf ist weg (es gibt nichts mehr
+     zurückzusetzen).
+  9. **Eine ganze Einheit durchgezogen:** zehn Aufgaben, Abschluss-Screen mit
+     „Whole words 0 of 10" und „Characters 0 of 31" — die beiden Zahlen sagen
+     Verschiedenes, und beide stimmen.
+  10. **Keine Konsolenfehler** in keinem der Durchläufe.
+- **Timing-Budget: unberührt.** An Zeitachse, Timing und Player ist keine Zeile
+  geändert; ein Wort läuft über denselben `buildSchedule`, denselben
+  `computeTiming` und dieselbe Audio-Uhr wie ein einzelnes Zeichen — es ist
+  bloß ein längerer Text. Der Wort-Loop misst gar keine Reaktionszeit und
+  braucht deshalb weder rAF-Takt noch Uhrenvergleich. Neu auf dem Eingabepfad
+  ist ein Zeichen an einen String anzuhängen; die schwerere Rechnung (baubare
+  Wörter über 230 Einträge, schwache Zeichen über den aktiven Satz) läuft
+  **einmal je Aufgabe** beim Weiterschalten, nicht beim Tippen. Über eine
+  Sitzung wächst nichts: die Einheit hält höchstens zehn `WordAttempt`.
+- **Zwei Nebenbefunde, gemessen und nicht mitrepariert**
+  ([FINDINGS #7 und #8](./FINDINGS.md)): der **Start-Screen** ist bei 36 aktiven
+  Zeichen **890 px** hoch und scrollt damit 46 px — auf `main` genauso, also
+  nicht von dieser Runde. Und **✓ und ✗ fehlen in allen vier
+  Schriftschnitten** (cmap geprüft) und kommen aus dem Fallback; die App
+  benutzt sie seit dem ersten Feedback-Screen.
 
 **Aus Runde U1 (das Tastenfeld):**
 
@@ -1455,7 +1862,23 @@ ist offline, die Artikel sind eine Website.
 - **`addInitScript` läuft bei *jeder* Navigation, auch beim Reload.** Wer damit
   einen Stand präpariert, braucht eine Einmal-Sperre — sonst testet er seinen
   eigenen Seed statt der App. Zweimal zugeschlagen (Variabilitäts-Runde und
-  diese).
+  U1). In F2 war genau das nützlich: `Math.random` fest gesetzt und der Stand
+  bei jedem Reload neu gesetzt macht Runde 1 reproduzierbar — einmal falsch
+  antworten, die Auflösung lesen, neu laden, richtig antworten. Ohne das lässt
+  sich „richtig geantwortet" im Wort-Modus nicht ansteuern, denn die App
+  verrät die Aufgabe vor der Antwort nicht (das ist der Sinn).
+- **Eine Zufallsquelle nach oben zu klemmen ist kein Test.** Um im Wort-Modus
+  „Gruppe statt Wort" zu erzwingen, lag es nahe, jede Zufallszahl auf ≥ 0,7 zu
+  ziehen. Damit zieht `pickNext` aber nur noch das **Ende** der Kandidatenliste,
+  und der Test, der die Gewichtung nach Schwäche belegen sollte, zählte
+  konstant null. Richtig ist, **nur die erste** Zahl zu klemmen (die Münze) und
+  alle weiteren durchzulassen — `forcedGroup` in `words.test.ts`.
+- **Ein `.answer` trägt zwei Texte**: das sichtbare Zeichen (`aria-hidden`) und
+  einen `visually-hidden`-Text für Screenreader. Ein Selektor über
+  `textContent` findet deshalb „KK" und nicht „K". Über die **Rolle und den
+  zugänglichen Namen** gehen (`getByRole('button', { name: 'K', exact: true })`)
+  — das ist ohnehin der ehrlichere Zugriff: was ein Mensch nicht anklicken
+  kann, ist keine View.
 - **Ein `evaluate` nach dem Laden verliert das Rennen gegen den
   Leerlauf-Schreiber der App.** Präparierte Stände gehören ins Init-Script,
   nicht hinter das `goto`.
@@ -1502,9 +1925,50 @@ ist offline, die Artikel sind eine Website.
 
 ## 7. Nächster Schritt
 
-**Diese Runde (U1) wartet auf Fables Review** — über das Repo; die beiden
-Screenshots und die Messungen stehen in §4, die Begründungen in §3j. Zwei
-Dinge brauchen dabei ein Urteil, keines blockiert etwas:
+**Runde F2 wartet auf Review 14** — über das Repo; die vier Screenshots und die
+Messungen stehen in §4, die Begründungen in §3k. **Nicht gemergt**, wie
+beauftragt. Danach ist laut Plan **F4 (Sende-Training)** dran.
+
+Vier Dinge brauchen dabei ein Urteil. Keines blockiert etwas, und keines ist
+still aufgelöst:
+
+1. **Die drei Setzungen im Kopf dieser Übergabe** — „eingeführt" als „im
+   aktiven Satz" gelesen, kein Amber in der Wort-Auflösung, keine Kopfzeile
+   während einer laufenden Einheit. Die dritte ist zugleich der Grund, warum
+   der Wort-Screen mit Tastenfeld ohne Scrollen passt; sie zurückzunehmen
+   heißt, 44 px woanders zu finden.
+2. **Bedingung (b) und (c) gelten für die Tempo-Stufe nicht** (§3k). Das Ruling
+   nennt das 90-%-Fenster; mit den Zeichen-Bedingungen hielte ein einzelnes
+   zähes Zeichen das Tempo auf Dauer fest. Soll die Stufe strenger sein, ist es
+   eine Zeile in `isReadyToSpeedUp`.
+3. **Der Tempo-Reset wirkt lokal, nicht im Konto** (§3k, Kasten). Die Kehrseite
+   der Monotonie im Merge. Der Weg, das zu ändern, steht daneben — er hat
+   selbst einen Preis.
+4. **Kein „noch eine Einheit" auf dem Abschluss-Screen** des Wort-Modus. Es
+   steht dort genau ein Knopf („Back to practice"), wie beim Drill; das Ruling
+   nennt keinen zweiten. Wer nach zehn Aufgaben weitermachen will, geht zweimal
+   tippen über das Menü.
+
+**Menschliche Prüfung, die von hier aus nicht geht:**
+
+- **Der Wort-Modus auf einem echten Telefon.** Reicht die Antwortzeile ohne
+  Kästchen, oder verliert man beim vierten Zeichen den Überblick? Ist „Check"
+  am rechten Rand der Zeile gut erreichbar, oder gehört er unter das
+  Tastenfeld? Und trifft der Finger die 24er-Löschtaste?
+- **Hörbar geprüft: klingt die Wortpause richtig?** Die Zeitachse ist dieselbe
+  Rechnung wie im Training (ARRL-Farnsworth, gegen die Referenz getestet), aber
+  ob ein ganzes Wort bei 10 WPM effektiv *hörbar* als Wort zusammenhält oder in
+  Einzelzeichen zerfällt, entscheidet ein Ohr. Das ist die eigentliche Frage
+  hinter Teil A.
+- **Screenreader über die Wort-Auflösung.** Sie liest einen Satz vor
+  („Sent: C A R D. position 1: C, you typed K; …"), nicht die Zellen. Ob dieser
+  Satz hilft oder überfordert, entscheidet ein Mensch mit Screenreader.
+- **Ein Blick auf die Wortliste.** 230 Einträge, gegen die Kriterien geprüft,
+  aber „gebräuchlich" ist keine Eigenschaft, die ein Test messen kann. Sie
+  steht als Konstante in `src/engine/words.ts`, nach Länge und alphabetisch —
+  Streichen oder Ergänzen ist je eine Zeile.
+
+**Aus der Runde davor (U1) offen** — zwei Punkte, unverändert:
 
 1. **Der Nebenbefund im Kopf dieser Übergabe** (auch
    [FINDINGS #6](./FINDINGS.md)): Echo-Check und „Learn the sounds" tragen
@@ -1516,12 +1980,12 @@ Dinge brauchen dabei ein Urteil, keines blockiert etwas:
    begründet — aber eine Abweichung vom Verhalten des Dreier-Gitters, und
    deshalb ein Punkt für das Review.
 
-**Menschliche Prüfung, die von hier aus nicht geht:** das Tastenfeld auf einem
-echten Telefon — trifft der Finger bei 50 × 52 px sicher, und stört das
-Dimmen der 21 unbenutzten Positionen beim Üben? Dazu ein Screenreader-Durchlauf
-über die 36 Tasten: die gedimmten melden sich als „— not in this round", und ob
-das an dieser Stelle hilfreich oder Lärm ist, entscheidet ein Mensch mit
-Screenreader, nicht diese Übergabe.
+**Menschliche Prüfung aus U1, weiter offen:** das Tastenfeld auf einem echten
+Telefon — trifft der Finger bei 50 × 52 px sicher, und stört das Dimmen der 21
+unbenutzten Positionen beim Üben? Dazu ein Screenreader-Durchlauf über die 36
+Tasten: die gedimmten melden sich als „— not in this round", und ob das an
+dieser Stelle hilfreich oder Lärm ist, entscheidet ein Mensch mit Screenreader.
+Der Wort-Modus benutzt dieselbe Fläche, die Frage gilt dort mit.
 
 **Aus der Runde davor (L1) offen** — über das Repo und danach live auf
 `morse-lab.com/learn/`. Drei Dinge brauchen ein Urteil, keines davon blockiert

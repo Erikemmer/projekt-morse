@@ -20,7 +20,7 @@
  * von vor drei Wochen.
  */
 
-import { STARTING_CHARACTERS } from './settings';
+import { CHARACTER_WPM, STARTING_CHARACTERS, STARTING_EFFECTIVE_WPM } from './settings';
 import { emptyStreak, parseStreak, type Streak } from './streak';
 
 /** Wie viele Reaktionszeiten je Zeichen aufgehoben werden. */
@@ -120,6 +120,23 @@ export interface Progress {
    * (CLAUDE.md 2.6).
    */
   streak: Streak;
+  /**
+   * Das erreichte Gesamttempo in WpM (Farnsworth) -- das Tempo-Niveau der
+   * Tempo-Progression (engine/tempo.ts).
+   *
+   * Es beschreibt die *Pausen*, nie die Zeichen: die spielen immer
+   * CHARACTER_WPM (CLAUDE.md 2.3). Additiv mit Default
+   * STARTING_EFFECTIVE_WPM -- ein Stand von vor dieser Regel steht damit
+   * genau da, wo er vorher stand, denn vorher war dieser Wert die Konstante.
+   */
+  effectiveWpm: number;
+  /**
+   * Antworten seit der letzten Tempo-Stufe. Traegt die Sperre der
+   * Tempo-Progression, genau wie `answersSinceGrowth` die der Wachstumsregel
+   * -- und wird von denselben Antworten gezaehlt (nur denen, die ins
+   * Wachstumsfenster zaehlen; siehe `RecordOptions`).
+   */
+  answersSinceSpeedUp: number;
 }
 
 export function emptyRecord(): CharacterRecord {
@@ -143,6 +160,8 @@ export function emptyProgress(): Progress {
     introducedCharacters: [],
     variabilityNoticeSeen: false,
     streak: emptyStreak(),
+    effectiveWpm: STARTING_EFFECTIVE_WPM,
+    answersSinceSpeedUp: 0,
   };
 }
 
@@ -178,6 +197,12 @@ export interface RecordOptions {
    * Zeichensatz danach zu frueh oder gar nicht wachsen. Die Statistik pro
    * Zeichen wird trotzdem geschrieben: die Antworten sind echt.
    * (Produktentscheidung, Notion-Log #66; siehe engine/drill.ts.)
+   *
+   * Das Wort-Training (Ruling #83) setzt es aus demselben Grund auf false --
+   * dort steht die Begruendung noch schaerfer: zehn Aufgaben ergeben bis zu
+   * 50 Positionen, ein aus ihnen gefuelltes Dreissiger-Fenster waere kein
+   * Bild der normalen Uebung mehr. Dasselbe Flag traegt die Sperre der
+   * Tempo-Progression (`answersSinceSpeedUp`).
    */
   readonly countTowardGrowth?: boolean;
 }
@@ -187,12 +212,20 @@ export interface RecordOptions {
  *
  * Ohne Seiteneffekt auf die Eingabe, damit React-Zustand und Tests dieselbe
  * Funktion benutzen koennen.
+ *
+ * **`reactionSeconds` darf `null` sein** -- dann bleibt die Messreihe des
+ * Zeichens unberuehrt, Versuche und Treffer werden trotzdem verbucht. Das ist
+ * der Fall des Wort-Trainings (engine/wordSession.ts): dort gilt die gemessene
+ * Zeit dem *ganzen Wort*, nicht einer seiner Positionen. Sie auf die Positionen
+ * zu verteilen waere eine erfundene Zahl, und sie waere sofort im Umlauf --
+ * "langsames Zeichen" (engine/drill.ts) und die Gewichtung nach Schwaeche
+ * (engine/selection.ts) lesen genau diese Reihe (CLAUDE.md 2.6).
  */
 export function recordAttempt(
   progress: Progress,
   char: string,
   correct: boolean,
-  reactionSeconds: number,
+  reactionSeconds: number | null,
   today: string,
   options: RecordOptions = {},
 ): Progress {
@@ -200,9 +233,10 @@ export function recordAttempt(
   const previous = recordFor(progress, char);
   const day = dayFor(progress, today);
 
-  const recentReactions = correct
-    ? [...previous.recentReactions, Math.max(0, reactionSeconds)].slice(-RECENT_SAMPLES)
-    : previous.recentReactions;
+  const recentReactions =
+    correct && reactionSeconds !== null
+      ? [...previous.recentReactions, Math.max(0, reactionSeconds)].slice(-RECENT_SAMPLES)
+      : previous.recentReactions;
 
   return {
     ...progress,
@@ -218,6 +252,10 @@ export function recordAttempt(
       ? [...progress.recentAnswers, correct].slice(-RECENT_ANSWER_WINDOW)
       : progress.recentAnswers,
     answersSinceGrowth: progress.answersSinceGrowth + (countTowardGrowth ? 1 : 0),
+    // Dieselbe Bedingung, weil es dieselbe Sorte Sperre ist: die Tempo-Stufe
+    // haengt am Wachstumsfenster, also darf sie nur zaehlen, was darin steht
+    // (engine/tempo.ts).
+    answersSinceSpeedUp: progress.answersSinceSpeedUp + (countTowardGrowth ? 1 : 0),
     day: {
       date: today,
       attempts: day.attempts + 1,
@@ -336,6 +374,15 @@ export function parseProgress(raw: unknown): Progress {
     day: parseDay((raw as { day?: unknown }).day),
     introSeen: (raw as { introSeen?: unknown }).introSeen === true,
     streak: parseStreak((raw as { streak?: unknown }).streak),
+    // Additiv mit Default: ein Stand von vor der Tempo-Progression stand bei
+    // STARTING_EFFECTIVE_WPM, denn das war bis dahin eine Konstante. Ein Wert
+    // aus einer kuenftigen Version mit hoeherem Deckel wird in die heutige
+    // Spanne gezogen statt verworfen -- dieselbe Haltung wie bei der Tonhoehe
+    // in deviceSettings.ts.
+    effectiveWpm: parseEffectiveWpm((raw as { effectiveWpm?: unknown }).effectiveWpm),
+    answersSinceSpeedUp: finiteOrZero(
+      (raw as { answersSinceSpeedUp?: unknown }).answersSinceSpeedUp,
+    ),
     variabilityNoticeSeen: (raw as { variabilityNoticeSeen?: unknown }).variabilityNoticeSeen === true,
     introducedCharacters: parseIntroduced(
       (raw as { introducedCharacters?: unknown }).introducedCharacters,
@@ -394,6 +441,18 @@ function parseDay(raw: unknown): DayStats {
     hits: Math.min(finiteOrZero(entry.hits), attempts),
     characters,
   };
+}
+
+/**
+ * Das gespeicherte Tempo-Niveau, in die Spanne gezogen.
+ *
+ * Unter dem Startwert kann es nicht liegen (die Progression geht nie abwaerts),
+ * ueber dem Zeichentempo auch nicht -- dort waeren die Pausen kuerzer als null.
+ * Nicht ganzzahlige Werte werden abgeschnitten: die Stufe ist ein ganzes WpM.
+ */
+function parseEffectiveWpm(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return STARTING_EFFECTIVE_WPM;
+  return Math.min(CHARACTER_WPM, Math.max(STARTING_EFFECTIVE_WPM, Math.floor(value)));
 }
 
 function finiteOrZero(value: unknown): number {

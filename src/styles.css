@@ -564,6 +564,136 @@ button:disabled {
   border-color: var(--edge-soft);
 }
 
+/* --- Wort-Training: Antwortzeile und Aufloesung (Ruling #83) ---
+ *
+ * Die Antwortzeile steht zwischen Buehne und Tasten: was getippt ist, dazu
+ * Loeschen und Abschicken. **Keine Kaestchen fuer die Positionen** -- ein
+ * Raster verriete die Laenge der Aufgabe, und die Laenge zu hoeren ist Teil
+ * der Uebung (ui/Words.tsx).
+ *
+ * Die Haarlinie darunter traegt die Zeile, wie die Trennlinien der
+ * Gehaeuse-Screens: Linien tragen die Oberflaeche, keine Flaechen (1.1 §7).
+ */
+.answer-line {
+  flex: none;
+  margin-top: var(--space-3);
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-bottom: 8px;
+  border-bottom: var(--hairline);
+}
+
+/* Die getippten Zeichen: Newsreader wie die Tasten, gesperrt, damit man die
+ * einzelnen Positionen sieht, ohne sie zu zaehlen. */
+.answer-typed {
+  flex: 1 1 auto;
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.06em;
+}
+
+/* Leer ist ein Strich, keine erfundene Null (CLAUDE.md 2.6). */
+.answer-typed-empty {
+  color: var(--gray);
+}
+
+/* Das Loeschen-Icon sitzt am rechten Rand der Zeile, nicht an der Seitenkante:
+ * der negative Rand von `.icon-button` gilt der Kopfzeile. */
+.answer-delete {
+  flex: none;
+  margin-right: 0;
+}
+
+/* Abschicken: der eine gefuellte Amber dieser View -- und er erscheint erst,
+ * wenn etwas dasteht (ui/Words.tsx). Waehrend der Ton laeuft, traegt das Amber
+ * der Play-Kreis, und zwei zugleich gaebe es nicht (1.1 §4).
+ *
+ * Kleiner als die 64er-Primaries: er steht in einer Zeile mit der Eingabe,
+ * nicht allein unter der Buehne. 48 liegt auf der Skala aus 1.1 §6. */
+.button-check {
+  flex: none;
+  height: 48px;
+  min-height: var(--tap);
+  padding: 0 var(--space-2);
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--paper);
+  background: var(--amber);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  transition:
+    background-color var(--dur-state) ease-out,
+    border-color var(--dur-state) ease-out;
+}
+
+.button-check:hover {
+  background: var(--amber-deep);
+  border-color: var(--amber-deep);
+}
+
+/*
+ * Die Aufloesung einer Folge: die gesendeten Zeichen nebeneinander, jedes mit
+ * seinem Zeichen darunter.
+ *
+ * **Kein Amber.** Im Einzelzeichen-Feedback markiert Amber die *eine* richtige
+ * Antwort; bei fuenf Positionen waeren es bis zu fuenf Flaechen, und das Budget
+ * erlaubt eine (1.1 §4). Haken gegen Kreuz plus die getippte Alternative
+ * tragen die Unterscheidung ohne Farbe (CLAUDE.md 6).
+ */
+.solution {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.solution-row {
+  margin: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.solution-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 40px;
+}
+
+/* Die Loesung selbst steht immer in ink -- auch an einer verfehlten Position:
+ * dort ist sie das, was der Blick finden soll. Gray traegt nur die getippte
+ * Alternative darunter. */
+.solution-char {
+  font-family: var(--font-serif);
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.solution-mark {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* Was stattdessen getippt wurde: klein und gray, unter dem Haken. Es ist die
+ * Auskunft "falsch gehoert" gegen "zu kurz gehoert" (ui/Words.tsx). */
+.solution-typed {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--gray);
+}
+
 /*
  * Weiter-Taste im Feedback: dieselbe Form wie eine Antwort, aber nur umrandet
  * und in ink. Das Amber dieser View gehoert der richtigen Antwort (1.1 §4, §7).
@@ -888,6 +1018,27 @@ button:disabled {
   color: var(--amber-deep);
 }
 
+/* Ein `<a>` bringt eine Unterstreichung mit, die die Zeilen des Menues nicht
+ * haben -- die Form ist hier die Liste, nicht der Link (1.1 §7). Der Eintrag
+ * "Learn" fuehrt aus der App heraus (Ruling #83, C). */
+a.menu-item {
+  text-decoration: none;
+}
+
+/* Der stille Hinweis an einem gesperrten Eintrag ("from 8 characters"): klein,
+ * gray, hinter dem Wort und nicht darunter -- er soll die Zeile nicht in zwei
+ * teilen. Die Zeile selbst ist ueber `button:disabled` gedimmt, also traegt
+ * schon die Flaeche die Aussage; der Text sagt, ab wann sie aufgeht.
+ *
+ * `font-family` explizit, weil `.menu-item` Newsreader setzt: der Hinweis ist
+ * Beschriftung, keine Ueberschrift. */
+.menu-hint {
+  margin-left: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--gray);
+}
+
 /* Der Ortsmarker: bei jedem Eintrag im Layout (sonst spraenge der Text),
  * gefuellt nur am aktuellen Ort -- das eine Amber der Menue-View (1.1 §4).
  * An- oder abwesend ist eine Form, nicht nur eine Farbe (CLAUDE.md 6);
@@ -1150,7 +1301,11 @@ button:disabled {
   gap: var(--space-2);
 }
 
-.setting-head label {
+/* Auch die Tempo-Zeile: dort steht ein `span` statt eines `label`, weil es
+ * kein Eingabefeld gibt, zu dem es gehoeren koennte -- gleich aussehen soll es
+ * trotzdem (ui/Settings.tsx). */
+.setting-head label,
+.setting-head > span:first-child {
   font-size: 16px;
 }
 

@@ -19,7 +19,26 @@
 import { useEffect, useRef } from 'react';
 
 /** Wo man gerade ist — 'learn' ist die Klang-Auswahl (ReviewPicker). */
-export type MenuLocation = 'practice' | 'learn' | 'progress' | 'account' | 'settings' | 'about';
+export type MenuLocation =
+  | 'practice'
+  | 'learn'
+  | 'words'
+  | 'progress'
+  | 'account'
+  | 'settings'
+  | 'about';
+
+/**
+ * Ein Eintrag ist entweder ein Ort in dieser App oder ein Link nach draußen.
+ *
+ * Zwei Formen und kein gemeinsamer Nenner, weil sie sich wirklich
+ * unterscheiden: ein Ort wird gemeldet und setzt den Ortsmarker, ein Link
+ * verlässt die SPA und kann nie „hier" sein. Ein `<button>`, der navigiert,
+ * wäre für Tastatur und Screenreader die falsche Rolle.
+ */
+type MenuEntry =
+  | { readonly kind: 'place'; readonly location: MenuLocation; readonly label: string }
+  | { readonly kind: 'link'; readonly href: string; readonly label: string };
 
 /*
  * „Account" stand in Runde A bewusst nicht hier (1.1 §7: nichts zeigen, was
@@ -31,14 +50,25 @@ export type MenuLocation = 'practice' | 'learn' | 'progress' | 'account' | 'sett
  * „Settings" steht aus demselben Grund dahinter: Tonhöhe und Lautstärke
  * gehören dem Gerät, nicht dem Üben und nicht dem Konto
  * (engine/deviceSettings.ts).
+ *
+ * „Words & groups" (Ruling #83) steht bei den Übungsmodi, direkt hinter dem
+ * Lernmodus: es *ist* Üben, und wer den Modus sucht, sucht ihn dort. Er kann
+ * gesperrt sein — dann steht er gedimmt da, mit dem stillen Hinweis, ab wann
+ * er aufgeht.
+ *
+ * „Learn" ist der redaktionelle Bereich unter `/learn/` und damit kein Ort
+ * dieser App, sondern ein Weg hinaus. Er steht bei den sekundären Einträgen
+ * und direkt vor „About": beides ist Lesestoff, kein Üben (Ruling #83, C).
  */
-const ENTRIES: readonly { location: MenuLocation; label: string }[] = Object.freeze([
-  { location: 'practice', label: 'Practice' },
-  { location: 'learn', label: 'Learn the sounds' },
-  { location: 'progress', label: 'Progress' },
-  { location: 'account', label: 'Account' },
-  { location: 'settings', label: 'Settings' },
-  { location: 'about', label: 'About' },
+const ENTRIES: readonly MenuEntry[] = Object.freeze([
+  { kind: 'place', location: 'practice', label: 'Practice' },
+  { kind: 'place', location: 'learn', label: 'Learn the sounds' },
+  { kind: 'place', location: 'words', label: 'Words & groups' },
+  { kind: 'place', location: 'progress', label: 'Progress' },
+  { kind: 'place', location: 'account', label: 'Account' },
+  { kind: 'place', location: 'settings', label: 'Settings' },
+  { kind: 'link', href: '/learn/', label: 'Learn' },
+  { kind: 'place', location: 'about', label: 'About' },
 ]);
 
 /**
@@ -88,10 +118,20 @@ export function AppHeader({
 
 export function MenuPanel({
   location,
+  locked,
   onNavigate,
   onDismiss,
 }: {
   location: MenuLocation;
+  /**
+   * Gesperrte Orte samt ihrem stillen Hinweis, z. B.
+   * `{ words: 'from 8 characters' }`.
+   *
+   * Der Text kommt von außen und wird hier nicht gebaut: *ab wann* ein Modus
+   * aufgeht, ist eine Regel der Engine, und diese Komponente rechnet nicht
+   * (CLAUDE.md 4). Ohne Eintrag ist ein Ort offen.
+   */
+  locked?: Partial<Record<MenuLocation, string>>;
   onNavigate: (target: MenuLocation) => void;
   /** Schließen ohne Ortswechsel (X oder Esc) — der Fokus geht zum Trigger zurück. */
   onDismiss: () => void;
@@ -129,7 +169,23 @@ export function MenuPanel({
 
       <nav className="menu-nav" aria-label="Menu">
         {ENTRIES.map((entry, index) => {
+          /*
+            Der Punkt ist bei jedem Eintrag im Layout (sonst spränge der Text),
+            aber nur am aktuellen Ort gefüllt. Ein Link nach draußen ist nie
+            der aktuelle Ort.
+          */
+          if (entry.kind === 'link') {
+            return (
+              <a key={entry.href} className="menu-item" href={entry.href}>
+                <span className="menu-dot" data-current={false} aria-hidden="true" />
+                {entry.label}
+              </a>
+            );
+          }
+
           const current = entry.location === location;
+          const hint = locked?.[entry.location];
+
           return (
             <button
               key={entry.location}
@@ -137,14 +193,26 @@ export function MenuPanel({
               type="button"
               className="menu-item"
               aria-current={current ? 'page' : undefined}
+              /*
+                Gesperrt heißt wirklich gesperrt -- das Attribut steht, nicht
+                nur die Optik (wie im Tastenfeld, Ruling #75). Der Hinweis
+                daneben sagt, ab wann es aufgeht; für Screenreader steht er
+                zusätzlich im Namen des Eintrags, denn eine gedimmte Zeile
+                allein ist keine Auskunft (CLAUDE.md 6).
+              */
+              disabled={hint !== undefined}
               onClick={() => onNavigate(entry.location)}
             >
-              {/*
-                Der Punkt ist bei jedem Eintrag im Layout (sonst spränge der
-                Text), aber nur am aktuellen Ort gefüllt.
-              */}
               <span className="menu-dot" data-current={current} aria-hidden="true" />
               {entry.label}
+              {hint !== undefined && (
+                <>
+                  <span className="menu-hint" aria-hidden="true">
+                    {hint}
+                  </span>
+                  <span className="visually-hidden">{` — locked, ${hint}`}</span>
+                </>
+              )}
             </button>
           );
         })}

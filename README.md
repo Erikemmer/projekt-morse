@@ -21,11 +21,24 @@ Fehlerquote und Reaktionszeit pro Zeichen. Der Fortschritt liegt im localStorage
 Startzeichensatz K M R S U A, 20 WPM Zeichentempo bei 10 WPM Gesamttempo
 (Farnsworth). Die Oberfläche ist auf Englisch.
 
+**Sind alle 36 Zeichen aktiv, steigt das Gesamttempo** — ein WPM je Stufe, wenn
+das 90-%-Fenster stimmt, mit einer Sperre von 20 Antworten dazwischen, und
+höchstens bis zum Zeichentempo. Nie automatisch abwärts; zurücksetzen kann man
+es in den Einstellungen. Erst der volle Zeichensatz, dann schrumpfen die
+Pausen — solange noch Zeichen dazukommen, ist Kopfhören die knappe Ressource
+und nicht Geschwindigkeit.
+
 Geantwortet wird bis zwölf aktive Zeichen auf einem Dreier-Gitter; **ab
 dreizehn** übernimmt ein festes Tastenfeld — sechs Spalten, A–Z, darunter 0–9,
 alle 36 Positionen immer sichtbar und ortsfest. Wer immer an dieselbe Stelle
 greift, baut Motorik auf, und die gemessene Reaktionszeit enthält nicht bei
 jedem neuen Zeichen eine neue Suche.
+
+Ab acht aktiven Zeichen öffnet sich **„Words & groups"**: ein ganzes Wort oder
+eine Zufallsgruppe als *eine* Zeitachse, danach als Ganzes eingetippt und
+Position für Position aufgelöst. Zehn Aufgaben je Einheit. Die Antworten
+trainieren die Statistik jedes Zeichens mit, lassen das Wachstumsfenster aber
+unberührt — über den nächsten Buchstaben entscheidet der Einzelzeichen-Loop.
 
 Dazu: ein Streak, der einen verpassten Tag verzeiht statt ihn zu bestrafen;
 Tonhöhe und Lautstärke einstellbar (gerätespezifisch, nie im Konto); und eine
@@ -52,11 +65,11 @@ arbeitet: `npm run build:learn` (setzt einen Vite-Build voraus, weil er nach
 `dist/` schreibt) und `npm run verify:learn` für die SEO-Gegenprobe.
 
 `npm run verify:amber` prüft die Regel „Amber steht nie zweimal in einer View"
-(Guidelines 1.1 §4) am gerenderten Bild: das Skript fährt zwanzig Ansichten in
-einem Browser an und zählt die Flächen. Es setzt einen Build voraus und braucht
-zwei Dinge aus der Umgebung, nicht aus dem Projekt: `playwright-core`
-(`npm i --no-save playwright-core` — ein Werkzeug, keine Abhängigkeit) und den
-Pfad zu Chromium in `CHROMIUM_PATH`.
+(Guidelines 1.1 §4) am gerenderten Bild: das Skript fährt achtundzwanzig
+Ansichten in einem Browser an und zählt die Flächen. Es setzt einen Build
+voraus und braucht zwei Dinge aus der Umgebung, nicht aus dem Projekt:
+`playwright-core` (`npm i --no-save playwright-core` — ein Werkzeug, keine
+Abhängigkeit) und den Pfad zu Chromium in `CHROMIUM_PATH`.
 
 ## Aufbau
 
@@ -69,6 +82,9 @@ Pfad zu Chromium in `CHROMIUM_PATH`.
 | `src/engine/stats.ts` | Statistik pro Zeichen, plus das Lesen alter Stände |
 | `src/engine/streak.ts` | Der Streak mit Freeze-Gnade — Kalendertage, keine Uhr |
 | `src/engine/drill.ts` | Langsame Zeichen und der Satz einer „Speed round" |
+| `src/engine/words.ts` | Wortliste und die Auswahl von Wörtern und Gruppen |
+| `src/engine/wordSession.ts` | Der Wort-Loop als reiner Zustandsautomat |
+| `src/engine/tempo.ts` | Die Tempo-Progression: wann die Pausen kürzer werden |
 | `src/engine/deviceSettings.ts` | Tonhöhe und Lautstärke dieses Geräts |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche und die Ziehung daraus |
 | `src/engine/session.ts` | Der Loop als reiner Zustandsautomat |

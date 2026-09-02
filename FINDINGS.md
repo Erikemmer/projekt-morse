@@ -107,6 +107,13 @@ Sache des Design-Owners, kein Einzeiler unterwegs. Alternative ohne neue
 Dateien: den Pfeil in der CTA durch eine Form ersetzen. Das wäre eine Änderung
 an Fables Text und deshalb ausdrücklich nicht hier entschieden.
 
+**Nachtrag 02.09.2026 (Runde F2): der Pfeil steht jetzt auch in der App.** Die
+Fußzeile zeigt im Moment einer Tempo-Stufe `10 → 11 wpm` — so wörtlich in
+Ruling #83, B.11 vorgegeben. Er kommt dort aus demselben Fallback wie auf den
+Learn-Seiten; ein anderer Wortlaut wäre eine Abweichung von der Vorgabe und
+gehört Fable, nicht diesem Commit. Die Zeile steht in `--gray` bei 13 px, der
+Unterschied ist entsprechend klein.
+
 ## 5. Die Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen
 
 **Gefunden:** 02.09.2026, gleiche Aufgabe.
@@ -167,3 +174,63 @@ Positionen aus `KEYPAD_LAYOUT`, `data-active` je Zugehörigkeit. Für den
 Echo-Check wäre zusätzlich zu entscheiden, was „aktiv" dort heißt: die
 Optionen des Checks oder der ganze aktive Satz. **Gehört Fable, nicht dem
 nächsten Commit.**
+
+## 7. Der Start-Screen scrollt, sobald alle 36 Zeichen aktiv sind
+
+**Gefunden:** 02.09.2026, beim Vermessen des Wort-Screens (Runde F2). **Nicht
+neu und nicht von dieser Runde** — auf `main` (66d0af4) genauso gemessen.
+
+Bei 390 × 844 und 36 aktiven Zeichen ist der **Start-Screen 890 px** hoch, also
+46 px zu viel. Betroffen ist nur dieser eine Zustand: Kopfzeile mit Wortmarke
+und Menü, dazu die Streak-Zeile *und* das siebenreihige Tastenfeld. Der
+Trainings-Screen derselben Sitzung passt exakt (gemessen: **844 px**) — dort
+fehlt die Kopfzeile, weil sie mitten in einer Sitzung nicht dasteht.
+
+**Warum es zählt:** Die Übergabe der Runde U1 (§3j) hält fest, dass „sieben
+Reihen à 52 px bei 390 × 844 **ohne Scrollen** passen". Gemessen wurde damals
+der Zustand mit offener Antwort — und der stimmt. Für den Start-Screen gilt es
+nicht, und dort steht der Play-Kreis, der als erstes gefunden werden soll.
+
+**Warum es hier nicht behoben wurde:** Die Aufgabe der Runde F2 nennt diese
+Fläche nicht (CLAUDE.md 5). Und die naheliegende Lösung wäre eine
+Gestaltungsentscheidung, keine technische: das Tastenfeld auf dem Start-Screen
+gar nicht zu zeigen (es beantwortet dort nichts) wäre die sauberste, widerspricht
+aber dem Review-6-Ruling (#43), das die Tasten ausdrücklich als „Kontext der
+Frage" sichtbar hält. Für Runde F2 ist derselbe Konflikt im Wort-Screen
+entschieden worden: dort **fehlt die Kopfzeile während einer laufenden
+Einheit**, wie im Training und im Drill — damit passt er.
+
+**Was es kosten würde:** wenig Code, aber eine Entscheidung. Drei Wege, alle
+eine Zeile bis ein Dutzend: die Kopfzeile auf dem Start-Screen bei großem
+Zeichensatz weglassen (dann fehlt der Menü-Zugang), die Streak-Zeile dort
+weglassen (eine leise Zeile für 46 px — und der Streak wäre auf dem
+Start-Screen weg), oder die Tastenhöhe im Tastenfeld von 52 auf 46 px nehmen
+(bleibt über `--tap`, ändert aber die Formfamilie).
+**Gehört Fable.**
+
+## 8. ✓ und ✗ fehlen ebenfalls in allen vier Schriftschnitten
+
+**Gefunden:** 02.09.2026, beim Prüfen der cmap-Tabellen für Eintrag 4
+(Runde F2). **Nicht neu** — die App benutzt beide Zeichen seit dem ersten
+Feedback-Screen.
+
+Geprüft über die cmap-Tabellen der vier woff2-Dateien in `src/fonts/`:
+**U+2713 (✓) und U+2717 (✗) sind in keinem der vier Schnitte.** Enthalten sind
+dagegen U+2013, U+2014, U+2212 und U+00B7 — die anderen Sonderzeichen der
+Oberfläche. Beide Marken kommen also aus dem Fallback-Stack des Systems: im
+Feedback des Trainings, im Echo-Check, im Tastenfeld und seit dieser Runde in
+der Aufloesung des Wort-Trainings.
+
+**Warum es zählt:** Es bricht nichts — die Zeichen existieren auf allen
+Zielplattformen, und keine Information hängt allein an ihnen (CLAUDE.md 6: es
+steht immer ein Satz daneben). Aber die Zeichnung wechselt je nach System, und
+sie steht direkt neben Newsreader und IBM Plex. Auf Windows sieht ein ✓ anders
+aus als auf iOS.
+
+**Was es kosten würde:** dieselbe Rechnung wie bei Eintrag 4 — die Schnitte mit
+diesen beiden Codepoints neu subsetten (Sache des Design-Owners), oder die
+Marken als kleine Inline-SVG zeichnen, wie das Menü-Icon und der Play-Pfeil es
+schon tun (1.1 §8: 24er-Raster, 1,5 px Strich). Der zweite Weg braucht keine
+neuen Dateien, ändert aber die Form von Haken und Kreuz — und das ist eine
+Gestaltungsfrage. **Gehört Fable.**
+

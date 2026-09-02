@@ -17,8 +17,16 @@ import {
   summarize,
   type SessionState,
 } from './session';
-import { STARTING_CHARACTERS, ROUNDS_PER_SESSION } from './settings';
 import {
+  CHARACTER_ORDER,
+  CHARACTER_WPM,
+  STARTING_CHARACTERS,
+  STARTING_EFFECTIVE_WPM,
+  ROUNDS_PER_SESSION,
+} from './settings';
+import { SPEED_LOCKOUT_ANSWERS, SPEED_STEP_WPM } from './tempo';
+import {
+  RECENT_ANSWER_WINDOW,
   RECENT_SAMPLES,
   beginSession,
   dayAccuracy,
@@ -455,5 +463,116 @@ describe('Tagesstatistik, Sitzungszaehler, Intro-Merker', () => {
     expect(parsed.day.hits).toBe(2);
     // Doppelte Zeichen sind kein gueltiger Eimer -- einmal zaehlt einmal.
     expect(parsed.day.characters).toEqual(['K']);
+  });
+});
+
+/*
+ * Die Tempo-Progression an der Kante zum Loop (Ruling #83, Teil B).
+ *
+ * Die Regel selbst steht in tempo.test.ts. Hier geht es nur um die drei
+ * Fragen, die der Zustandsautomat entscheidet: greift sie in der normalen
+ * Uebung, bleibt sie im Drill draussen, und wirkt sie ab der naechsten Aufgabe
+ * statt rueckwirkend auf die laufende.
+ */
+describe('Tempo-Progression im Loop', () => {
+  const DAY = '2026-09-01';
+
+  /** Ein Stand, dem genau eine richtige Antwort zur naechsten Stufe fehlt. */
+  function almostFaster() {
+    return {
+      ...emptyProgress(),
+      activeCharacters: [...CHARACTER_ORDER],
+      characters: Object.fromEntries(
+        CHARACTER_ORDER.map((char) => [char, { attempts: 10, hits: 10, recentReactions: [0.5] }]),
+      ),
+      recentAnswers: Array.from({ length: RECENT_ANSWER_WINDOW - 1 }, () => true),
+      answersSinceGrowth: 40,
+      answersSinceSpeedUp: SPEED_LOCKOUT_ANSWERS,
+    };
+  }
+
+  /** Eine Sitzung, die den Klang unverfaelscht laesst: 0.5 hebt den Jitter auf. */
+  function session(progress = almostFaster(), kind: 'practice' | 'drill' = 'practice') {
+    return createSession({
+      totalRounds: 3,
+      progress,
+      random: () => 0.5,
+      today: DAY,
+      kind,
+      pool: kind === 'drill' ? ['K', 'M', 'R'] : undefined,
+    });
+  }
+
+  /** Eine Runde spielen und richtig antworten. */
+  function answerCorrectly(state: SessionState) {
+    return submitAnswer(promptFinished(beginPlayback(state, 1)), state.prompt, 1.5);
+  }
+
+  it('hebt das Tempo in der normalen Uebung und meldet die Bewegung', () => {
+    const state = answerCorrectly(session());
+    expect(state.progress.effectiveWpm).toBe(STARTING_EFFECTIVE_WPM + SPEED_STEP_WPM);
+    expect(state.speedUp).toEqual({
+      from: STARTING_EFFECTIVE_WPM,
+      to: STARTING_EFFECTIVE_WPM + SPEED_STEP_WPM,
+    });
+  });
+
+  it('wirkt auf den Klang der laufenden Sitzung -- ab der naechsten Aufgabe', () => {
+    const before = session();
+    // 0.5 hebt den Stufe-2-Jitter genau auf: der Klang traegt das Niveau.
+    expect(before.sound.effectiveWpm).toBe(STARTING_EFFECTIVE_WPM);
+    const after = answerCorrectly(before);
+    expect(after.sound.effectiveWpm).toBe(STARTING_EFFECTIVE_WPM + SPEED_STEP_WPM);
+    // Das Zeichentempo bleibt unangetastet -- variiert werden nur die Pausen.
+    expect(CHARACTER_WPM).toBe(20);
+  });
+
+  it('addiert die Stufe auf den gezogenen Wert, statt neu zu ziehen', () => {
+    // Ein Jitter ungleich null: 0.9 zieht das Tempo nach oben.
+    const drawn = createSession({
+      totalRounds: 3,
+      progress: almostFaster(),
+      random: () => 0.9,
+      today: DAY,
+    });
+    const jitter = drawn.sound.effectiveWpm;
+    expect(jitter).not.toBe(STARTING_EFFECTIVE_WPM);
+    expect(answerCorrectly(drawn).sound.effectiveWpm).toBeCloseTo(jitter + SPEED_STEP_WPM, 12);
+  });
+
+  it('nimmt die Meldung mit der naechsten Aufgabe zurueck', () => {
+    const stepped = answerCorrectly(session());
+    expect(advance(stepped, () => 0.5).speedUp).toBeNull();
+  });
+
+  it('greift im Drill nicht -- aus seinem Verlauf folgt keine Stufe', () => {
+    const state = answerCorrectly(session(almostFaster(), 'drill'));
+    expect(state.progress.effectiveWpm).toBe(STARTING_EFFECTIVE_WPM);
+    expect(state.speedUp).toBeNull();
+  });
+
+  it('meldet nichts, solange die Regel nicht greift', () => {
+    const notYet = { ...almostFaster(), answersSinceSpeedUp: 0 };
+    const state = answerCorrectly(session(notYet));
+    expect(state.speedUp).toBeNull();
+    expect(state.progress.effectiveWpm).toBe(STARTING_EFFECTIVE_WPM);
+  });
+
+  it('zaehlt die Sperre nur mit Antworten aus der normalen Uebung', () => {
+    const fresh = { ...almostFaster(), answersSinceSpeedUp: 0 };
+    expect(answerCorrectly(session(fresh)).progress.answersSinceSpeedUp).toBe(1);
+    expect(answerCorrectly(session(fresh, 'drill')).progress.answersSinceSpeedUp).toBe(0);
+  });
+
+  it('laedt ein Tempo-Niveau aus dem Speicher und deckelt es am Zeichentempo', () => {
+    expect(parseProgress({ characters: {} }).effectiveWpm).toBe(STARTING_EFFECTIVE_WPM);
+    expect(parseProgress({ characters: {}, effectiveWpm: 14 }).effectiveWpm).toBe(14);
+    expect(parseProgress({ characters: {}, effectiveWpm: 99 }).effectiveWpm).toBe(CHARACTER_WPM);
+    expect(parseProgress({ characters: {}, effectiveWpm: 2 }).effectiveWpm).toBe(
+      STARTING_EFFECTIVE_WPM,
+    );
+    expect(parseProgress({ characters: {}, effectiveWpm: 'schnell' }).effectiveWpm).toBe(
+      STARTING_EFFECTIVE_WPM,
+    );
   });
 });

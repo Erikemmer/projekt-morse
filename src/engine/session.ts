@@ -21,6 +21,7 @@ import { maybeGrow } from './growth';
 import { pickNext } from './selection';
 import { beginSession, recordAttempt, type Progress } from './stats';
 import { recordPracticeDay } from './streak';
+import { maybeSpeedUp } from './tempo';
 import { drawPromptTone, drawSessionSound, type SessionSound } from './variability';
 
 export type Phase =
@@ -77,6 +78,19 @@ export interface SessionState {
   readonly lastAttempt: Attempt | null;
   /** Mit dieser Antwort neu eingefuehrtes Zeichen -- fuer die Ankuendigung im Feedback. */
   readonly introduced: string | null;
+  /**
+   * Mit dieser Antwort gefallene Tempo-Stufe (engine/tempo.ts) -- das Tempo
+   * davor und danach, oder null.
+   *
+   * Steht neben `introduced` und verhaelt sich wie es: gesetzt im Feedback der
+   * Antwort, die die Stufe ausgeloest hat, und in `advance` wieder null. Beide
+   * Zahlen, weil die Fusszeile die Bewegung zeigt ("10 -> 11 wpm") und nicht
+   * nur das Ergebnis.
+   *
+   * Es koennen nie beide zugleich stehen: Wachstum braucht einen Kandidaten,
+   * die Tempo-Progression braucht, dass keiner mehr da ist.
+   */
+  readonly speedUp: { readonly from: number; readonly to: number } | null;
   /** Fortschritt ueber alle Sitzungen -- Grundlage der Gewichtung. */
   readonly progress: Progress;
   /**
@@ -159,6 +173,7 @@ export function createSession(options: SessionOptions): SessionState {
     attempts: [],
     lastAttempt: null,
     introduced: null,
+    speedUp: null,
     progress,
     today: options.today,
     sound,
@@ -240,14 +255,43 @@ export function submitAnswer(
     ? { progress: recorded, introduced: null as string | null }
     : maybeGrow(recorded);
 
+  /*
+   * Und danach die Tempo-Progression (engine/tempo.ts) -- ebenfalls nur in der
+   * normalen Uebung, und aus demselben Grund: ein Drill fragt gezielt die
+   * langsamen Zeichen ab, aus seinem Verlauf darf keine Stufe folgen.
+   *
+   * Die Reihenfolge ist unkritisch, weil sich die beiden Regeln ausschliessen:
+   * `maybeGrow` braucht einen Kandidaten in CHARACTER_ORDER, `maybeSpeedUp`
+   * braucht, dass keiner mehr uebrig ist.
+   */
+  const stepped = drill
+    ? { progress: growth.progress, from: null as number | null, to: null as number | null }
+    : maybeSpeedUp(growth.progress);
+
   return {
     ...state,
     phase: 'feedback',
     attempts: [...state.attempts, attempt],
     lastAttempt: attempt,
     introduced: growth.introduced,
+    speedUp:
+      stepped.from === null || stepped.to === null
+        ? null
+        : { from: stepped.from, to: stepped.to },
+    /*
+     * Eine gefallene Stufe wirkt **ab der naechsten Aufgabe**, nicht rueckwirkend
+     * auf die laufende: das neue Tempo wird auf den *gezogenen* Wert dieser
+     * Sitzung addiert, nicht neu gezogen. So bleibt die Streuung der Stufe 2
+     * genau die, die die Sitzung bekommen hat -- ein zweites Ziehen mitten in
+     * der Sitzung waere ein zweiter Klang derselben Sitzung, und `SessionSound`
+     * ist bewusst eine einmal gezogene Groesse (variability.ts).
+     */
+    sound:
+      stepped.from === null || stepped.to === null
+        ? state.sound
+        : { ...state.sound, effectiveWpm: state.sound.effectiveWpm + (stepped.to - stepped.from) },
     pool: growth.introduced === null ? state.pool : growth.progress.activeCharacters,
-    progress: growth.progress,
+    progress: stepped.progress,
   };
 }
 
@@ -286,6 +330,7 @@ export function advance(state: SessionState, random: () => number): SessionState
     promptEndsAt: null,
     replays: 0,
     introduced: null,
+    speedUp: null,
     // Pro Abfrage, nicht pro Abspielen: Wiederholungen behalten den Ton.
     promptToneHz: drawPromptTone(state.sound, random),
   };

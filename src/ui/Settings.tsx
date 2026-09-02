@@ -11,6 +11,8 @@
  *
  * **Amber-Budget.** Das eine Amber der View trägt "Play test tone" — das
  * Angebot. Die Regler sind ink: sie zeigen einen Zustand, sie laden nicht ein.
+ * Auch der Tempo-Reset ist deshalb ein leiser Textknopf (`.quiet-action`) und
+ * kein zweiter gefüllter Knopf (1.1 §4).
  *
  * **Kein Autoplay.** Der Ton kommt ausschliesslich auf eine Geste, nie beim
  * Schieben (CLAUDE.md 6 und die Regel des Trainings: nichts läuft von allein).
@@ -24,6 +26,8 @@
  */
 
 import {
+  CHARACTER_WPM,
+  STARTING_EFFECTIVE_WPM,
   TONE_HZ_RANGE,
   TONE_HZ_STEP,
   VOLUME_RANGE,
@@ -34,20 +38,26 @@ import type { DeviceSettings } from '../engine/deviceSettings';
 export function Settings({
   settings,
   playing,
+  effectiveWpm,
   onToneHz,
   onVolume,
   onPreview,
+  onResetSpeed,
   headingRef,
 }: {
   settings: DeviceSettings;
   /** Ob gerade ein Ton läuft — dann wartet der Probeton, statt sich zu überlagern. */
   playing: boolean;
+  /** Das erreichte Tempo-Niveau in WpM (engine/tempo.ts). */
+  effectiveWpm: number;
   onToneHz: (hz: number) => void;
   onVolume: (volume: number) => void;
   onPreview: () => void;
+  onResetSpeed: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
   const volumePercent = Math.round(settings.volume * 100);
+  const raised = effectiveWpm > STARTING_EFFECTIVE_WPM;
 
   return (
     <section className="screen" aria-labelledby="settings-heading">
@@ -115,6 +125,38 @@ export function Settings({
         These two stay on this device — how loud something needs to be is a property of the
         device, not of you.
       </p>
+
+      {/*
+        Das Tempo (Ruling #83, Teil B). Kein Regler: es ist kein Wert, den man
+        einstellt, sondern einer, den man sich erübt — er steigt über die
+        Tempo-Progression und geht nie von selbst zurück. Hier steht deshalb
+        der Stand, und darunter der eine Weg abwärts.
+
+        Er steht **unter** der Geräte-Notiz und nicht zwischen den Reglern: die
+        Notiz sagt „these two", und das müssen die zwei bleiben, über denen sie
+        steht. Das Tempo gehört ohnehin dem Lernstand und nicht dem Gerät — es
+        wandert mit dem Konto (engine/sync.ts).
+      */}
+      <div className="setting">
+        <div className="setting-head">
+          <span>Effective speed</span>
+          <span className="setting-value">{effectiveWpm} wpm</span>
+        </div>
+        {/*
+          Die zwei ehrlichen Sätze zu dieser Zahl (CLAUDE.md 2.6): das
+          Zeichentempo ändert sich nie, und was hier steht, ist das Niveau —
+          eine einzelne Sitzung streut ab Variabilitäts-Stufe 2 leicht darum.
+        */}
+        <p className="setting-note">
+          Characters always play at {CHARACTER_WPM} wpm — the effective speed only stretches the
+          gaps between them, and a single session varies a little around this value.
+        </p>
+        {raised && (
+          <button type="button" className="quiet-action" onClick={onResetSpeed}>
+            {`Reset to ${STARTING_EFFECTIVE_WPM} wpm`}
+          </button>
+        )}
+      </div>
     </section>
   );
 }

@@ -391,3 +391,49 @@ describe('emptySnapshot', () => {
     expect(fresh.progress.day).toEqual(emptyDay());
   });
 });
+
+/*
+ * Das Tempo-Niveau im Merge (Ruling #83, Teil B).
+ *
+ * Zwei verschiedene Regeln fuer zwei verschiedene Bedeutungen: das erreichte
+ * Niveau ist Wachstum (Maximum, wie der aktive Satz), der Sperr-Zaehler ist
+ * eine Momentaufnahme (juengerer Stand, wie `answersSinceGrowth`).
+ */
+describe('Tempo-Niveau', () => {
+  it('nimmt das Maximum -- ein Merge macht kein Gerät langsamer', () => {
+    const merged = mergeProgress(
+      { progress: { ...fullProgress(), effectiveWpm: 12 }, updatedAt: 200 },
+      { progress: { ...fullProgress(), effectiveWpm: 17 }, updatedAt: 100 },
+    );
+    expect(merged.effectiveWpm).toBe(17);
+  });
+
+  it('nimmt das Maximum auch, wenn der jüngere Stand tiefer steht', () => {
+    const merged = mergeProgress(
+      { progress: { ...fullProgress(), effectiveWpm: 10 }, updatedAt: 900 },
+      { progress: { ...fullProgress(), effectiveWpm: 15 }, updatedAt: 100 },
+    );
+    expect(merged.effectiveWpm).toBe(15);
+  });
+
+  it('nimmt den Sperr-Zähler vom jüngeren Stand', () => {
+    const merged = mergeProgress(
+      { progress: { ...fullProgress(), answersSinceSpeedUp: 3 }, updatedAt: 100 },
+      { progress: { ...fullProgress(), answersSinceSpeedUp: 18 }, updatedAt: 900 },
+    );
+    expect(merged.answersSinceSpeedUp).toBe(18);
+  });
+
+  it('lässt ein frisches Gerät das Niveau des Kontos übernehmen', () => {
+    const merged = mergeProgress(emptySnapshot(), {
+      progress: { ...fullProgress(), effectiveWpm: 14 },
+      updatedAt: 500,
+    });
+    expect(merged.effectiveWpm).toBe(14);
+  });
+
+  it('ändert die Lern-Kennung nicht -- ein Tempo ist kein Lernfortschritt', () => {
+    const base = fullProgress();
+    expect(learningRevision({ ...base, effectiveWpm: 19 })).toBe(learningRevision(base));
+  });
+});

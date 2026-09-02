@@ -64,6 +64,19 @@ import {
   type SessionState,
 } from '../engine/session';
 import { CHARACTER_WPM, ROUNDS_PER_GROUP, ROUNDS_PER_SESSION } from '../engine/settings';
+import { resetEffectiveWpm, speedProgressionActive } from '../engine/tempo';
+import {
+  advanceWord,
+  beginWordPlayback,
+  createWordSession,
+  deleteCharacter,
+  retuneWordHomeTone,
+  submitWord,
+  typeCharacter,
+  wordPromptFinished,
+  type WordSessionState,
+} from '../engine/wordSession';
+import { WORDS_MIN_CHARACTERS, wordsUnlocked } from '../engine/words';
 import {
   dayAccuracy,
   dayFor,
@@ -84,6 +97,8 @@ import { Learn, ReviewPicker } from './Learn';
 import { AppHeader, MenuPanel, type MenuLocation } from './Menu';
 import { Pattern } from './Pattern';
 import { ProgressScreen } from './Progress';
+import { SessionHeader } from './SessionHeader';
+import { Words, useWordKeyboard } from './Words';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { loadDeviceSettings, saveDeviceSettings } from './deviceStorage';
 import { Settings } from './Settings';
@@ -127,6 +142,16 @@ export function App() {
    * `null` heisst: es lief kein Drill.
    */
   const [drillTarget, setDrillTarget] = useState<DrillTarget | null>(null);
+  /**
+   * Die laufende Wort-Einheit (Ruling #83, Teil A) -- oder `null`.
+   *
+   * Sie laeuft **neben** der Sitzung her, wie der Lernmodus: die Sitzung steht
+   * derweil unberuehrt da und behaelt ihre Nummer. Angelegt wird sie beim
+   * Betreten des Modus und *nur*, wenn es noch keine gibt -- ein Blick ins
+   * Menue oder auf Progress soll eine halbe Einheit nicht wegwerfen. Weg ist
+   * sie, wenn der Abschluss-Screen verlassen wird.
+   */
+  const [words, setWords] = useState<WordSessionState | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [tonePlaying, setTonePlaying] = useState(false);
 
@@ -136,9 +161,9 @@ export function App() {
    * Verlauf, keine neue Abhängigkeit (CLAUDE.md 3). Die Sitzung läuft dabei
    * unberührt weiter; Progress und About lesen nur.
    */
-  const [view, setView] = useState<'practice' | 'progress' | 'account' | 'settings' | 'about'>(
-    'practice',
-  );
+  const [view, setView] = useState<
+    'practice' | 'words' | 'progress' | 'account' | 'settings' | 'about'
+  >('practice');
   const [menuOpen, setMenuOpen] = useState(false);
   /** Der Menü-Trigger — Fokusziel nach dem Schließen ohne Ortswechsel. */
   const menuTriggerRef = useRef<HTMLButtonElement>(null);
@@ -235,11 +260,17 @@ export function App() {
       return;
     }
     focusRef.current?.focus();
+    // `words.phase` und `words.round` haengen mit drin, seit es das
+    // Wort-Training gibt: dort wechselt die Flaeche genauso zwischen
+    // Play-Kreis, Aufloesung und Weiter-Taste, und ohne dieses Nachziehen
+    // fiele der Fokus nach jedem Ton auf <body>.
   }, [
     session.phase,
     session.round,
     session.kind,
     session.progress.introSeen,
+    words?.phase,
+    words?.round,
     view,
     reviewing,
     menuOpen,
@@ -311,6 +342,89 @@ export function App() {
     const at = playerRef.current?.currentTime ?? 0;
     setSession((current) => submitAnswer(current, choice, at));
   }, []);
+
+  // --- Wort-Training ------------------------------------------------------
+
+  /*
+   * Das Timing der Wort-Einheit -- eigener Klang, eigenes Tempo, dieselbe
+   * Rechnung. Das Zeichentempo ist auch hier CHARACTER_WPM: ein Wort wird als
+   * *eine* Zeitachse geplant, mit den Farnsworth-Abstaenden des aktuellen
+   * Effektivtempos (engine/schedule.ts). Nichts davon rechnet der Player.
+   */
+  const wordsEffectiveWpm = words?.sound.effectiveWpm ?? null;
+  const wordsTiming = useMemo(
+    () =>
+      wordsEffectiveWpm === null
+        ? null
+        : computeTiming({ characterWpm: CHARACTER_WPM, effectiveWpm: wordsEffectiveWpm }),
+    [wordsEffectiveWpm],
+  );
+  const wordsSchedule = useMemo(
+    () =>
+      words === null || wordsTiming === null ? null : buildSchedule(words.prompt, wordsTiming),
+    [words?.prompt, wordsTiming],
+  );
+
+  /*
+   * Der Fortschritt der Einheit wandert in die Sitzung zurueck -- dort haengt
+   * das Speichern (der Leerlauf-Schreiber oben) und dort liest die App ihn.
+   * Ein zweiter Speicher-Pfad waere ein zweiter Ort, an dem man ihn vergessen
+   * kann.
+   */
+  const wordsProgress = words?.progress;
+  useEffect(() => {
+    if (wordsProgress === undefined) return;
+    setSession((current) =>
+      current.progress === wordsProgress ? current : { ...current, progress: wordsProgress },
+    );
+  }, [wordsProgress]);
+
+  const playWord = useCallback(async () => {
+    if (wordsSchedule === null || words === null) return;
+    const player = ensurePlayer();
+    // Muss in der Klick-Geste passieren, sonst bleibt Audio stumm.
+    await player.resume();
+
+    const handle = player.play(wordsSchedule, () => {}, words.promptToneHz);
+    setWords((current) => (current === null ? null : beginWordPlayback(current)));
+
+    // Kein rAF-Takt und keine Audio-Uhr: dieser Modus misst keine
+    // Reaktionszeit, er braucht nur das Ende des Tons (engine/wordSession.ts).
+    await handle.finished;
+    setWords((current) => (current === null ? null : wordPromptFinished(current)));
+  }, [wordsSchedule, words?.promptToneHz, ensurePlayer]);
+
+  const typeWord = useCallback((char: string) => {
+    setWords((current) => (current === null ? null : typeCharacter(current, char)));
+  }, []);
+
+  const deleteWordCharacter = useCallback(() => {
+    setWords((current) => (current === null ? null : deleteCharacter(current)));
+  }, []);
+
+  const submitWordAnswer = useCallback(() => {
+    setWords((current) => (current === null ? null : submitWord(current)));
+  }, []);
+
+  const nextWord = useCallback(() => {
+    setWords((current) => (current === null ? null : advanceWord(current, Math.random)));
+  }, []);
+
+  /** Der Abschluss-Screen ist verlassen: die Einheit ist damit vorbei. */
+  const leaveWords = useCallback(() => {
+    setWords(null);
+    setView('practice');
+  }, []);
+
+  // Die physische Tastatur am Schreibtisch (ui/Words.tsx). Sie haengt nur in
+  // der Eingabephase am Fenster -- und nur, solange dieser Modus vorne ist.
+  useWordKeyboard({
+    enabled: view === 'words' && !menuOpen && words?.phase === 'answering',
+    pool: words?.pool ?? [],
+    onType: typeWord,
+    onDelete: deleteWordCharacter,
+    onSubmit: submitWordAnswer,
+  });
 
   const next = useCallback(() => setSession((current) => advance(current, Math.random)), []);
 
@@ -495,7 +609,27 @@ export function App() {
 
   useEffect(() => {
     setSession((current) => retuneHomeTone(current, device.toneHz));
+    setWords((current) => (current === null ? null : retuneWordHomeTone(current, device.toneHz)));
   }, [device.toneHz]);
+
+  /*
+   * Das Tempo zuruecksetzen (Ruling #83, B.9) -- der eine Weg abwaerts, und er
+   * gehoert dem Nutzer.
+   *
+   * Sofort geschrieben und nicht im Leerlauf: es ist eine ausdrueckliche
+   * Entscheidung auf einem Screen ohne Ton, wie das Merken der Einfuehrung.
+   * Die *laufende* Sitzung behaelt ihren Klang -- ein Tempo mitten in einer
+   * Sitzung zu senken hiesse, die Uebung unter der Messung zu wechseln; das
+   * neue Niveau gilt ab der naechsten (dieselbe Regel wie beim Wachstum).
+   */
+  const resetSpeed = useCallback(() => {
+    setSession((current) => {
+      const reset = resetEffectiveWpm(current.progress);
+      if (reset === current.progress) return current;
+      saveProgressNow(reset);
+      return { ...current, progress: reset };
+    });
+  }, []);
 
   /**
    * Der Probeton: **nur auf eine Geste**, nie beim Schieben des Reglers.
@@ -527,6 +661,18 @@ export function App() {
   /** Der Ort fürs Menü: die Klang-Auswahl zählt als eigener ('learn'). */
   const menuLocation: MenuLocation = reviewing ? 'learn' : view;
 
+  /*
+   * Was im Menü gesperrt ist -- und ab wann es aufgeht (Ruling #83, A.1).
+   *
+   * Die Zahl steht in `engine/words.ts`, der Satz hier: `MenuPanel` rechnet
+   * nicht, es rendert (CLAUDE.md 4). Entschieden wird an den **aktiven**
+   * Zeichen -- dem Satz, aus dem der Modus baut.
+   */
+  const wordsOpen = wordsUnlocked(session.progress.activeCharacters.length);
+  const menuLocked = wordsOpen
+    ? undefined
+    : { words: `from ${WORDS_MIN_CHARACTERS} characters` };
+
   const dismissMenu = useCallback(() => {
     focusMenuTrigger.current = true;
     setMenuOpen(false);
@@ -542,12 +688,36 @@ export function App() {
       }
       setReviewing(target === 'learn');
       setView(target === 'learn' ? 'practice' : target);
+
+      /*
+       * Eine Wort-Einheit wird beim Betreten angelegt -- aber nur, wenn keine
+       * offen ist: wer zwischendurch ins Menü sieht, kommt in seine Einheit
+       * zurück und nicht in eine neue. Der Zeichensatz kommt aus dem
+       * Fortschritt der Sitzung, also aus demselben Stand wie überall.
+       */
+      if (target === 'words') {
+        setWords((current) =>
+          current ??
+          createWordSession({
+            progress: session.progress,
+            random: Math.random,
+            today: todayISO(),
+            homeToneHz: device.toneHz,
+          }),
+        );
+      }
     },
-    [menuLocation],
+    [menuLocation, session.progress, device.toneHz],
   );
 
   // Tippen statt Zielen: die Buchstaben des Zeichensatzes beantworten direkt.
+  //
+  // Nur, solange der Trainings-Screen wirklich vorne ist. Erreichbar ist das
+  // Menue heute ohnehin nur auf dem Start-Screen (headerShown), eine Sitzung
+  // kann also nicht im Hintergrund in 'answering' stehen -- aber ein Listener
+  // am *Fenster* soll das nicht voraussetzen, sondern sagen.
   useEffect(() => {
+    if (view !== 'practice' || menuOpen) return undefined;
     if (session.phase !== 'answering') return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
@@ -560,7 +730,7 @@ export function App() {
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [session.phase, session.pool, answer]);
+  }, [session.phase, session.pool, answer, view, menuOpen]);
 
   const attempt = session.lastAttempt;
   const summary = summarize(session);
@@ -593,10 +763,26 @@ export function App() {
    */
   const invitation = onStartScreen ? slowCharacters(session.progress) : [];
 
+  /**
+   * Ob die Kopfzeile mit dem Menue dasteht.
+   *
+   * Sie fehlt **mitten in einer Uebung** -- im Training, im Drill und seit
+   * Ruling #83 auch in einer laufenden Wort-Einheit. Der Grund ist derselbe
+   * wie in Runde A: dort waere sie eine Ablenkung, und der Play-Kreis soll
+   * der einzige naechste Schritt sein. Nebenbei ist sie der Platz, den das
+   * Tastenfeld braucht: mit Kopfzeile ist der Wort-Screen bei 390 x 844
+   * gemessen 888 px hoch, ohne sie passt er (§4 der Uebergabe).
+   *
+   * Der Weg heraus aus einer angefangenen Einheit ist damit derselbe wie aus
+   * einer Speed round: sie zu Ende bringen. Auf dem Abschluss-Screen steht die
+   * Kopfzeile wieder -- und "Back to practice" ohnehin.
+   */
+  const wordsRunning = view === 'words' && words !== null && words.phase !== 'finished';
   const headerShown =
     !menuOpen &&
     session.progress.introSeen &&
     learn === null &&
+    !wordsRunning &&
     (view !== 'practice' || reviewing || onStartScreen);
 
   return (
@@ -618,7 +804,12 @@ export function App() {
       )}
 
       {menuOpen ? (
-        <MenuPanel location={menuLocation} onNavigate={navigateTo} onDismiss={dismissMenu} />
+        <MenuPanel
+          location={menuLocation}
+          locked={menuLocked}
+          onNavigate={navigateTo}
+          onDismiss={dismissMenu}
+        />
       ) : !session.progress.introSeen ? (
         <Intro onDone={finishIntro} />
       ) : learn !== null ? (
@@ -633,6 +824,20 @@ export function App() {
           onAdvance={() => setLearn((c) => (c === null ? null : advanceEcho(c, Math.random)))}
           onSkip={reviewing ? undefined : skipLearn}
         />
+      ) : view === 'words' && words !== null ? (
+        <Words
+          state={words}
+          /* Die Zahl der *aktiven* Zeichen entscheidet Tastenfeld gegen
+             Dreier-Gitter -- dieselbe Schwelle wie im Training (ui/keypad.ts). */
+          activeCharacterCount={session.progress.activeCharacters.length}
+          onPlay={() => void playWord()}
+          onType={typeWord}
+          onDelete={deleteWordCharacter}
+          onSubmit={submitWordAnswer}
+          onNext={nextWord}
+          onLeave={leaveWords}
+          headingRef={focusTarget}
+        />
       ) : view === 'progress' ? (
         <ProgressScreen progress={session.progress} today={session.today} headingRef={focusTarget} />
       ) : view === 'account' ? (
@@ -641,9 +846,11 @@ export function App() {
         <Settings
           settings={device}
           playing={tonePlaying}
+          effectiveWpm={session.progress.effectiveWpm}
           onToneHz={(hz) => applySettings(withToneHz(device, hz))}
           onVolume={(volume) => applySettings(withVolume(device, volume))}
           onPreview={playPreview}
+          onResetSpeed={resetSpeed}
           headingRef={focusTarget}
         />
       ) : view === 'about' ? (
@@ -767,7 +974,18 @@ export function App() {
             </div>
           )}
 
-          <Footer day={dayFor(session.progress, session.today)} done={session.attempts.length} />
+          {/*
+            Die Fusszeile traegt seit Ruling #83 auch das Tempo -- und nur,
+            solange die Tempo-Progression ueberhaupt laeuft (alle Zeichen
+            aktiv). Vorher waere es eine Zahl ohne Bewegung und damit eine
+            Zeile ohne Aussage (1.1 §7, CLAUDE.md 2.8).
+          */}
+          <Footer
+            day={dayFor(session.progress, session.today)}
+            done={session.attempts.length}
+            wpm={speedProgressionActive(session.progress) ? session.progress.effectiveWpm : null}
+            speedUp={session.speedUp}
+          />
         </>
       )}
     </main>
@@ -877,47 +1095,6 @@ function patternOf(char: string): string {
 }
 
 /**
- * Kopfzeile: links die laufende Sitzung, rechts die Runde, darunter die
- * Fortschrittslinie.
- *
- * Rechts stehen Runden und keine Restzeit: eine mitlaufende Uhr baut Druck auf,
- * und genau den soll dieses Produkt nicht erzeugen (CLAUDE.md 2.8).
- */
-function SessionHeader({
-  label,
-  round,
-  totalRounds,
-  done,
-}: {
-  /** Was links steht: "Session 12" -- oder "Speed round", wenn es einer ist. */
-  label: string;
-  round: number;
-  totalRounds: number;
-  done: number;
-}) {
-  return (
-    <header className="masthead">
-      <div className="masthead-row">
-        <span>{label}</span>
-        <span>
-          Round {Math.min(round, totalRounds)} / {totalRounds}
-        </span>
-      </div>
-      <div
-        className="progress-track"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={totalRounds}
-        aria-valuenow={done}
-        aria-label="Rounds answered"
-      >
-        <div className="progress-fill" style={{ width: `${(done / totalRounds) * 100}%` }} />
-      </div>
-    </header>
-  );
-}
-
-/**
  * Der Play-Kreis. Ein Umriss, kein gefuellter Knopf -- das Mockup will hier
  * Ruhe, und die Flaeche von 88 px traegt die Zielgroesse locker (WCAG 2.5.5).
  */
@@ -952,8 +1129,32 @@ function PlayCircle({
  * "Today" meint wirklich heute -- der Eimer dahinter faengt bei Datumswechsel
  * neu an (engine/stats.ts). Ohne Antworten steht hier ein Strich statt einer
  * erfundenen Null (CLAUDE.md 2.6).
+ *
+ * **Das Tempo steht in derselben Zeile** (Ruling #83, B.11): eine stille Zahl
+ * hinter demselben Trennpunkt, kein eigener Platz und keine Auszeichnung. Im
+ * Moment einer Stufe zeigt sie die Bewegung ("10 → 11 wpm"), danach nur den
+ * Wert. Kein Jubel, kein Konfetti -- die Zeile stellt fest und geht wieder
+ * (CLAUDE.md 2.8).
+ *
+ * Gezeigt wird das **Niveau**, nicht der gezogene Wert der laufenden Sitzung:
+ * ab Variabilitaets-Stufe 2 streut das Tempo um +/-10 %, und diese Streuung
+ * ist eine Eigenschaft der Sitzung, keine des Fortschritts. Dass es so ist,
+ * sagt der Settings-Screen in einem Satz statt es zu verschweigen
+ * (CLAUDE.md 2.6).
  */
-function Footer({ day, done }: { day: DayStats; done: number }) {
+function Footer({
+  day,
+  done,
+  wpm,
+  speedUp,
+}: {
+  day: DayStats;
+  done: number;
+  /** Das Tempo-Niveau -- oder null, solange die Progression nicht laeuft. */
+  wpm: number | null;
+  /** Die gerade gefallene Stufe, oder null. */
+  speedUp: { readonly from: number; readonly to: number } | null;
+}) {
   const accuracy = dayAccuracy(day);
   const characters = day.characters.length;
 
@@ -963,6 +1164,11 @@ function Footer({ day, done }: { day: DayStats; done: number }) {
         {accuracy === null
           ? 'Today — no answers yet'
           : `Today ${Math.round(accuracy * 100)}% · ${characters} character${characters === 1 ? '' : 's'}`}
+        {speedUp !== null
+          ? ` · ${speedUp.from} → ${speedUp.to} wpm`
+          : wpm !== null
+            ? ` · ${wpm} wpm`
+            : ''}
       </p>
       <GroupDots done={done} />
     </footer>
