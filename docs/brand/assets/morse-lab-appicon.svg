@@ -1,6 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Morse Lab">
-  <title>Morse Lab</title>
-  <rect width="512" height="512" rx="0" fill="#F6F1E8"></rect>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="116" fill="#F6F1E8"></rect>
   <g transform="translate(97.3 158.1) scale(2.6453)">
     <rect x="0" y="66" width="120" height="8" rx="4" fill="#221D16"></rect>
     <rect x="14" y="54" width="92" height="8" rx="4" fill="#221D16" transform="rotate(13 106 58)"></rect>

@@ -25,7 +25,7 @@ export function About({ headingRef }: { headingRef: (element: HTMLElement | null
 
       <p className="about-lockup">
         {/* Dekorativ: den Namen sagt die Wortmarke daneben. */}
-        <img className="about-mark" src="/logo-key.svg" alt="" width="90" height="60" />
+        <img className="about-mark" src="/logo-key.svg" alt="" width="90" height="61" />
         <span className="wordmark about-wordmark">Morse Lab</span>
       </p>
 

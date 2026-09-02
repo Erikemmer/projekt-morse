@@ -427,9 +427,13 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | **`tools/learn/verify.mjs`** | **Die SEO-Gegenprobe an den gebauten Dateien** | **neu** |
 | `public/sw.js` | Service Worker, `/api/` ausgenommen, **Learn-Pfade ausgenommen** | erweitert |
 | `src/ui/About.tsx` | About-Screen, **plus Link in den Learn-Bereich** | erweitert |
-| `public/og-morse-lab.png` | Das Lockup als OG-Bild, 1200 × 630 (§3i) | neu |
+| `public/og-morse-lab.png` | Das Lockup als OG-Bild, 1200 × 630 (§3i) — **aus der Owner-Marke neu gerendert** | erneuert |
 | `docs/CONCEPT-LEARN.md` | Fables Konzept — die verbindliche Vorgabe dieser Runde | neu |
-| `docs/brand/logo.py` | Konstruktions-Doku, nicht mehr Quelle (#53/54) | unverändert |
+| **`docs/brand/assets/*.svg`** | **Die drei Owner-Originale, byte-identisch — die Quelle der Marke (#88)** | **neu** |
+| **`tools/brand/derive.mjs`** | **Leitet Favicon, App-Icons, Lockup und OG-Bild daraus ab; zeichnet nichts** | **neu** |
+| `public/logo-key.svg`, `logo-lockup.svg`, `favicon.svg`, `icons/*` | Aus den Originalen neu erzeugt (#88) | erneuert |
+| **`public/logo-mark-inverse.svg`** | **Die Marke für dunkle Flächen; noch nirgends verwendet** | **neu** |
+| ~~`docs/brand/logo.py`~~ | Der Rekonstruktions-Zeichner — eine zweite Wahrheit (#88) | **gelöscht** |
 | `docs/screenshots/` | …, acht Learn-Screenshots, **zwei Tastenfeld-Screenshots** | erweitert |
 | `src/**/*.test.ts`, `tools/learn/pages.test.mjs` | **375 Tests** (278 vorher, **97 neu** in dieser Runde) | grün |
 
@@ -612,43 +616,86 @@ früher Konten. **Entscheidung offen, gehört vor den DNS-Eintrag.**
 sein, eine IP-Adresse lehnt der Browser ab. Beim ersten Browser-Durchlauf
 aufgefallen.
 
-### 3f. Die Bildmarke — GESCHLOSSEN (Notion-Log #61)
+### 3f. Die Bildmarke — die Owner-Dateien sind die Quelle (Ruling #88)
 
-**Der Punkt ist erledigt, und zwar ohne Dateitransfer.** Fable hat die
-Owner-Renderings pixelgenau vermessen und gegen die Sollwerte aus
-Guidelines 1.1 §3 gehalten:
+**Runde B2 räumt hier auf, und zwar gegen das, was in dieser Übergabe bis
+Review 14 stand.** Der Owner hat die drei Original-SVGs geliefert; sie liegen
+seither **byte-identisch** im Repo:
 
-| Verhältnis | Gemessen (Owner) | Soll (1.1 §3) |
+| Datei | Bytes | md5 |
 |---|---|---|
-| Knopf / Basis | 0,249 | 0,250 |
-| Balkenhöhe / Basis | 0,0668 | 0,0667 |
+| `docs/brand/assets/morse-lab-mark.svg` | 399 | `4e9c317a592ce2ad5175be6880c71b39` |
+| `docs/brand/assets/morse-lab-mark-inverse.svg` | 399 | `1a3018b9580cad1714081737bb8787e4` |
+| `docs/brand/assets/morse-lab-appicon.svg` | 530 | `21b38583a2feb6a53ab3a6750b9fb8c9` |
 
-**Ergebnis: die Owner-Dateien und die im Repo aus §3 konstruierte Bildmarke
-sind geometrisch identisch.** Die Abweichung, die drei Sessions lang als
-Blockade geführt wurde, war keine — es sind zwei Wege zu derselben Geometrie.
-Damit entfällt der Dateitransfer, und Favicon, App-Icons und das About-Lockup
-im Repo sind bereits richtig; sie werden nicht neu gerendert.
+**Die frühere Behauptung „die Konstruktion im Repo ist geometrisch identisch"
+war falsch.** Sie stützte sich auf zwei Verhältniszahlen (Knopf/Basis,
+Balkenhöhe/Basis) — und die stimmen tatsächlich, weil sie nur *Größen*
+vergleichen, keine *Orte*. Verglichen man die Koordinaten, sind es vier
+Abweichungen:
 
-**Was das für `docs/brand/logo.py` heißt:** das Skript beschreibt die
-Konstruktion, die nachweislich der Marke entspricht. Sein Kopfkommentar sagt
-noch, es sei „nicht mehr die Quelle" und die Owner-Dateien fehlten im Repo —
-das ist mit diesem Ruling überholt. **Bewusst nicht mitgeändert** (CLAUDE.md 5:
-die Aufgabe war die Dokumentation, nicht das Skript); wer als Nächstes an der
-Marke arbeitet, zieht den Kopf in einer Zeile nach.
+| | Rekonstruktion (alt) | Owner-Datei |
+|---|---|---|
+| Grundplatte | `y="64"` | `y="66"` (2 px tiefer) |
+| Hebel-Drehpunkt | `rotate(13 108 48)` | `rotate(13 106 58)` |
+| Knopf | `cx="18.358" cy="27.305"` | `cx="21" cy="33"` |
+| Lagerring | `r="5"` | `r="3.5"` |
 
-**Optionaler Rest, kein Blocker:** die drei Original-SVGs
-(`morse-lab-mark.svg`, `morse-lab-mark-inverse.svg`, `morse-lab-appicon.svg`)
-irgendwann als Referenz nach `docs/brand/assets/` legen. Das wäre Archiv, nicht
-Korrektur — die gerenderten Assets ändern sich dadurch nicht.
+Sichtbar ist davon vor allem die letzte in Verbindung mit der zweiten: in der
+Rekonstruktion **klebt der Lagerring auf der Hebelspitze**, in der Owner-Datei
+steht er frei daneben. Genau das ist dem Owner aufgefallen.
 
-**Was aus den drei Anläufen bleibt** — nicht als Vorwurf, sondern als Regel für
-die nächste Runde: diese Sessions laufen in einem flüchtigen Remote-Container,
-in dem nur das Repo liegt. Ein Pfad auf dem Rechner des Owners
-(`~/Downloads/…`) ist von hier aus kein gültiger Weg, Dateien hereinzugeben;
-der einzige Weg ist, sie ins Repo zu legen. Geprüft war das jedes Mal, nicht
-vermutet — und in keinem der drei Anläufe wurde ersatzweise etwas konstruiert.
-Rückblickend war genau das richtig: die Konstruktion im Repo war die ganze Zeit
-korrekt.
+**Was daraus folgt — eine Quelle, keine zweite Wahrheit:**
+
+- `docs/brand/logo.py` ist **gelöscht**. Ein Skript, das die Marke *rechnet*,
+  ist eine zweite Herkunft neben den Originalen, und diese vier Abweichungen
+  sind genau das, was so etwas produziert. Wer die Marke ändern will, ändert
+  die Owner-Dateien.
+- `tools/brand/derive.mjs` **rendert nur**. Es zeichnet keine Geometrie: es
+  hängt `role`, `aria-label` und `<title>` an, setzt für die maskable-Variante
+  den Eckenradius auf null, stellt die Wortmarke daneben und rendert die PNGs.
+  `playwright-core` kommt ad hoc dazu (`npm i --no-save playwright-core`), der
+  Browser steht in `CHROMIUM_PATH` — dieselbe Bauart wie `tools/amber/check.mjs`
+  und aus demselben Grund (CLAUDE.md 3: möglichst null neue Abhängigkeiten).
+  `--check` schreibt nicht, sondern meldet Abweichungen mit Rückgabewert 1.
+- **Der Punkt-und-Strich-Notbehelf für kleine Größen ist entfallen.** Er war
+  keine Ableitung der Marke, sondern eine eigene Zeichnung — und damit dieselbe
+  Sorte zweite Wahrheit. `public/favicon.svg` ist jetzt das App-Icon.
+- **Neu: `public/logo-mark-inverse.svg`** für dunkle Flächen. Noch nirgends
+  verwendet; sie liegt bereit, damit niemand sie beim nächsten Bedarf neu
+  erfindet.
+
+**Das Lockup ist gerechnet, nicht geschätzt** (1.1 §3). Marken-Bildfläche
+x 0–120, Abstand ein Knopfdurchmesser (30), Wortmarke in Newsreader Regular
+46 px bei `x=150`, Grundlinie `y=62`. Die viewBox-Breite ist
+`12 + 120 + 30 + Textbreite + 12`. Die Textbreite ist **gemessen**, mit der
+Schrift aus dem Repo (`src/fonts/newsreader-latin-wght-normal.woff2`,
+`wght 400`) an einem echten `<text>` über `getComputedTextLength()`:
+**209,45 px**, also viewBox-Breite **383,45**. Der Text bleibt Text und wird
+nicht in Pfade gewandelt — die Schrift liegt im Repo, und so bleibt die
+Wortmarke durchsuchbar und vorlesbar.
+
+**Die maskable-Variante wird nicht umskaliert.** Der äußerste Punkt der
+Zeichnung liegt **182,7 px** von der Mitte (am Pixelbild gemessen, nicht
+geschätzt); erlaubt sind 204,8 (40 % von 512). Sie liegt also innerhalb der
+Sicherheitszone, und ihr ein zweites Mal Luft zu geben machte sie nur kleiner
+als nötig.
+
+> **Korrektur an der Vorgabe, ausgewiesen statt still übernommen:** der Prompt
+> zu Ruling #88 nennt für die Sicherheitszone 166,5 px. Das ist der Abstand zur
+> **oberen linken Ecke** der Bildfläche; der weiteste Punkt ist aber die
+> **untere** Ecke der Grundplatte, und die liegt bei 182,7 px. An der
+> Entscheidung ändert das nichts (beides ist unter 204,8) — an der Zahl schon,
+> und eine Zahl auf dem Schirm ist eine Behauptung (CLAUDE.md 2.6). Ebenso die
+> Textbreite: die Vorgabe nennt 209,44 px, gemessen sind 209,45 px. Die
+> Anweisung war, nachzumessen und die Messung einzusetzen — das ist geschehen.
+
+**Was aus den vier Anläufen bleibt:** die Sessions laufen in einem flüchtigen
+Remote-Container, in dem nur das Repo liegt. Ein Pfad auf dem Rechner des
+Owners ist von hier aus kein Weg, Dateien hereinzugeben — der einzige Weg ist,
+sie ins Repo zu legen. Das galt und gilt. Was **nicht** hätte passieren dürfen,
+ist der Schluss von zwei stimmigen Verhältnissen auf eine identische Geometrie:
+zwei Kennzahlen sind kein Vergleich, sie sind zwei Kennzahlen.
 
 ## 3g. Backend & Datenschutz — was gespeichert wird, und was nicht
 

@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Morse Lab">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Morse Lab">
   <title>Morse Lab</title>
-  <rect width="64" height="64" rx="14.545" fill="#F6F1E8"/>
-  <circle cx="16" cy="32" r="4" fill="#B45309"/>
-  <rect x="28" y="28" width="24" height="8" rx="4" fill="#B45309"/>
+  <rect width="512" height="512" rx="116" fill="#F6F1E8"></rect>
+  <g transform="translate(97.3 158.1) scale(2.6453)">
+    <rect x="0" y="66" width="120" height="8" rx="4" fill="#221D16"></rect>
+    <rect x="14" y="54" width="92" height="8" rx="4" fill="#221D16" transform="rotate(13 106 58)"></rect>
+    <circle cx="21" cy="33" r="15" fill="#B45309"></circle>
+    <circle cx="111" cy="45" r="3.5" fill="none" stroke="#221D16" stroke-width="3"></circle>
+  </g>
 </svg>
