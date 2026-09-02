@@ -2,7 +2,7 @@
 slug: beyond-the-koch-method
 lang: en
 pair: lernforschung
-metaTitle: "Beyond the Koch Method — Modern Science of Learning Morse | Morse Lab"
+metaTitle: "Beyond the Koch Method — Modern Morse Science | Morse Lab"
 metaDescription: "What 90 years of learning research add to Morse training: optimal error rates, sound variability, spaced repetition and honest feedback — and how to use them."
 keywords: "best way to learn morse code, morse code learning science, spaced repetition morse, 85 percent rule, HVPT, morse code training method"
 datePublished: 2026-09-02

@@ -2,8 +2,8 @@
 slug: geschichte-des-morsecodes
 lang: de
 pair: history-of-morse-code
-metaTitle: "Die Geschichte des Morsecodes — von 1844 bis heute | Morse Lab"
-metaDescription: "Wie aus der Idee eines Malers der erste digitale Code der Welt wurde: Samuel Morse, Alfred Vail, Gerkes Reform, SOS auf See — und warum der Code alle überlebt hat."
+metaTitle: "Geschichte des Morsecodes — von 1844 bis heute | Morse Lab"
+metaDescription: "Wie aus der Idee eines Malers der erste digitale Code der Welt wurde: Samuel Morse, Alfred Vail, Gerkes Reform, SOS auf See — und warum der Code überlebt."
 keywords: "geschichte morsecode, samuel morse, alfred vail, friedrich clemens gerke, telegraf geschichte, SOS geschichte"
 datePublished: 2026-09-02
 ---

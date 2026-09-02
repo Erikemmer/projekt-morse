@@ -2,7 +2,7 @@
 slug: morsealphabet
 lang: de
 pair: morse-code-alphabet
-metaTitle: "Morsealphabet — alle Buchstaben, Zahlen & das Timing | Morse Lab"
+metaTitle: "Morsealphabet — Buchstaben, Zahlen & Timing | Morse Lab"
 metaDescription: "Das komplette internationale Morsealphabet: 26 Buchstaben, 10 Ziffern und die wichtigsten Satzzeichen — plus die Timing-Regeln, die den Code ausmachen."
 keywords: "morsealphabet, morse alphabet, morsezeichen tabelle, morsecode buchstaben, morsecode zahlen, internationales morsealphabet"
 datePublished: 2026-09-02

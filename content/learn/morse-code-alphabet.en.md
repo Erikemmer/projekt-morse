@@ -2,7 +2,7 @@
 slug: morse-code-alphabet
 lang: en
 pair: morsealphabet
-metaTitle: "Morse Code Alphabet — Letters, Numbers & Timing | Morse Lab"
+metaTitle: "Morse Code Alphabet — Letters, Digits & Timing | Morse Lab"
 metaDescription: "The complete international Morse code alphabet: all 26 letters, 10 digits and common punctuation, plus the timing rules that make the code work."
 keywords: "morse code alphabet, morse code chart, morse code letters, morse code numbers, international morse code, morse code timing"
 datePublished: 2026-09-02

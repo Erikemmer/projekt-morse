@@ -2,7 +2,7 @@
 slug: morse-code-in-amateur-radio
 lang: en
 pair: morsen-im-amateurfunk
-metaTitle: "Morse Code in Amateur Radio — Why CW Still Thrives | Morse Lab"
+metaTitle: "Morse Code in Amateur Radio — Why CW Thrives | Morse Lab"
 metaDescription: "Nobody needs Morse code for a ham license anymore — yet CW is growing. Why radio amateurs still love the code, and how to get started today."
 keywords: "morse code amateur radio, CW ham radio, learn CW, morse code license, POTA CW, ham radio morse"
 datePublished: 2026-09-02

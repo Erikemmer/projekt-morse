@@ -2,7 +2,7 @@
 slug: how-to-learn-morse-code
 lang: en
 pair: morsecode-lernen
-metaTitle: "How to Learn Morse Code by Ear — a Realistic Guide | Morse Lab"
+metaTitle: "Learn Morse Code by Ear — a Realistic Guide | Morse Lab"
 metaDescription: "Learn Morse code the way it actually sticks: by ear, at full character speed, in short daily sessions. A step-by-step guide based on evidence, not folklore."
 keywords: "how to learn morse code, learn morse code by ear, morse code training, learn CW, koch method, farnsworth timing"
 datePublished: 2026-09-02
@@ -12,7 +12,7 @@ datePublished: 2026-09-02
 
 Most people who give up on Morse code fail for the same reason: they learned it with their eyes. A chart on the wall, dots and dashes memorized like vocabulary — and at around ten words per minute the whole system collapses, because there is no time left to count. The learners who make it treat Morse as what it really is: **a listening skill**. Each character is a small rhythm, recognized as one sound, the way you recognize a spoken word without spelling it.
 
-This guide describes a method built on that idea. Its core is almost a century old; the parts that were never quite proven have been replaced with what modern learning research supports. If you want the background, read about [the Koch method](/learn/koch-method/) and [what came after it](/learn/beyond-the-koch-method/).
+This guide describes a method built on that idea. Its core is almost a century old; the parts that were never quite proven have been replaced with what modern learning research supports. If you want the background, read about [the Koch method](/learn/koch-method/) and [what came after it](/learn/beyond-the-koch-method/). And if you wonder why anyone still learns this at all, the [history of the code](/learn/history-of-morse-code/) and [its life in amateur radio](/learn/morse-code-in-amateur-radio/) are good answers.
 
 ## The five rules
 

@@ -3,7 +3,7 @@ slug: index
 lang: de
 pair: index
 metaTitle: "Morsecode lernen — Anleitungen & Hintergrund | Morse Lab"
-metaDescription: "Alles zum Morselernen an einem Ort: die praktische Anleitung, das komplette Alphabet, die Geschichte, die Koch-Methode auf dem Prüfstand und die moderne Lernforschung."
+metaDescription: "Alles zum Morselernen an einem Ort: die praktische Anleitung, das Alphabet, die Geschichte, die Koch-Methode auf dem Prüfstand und die moderne Lernforschung."
 keywords: "morsecode lernen, morsen lernen, morse anleitung, morse artikel"
 datePublished: 2026-09-02
 ---

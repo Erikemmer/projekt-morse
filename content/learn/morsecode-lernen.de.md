@@ -3,7 +3,7 @@ slug: morsecode-lernen
 lang: de
 pair: how-to-learn-morse-code
 metaTitle: "Morsecode lernen — nach Gehör, mit Methode | Morse Lab"
-metaDescription: "Morsecode lernen, das wirklich hält: nach Gehör, in voller Zeichengeschwindigkeit, in kurzen täglichen Einheiten. Eine ehrliche Schritt-für-Schritt-Anleitung."
+metaDescription: "Morsecode lernen, das wirklich hält: nach Gehör, im vollen Zeichentempo, in kurzen täglichen Einheiten. Eine ehrliche Schritt-für-Schritt-Anleitung."
 keywords: "morsecode lernen, morsen lernen, morse code lernen, CW lernen, koch methode, farnsworth"
 datePublished: 2026-09-02
 ---
@@ -12,7 +12,7 @@ datePublished: 2026-09-02
 
 Die meisten, die am Morsecode scheitern, scheitern aus demselben Grund: Sie haben ihn mit den Augen gelernt. Eine Tabelle an der Wand, Punkte und Striche auswendig wie Vokabeln — und bei etwa zehn Wörtern pro Minute bricht das System zusammen, weil zum Abzählen keine Zeit mehr bleibt. Wer durchkommt, behandelt Morse als das, was es wirklich ist: **eine Hörfertigkeit**. Jedes Zeichen ist ein kleiner Rhythmus, den man als Ganzes erkennt — so, wie man ein gesprochenes Wort erkennt, ohne es zu buchstabieren.
 
-Diese Anleitung beschreibt eine Methode, die auf genau dieser Idee aufbaut. Ihr Kern ist fast hundert Jahre alt; die Teile, die nie sauber belegt waren, sind durch das ersetzt, was die moderne Lernforschung trägt. Wer die Hintergründe möchte: hier zur [Koch-Methode](/de/lernen/koch-methode/) und zu dem, [was danach kam](/de/lernen/lernforschung/).
+Diese Anleitung beschreibt eine Methode, die auf genau dieser Idee aufbaut. Ihr Kern ist fast hundert Jahre alt; die Teile, die nie sauber belegt waren, sind durch das ersetzt, was die moderne Lernforschung trägt. Wer die Hintergründe möchte: hier zur [Koch-Methode](/de/lernen/koch-methode/) und zu dem, [was danach kam](/de/lernen/lernforschung/). Und wer sich fragt, warum das heute überhaupt noch jemand lernt: [die Geschichte des Codes](/de/lernen/geschichte-des-morsecodes/) und [sein Leben im Amateurfunk](/de/lernen/morsen-im-amateurfunk/) sind gute Antworten.
 
 ## Die fünf Regeln
 

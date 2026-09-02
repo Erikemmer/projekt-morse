@@ -2,8 +2,8 @@
 slug: lernforschung
 lang: de
 pair: beyond-the-koch-method
-metaTitle: "Nach Koch — die moderne Lernforschung zum Morsen | Morse Lab"
-metaDescription: "Was 90 Jahre Lernforschung dem Morse-Training hinzufügen: optimale Fehlerquote, Klangvariabilität, verteiltes Üben und ehrliches Feedback — und wie man es nutzt."
+metaTitle: "Nach Koch — moderne Lernforschung zum Morsen | Morse Lab"
+metaDescription: "Was 90 Jahre Lernforschung dem Morse-Training hinzufügen: optimale Fehlerquote, Klangvariabilität, verteiltes Üben und ehrliches Feedback."
 keywords: "morsecode lernen methode, lernforschung morsen, spaced repetition morsen, 85 prozent regel, morse training wissenschaft"
 datePublished: 2026-09-02
 ---
