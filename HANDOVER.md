@@ -1,31 +1,59 @@
-# Übergabe — Stand nach Runde L1 (der Learn-Bereich)
+# Übergabe — Stand nach Runde U1 (das feste Tastenfeld)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
-**Stand:** **Runde L1 liegt auf dem Branch
-`claude/morse-handover-alignment-nbkk6o`** und wartet auf das Review von Fable
-— über das Repo und danach live auf `morse-lab.com/learn/`. Sie baut auf `main`
-nach Runde F1 auf. An **Engine, Audio, Backend, Sync und Konto ist nichts
-angefasst**; von der App selbst sind vier Dateien berührt, und jede aus einem
-benannten Grund:
+**Stand:** **Runde U1 liegt auf dem Branch
+`claude/morse-handover-alignment-nbkk6o`** und wartet auf das Review von
+Fable. Sie baut auf `main` nach Runde L1 auf. Sie ist der UI-Fix aus Eriks
+Eigen-Test (Sitzung 36, 15 aktive Zeichen) nach **Ruling Fable,
+Notion-Log #75**: das Dreier-Antwortgitter skaliert nicht.
+
+An **Engine, Audio, Backend, Sync, Konto und dem Learn-Bereich ist nichts
+angefasst** — das ist reine UI-Schicht. Berührt sind zwei Dateien, dazu eine
+neue und ihr Test:
 
 | Datei | Warum |
 |---|---|
-| `public/sw.js` | Learn-Seiten nicht vorab cachen — und die Falle darunter (§3i) |
-| `src/ui/About.tsx` | der eine leise Link „Learn more about Morse" |
-| `src/styles.css` | `.quiet-link` und `.about-more` für genau diesen Link |
-| `vite.config.ts` | die Generator-Tests in `include` aufnehmen |
+| **`src/ui/keypad.ts`** | **neu:** die Schwelle und die 36 Positionen als benannte Konstanten |
+| **`src/ui/keypad.test.ts`** | **neu:** sieben Fälle darauf, inklusive Gegenprobe gegen `CHARACTER_ORDER` |
+| `src/ui/App.tsx` | `Answers` rendert ab der Schwelle das Tastenfeld statt des Gitters |
+| `src/styles.css` | `.keypad` — Raster, Tastenmaß, der Dimm-Zustand |
 
-Alles andere ist neu: `content/learn/` (die 14 Texte von Fable, unverändert),
-`tools/learn/` (Generator, Stylesheet, Tests, Prüfskript),
-`docs/CONCEPT-LEARN.md`, `public/og-morse-lab.png` und acht Screenshots.
+Dazu zwei Screenshots (`docs/screenshots/keypad-15-chars-390.png`,
+`keypad-36-chars-390.png`), ein FINDINGS-Eintrag und diese Übergabe.
 
-**Was die Runde liefert:** sieben redaktionelle Seiten auf Englisch unter
-`/learn/` und dieselben sieben auf Deutsch unter `/de/lernen/` — statisch
-generiert, mit vollständigem Head (canonical, hreflang wechselseitig, OG,
-JSON-LD Article), `sitemap.xml`, eigenem Stylesheet aus denselben Tokens und
-einem Weg zurück in die App auf jeder Seite.
+> ### Ein Nebenbefund, der zum Ruling gehört — Entscheidung liegt bei Fable
+>
+> Punkt 3 des Rulings lässt die **Echo-Checks des Lernmodus** bei ihrem
+> kleinen Gitter, „dort sind es bewusst wenige Optionen". Gemessen sind es
+> das nur am Anfang: `answerPool` (engine/learn.ts) bietet **alles bisher
+> Eingeführte** an. Bei 15 eingeführten Zeichen stehen dort 15 Optionen im
+> Dreier-Gitter, bei 36 sind es 36 und die Seite wird **1311 px** hoch
+> (Viewport 844). Dieselbe Zahl trifft „Learn the sounds"
+> (`ReviewPicker`): 36 Tasten, **1223 px**.
+>
+> Beides ist **nicht** mitgeändert — das Ruling nennt die Echo-Checks
+> ausdrücklich als unverändert, und der Rest wäre Arbeit an einer Fläche, die
+> die Aufgabe nicht nennt (CLAUDE.md 5). Es steht als
+> [FINDINGS #6](./FINDINGS.md) mit Maßen da. Wäre die Antwort „auch dort das
+> Tastenfeld", ist es je eine Zeile: beide Flächen rendern schon dieselbe
+> `.answer`-Taste.
 
-> ### Zwei Konflikte im Inhalt — Entscheidung liegt bei Fable
+**Was die Runde liefert:** ab **13 aktiven Zeichen** ist die Antwortfläche ein
+festes Tastenfeld — sechs Spalten, A–Z alphabetisch, darunter 0–9, **alle 36
+Positionen immer sichtbar und ortsfest**. Was gerade nicht abgefragt wird,
+steht gedimmt und nicht bedienbar an seinem Platz. Bis einschließlich zwölf
+Zeichen bleibt alles, wie es war. Zurück geht es nicht: die Entscheidung hängt
+an der Zahl der aktiven Zeichen, und die nimmt nie ab — auch eine Speed round
+mit drei Zeichen bleibt im Tastenfeld (§3j).
+
+**Runde davor (L1) — auf `main`.** Der Learn-Bereich: sieben redaktionelle
+Seiten auf Englisch unter `/learn/` und dieselben sieben auf Deutsch unter
+`/de/lernen/` — statisch generiert, mit vollständigem Head (canonical, hreflang
+wechselseitig, OG, JSON-LD Article), `sitemap.xml`, eigenem Stylesheet aus
+denselben Tokens und einem Weg zurück in die App auf jeder Seite. Die zwei
+Konflikte im Inhalt liegen unverändert bei Fable:
+
+> ### Zwei Konflikte im Inhalt der Learn-Texte (aus L1) — Entscheidung liegt bei Fable
 >
 > Beide sind gefunden, gemessen und **nicht** still aufgelöst: die Texte werden
 > laut Aufgabe nicht umgeschrieben, und beides wäre Umschreiben.
@@ -158,7 +186,35 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde (L1): der Learn-Bereich.**
+**Neu aus dieser Runde (U1): die Antwortfläche skaliert.**
+
+- **Ab 13 aktiven Zeichen ein festes Tastenfeld** statt des gewachsenen
+  Dreier-Gitters: sechs Spalten, A–Z alphabetisch, darunter 0–9. Die Schwelle
+  steht als `KEYPAD_MIN_CHARACTERS` in `src/ui/keypad.ts`, nicht als Zahl
+  irgendwo im Markup.
+- **Alle 36 Positionen sind immer da und immer an derselben Stelle.** Was nicht
+  abgefragt wird, ist gedimmt (`--gray`, 40 %) und nicht bedienbar — noch nicht
+  eingeführte Zeichen wie auch die, die eine Speed round diesmal auslässt. Das
+  ist der Zweck, nicht ein Nebeneffekt: Ortsfestigkeit baut Motorik auf und
+  hält die Latenz-Messung sauber (§3j).
+- **Einmal gewechselt, bleibt gewechselt.** Die Entscheidung hängt an der Zahl
+  der *aktiven* Zeichen, nicht am Satz der laufenden Abfrage — die nimmt nie
+  ab, also gibt es kein Zurückspringen. Ohne neues Feld im Lernstand.
+- **Tastenmaß 50 × 52 px** bei 390 px Breite (Minimum `--tap`, also 44),
+  Newsreader 20 px/500 statt 26 — eine Stufe kleiner, gleiche Rand-Optik.
+  Feedback (✓/✗, nie Farbe allein) und die Tastatur-Eingabe am Desktop sind
+  unverändert.
+- **Der Lernmodus ist nicht angefasst:** die Echo-Checks behalten ihr kleines
+  Gitter (Ruling Punkt 3) — mit dem gemessenen Nebenbefund im Kopf dieser
+  Übergabe.
+
+Screenshots:
+[`docs/screenshots/keypad-15-chars-390.png`](./docs/screenshots/keypad-15-chars-390.png)
+(15 aktive Zeichen — Eriks Fall),
+[`keypad-36-chars-390.png`](./docs/screenshots/keypad-36-chars-390.png)
+(alle 36).
+
+**Aus Runde L1 gilt weiter: der Learn-Bereich.**
 
 - **14 statische Seiten**, sieben je Sprache: Hub, Anleitung (Pillar), Alphabet,
   Geschichte, Amateurfunk, Koch-Methode, Lernforschung. URLs flach und
@@ -256,14 +312,15 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `functions/_lib/`, `functions/api/` | Env, HTTP, Passkeys, Sitzungen, Sync-API | unverändert |
 | `migrations/0001_accounts.sql` | users, credentials, sessions, progress | unverändert |
 | `wrangler.toml` | D1-Bindung `DB`; echte `database_id` (config-as-code) | unverändert |
-| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, **Streak-Zeile, Settings, Drill** | erweitert |
+| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, Streak-Zeile, Settings, Drill, **`Answers` mit Tastenfeld** | erweitert |
+| **`src/ui/keypad.ts`** | **Schwelle und die 36 Positionen des Tastenfelds — reine Daten** | **neu, getestet** |
 | `src/ui/Account.tsx`, `src/ui/account.ts` | Account-Screen und Passkeys | unverändert |
 | **`src/ui/Settings.tsx`** | **Zwei Regler, ein Probeton, eine ehrliche Zeile** | **neu** |
 | **`src/ui/deviceStorage.ts`** | **Eigener localStorage-Schlüssel, nie im Sync** | **neu** |
 | `src/ui/Menu.tsx` | Kopfzeile und Menü, **jetzt mit Settings-Zeile** | erweitert |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, plus Lern-Zeitstempel | unverändert |
 | `src/ui/Progress.tsx`, `Intro.tsx`, `Learn.tsx`, `Pattern.tsx` | — | unverändert |
-| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, **`.quiet-link`** | erweitert |
+| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, `.quiet-link`, **`.keypad`** | erweitert |
 | **`content/learn/*.md`** | **Die 14 Texte des Learn-Bereichs (Fable), unverändert** | **neu** |
 | **`tools/learn/pages.mjs`** | **Frontmatter, Markdown, Head-Tags, Sitemap — reine Funktionen** | **neu, getestet** |
 | **`tools/learn/build.mjs`** | **Ein- und Ausgabe: schreibt nach `dist/`, prüft die Paare** | **neu** |
@@ -274,8 +331,8 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `public/og-morse-lab.png` | Das Lockup als OG-Bild, 1200 × 630 (§3i) | neu |
 | `docs/CONCEPT-LEARN.md` | Fables Konzept — die verbindliche Vorgabe dieser Runde | neu |
 | `docs/brand/logo.py` | Konstruktions-Doku, nicht mehr Quelle (#53/54) | unverändert |
-| `docs/screenshots/` | …, **acht Learn-Screenshots (390 und 1280 px)** | erweitert |
-| `src/engine/*.test.ts`, `tools/learn/pages.test.mjs` | **271 Tests** (221 vorher, **50 neu** in dieser Runde) | grün |
+| `docs/screenshots/` | …, acht Learn-Screenshots, **zwei Tastenfeld-Screenshots** | erweitert |
+| `src/**/*.test.ts`, `tools/learn/pages.test.mjs` | **278 Tests** (271 vorher, **7 neu** in dieser Runde) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die
 Engine kennt niemanden, die UI rechnet nicht. **Neu dazu: der Server rechnet
@@ -726,7 +783,115 @@ gehört er nicht nach `src/engine/`; geprüft wird er trotzdem, und mit denselbe
 fixture-basierten Fällen wie die Engine: die letzten sieben Tests fahren die
 **echten 14 Dateien** durch den Generator, nicht eine Testvorlage.
 
+## 3j. Runde U1 — warum das Tastenfeld so aussieht
+
+**Das Problem, gemessen und nicht vermutet.** Bis zwölf Zeichen füllt das
+Dreier-Gitter vier ruhige Reihen. Ab dreizehn beginnt die fünfte,
+unvollständige — und schlimmer: bei jedem Wachstumsschritt wandern alle Tasten
+hinter dem neuen Zeichen an eine andere Stelle. Damit wandert die Suchzeit, und
+die steckt in der gemessenen Reaktionszeit (`stats.ts`, Punkt 2: die Zahl ist
+ein Näherungswert und enthält „die Suche auf dem Antwort-Gitter"). Eriks
+Eigen-Test bei Sitzung 36 mit 15 Zeichen hat genau das gezeigt. Ruling
+Notion-Log #75.
+
+**Ortsfest ist die Antwort — und sie kostet eine dokumentierte Abweichung.**
+Guidelines 1.1 §7 sagt „hide what can't be used". Das Antwort-Gitter hatte
+dafür schon eine Ausnahme (Review-6-Ruling, Notion-Log #43: die Tasten sind
+der Kontext der Frage, man muss sehen, *woraus* man wählt). Das Tastenfeld
+erweitert sie: es zeigt auch die 21 Zeichen, die bei 15 aktiven noch nicht
+dran sind. Der Gegenwert ist genau der Zweck — wer immer an dieselbe Stelle
+greift, baut Motorik auf, und die Latenz-Messung misst nicht bei jedem
+Wachstumsschritt eine neue Suche mit. Ruling #75 nennt das ausdrücklich.
+
+**Die Schwelle hängt an den aktiven Zeichen, nicht am Pool der Abfrage.** Eine
+Speed round zieht aus drei bis fünf Zeichen (`DRILL_MIN_POOL`). Hinge das
+Layout am Pool, fiele sie aufs Dreier-Gitter zurück — und die Positionen wären
+kein Versprechen mehr. `usesKeypad` bekommt deshalb
+`progress.activeCharacters.length`. Weil dieser Satz nur wächst (`growth.ts`
+hängt an, nimmt nie weg), ist die Entscheidung damit von sich aus monoton:
+**kein neues Feld im Lernstand, keine Versionierung, kein Zurückspringen.** Ein
+Test hält die Monotonie fest, damit nicht später jemand die Poolgröße einsetzt.
+
+**Alphabetisch, nicht in Einführungsreihenfolge.** `CHARACTER_ORDER` ist die
+Reihe, in der Zeichen dazukommen (Koch-nah). Als Tastenfeld wäre sie eine
+zweite Sache zum Lernen. Das Alphabet kennt jeder auswendig; wer eine Taste
+sucht, soll sie ableiten können. Ein Test prüft, dass die 36 Positionen genau
+`CHARACTER_ORDER` abdecken — kommt dort je ein Satzzeichen dazu, fällt der
+Test und nicht ein Nutzer auf eine Taste, die es nicht gibt.
+
+**Die Ziffern stehen unter den Buchstaben, nicht hinter Z.** Y und Z lassen
+vier Plätze ihrer Reihe frei; `0` beginnt eine neue (`grid-column: 1`, gesteuert
+über `KEYPAD_ROW_BREAK`). Sieben Reihen à 52 px passen bei 390 × 844 **ohne
+Scrollen** (gemessen: Seitenhöhe exakt 844 px, §4).
+
+**Eine Abweichung, die Fable sehen muss: das Tastenfeld dimmt nicht nach
+Phase.** Im Dreier-Gitter war die Abblendung von `button:disabled` das Zeichen
+„jetzt nicht". Im Tastenfeld ist Dimmen die Aussage „gehört nicht zu dieser
+Runde" — zwei Bedeutungen auf einer Eigenschaft wären eine zu viel, und die
+gedimmten Positionen wären während des Tons kaum noch zu sehen (0,45 × 0,4).
+Also nimmt `.keypad .answer:disabled` die Phasen-Abblendung zurück. Dass
+gerade nicht getippt werden kann, sagen die Augenbraue („Listening…"), die
+Frage und der gefüllte Play-Kreis; **bedienbar ist die Taste trotzdem nicht** —
+das Attribut `disabled` steht, nicht nur die Optik. Sollte Fable die
+Phasen-Abblendung dort haben wollen, ist es eine Zeile.
+
+**Nicht gebaut, obwohl naheliegend:** keine Tastatur-Anzeige auf den Tasten,
+kein Sortieren nach Schwäche, keine Animation beim Wechsel der Fläche, kein
+Zurückschalten über eine Einstellung. Und der visuelle Zwilling aus 1.1 §12
+bleibt, was Addendum (a) sagt: nicht jetzt.
+
 ## 4. Was nachgewiesen ist (und wie)
+
+**Aus Runde U1 (das Tastenfeld):**
+
+- **`npm test` → 278/278 grün** (271 vorher, **7 neu** in
+  `src/ui/keypad.test.ts`): 36 Positionen in der richtigen Ordnung, jede genau
+  einmal, **Deckungsgleichheit mit `CHARACTER_ORDER`** (Mengenvergleich, keine
+  Selbstbestätigung), der Umbruch auf die Ziffern liegt nicht ohnehin am
+  Reihenanfang, die Schwelle bei 12/13 und die Monotonie über 0…36.
+  **Regression:** die 271 Fälle davor sind unverändert grün — an der Engine ist
+  keine Zeile angefasst.
+- **`npm run build` → sauber.** Bundle-Delta: JS **195,78 kB roh / 61,85 kB
+  gzip** (vorher 195,45 / 61,67 — Delta **+0,33 / +0,18**), CSS **12,49 / 2,99**
+  (vorher 12,12 / 2,90 — Delta **+0,37 / +0,09**). Zusammen **+0,27 kB gzip**.
+  Keine neue Abhängigkeit.
+- **Browser-Durchlauf gegen `dist/`** (headless Chromium, 390 × 844,
+  `--autoplay-policy=no-user-gesture-required`, Lernstand vorab in
+  localStorage gesetzt):
+
+  1. **Die Schwelle greift genau dort:** bei 12 aktiven Zeichen steht
+     `.answers` und kein `.keypad`, bei 13 umgekehrt.
+  2. **Bei 15 aktiven Zeichen:** 36 Tasten, davon **15 bedienbar und 21
+     gedimmt**. Bei 36 aktiven: 36 Tasten, **0 gedimmt**.
+  3. **Maße gemessen, nicht gerechnet:** Taste **50,3 × 52,0 px**
+     (`--tap` = 44 als `min-height` darunter), Schrift **Newsreader 20 px,
+     Gewicht 500**. **Kein horizontales Scrollen**, und die Seite ist **exakt
+     844 px** hoch — das Tastenfeld passt auf ein 390er-Telefon, ohne zu
+     scrollen.
+  4. **Die Ziffernreihe beginnt links:** `0` liegt auf x = 24 (Spalte 1) in der
+     Reihe unter Y und Z, nicht neben ihnen.
+  5. **Feedback unverändert:** nach einem Fehlgriff trägt die richtige Taste
+     `✓` und Amber, die getippte `✗` in Grau; der Screenreader liest an
+     derselben Taste „— this was the character" bzw. „— your answer, not the
+     character". Nie Farbe allein (CLAUDE.md 6).
+  6. **Tastatur am Desktop unverändert:** `a` beantwortet, solange A im Satz
+     ist; `b` (bei 15 Zeichen nicht im Satz) löst nichts aus.
+  7. **Speed round mit drei langsamen Zeichen:** das Tastenfeld bleibt,
+     bedienbar sind genau die drei Positionen des Drill-Satzes.
+  8. **Der Echo-Check des Lernmodus** rendert weiter `.answers` und **kein**
+     `.keypad` — Ruling Punkt 3 gehalten.
+  9. **Keine Konsolenfehler** in keinem der Durchläufe.
+- **Amber-Budget geprüft** (alle sichtbaren Flächen, deren Rahmen, Text oder
+  Füllung `--amber` oder `--amber-deep` trägt): im Antwort-Zustand **keins**,
+  im Feedback nach einem Fehlgriff **genau eine Fläche** (die richtige Taste),
+  im Feedback nach einer richtigen Antwort **keins**. Amber steht also nie
+  zweimal in dieser View (1.1 §4).
+- **Timing-Budget: unberührt.** Es ist keine Zeile an Engine, Zeitachse oder
+  Player geändert; die Tonplanung läuft unverändert über die Audio-Uhr. Neu ist
+  je Render ein `Set` über den Pool (höchstens 36 Einträge) und 36 Tasten im
+  DOM statt so vieler, wie der Satz gerade groß ist — bei 15 aktiven Zeichen
+  also 21 Knoten mehr. Beides ist konstant und liegt außerhalb des
+  Eingabepfads; über eine Sitzung wächst nichts.
 
 **Aus Runde L1 (Learn-Bereich):**
 
@@ -1336,9 +1501,30 @@ ist offline, die Artikel sind eine Website.
 
 ## 7. Nächster Schritt
 
-**Diese Runde wartet auf Fables Review** — über das Repo (Screenshots und
-Prüfausgaben stehen in §4) und danach live auf `morse-lab.com/learn/`. Drei
-Dinge brauchen dabei ein Urteil, keines davon blockiert den Deploy:
+**Diese Runde (U1) wartet auf Fables Review** — über das Repo; die beiden
+Screenshots und die Messungen stehen in §4, die Begründungen in §3j. Zwei
+Dinge brauchen dabei ein Urteil, keines blockiert etwas:
+
+1. **Der Nebenbefund im Kopf dieser Übergabe** (auch
+   [FINDINGS #6](./FINDINGS.md)): Echo-Check und „Learn the sounds" tragen
+   dieselbe wachsende Liste im Dreier-Gitter — bei 36 Zeichen 1311 px bzw.
+   1223 px hohe Seiten. Ruling #75 lässt die Echo-Checks ausdrücklich in Ruhe;
+   ob das auch bei 36 eingeführten Zeichen so bleiben soll, ist eine
+   Produktfrage.
+2. **Das Tastenfeld dimmt nicht nach Phase** (§3j, letzter Absatz). Bewusst so,
+   begründet — aber eine Abweichung vom Verhalten des Dreier-Gitters, und
+   deshalb ein Punkt für das Review.
+
+**Menschliche Prüfung, die von hier aus nicht geht:** das Tastenfeld auf einem
+echten Telefon — trifft der Finger bei 50 × 52 px sicher, und stört das
+Dimmen der 21 unbenutzten Positionen beim Üben? Dazu ein Screenreader-Durchlauf
+über die 36 Tasten: die gedimmten melden sich als „— not in this round", und ob
+das an dieser Stelle hilfreich oder Lärm ist, entscheidet ein Mensch mit
+Screenreader, nicht diese Übergabe.
+
+**Aus der Runde davor (L1) offen** — über das Repo und danach live auf
+`morse-lab.com/learn/`. Drei Dinge brauchen ein Urteil, keines davon blockiert
+den Deploy:
 
 1. **Die fünf zu langen `metaTitle` und drei zu langen `metaDescription`**
    (Kopf dieser Übergabe, Konflikt 1). Texte werden hier nicht umgeschrieben;

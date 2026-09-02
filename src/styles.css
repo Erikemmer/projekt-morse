@@ -500,6 +500,70 @@ button:disabled {
   opacity: 1;
 }
 
+/* --- Das feste Tastenfeld: sechs Spalten, alle 36 Positionen ---
+ *
+ * Ab KEYPAD_MIN_CHARACTERS aktiven Zeichen tritt es an die Stelle von
+ * `.answers` (ui/keypad.ts nennt die Zahl und die Begruendung). Es erbt die
+ * Tasten-Optik von `.answer` -- gleicher Rand, gleicher Radius, gleiche
+ * Feedback-Zustaende -- und aendert nur Raster, Hoehe und Schriftgrad.
+ *
+ * 390 px Schale minus 2 x 24 px Rand ergibt 342 px; sechs Spalten mit fuenf
+ * Luecken von 8 px lassen 50 px je Taste. Mit 52 px Hoehe liegt jede Taste
+ * ueber der Zielgroesse aus WCAG 2.5.5 (--tap: 44px), die als min-height
+ * darunter steht und auch bei groesserer Schrift haelt.
+ */
+.keypad {
+  flex: none;
+  margin-top: 32px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-1);
+}
+
+.keypad .answer {
+  height: 52px;
+  min-height: var(--tap);
+  /* Eine Stufe kleiner als im Dreier-Gitter (26 px): die Taste ist schmaler,
+   * und 20 px stehen darin ohne Enge. Newsreader bleibt Newsreader. */
+  font-size: 20px;
+}
+
+/*
+ * Die Ziffern stehen *unter* den Buchstaben, nicht hinter Z: die erste Ziffer
+ * beginnt eine Reihe, die vier Restplaetze neben Y und Z bleiben leer. Welche
+ * Position das ist, sagt KEYPAD_ROW_BREAK.
+ */
+.keypad .answer[data-row-start='true'] {
+  grid-column: 1;
+}
+
+/*
+ * **Ortsfest heisst auch: gleich aussehend.** Das Tastenfeld nimmt die
+ * Phasen-Abblendung von `button:disabled` zurueck. Im Dreier-Gitter war sie
+ * das Zeichen "jetzt nicht"; hier ist Dimmen die Aussage "gehoert nicht zu
+ * dieser Runde", und zwei Bedeutungen auf einer Eigenschaft waeren eine zu
+ * viel. Dass gerade nicht getippt werden kann, steht in der Augenbraue, in
+ * der Frage und im gefuellten Play-Kreis -- und die Taste nimmt den Klick
+ * ohnehin nicht an (Attribut `disabled`, nicht nur Optik).
+ */
+.keypad .answer:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+/*
+ * Was diesmal nicht dran ist: gedimmt in gray, mit der weichen Kante. Rund
+ * 40 % -- sichtbar als Platz, nicht lesbar als Angebot. Das ist ein
+ * deaktiviertes Bedienelement (WCAG 1.4.3 nimmt die vom Kontrastminimum aus);
+ * keine Information haengt allein daran, denn der Screenreader liest an
+ * derselben Taste ", not in this round".
+ */
+.keypad .answer[data-active='false'] {
+  opacity: 0.4;
+  color: var(--gray);
+  border-color: var(--edge-soft);
+}
+
 /*
  * Weiter-Taste im Feedback: dieselbe Form wie eine Antwort, aber nur umrandet
  * und in ink. Das Amber dieser View gehoert der richtigen Antwort (1.1 §4, §7).

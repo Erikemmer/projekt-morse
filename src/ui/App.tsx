@@ -79,6 +79,7 @@ import { About } from './About';
 import { Account } from './Account';
 import { pushProgress } from './account';
 import { Intro } from './Intro';
+import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 import { Learn, ReviewPicker } from './Learn';
 import { AppHeader, MenuPanel, type MenuLocation } from './Menu';
 import { Pattern } from './Pattern';
@@ -712,6 +713,10 @@ export function App() {
 
           <Answers
             pool={session.pool}
+            /* Die Zahl der *aktiven* Zeichen entscheidet, nicht die des Pools:
+               eine Speed round zieht aus wenigen und darf das Tastenfeld
+               trotzdem nicht abschalten (ui/keypad.ts). */
+            keypad={usesKeypad(session.progress.activeCharacters.length)}
             enabled={session.phase === 'answering'}
             attempt={session.phase === 'feedback' ? attempt : null}
             onAnswer={answer}
@@ -1007,32 +1012,56 @@ function Reveal({ char }: { char: string }) {
 }
 
 /**
- * Das Antwort-Gitter.
+ * Die Antwortflaeche -- Dreier-Gitter oder festes Tastenfeld.
  *
- * Es ist in jeder Phase sichtbar und ausserhalb von 'answering' deaktiviert --
- * eine **dokumentierte Ausnahme von Guidelines 1.1 §7** ("hide what can't be
- * used"): die Tasten sind der Kontext der Frage. Wer den Ton hoert, soll
- * schon sehen, *woraus* er gleich waehlt; ein Gitter, das erst nach dem Ton
+ * Sie ist in jeder Phase sichtbar und ausserhalb von 'answering' deaktiviert
+ * -- eine **dokumentierte Ausnahme von Guidelines 1.1 §7** ("hide what can't
+ * be used"): die Tasten sind der Kontext der Frage. Wer den Ton hoert, soll
+ * schon sehen, *woraus* er gleich waehlt; eine Flaeche, die erst nach dem Ton
  * einblendet, laesst den Blick jedes Mal neu suchen und verschiebt die
  * gemessene Reaktionszeit um genau diese Suche. Review-6-Ruling,
  * Notion-Log #43.
+ *
+ * **Zwei Formen, eine Schwelle.** Bis zwoelf aktive Zeichen das gewachsene
+ * Dreier-Gitter, ab dreizehn das feste Tastenfeld ueber alle 36 Positionen
+ * (Ruling Fable, Notion-Log #75). Die Schwelle und die Positionen stehen in
+ * `ui/keypad.ts`; hier wird nur gerendert.
+ *
+ * Im Tastenfeld tragen die Tasten, die gerade **nicht** abgefragt werden,
+ * `data-active="false"`: gedimmt, nicht bedienbar, aber ortsfest da -- noch
+ * nicht eingefuehrte Zeichen, und in einer Speed round auch die, die diesmal
+ * nicht dran sind.
+ *
+ * Genau darum dimmt das Tastenfeld -- anders als das Dreier-Gitter -- **nicht
+ * zusaetzlich nach Phase** (styles.css, `.keypad`): der eine Dimm-Zustand
+ * gehoert der Zugehoerigkeit zum Satz, sonst waeren zwei Bedeutungen auf
+ * derselben Eigenschaft. Dass gerade nicht getippt werden kann,
+ * sagen Augenbraue, Frage und der amberne Play-Kreis.
  */
 function Answers({
   pool,
+  keypad,
   enabled,
   attempt,
   onAnswer,
 }: {
   pool: readonly string[];
+  /** Festes Tastenfeld statt Dreier-Gitter -- entschieden in `usesKeypad`. */
+  keypad: boolean;
   enabled: boolean;
   attempt: { char: string; answer: string; correct: boolean } | null;
   onAnswer: (choice: string) => void;
 }) {
+  const asked = new Set(pool);
+  const positions = keypad ? KEYPAD_LAYOUT : pool;
+
   return (
-    <div className="answers">
-      {pool.map((char) => {
+    <div className={keypad ? 'keypad' : 'answers'}>
+      {positions.map((char) => {
+        // Ausserhalb des Tastenfelds steht ohnehin nur der Pool da.
+        const active = !keypad || asked.has(char);
         const mark =
-          attempt === null
+          attempt === null || !active
             ? undefined
             : char === attempt.char
               ? 'correct'
@@ -1049,7 +1078,10 @@ function Answers({
             /* Amber nur auf der richtigen Antwort, und nur wenn danebengegriffen
                wurde -- sonst bleibt es beim ruhigen ink-Haekchen (1.1 §4). */
             data-tone={mark === 'correct' && attempt !== null && !attempt.correct ? 'amber' : undefined}
-            disabled={!enabled}
+            data-active={keypad ? String(active) : undefined}
+            /* Die erste Ziffer beginnt eine neue Reihe (styles.css). */
+            data-row-start={keypad && char === KEYPAD_ROW_BREAK ? 'true' : undefined}
+            disabled={!enabled || !active}
             onClick={() => onAnswer(char)}
           >
             <span aria-hidden="true">{char}</span>
@@ -1062,6 +1094,7 @@ function Answers({
               {char}
               {mark === 'correct' && ' — this was the character'}
               {mark === 'wrong' && ' — your answer, not the character'}
+              {!active && ' — not in this round'}
             </span>
           </button>
         );

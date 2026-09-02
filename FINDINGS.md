@@ -128,3 +128,42 @@ bleiben. Deshalb Bericht statt Eingriff (CLAUDE.md §5, §2.9).
 `**X** ·−` erkennen und das Muster zusätzlich als `<span class="visually-hidden">`
 in der vorgelesenen Form ausgeben. Braucht eine Freigabe von Fable, weil es
 den vorgelesenen Inhalt der Seite ändert.
+
+## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter
+
+**Gefunden:** 02.09.2026, beim Umsetzen von Ruling #75 (das feste Tastenfeld im
+Training).
+
+Das Antwort-Gitter des Trainings hat ab 13 aktiven Zeichen jetzt ein festes
+Tastenfeld (`src/ui/keypad.ts`). **Zwei andere Flächen benutzen dieselbe
+`.answers`-Klasse und wachsen weiter mit:**
+
+1. **Der Echo-Check des Lernmodus** (`src/ui/Learn.tsx`, `Echo`). Ruling #75
+   Punkt 3 lässt ihn ausdrücklich in Ruhe — „dort sind es bewusst wenige
+   Optionen". Das gilt am Anfang: `answerPool` (`src/engine/learn.ts`) bietet
+   **alles bisher Eingeführte** an, und das ist irgendwann alles. Gemessen
+   (headless Chromium, 390 × 844): bei 15 eingeführten Zeichen 15 Optionen, bei
+   36 sind es **36 Optionen und eine 1311 px hohe Seite**.
+2. **„Learn the sounds"** (`ReviewPicker`, dieselbe Datei) listet alle aktiven
+   Zeichen. Bei 36 sind das **36 Tasten und 1223 px** — die Liste ist dort
+   allerdings ein Auswahlmenü und keine Antwortfläche, es wird keine
+   Reaktionszeit daran gemessen.
+
+**Warum es zählt:** Für den Echo-Check ist es der Kern des Rulings — dieselbe
+wandernde Taste, dieselbe mitgemessene Suchzeit. Der Unterschied ist, dass der
+Echo-Check die Statistik nicht anfasst (`learn.ts`: „Der Echo-Check fasst die
+Statistik nicht an"), die verschobene Suche also keine Zahl verfälscht. Sie
+kostet nur die Übung: wer im Training an feste Positionen gewöhnt ist, greift
+im Echo-Check ins Leere. Bei „Learn the sounds" geht es allein um das Scrollen.
+
+**Vorläufiger Umgang:** unverändert gelassen. Das Ruling nennt die Echo-Checks
+namentlich als unberührt, und die zweite Fläche nennt die Aufgabe überhaupt
+nicht (CLAUDE.md 5: nicht mitreparieren).
+
+**Was es kosten würde:** wenig, und genau deshalb ist es eine Entscheidung und
+keine Arbeit. Beide Flächen rendern schon dieselbe `.answer`-Taste; sie
+bräuchten dieselben zwei Zeilen wie `Answers` — die Klasse `keypad`, die
+Positionen aus `KEYPAD_LAYOUT`, `data-active` je Zugehörigkeit. Für den
+Echo-Check wäre zusätzlich zu entscheiden, was „aktiv" dort heißt: die
+Optionen des Checks oder der ganze aktive Satz. **Gehört Fable, nicht dem
+nächsten Commit.**

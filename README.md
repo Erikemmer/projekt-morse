@@ -21,6 +21,12 @@ Fehlerquote und Reaktionszeit pro Zeichen. Der Fortschritt liegt im localStorage
 Startzeichensatz K M R S U A, 20 WPM Zeichentempo bei 10 WPM Gesamttempo
 (Farnsworth). Die Oberfläche ist auf Englisch.
 
+Geantwortet wird bis zwölf aktive Zeichen auf einem Dreier-Gitter; **ab
+dreizehn** übernimmt ein festes Tastenfeld — sechs Spalten, A–Z, darunter 0–9,
+alle 36 Positionen immer sichtbar und ortsfest. Wer immer an dieselbe Stelle
+greift, baut Motorik auf, und die gemessene Reaktionszeit enthält nicht bei
+jedem neuen Zeichen eine neue Suche.
+
 Dazu: ein Streak, der einen verpassten Tag verzeiht statt ihn zu bestrafen;
 Tonhöhe und Lautstärke einstellbar (gerätespezifisch, nie im Konto); und eine
 kurze „Speed round" für Zeichen, die zwar sitzen, aber zu lange brauchen.
@@ -60,6 +66,7 @@ arbeitet: `npm run build:learn` (setzt einen Vite-Build voraus, weil er nach
 | `src/engine/selection.ts` | Gewichtung nach Schwäche und die Ziehung daraus |
 | `src/engine/session.ts` | Der Loop als reiner Zustandsautomat |
 | `src/audio/player.ts` | Wiedergabe über die Web Audio API |
+| `src/ui/keypad.ts` | Schwelle und Positionen des festen Tastenfelds |
 | `src/ui/` | React-Oberfläche |
 | `content/learn/` | Die Texte des Learn-Bereichs (Markdown mit Frontmatter) |
 | `tools/learn/` | Der statische Generator, sein Stylesheet und die Prüfung |
