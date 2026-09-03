@@ -106,7 +106,7 @@ import { Account } from './Account';
 import { pushProgress } from './account';
 import { Intro } from './Intro';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
-import { Learn, ReviewPicker } from './Learn';
+import { Learn, ReviewPicker, useLearnKeyboard } from './Learn';
 import { AppHeader, MenuPanel, NavRail, type MenuLocation } from './Menu';
 import { MarginColumn } from './MarginColumn';
 import { Pattern } from './Pattern';
@@ -734,6 +734,48 @@ export function App() {
     );
   }, [session.progress.introducedCharacters]);
 
+  /*
+   * Von der Karte weiter -- zum Echo-Check oder, beim freien Wiederholen,
+   * direkt zur naechsten Karte. Dieselbe Fallunterscheidung wie `Card`s
+   * `onContinue` in `ui/Learn.tsx`, hier gebraucht von der neuen Tastatur
+   * (Ruling #108): die Taste kennt kein JSX-Prop, an dem sie sich anhaengen
+   * koennte.
+   */
+  const continueLearnCard = useCallback(() => {
+    setLearn((current) => {
+      if (current === null) return null;
+      return current.requireEcho ? beginEcho(current) : nextCard(current);
+    });
+  }, []);
+
+  const answerLearnEcho = useCallback((choice: string) => {
+    setLearn((current) => (current === null ? null : answerEcho(current, choice)));
+  }, []);
+
+  const advanceLearnEcho = useCallback(() => {
+    setLearn((current) => (current === null ? null : advanceEcho(current, Math.random)));
+  }, []);
+
+  /** Play/Replay der Karte -- dieselbe Weiche wie das `onPlay`-Prop unten. */
+  const learnOnPlay =
+    learn !== null && (learn.phase === 'card' || learn.phase === 'card-heard') ? replayCard : playEcho;
+
+  // Die eigene Tastatur des Lernmodus (Ruling Notion-Log #108): aktiv, sobald
+  // der Lernmodus wirklich vorne steht -- Menue zu, keine andere Flaeche
+  // davor. `view` ist immer 'practice', solange `learn !== null` gilt
+  // (navigateTo setzt beides zusammen), die Bedingung steht trotzdem explizit
+  // da, aus demselben Grund wie beim Trainings-Listener: eine Flaeche, die
+  // *zufaellig* nie zusammen mit `learn` auftritt, ist kein Beweis dafuer,
+  // dass sie es nie tut.
+  useLearnKeyboard({
+    active: view === 'practice' && !menuOpen && learn !== null,
+    state: learn,
+    onPlay: learnOnPlay,
+    onContinue: continueLearnCard,
+    onAnswer: answerLearnEcho,
+    onAdvance: advanceLearnEcho,
+  });
+
   const restart = useCallback(() => {
     setDrillTarget(null);
     setSession((current) =>
@@ -940,9 +982,36 @@ export function App() {
    * (ui/Words.tsx, ui/Send.tsx): der Listener soll nicht bei jedem
    * Phasenwechsel ab- und wieder anhaengen, sondern die ganze Zeit am Fenster
    * liegen und trotzdem den *aktuellen* Stand lesen.
+   *
+   * `learnActive`, `reviewing` und `introSeen` gehoeren seit Ruling
+   * Notion-Log #108 mit hinein: dieser Listener bedient den Trainings-Screen,
+   * nicht die Ansicht -- und `view === 'practice'` unterscheidet nur die
+   * Ansicht, nicht, was gerade *auf* ihr steht. Der Lernmodus (`learn`) laeuft
+   * technisch *innerhalb* von `view === 'practice'` weiter (die Sitzung steht
+   * derweil verdeckt auf `ready`), und ohne diese drei Bedingungen traf ein
+   * Anschlag dort auf die verdeckte Sitzung statt auf die sichtbare Lernkarte
+   * oder den Echo-Check -- verschluckt, und seit der Ready/Play-Kopplung ein
+   * Phantom-Ton obendrauf. Siehe `useLearnKeyboard` (ui/Learn.tsx) fuer die
+   * eigene Tastatur, die dieser Listener jetzt Platz macht.
    */
-  const keyboardStateRef = useRef({ phase: session.phase, pool: session.pool, next, play });
-  keyboardStateRef.current = { phase: session.phase, pool: session.pool, next, play };
+  const keyboardStateRef = useRef({
+    phase: session.phase,
+    pool: session.pool,
+    next,
+    play,
+    learnActive: learn !== null,
+    reviewing,
+    introSeen: session.progress.introSeen,
+  });
+  keyboardStateRef.current = {
+    phase: session.phase,
+    pool: session.pool,
+    next,
+    play,
+    learnActive: learn !== null,
+    reviewing,
+    introSeen: session.progress.introSeen,
+  };
 
   // Tippen statt Zielen: die Buchstaben des Zeichensatzes beantworten direkt.
   //
@@ -964,7 +1033,13 @@ export function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const key = event.key.toUpperCase();
-      const { phase, pool, next, play } = keyboardStateRef.current;
+      const { phase, pool, next, play, learnActive, reviewing: isReviewing, introSeen } =
+        keyboardStateRef.current;
+      // Ruling #108: der Trainings-Screen ist nicht wirklich vorne, solange
+      // der Lernmodus oder die Klang-Auswahl davor steht, oder solange die
+      // Einfuehrung noch laeuft (dort gibt es ohnehin keine verdeckte
+      // Sitzung, die reagieren duerfte).
+      if (learnActive || isReviewing || !introSeen) return;
       if (!pool.includes(key)) return;
       event.preventDefault();
 
@@ -1106,11 +1181,11 @@ export function App() {
           state={learn}
           playing={tonePlaying}
           toneHz={learnToneHz}
-          onPlay={learn.phase === 'card' || learn.phase === 'card-heard' ? replayCard : playEcho}
+          onPlay={learnOnPlay}
           onBeginEcho={() => setLearn((c) => (c === null ? null : beginEcho(c)))}
           onNextCard={() => setLearn((c) => (c === null ? null : nextCard(c)))}
-          onAnswer={(choice) => setLearn((c) => (c === null ? null : answerEcho(c, choice)))}
-          onAdvance={() => setLearn((c) => (c === null ? null : advanceEcho(c, Math.random)))}
+          onAnswer={answerLearnEcho}
+          onAdvance={advanceLearnEcho}
           onSkip={reviewing ? undefined : skipLearn}
         />
       ) : view === 'words' && words !== null ? (

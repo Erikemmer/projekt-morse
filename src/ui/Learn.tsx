@@ -88,6 +88,112 @@ export function Learn({
 }
 
 /**
+ * Die physische Tastatur des Lernmodus (Ruling Notion-Log #108).
+ *
+ * Bisher hatte der Lernmodus **keine eigene** Tastatur -- ein Tastendruck lief
+ * hinter ihm in den (verdeckten) Trainings-Listener, der seit Ruling #105 in
+ * jeder Phase reagiert. Seit P2 loeste das dort sogar einen Phantom-Ton aus,
+ * den niemand angefordert hat. Der Fix in `App.tsx` haelt diesen Listener jetzt
+ * fern, solange der Lernmodus steht -- dieser Hook hier ist der Ersatz, nicht
+ * nur die Reparatur.
+ *
+ * **Explizit statt auf natuerlichen Fokus verlassen.** Die Karte und der
+ * "Weiter"-Knopf tragen zwar eigene `<button>`-Elemente, die nach jedem
+ * Phasenwechsel den Fokus bekommen (Learn.tsx, `focusRef`) -- aber Leertaste
+ * und Enter auf einem fokussierten Knopf haben *native* Bedeutung, und die
+ * deckt sich nicht mit dem, was diese Runde verlangt (auf der Karte spielt
+ * die Leertaste immer den Ton ab, nie "weiter"). Genau dieses Auseinanderlaufen
+ * von nativer Knopf-Aktivierung und gewuenschter Taste hat schon das
+ * Sende-Training in P2 gebissen (siehe `useSendKeyboard`) -- hier wird es
+ * von Anfang an explizit entschieden, nicht dem Fokus ueberlassen.
+ */
+export function useLearnKeyboard({
+  active,
+  state,
+  onPlay,
+  onContinue,
+  onAnswer,
+  onAdvance,
+}: {
+  active: boolean;
+  state: LearnState | null;
+  /** Karte (ab)spielen -- gilt fuer 'card' und 'card-heard' gleichermassen. */
+  onPlay: () => void;
+  /** Von der Karte weiter -- zum Echo-Check oder zur naechsten Karte. */
+  onContinue: () => void;
+  onAnswer: (choice: string) => void;
+  onAdvance: () => void;
+}) {
+  const handlers = useRef({ state, onPlay, onContinue, onAnswer, onAdvance });
+  handlers.current = { state, onPlay, onContinue, onAnswer, onAdvance };
+
+  useEffect(() => {
+    if (!active) return undefined;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const current = handlers.current;
+      if (current.state === null) return;
+      const isSpace = event.key === ' ' || event.key === 'Spacebar';
+
+      if (current.state.phase === 'card') {
+        // Noch nicht gehoert: Leertaste oder Enter spielen die Karte.
+        if (isSpace || event.key === 'Enter') {
+          event.preventDefault();
+          current.onPlay();
+        }
+        return;
+      }
+
+      if (current.state.phase === 'card-heard') {
+        // Gehoert: die Leertaste spielt weiter erneut ab, Enter geht weiter
+        // (zum Echo-Check oder, beim freien Wiederholen, zur naechsten
+        // Karte) -- dieselbe Geste wie der "Try it"/"Done"-Knopf.
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          current.onContinue();
+          return;
+        }
+        if (isSpace) {
+          event.preventDefault();
+          current.onPlay();
+        }
+        return;
+      }
+
+      if (current.state.phase === 'echo-answering') {
+        // Nur ein Zeichen aus den angebotenen Optionen antwortet -- nicht der
+        // ganze Zeichensatz (die Optionen sind hier bewusst wenige).
+        const key = event.key.toUpperCase();
+        if (key.length !== 1) return;
+        if (!answerPool(current.state).includes(key)) return;
+        event.preventDefault();
+        current.onAnswer(key);
+        return;
+      }
+
+      if (current.state.phase === 'echo-feedback') {
+        if (event.key === 'Enter' || isSpace) {
+          event.preventDefault();
+          current.onAdvance();
+        }
+        return;
+      }
+
+      // 'echo-ready'/'echo-listening': bewusst nichts Eigenes -- der Play-Kreis
+      // traegt in diesen beiden Phasen ohnehin schon den Fokus (Learn.tsx,
+      // `focusRef`), und die native Leertasten-/Enter-Aktivierung eines
+      // fokussierten Knopfs spielt genau das ab, was hier ohnehin passieren
+      // soll. Eine Ausweitung auf das *Starten* der Wiedergabe waere hier
+      // ohne Wirkung, weil es schon funktioniert.
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [active]);
+}
+
+/**
  * Die Einfuehrungskarte: Buchstabe, Ton, danach das Muster.
  *
  * **Hier steht die eine bewusste Ausnahme von CLAUDE.md 2.2.** Die Regel sagt:
