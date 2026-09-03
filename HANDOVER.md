@@ -1,3 +1,112 @@
+# Übergabe — Stand nach Runde P1 (fünf Owner-Befunde aus dem echten Gebrauch)
+
+**Repository:** https://github.com/Erikemmer/projekt-morse
+**Stand:** Schritt 0 dieser Runde hat `main` per Fast-Forward von `00b63e6` auf
+`49592e8` gebracht — **F4 (das Sende-Training) ist damit in `main`**, Review 17
+ist bestanden (Notion-Log #102). **Runde P1 liegt darauf als fünf Commits auf
+`claude/morse-handover-alignment-nbkk6o`** — noch nicht gemergt, Review 18
+(Fable) steht aus.
+
+- **P1 setzt fünf Befunde des Owners aus dem echten Gebrauch um** (Ruling
+  Notion-Log #103a–e). Kein Konzept-Zuwachs — fünf gezielte Korrekturen an
+  Dingen, die beim wirklichen Üben aufgefallen sind: verlorene Tasteneingaben,
+  eine zu ungleiche Zeichenverteilung, eine unehrliche Reaktionszeit, eine zu
+  strenge Wachstumsschwelle und ein Layout-Umbruch am Laptop.
+
+An **Backend, Sync-API, Konto, dem Learn-Bereich, dem Wort-Modus und dem
+Sende-Training ist nichts angefasst.** Berührt sind:
+
+| Datei | Warum |
+|---|---|
+| `src/ui/App.tsx` | Ruling #103a: der `keydown`-Listener hängt jetzt immer am Fenster (Ref-Puffer statt Phasen-Gate); Ruling #103c: `answerViaKeypad` verbucht Tastenfeld-Antworten mit `reactionSeconds: null` |
+| `src/engine/session.ts` | `Attempt.reactionSeconds`/`submitAnswer` nehmen jetzt `number \| null`; `summarize()` lässt ungemessene Treffer aus dem Median; `SessionState.bag`, `createSession`/`advance` ziehen über `drawFromBag` (bag.ts) statt `pickNext` |
+| **`src/engine/bag.ts`** | **neu** (Ruling #103b): der Beutel für den Einzelzeichen-Loop — reine Funktionen, kein Modulzustand |
+| **`src/engine/bag.test.ts`** | **neu:** 6 Fälle — Vollständigkeit, Deckel bei zwei Losen, keine Wiederholung (auch nicht an der Zyklusgrenze), Determinismus, Pool-Größe 1, das 2,2:1-Verhältnis |
+| `src/engine/drill.ts` | `attemptMedianOver` lässt `reactionSeconds: null` aus dem Median (Folge von #103a/#103c) |
+| `src/engine/growth.ts` | Ruling #103d: `GROWTH_WINDOW_ACCURACY` 0,9 → 0,85, `GROWTH_LOCKOUT_ANSWERS` 20 → 10 |
+| `src/engine/session.test.ts` | +3 Fälle (Nullzeit-Antwort, Median ohne Nullzeit-Treffer, Beutel über viele Runden ohne Wiederholung) |
+| `src/engine/tempo.test.ts` | zwei Erwartungswerte an die neuen Zahlen angepasst (27→26, 20→10) — kein Fall gelöscht |
+| `src/ui/Progress.tsx` | zweite leise Zeile: „Median from typed answers only — tapping a key includes the time to find it." |
+| `src/styles.css` | `.progress-screen`-Spalte 180 → 220 px, `.stat-line` stapelt ab 900 px (Ruling #103e) |
+
+Dazu zwei Screenshots und diese Übergabe:
+[`progress-p1-nowrap-1440.png`](./docs/screenshots/progress-p1-nowrap-1440.png)
+(1440 × 900, „20 answers · 100%" bricht nicht mehr um),
+[`progress-p1-390.png`](./docs/screenshots/progress-p1-390.png)
+(390 × 844, pixelgleich zum Stand vor der Runde — Diff 0 von 329.160 Pixeln
+gegen einen eigens dafür gebauten Vergleichsstand vor Commit 5).
+
+**Bundle-Delta** (gegen `main` = `49592e8`, `vite build`, gzip in Klammern):
+JS 225,80 kB → 227,07 kB (**+1,27 kB**, gzip 69,16 → 69,56 kB, **+0,40 kB**);
+CSS 17,69 kB → 17,88 kB (**+0,19 kB**, gzip 3,86 → 3,90 kB, **+0,04 kB**).
+Kein neues Paket.
+
+**Tests:** 449 (18 Dateien), davon 26 neu für diese Runde (6 in `bag.test.ts`,
+3 in `session.test.ts`, der Rest angepasste Erwartungswerte in
+`tempo.test.ts`). `npm test`, `npm run build`, `npm run verify:amber`
+(35 Ansichten, Budget gehalten) und `npm run verify:learn` (14 Seiten, alle
+Pflichten erfüllt) sind grün — nach jedem der fünf Commits einzeln geprüft,
+nicht erst am Ende.
+
+> ### Was Fable an dieser Runde sehen muss
+>
+> 1. **#103a — der Puffer verwirft nichts, aber er merkt sich nur den
+>    letzten Anschlag.** Wer während des Tons mehrfach tippt (z. B. sich
+>    korrigiert), zählt nur der letzte Tastendruck beim Übergang in
+>    `'answering'`. Das steht nicht wörtlich im Ruling, folgt aber aus „nur
+>    den letzten, nicht mehrere" und aus derselben Regel, die ein zweites
+>    `submitAnswer` in `'feedback'` schon immer verwarf.
+> 2. **#103b — der Beutel wird neu gefüllt, sobald er leer ist, aus dem dann
+>    aktuellen Zeichensatz.** Wächst der Zeichensatz mitten in einem Zyklus
+>    (Wachstumsregel), bleibt der laufende Beutel bei der alten, kleineren
+>    Menge — das neue Zeichen kommt mit dem *nächsten* Zyklus dazu, nicht
+>    mitten im laufenden. Das Ruling sagt nur „ein Zyklus enthält jedes
+>    aktive Zeichen", nicht ausdrücklich, was bei einem Wachstumsschritt
+>    mitten im Zyklus passiert — entschieden für „beim nächsten Neufüllen",
+>    aus demselben Grund wie beim Tempo-Reset in `session.ts`: eine laufende
+>    Sitzung behält ihren Stand, ein neuer gilt ab dem nächsten Anlauf.
+> 3. **#103b — dieselbe Wiederholungssperre wie zuvor, nur strenger
+>    durchgesetzt.** `pickNext` (selection.ts) ließ bei Pool-Größe 1 eine
+>    Wiederholung zu ("die Abfrage gewinnt vor der Regel") — `drawFromBag`
+>    übernimmt exakt dieselbe Ausnahme, aus demselben Grund, und sonst nichts
+>    Neues.
+> 4. **#103c — der Median-Fußzeile ist jetzt zwei Zeilen, nicht mehr eine.**
+>    1.1 §4/CLAUDE.md 2.8 verlangen sonst „genau eine leise Zeile" auf dem
+>    Start-Screen — das gilt dort unverändert. Auf dem Progress-Screen stand
+>    ohnehin schon eine erklärende Fußzeile (Näherungswert-Hinweis); die
+>    zweite ergänzt sie, wörtlich aus der Aufgabenstellung, keine eigene
+>    Formulierung.
+> 5. **#103d — die Tempo-Progression wurde bewusst mitgezogen**, weil sie
+>    dieselbe Konstante teilt (`SPEED_LOCKOUT_ANSWERS = GROWTH_LOCKOUT_ANSWERS`,
+>    tempo.ts). Sobald alle 36 Zeichen aktiv sind, steigt das Tempo jetzt also
+>    ebenfalls schneller. Das war in der Aufgabenstellung angekündigt, nicht
+>    selbst entschieden — hier noch einmal ausdrücklich genannt, weil es eine
+>    zweite Regel berührt, die im Ruling nicht ausdrücklich stand.
+> 6. **#103e — 220 px allein hätten nicht gereicht.** Eine breitere Spalte
+>    verschiebt das Problem nur nach oben (eine noch längere Kennzahl bricht
+>    trotzdem irgendwann um); das Stapeln ist die eigentliche Lösung, die
+>    breitere Spalte macht das Stapeln nur weniger eng. Beides zusammen, wie
+>    in der Aufgabe verlangt.
+>
+> ### Eine bewusst in Kauf genommene Nebenwirkung von #103c
+>
+> Am Telefon (ab 13 aktiven Zeichen, also fast immer) werden ICR-Drills
+> („Speed round") **stiller**, solange jemand ausschließlich über das
+> Tastenfeld antwortet: `isSlow` (drill.ts) braucht mindestens fünf
+> gespeicherte Reaktionszeiten je Zeichen, und Tastenfeld-Antworten liefern
+> davon keine mehr. Wer stattdessen über die physische Tastatur tippt, ist
+> unverändert erfasst. Das ist keine übersehene Nebenwirkung — die Aufgabe hat
+> sie ausdrücklich benannt und ihre Priorität gesetzt: „eine fehlende Messung
+> ist besser als eine falsche". Betrifft nur die Speed-round-*Einladung*, nicht
+> die Grundübung: Trefferquote und Wachstum laufen unverändert weiter.
+
+**Kein neuer FINDINGS-Eintrag aus dieser Runde** — unterwegs ist nichts
+Fremdes aufgefallen, das nicht zur Aufgabe gehört hätte.
+
+<details>
+<summary><b>Die Übergabe nach Runde F4</b> (das Sende-Training — jetzt in `main`; B2, F3, D1, F4 unverändert gültig, Historie)</summary>
+
+
 # Übergabe — Stand nach Runde F4 (das Sende-Training)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
@@ -490,6 +599,8 @@ Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
 
 </details>
 
+</details>
+
 ---
 
 ## 1. Wo das Projekt steht
@@ -499,7 +610,27 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde (F4): das Sende-Training.**
+**Neu aus dieser Runde (P1): fünf Korrekturen aus dem echten Gebrauch (#103a–e).**
+
+- **Verlorene Tasteneingaben behoben** (#103a). Wer während des Tons tippt,
+  tippt nicht mehr ins Leere — der Anschlag wird gepuffert und beim Übergang
+  in die Antwortphase verbucht, ohne Reaktionszeit.
+- **Der Einzelzeichen-Loop zieht aus einem Beutel, nicht mehr aus einer
+  Lotterie** (#103b, `engine/bag.ts`). Jedes aktive Zeichen kommt in einem
+  Zyklus mindestens einmal, ein schwaches oder langsames höchstens ein
+  zweites Mal — Verhältnis häufigstes zu seltenstes Zeichen jetzt ≤ 2,2 statt
+  bis zu 7.
+- **Das Tastenfeld misst keine Reaktionszeit mehr** (#103c). Ab 13 aktiven
+  Zeichen war die Latenz überwiegend Suchzeit; jetzt zählt dort nur noch die
+  Richtigkeit. Gemessen wird weiter über die physische Tastatur und das
+  Dreier-Gitter (bis zwölf aktive Zeichen).
+- **Die Wachstumsschwelle ist 85 % statt 90 %, die Sperre halbiert** (#103d,
+  `GROWTH_WINDOW_ACCURACY`/`GROWTH_LOCKOUT_ANSWERS`) — neue Zeichen kommen
+  spürbar schneller, die Tempo-Progression zieht mit derselben Konstante mit.
+- **Die Progress-Kennzahlen brechen am Laptop nicht mehr um** (#103e) — die
+  Spalte ist breiter, und `.stat-line` stapelt ab 900 px.
+
+**Aus Runde F4 gilt weiter: das Sende-Training.**
 
 - **Der Modus „Send"** (#90) — ab denselben acht aktiven Zeichen wie
   „Words & groups" (`WORDS_MIN_CHARACTERS`, keine zweite Zahl). Ein Zeichen
@@ -656,14 +787,15 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `src/engine/schedule.ts` | Text → Zeitachse | unverändert |
 | `src/engine/settings.ts` | Tempo, Start-Satz, Kandidatenreihe, **Spannen für Ton und Lautstärke** | erweitert |
 | `src/engine/stats.ts` | Statistik, Tag/Sitzung/Intro, Streak-Feld, `RecordOptions`, Tempo-Niveau, Sperr-Zähler, `reactionSeconds: null`, **`day.sent`, `SendCharacterRecord`, `recordSendAttempt` (F4)** | erweitert |
-| `src/engine/growth.ts` | Die Wachstumsregel | unverändert |
+| `src/engine/growth.ts` | Die Wachstumsregel, **`GROWTH_WINDOW_ACCURACY` 0,85, `GROWTH_LOCKOUT_ANSWERS` 10 (P1, #103d)** | erweitert |
 | `src/engine/learn.ts` | Der Lernmodus: Karte, Echo-Check | unverändert |
 | `src/engine/variability.ts` | Klang-Variabilität in Stufen (HVPT), Heimton auf Stufe 0, **Streuung um das Tempo-Niveau** | erweitert |
-| `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
-| `src/engine/session.ts` | Loop-Zustandsautomat, Drill-Art, Pool, `retuneHomeTone`, Streak-Tag, **Tempo-Stufe (`speedUp`)** | erweitert |
+| `src/engine/selection.ts` | Gewichtung nach Schwäche — **seit P1 (#103b) nur noch für die Positionswahl im Wort-Modus** (`words.ts`, `drawGroup`); der Einzelzeichen-Loop zieht aus `bag.ts` | unverändert |
+| **`src/engine/bag.ts`** | **(P1, #103b) der Beutel des Einzelzeichen-Loops — reine Funktionen, kein Modulzustand** | **neu, getestet** |
+| `src/engine/session.ts` | Loop-Zustandsautomat, Drill-Art, Pool, `retuneHomeTone`, Streak-Tag, Tempo-Stufe (`speedUp`), **`SessionState.bag`, `reactionSeconds: number \| null` (P1)** | erweitert |
 | `src/engine/sync.ts` | Merge zweier Lernstände; Lern-Kennung, Streak, Tempo-Niveau (Maximum), **`mergeSendCharacters` (F4, eigene Funktion, dieselbe Regel)** | erweitert |
 | **`src/engine/streak.ts`** | **Streak mit Freeze-Gnade, Kalenderarithmetik, Merge** | **neu, getestet** |
-| **`src/engine/drill.ts`** | **Langsame Zeichen, Drill-Satz, ehrlicher Vergleich** | **neu, getestet** |
+| `src/engine/drill.ts` | Langsame Zeichen, Drill-Satz, ehrlicher Vergleich, **`attemptMedianOver` lässt `reactionSeconds: null` aus (P1)** | erweitert |
 | `src/engine/words.ts` | Wortliste (230) und die Auswahl von Wörtern und Gruppen, **`WORDS_MIN_CHARACTERS`/`WORDS_STREAK_MIN_ANSWERS` jetzt auch vom Sende-Modus gelesen (F4)** | erweitert |
 | **`src/engine/wordSession.ts`** | **Der Wort-Loop als reiner Zustandsautomat** | **neu, getestet** |
 | **`src/engine/tempo.ts`** | **Tempo-Progression: Bedingung, Sperre, Deckel, Reset** | **neu, getestet** |
@@ -674,7 +806,7 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `functions/_lib/`, `functions/api/` | Env, HTTP, Passkeys, Sitzungen, Sync-API | unverändert |
 | `migrations/0001_accounts.sql` | users, credentials, sessions, progress | unverändert |
 | `wrangler.toml` | D1-Bindung `DB`; echte `database_id` (config-as-code) | unverändert |
-| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, Streak-Zeile, Settings, Drill, `Answers` mit Tastenfeld, Wort-Modus, Tempo in der Fußzeile, Tempo-Reset, **Sende-Modus: Taste (Pointer + Leertaste), Stille-Timer, `keyDown`/`keyUp` (F4)** | erweitert |
+| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, Streak-Zeile, Settings, Drill, `Answers` mit Tastenfeld, Wort-Modus, Tempo in der Fußzeile, Tempo-Reset, Sende-Modus: Taste (Pointer + Leertaste), Stille-Timer, `keyDown`/`keyUp` (F4), **`keydown`-Listener puffert statt zu gaten, `answerViaKeypad` ohne Reaktionszeit (P1, #103a/#103c)** | erweitert |
 | **`src/ui/Words.tsx`** | **Der Wort-Screen: Antwortzeile, Tasten, Auflösung, Tastatur-Hook** | **neu** |
 | **`src/ui/Send.tsx`** | **(F4) Der Sende-Screen: Taste, „Tap it in", Auflösung als CSS-Formen, `useSendKeyboard`** | **neu** |
 | **`src/ui/SessionHeader.tsx`** | **Die Kopfzeile eines Übungs-Screens — aus `App.tsx` gezogen** | **neu** |
@@ -684,8 +816,9 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | **`src/ui/deviceStorage.ts`** | **Eigener localStorage-Schlüssel, nie im Sync** | **neu** |
 | `src/ui/Menu.tsx` | Kopfzeile und Menü, Settings-Zeile, sperrbare Einträge und ein Link nach draußen, **`'send'` als `MenuLocation` (F4)** | erweitert |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, plus Lern-Zeitstempel | unverändert |
-| `src/ui/Progress.tsx`, `Intro.tsx`, `Learn.tsx`, `Pattern.tsx` | — | unverändert |
-| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, `.quiet-link`, `.keypad`, `.answer-line`, `.button-check`, `.solution*`, `.menu-hint`, **`.send-key`, `.send-hear-it`, `.tap-pad`/`.tap-button`, `.send-solution*` (F4)** | erweitert |
+| `src/ui/Progress.tsx` | Zahlen aus `stats.ts`, keine eigene Rechnung, **zweite Fußzeile: „Median from typed answers only …" (P1, #103c)** | erweitert |
+| `src/ui/Intro.tsx`, `Learn.tsx`, `Pattern.tsx` | — | unverändert |
+| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, `.quiet-link`, `.keypad`, `.answer-line`, `.button-check`, `.solution*`, `.menu-hint`, `.send-key`, `.send-hear-it`, `.tap-pad`/`.tap-button`, `.send-solution*` (F4), **`.progress-screen`-Spalte 220 px, `.stat-line` stapelt ab 900 px (P1, #103e)** | erweitert |
 | `tools/amber/check.mjs` | Das Amber-Budget am gerenderten Bild, **jetzt 35 Ansichten (F4: +6)** | erweitert |
 | **`content/learn/*.md`** | **Die 14 Texte des Learn-Bereichs (Fable), unverändert** | **neu** |
 | **`tools/learn/pages.mjs`** | **Frontmatter, Markdown, Head-Tags, Sitemap — reine Funktionen** | **neu, getestet** |
