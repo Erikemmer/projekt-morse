@@ -455,14 +455,18 @@ export function App() {
     setWords((current) => (current === null ? null : advanceWord(current, Math.random)));
   }, []);
 
-  // Die physische Tastatur am Schreibtisch (ui/Words.tsx). Sie haengt nur in
-  // der Eingabephase am Fenster -- und nur, solange dieser Modus vorne ist.
+  // Die physische Tastatur am Schreibtisch (ui/Words.tsx). Haengt jetzt die
+  // ganze Zeit am Fenster, solange dieser Modus vorne ist -- nicht mehr nur
+  // waehrend 'answering': in 'feedback' schalten Enter/Leertaste weiter,
+  // sonst haette man dort auch hier zweimal ins Leere getippt (Ruling #105).
   useWordKeyboard({
-    enabled: view === 'words' && !menuOpen && words?.phase === 'answering',
+    active: view === 'words' && !menuOpen,
+    phase: words?.phase ?? 'ready',
     pool: words?.pool ?? [],
     onType: typeWord,
     onDelete: deleteWordCharacter,
     onSubmit: submitWordAnswer,
+    onAdvance: nextWord,
   });
 
   // --- Sende-Training (Ruling Notion-Log #90) -----------------------------
@@ -567,10 +571,6 @@ export function App() {
     setSend((current) => (current === null ? null : appendSendInterval(current, { downAt, upAt })));
   }, [ensurePlayer]);
 
-  // Die Leertaste als Sende-Taste, global -- wie useWordKeyboard, und aus
-  // demselben Grund (ui/Send.tsx: event.repeat, preventDefault, blur).
-  useSendKeyboard({ enabled: canKeySend, onPress: pressSendKey, onRelease: releaseSendKey });
-
   /**
    * Abschluss einer Eingabe nach 1,5 s Stille (Teil B.8) -- zusaetzlich zu
    * "Done" (weiter unten). "Stille" heisst: seit dem letzten *Loslassen*,
@@ -611,6 +611,18 @@ export function App() {
   const nextSend = useCallback(() => {
     setSend((current) => (current === null ? null : advanceSend(current, Math.random)));
   }, []);
+
+  // Die Leertaste als Sende-Taste, global -- wie useWordKeyboard, und aus
+  // demselben Grund (ui/Send.tsx: event.repeat, preventDefault, blur). Enter
+  // schaltet zusaetzlich in 'feedback' weiter (Ruling #105), unabhaengig vom
+  // Eingabeweg -- deshalb ohne die `mode === 'keyed'`-Bedingung aus canKeySend.
+  useSendKeyboard({
+    enabled: canKeySend,
+    onPress: pressSendKey,
+    onRelease: releaseSendKey,
+    advanceEnabled: view === 'send' && !menuOpen && send?.phase === 'feedback',
+    onAdvance: nextSend,
+  });
 
   const next = useCallback(() => setSession((current) => advance(current, Math.random)), []);
 
@@ -922,14 +934,15 @@ export function App() {
   const bufferedKeyRef = useRef<string | null>(null);
 
   /*
-   * Die aktuelle Phase und der aktuelle Pool ueber ein Ref -- derselbe Griff
-   * wie bei `useWordKeyboard`/`useSendKeyboard` (ui/Words.tsx, ui/Send.tsx):
-   * der Listener soll nicht bei jedem Phasenwechsel ab- und wieder anhaengen,
-   * sondern die ganze Zeit am Fenster liegen und trotzdem den *aktuellen*
-   * Stand lesen.
+   * Die aktuelle Phase, der aktuelle Pool und die beiden Gesten, die ein
+   * Anschlag ausserhalb von 'answering'/'listening' ausloesen kann, ueber ein
+   * Ref -- derselbe Griff wie bei `useWordKeyboard`/`useSendKeyboard`
+   * (ui/Words.tsx, ui/Send.tsx): der Listener soll nicht bei jedem
+   * Phasenwechsel ab- und wieder anhaengen, sondern die ganze Zeit am Fenster
+   * liegen und trotzdem den *aktuellen* Stand lesen.
    */
-  const keyboardStateRef = useRef({ phase: session.phase, pool: session.pool });
-  keyboardStateRef.current = { phase: session.phase, pool: session.pool };
+  const keyboardStateRef = useRef({ phase: session.phase, pool: session.pool, next, play });
+  keyboardStateRef.current = { phase: session.phase, pool: session.pool, next, play };
 
   // Tippen statt Zielen: die Buchstaben des Zeichensatzes beantworten direkt.
   //
@@ -937,13 +950,21 @@ export function App() {
   // vorne ist und das Menue zu -- nicht mehr nur waehrend 'answering'. Wer
   // waehrend des Tons tippt (schnell antwortet), tippte sonst ins Leere
   // (Ruling #103a); die Phasenpruefung wandert deshalb in den Handler.
+  //
+  // Ruling #105: der Loop hat keinen automatischen Vorlauf. Nach der Antwort
+  // steht die App in 'feedback', bis "Next" gedrueckt wird, danach in 'ready',
+  // bis der Play-Kreis gedrueckt wird -- zwei Zustaende, in denen die
+  // Tastatur bisher nichts tat. Wer tippt statt zu klicken, tippte dort also
+  // zweimal ins Leere, was sich anfuehlt wie ein verschluckter Tastendruck,
+  // obwohl der eigentliche Antwort-Anschlag laengst angekommen war. Ein
+  // Anschlag aus dem Zeichensatz treibt den Ablauf jetzt in jeder Phase.
   useEffect(() => {
     if (view !== 'practice' || menuOpen) return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const key = event.key.toUpperCase();
-      const { phase, pool } = keyboardStateRef.current;
+      const { phase, pool, next, play } = keyboardStateRef.current;
       if (!pool.includes(key)) return;
       event.preventDefault();
 
@@ -951,8 +972,23 @@ export function App() {
         answer(key);
       } else if (phase === 'listening') {
         bufferedKeyRef.current = key;
+      } else if (phase === 'feedback') {
+        // Weiterschalten, wie "Next character"/"Finish" -- ausdruecklich
+        // *nicht* als Antwort auf die naechste Aufgabe gepuffert (anders als
+        // 'listening'): was man noch nicht gehoert hat, kann man nicht
+        // beantworten, das waere eine Zahl ueber nichts (CLAUDE.md 2.6). Der
+        // Anschlag treibt den Ablauf, er beantwortet ihn nicht.
+        next();
+      } else if (phase === 'ready') {
+        // Dieselbe Geste wie der Play-Kreis -- sonst braeuchte ausgerechnet
+        // dieser eine Schritt des Loops die Maus, obwohl jede andere Phase
+        // laengst per Tastatur laeuft.
+        void play();
       }
-      // In 'ready', 'feedback' und 'finished' passiert nichts, wie bisher.
+      // In 'finished' passiert bewusst nichts: dort steht die Zusammenfassung,
+      // und "noch eine Runde" (Speed round) bleibt eine eigene, ausdrueckliche
+      // Geste -- ein Zeichen aus dem alten Satz soll nicht aus Versehen eine
+      // neue Einheit anstossen.
     };
 
     window.addEventListener('keydown', onKeyDown);

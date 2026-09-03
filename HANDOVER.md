@@ -1,3 +1,108 @@
+# Übergabe — Stand nach Runde P2 (kein Tastendruck bleibt wirkungslos)
+
+**Repository:** https://github.com/Erikemmer/projekt-morse
+**Stand:** `main` steht bei `28f6b74` (P1, L2 und die Anschrifts-Nachkorrektur
+sind gemergt, Review 18 bestanden, Notion-Log #104). **Runde P2 liegt als ein
+Commit obendrauf auf `claude/morse-handover-alignment-nbkk6o`** — noch nicht
+gemergt, Review kommt von Fable.
+
+- **P2 setzt Ruling Notion-Log #105 um: der Trainings-Loop hat keinen
+  automatischen Vorlauf.** Nach Ruling #103a wurden Tastendrücke *während*
+  des Tons nicht mehr verschluckt — aber der Owner meldete die Lücke erneut,
+  weil zwei benachbarte Zustände offen geblieben waren: `feedback` (die
+  Auflösung, bis „Next" gedrückt wird) und `ready` (bis der Play-Kreis
+  gedrückt wird). Wer tippt statt zu klicken, tippte dort zweimal ins Leere —
+  das fühlte sich an wie ein zweiter, neuer Fehler, war aber derselbe Riegel
+  an zwei weiteren Stellen. Reine UI-Runde, die Engine ist unberührt.
+
+An **Backend, Sync-API, Konto, der Engine und den Rechts-/Learn-Seiten ist
+nichts angefasst.** Berührt sind:
+
+| Datei | Warum |
+|---|---|
+| `src/ui/App.tsx` | der Trainings-Keydown-Handler bedient jetzt auch `feedback` (→ `next()`) und `ready` (→ `play()`); `useWordKeyboard`/`useSendKeyboard` bekommen ihre neuen Parameter (`phase`/`onAdvance` bzw. `advanceEnabled`/`onAdvance`) an den Aufrufstellen |
+| `src/ui/Words.tsx` | `useWordKeyboard`: haengt jetzt auch in `feedback` am Fenster; dort schalten Enter und Leertaste weiter, ein Buchstabe ausdrücklich nicht (er ist die erste Eingabe des nächsten Worts) |
+| **`src/ui/Send.tsx`** | `useSendKeyboard`: neuer, von `enabled` unabhängiger Schalter `advanceEnabled` — in `feedback` schaltet **nur Enter** weiter, die Leertaste bleibt die Morsetaste. **Ein echter Zweitfehler dabei gefunden und behoben** (siehe unten) |
+
+**Kein neuer FINDINGS-Eintrag, keine neue Abhängigkeit, keine CSS-Änderung.**
+Keine Screenshots — diese Runde ändert kein sichtbares Bild, nur, welche
+Taste was auslöst.
+
+**Bundle-Delta** (gegen den Stand vor dieser Runde, `28f6b74`, `vite build`,
+gzip in Klammern): JS 227,35 kB → 227,91 kB (**+0,56 kB**, gzip 69,68 →
+69,82 kB, **+0,14 kB**); CSS unverändert (18,38 kB). Kein neues Paket.
+
+**Tests:** 456 (18 Dateien) — unverändert, keine neuen automatisierten Fälle.
+Dieses Repo hat keine React-Komponententests (kein `@testing-library`,
+`environment: 'node'` in `vitest.config.ts`); Tastatur-Verhalten wird hier
+durchgängig per Playwright-Durchlauf geprüft (wie schon beim Sende-Training,
+Runde F4), nicht per Komponententest. `npm test`, `npm run build`,
+`npm run verify:amber` (35 Ansichten, Budget gehalten) und
+`npm run verify:learn` (18 Seiten, alle Pflichten erfüllt) sind grün.
+
+**Der geforderte Nachweis (Punkt 3 des Rulings), ein einmaliger
+Playwright-Durchlauf gegen den gebauten Stand, nicht committet:**
+
+- **Training, fünf Aufgaben in Folge, ausschließlich über die Tastatur:**
+  Play starten (`ready`), abwechselnd während des Tons tippen (gepuffert,
+  Ruling #103a) oder nach Tonende direkt antworten, weiter (`feedback`) —
+  kein Maus-/Tap-Klick. **14 Anschläge gesendet, `aria-valuenow` der
+  Fortschrittslinie (verbuchte Antworten) = 5.** Rechnung: 5× Play-Start + 5×
+  Antwort/Puffer + 4× Weiter zwischen den Runden (die fünfte braucht kein
+  Weiter mehr) = 14.
+- **Wort-Modus:** ein Buchstabe in `feedback` lässt die Auflösung stehen
+  (bestätigt, kein Wechsel); Enter schaltet weiter (Auflösung verschwindet).
+- **Sende-Modus:** die Leertaste in `feedback` lässt die Auflösung stehen
+  (nach der Korrektur unten — vorher schaltete sie fälschlich weiter); Enter
+  schaltet weiter.
+
+> ### Was Fable an dieser Runde sehen muss
+>
+> 1. **Der Trainings-Loop ist jetzt vollständig mit der Tastatur allein
+>    spielbar** — hören, tippen, tippen, hören, ohne die Maus. `feedback` und
+>    `ready` reagieren auf jeden Anschlag aus dem geübten Zeichensatz, nicht
+>    nur auf eine bestimmte Taste (dieselbe Regel wie `answering`/`listening`
+>    seit Ruling #103a). `finished` bleibt bewusst außen vor: dort steht die
+>    Zusammenfassung, und „noch eine Runde" ist eine eigene Geste — ein
+>    Zeichen aus dem alten Satz soll keine neue Einheit anstoßen.
+> 2. **`feedback` puffert nichts** — der Anschlag treibt sofort `next()` an,
+>    er wird nicht als Antwort auf die nächste (noch ungehörte) Aufgabe
+>    zurückgehalten. Das steht nach Auftrag jetzt auch im Kommentar an der
+>    Stelle, nicht nur hier.
+> 3. **Ein echter, eigenständiger Fehler wurde durch den geforderten
+>    Fünf-Aufgaben-Test gefunden, nicht durch Lesen:** Der Aufgaben-Auftrag
+>    verlangte für den Sende-Modus ausdrücklich, dass die Leertaste in
+>    `feedback` **nicht** weiterschaltet. Der naive Fix (`useSendKeyboard`
+>    einfach früh `return`en lassen, wenn `!enabled`) reichte nicht — die App
+>    verschiebt den Fokus bei jedem Phasenwechsel auf das jeweils aktuelle
+>    Ziel (`focusRef.current?.focus()`, App.tsx), und in `feedback` ist das
+>    der „Next"-Knopf. Ein früher `return` *ohne* `preventDefault()` ließ die
+>    **native** Leertasten-Aktivierung dieses fokussierten Knopfs durch —
+>    die Auflösung schaltete also doch weiter, nur nicht über meinen Code,
+>    sondern über den Browser selbst. Der Fünf-Aufgaben-Test (Punkt 3 des
+>    Rulings) deckte das auf; ein Blick in den Diff hätte es nicht getan.
+>    Behoben: `preventDefault()` auf die Leertaste jetzt unconditional,
+>    sobald der Hook überhaupt aktiv ist — gehandelt wird nur, wenn `enabled`
+>    zusätzlich stimmt.
+> 4. **Wort- und Sende-Modus bekommen `ready`/`listening` bewusst nicht
+>    angefasst.** Das Ruling nennt für diese beiden Modi ausdrücklich nur die
+>    Auflösung („dort aber mit anderen Tasten") — eine Ausweitung auf das
+>    Starten von „Play the word"/„Hear it" per Tastatur wäre über die
+>    Aufgabe hinaus (CLAUDE.md 5). Kommentar an der Stelle in beiden Hooks.
+>    Native Tab+Enter/Space-Aktivierung eines fokussierten Play-Knopfs
+>    funktioniert davon unabhängig ohnehin schon (Standard-HTML-Semantik).
+>
+> **Selbstkritik zur eigenen Arbeitsweise, wie im Auftrag verlangt:** Bei
+> Ruling #103a wurde nur die gemeldete Lücke geschlossen, nicht die ganze
+> Liste der Zustände geprüft — deshalb blieben `feedback`/`ready` offen. Für
+> P2 wurde deshalb wirklich jeder Zustand aller drei Screens einzeln
+> durchgegangen (siehe Punkt 4), und der Nachweis lief als **ein** Durchlauf
+> über fünf Aufgaben statt eines Einzelfalls.
+
+<details>
+<summary><b>Die Übergabe nach Runde L2</b> (Impressum und Datenschutz — Review 18 bestanden, Notion-Log #104, jetzt in main; unverändert gültig, Historie)</summary>
+
+
 # Übergabe — Stand nach Runde L2 (Impressum und Datenschutz)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
@@ -105,8 +210,10 @@ erfüllt) sind grün.
 **Review 18 ist bestanden (Notion-Log #104) — Runde L2 ist damit
 abgeschlossen und lag beim Merge auf main auf geprüftem Grund.**
 
+</details>
+
 <details>
-<summary><b>Die Übergabe nach Runde P1</b> (fünf Owner-Befunde aus dem echten Gebrauch — noch nicht gemergt, Review 18 steht aus; unverändert gültig, Historie)</summary>
+<summary><b>Die Übergabe nach Runde P1</b> (fünf Owner-Befunde aus dem echten Gebrauch — Review 18 bestanden, jetzt in main; unverändert gültig, Historie)</summary>
 
 
 # Übergabe — Stand nach Runde P1 (fünf Owner-Befunde aus dem echten Gebrauch)
@@ -723,7 +830,24 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde (L2): Impressum und Datenschutz.**
+**Neu aus dieser Runde (P2): kein Tastendruck bleibt wirkungslos (#105).**
+
+- **Der Trainings-Loop ist vollständig mit der Tastatur allein spielbar.**
+  Ruling #103a hatte nur die gemeldete Lücke geschlossen (Tippen während des
+  Tons); die App blieb aber in der Auflösung (`feedback`) und im Wartezustand
+  (`ready`) taub für die Tastatur. Ein Anschlag aus dem geübten Zeichensatz
+  schaltet dort jetzt weiter bzw. startet den Ton — genau wie „Next" bzw. der
+  Play-Kreis.
+- **Wort- und Sende-Modus bekamen denselben Riegel, mit anderen Tasten.** Im
+  Wort-Modus schalten Enter und Leertaste in der Auflösung weiter, ein
+  Buchstabe ausdrücklich nicht. Im Sende-Modus schaltet nur Enter weiter, die
+  Leertaste bleibt die Morsetaste.
+- **Dabei einen echten, eigenständigen Fehler gefunden:** die Leertaste
+  schaltete im Sende-Modus über die *native* Aktivierung des fokussierten
+  „Next"-Knopfs doch weiter, obwohl der eigene Code das verhinderte — der
+  vom Ruling verlangte Fünf-Aufgaben-Test deckte es auf. Behoben.
+
+**Aus Runde L2 gilt weiter: Impressum und Datenschutz.**
 
 - **Vier statische Rechtsseiten** — Impressum und Datenschutz, Deutsch und
   Englisch (`/de/impressum/`, `/imprint/`, `/de/datenschutz/`, `/privacy/`),

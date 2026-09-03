@@ -425,37 +425,73 @@ function deviationSentence(kind: SendDeviationKind): string {
  *
  * `preventDefault` verhindert das Scrollen der Seite und, waere ein Knopf
  * gerade fokussiert, dessen eigene Aktivierung durch dieselbe Leertaste.
+ *
+ * **In 'feedback' schaltet nur Enter weiter** (Ruling #105), unabhaengig von
+ * `enabled`: die Leertaste bleibt dort, was sie ueberall sonst in diesem
+ * Modus ist -- die Morsetaste selbst, kein zweites "weiter". `advanceEnabled`
+ * ist deshalb ein eigener Schalter statt an `enabled` gekoppelt, das nur den
+ * Tastungsweg betrifft (`canKeySend`, ui/App.tsx: `mode === 'keyed'`) --
+ * "Next" muss in *beiden* Eingabewegen erreichbar sein.
+ *
+ * **In 'ready' und 'listening' tut Enter nichts** -- bewusst, aus demselben
+ * Grund wie bei `useWordKeyboard`: das Ruling nennt nur die Aufloesung, eine
+ * Ausweitung auf das Starten von "Hear it" per Tastatur waere ueber die
+ * Aufgabe hinaus (CLAUDE.md 5).
  */
 export function useSendKeyboard({
   enabled,
   onPress,
   onRelease,
+  advanceEnabled,
+  onAdvance,
 }: {
   enabled: boolean;
   onPress: () => void;
   onRelease: () => void;
+  advanceEnabled: boolean;
+  onAdvance: () => void;
 }) {
-  const handlers = useRef({ onPress, onRelease });
-  handlers.current = { onPress, onRelease };
+  const handlers = useRef({ onPress, onRelease, onAdvance });
+  handlers.current = { onPress, onRelease, onAdvance };
 
   useEffect(() => {
-    if (!enabled) return undefined;
+    if (!enabled && !advanceEnabled) return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== ' ' && event.key !== 'Spacebar') return;
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+      if (event.key === 'Enter') {
+        if (!advanceEnabled) return;
+        event.preventDefault();
+        handlers.current.onAdvance();
+        return;
+      }
+      if (event.key !== ' ' && event.key !== 'Spacebar') return;
+      /*
+       * Immer preventDefault, auch wenn `!enabled`: der Fokus wandert beim
+       * Phasenwechsel auf den "Next"-Knopf (App.tsx, headingRef), und ohne
+       * dieses preventDefault wuerde die *native* Knopf-Aktivierung durch die
+       * Leertaste in 'feedback' doch zum Weiterschalten fuehren -- genau das
+       * verbietet Ruling #105 ausdruecklich ("die Leertaste bleibt die
+       * Morsetaste"). Ohne Kontrolle des Loops meldete sich der Bug erst im
+       * eigens dafuer geschriebenen Tastatur-Test, nicht am Auge.
+       */
       event.preventDefault();
+      if (!enabled) return;
       if (event.repeat) return;
       handlers.current.onPress();
     };
     const onKeyUp = (event: KeyboardEvent) => {
       if (event.key !== ' ' && event.key !== 'Spacebar') return;
       event.preventDefault();
+      if (!enabled) return;
       handlers.current.onRelease();
     };
     // Verliert das Fenster den Fokus waehrend die Leertaste unten ist (Alt-Tab,
     // ein anderer Tab), bleibt sonst ein Ton haengen (Teil B.6).
-    const onBlur = () => handlers.current.onRelease();
+    const onBlur = () => {
+      if (enabled) handlers.current.onRelease();
+    };
 
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
@@ -465,5 +501,5 @@ export function useSendKeyboard({
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [enabled]);
+  }, [enabled, advanceEnabled]);
 }

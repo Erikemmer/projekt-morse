@@ -38,7 +38,12 @@
 
 import { useEffect, useRef } from 'react';
 
-import { wordsHeardToday, type WordAttempt, type WordSessionState } from '../engine/wordSession';
+import {
+  wordsHeardToday,
+  type WordAttempt,
+  type WordPhase,
+  type WordSessionState,
+} from '../engine/wordSession';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 
 export function Words({
@@ -402,33 +407,62 @@ function Keys({
  * Backspace loescht, Enter schickt ab.
  *
  * Als Hook und nicht im Markup, weil es am Fenster haengt und nicht an einem
- * Element -- wer am Desktop tippt, zielt nicht erst auf ein Feld. Aktiv ist er
- * nur in 'answering'; ausserhalb liegt kein Listener am Fenster.
+ * Element -- wer am Desktop tippt, zielt nicht erst auf ein Feld. `active`
+ * haengt nur am Bildschirm und am Menue, nicht mehr an der Phase: der
+ * Listener bleibt jetzt auch in 'feedback' am Fenster (Ruling #105).
+ *
+ * **In 'feedback' schalten Enter und die Leertaste weiter** (dasselbe wie
+ * "Next word") -- ausdruecklich *kein* Buchstabe: ein Buchstabe ist dort die
+ * erste Eingabe des naechsten Wortes und darf nicht als "weiter" verpuffen.
+ * Anders als beim Einzelzeichen-Training (Ruling #103a) wird hier nichts
+ * gepuffert, weil "weiter" hier keine Antwort ist, sondern nur der Uebergang
+ * in die naechste Aufgabe -- die erste echte Eingabe dorthinein bleibt Sache
+ * von 'answering'.
+ *
+ * **In 'ready' und 'listening' tut kein Tastendruck etwas** -- bewusst: das
+ * Ruling nennt fuer diese beiden Modi ausdruecklich nur die Aufloesung
+ * ("dort aber mit anderen Tasten"), nicht das Starten der Wiedergabe per
+ * Tastatur. Eine Ausweitung darauf waere ueber die Aufgabe hinaus (CLAUDE.md 5).
  */
 export function useWordKeyboard({
-  enabled,
+  active,
+  phase,
   pool,
   onType,
   onDelete,
   onSubmit,
+  onAdvance,
 }: {
-  enabled: boolean;
+  active: boolean;
+  phase: WordPhase;
   pool: readonly string[];
   onType: (char: string) => void;
   onDelete: () => void;
   onSubmit: () => void;
+  onAdvance: () => void;
 }) {
   // Die Rueckrufe wandern durch ein Ref, damit der Listener nicht bei jedem
-  // Tastendruck neu haengt (jeder Anschlag aendert den Zustand).
-  const handlers = useRef({ pool, onType, onDelete, onSubmit });
-  handlers.current = { pool, onType, onDelete, onSubmit };
+  // Tastendruck oder Phasenwechsel neu haengt.
+  const handlers = useRef({ phase, pool, onType, onDelete, onSubmit, onAdvance });
+  handlers.current = { phase, pool, onType, onDelete, onSubmit, onAdvance };
 
   useEffect(() => {
-    if (!enabled) return undefined;
+    if (!active) return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const current = handlers.current;
+
+      if (current.phase === 'feedback') {
+        if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+          event.preventDefault();
+          current.onAdvance();
+        }
+        // Jede andere Taste, auch ein Buchstabe: bewusst nichts (siehe Kopf).
+        return;
+      }
+
+      if (current.phase !== 'answering') return; // 'ready'/'listening': bewusst nichts (siehe Kopf).
 
       if (event.key === 'Backspace') {
         event.preventDefault();
@@ -449,5 +483,5 @@ export function useWordKeyboard({
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [enabled]);
+  }, [active]);
 }
