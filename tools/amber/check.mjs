@@ -393,11 +393,16 @@ const VIEWS = [
     },
   },
   {
-    name: 'Learn the sounds',
+    /*
+     * Alle 36 Zeichen (Ruling Notion-Log #110) -- eingefuehrte und noch
+     * unbekannte stehen nebeneinander im selben Tastenfeld-Raster. Der Stand
+     * hier hat sechs eingefuehrte (LETTERS) und dreissig gedimmte.
+     */
+    name: 'Learn the sounds (36 Zeichen)',
     seed: progress(),
     async reach(page) {
       await openMenu(page, 'Learn the sounds');
-      await page.waitForSelector('.answers');
+      await page.waitForSelector('.keypad');
     },
   },
   {

@@ -20,6 +20,7 @@ import {
   createLearnRun,
   currentCharacter,
   echoPromptFinished,
+  introducesCharacters,
   nextCard,
   type LearnState,
 } from './learn';
@@ -165,6 +166,32 @@ describe('Lernmodus: freies Wiederholen', () => {
     const second = nextCard(cardHeard(state));
     expect(second.phase).toBe('card');
     expect(currentCharacter(second)).toBe('M');
+  });
+
+  /**
+   * Ruling Notion-Log #110: "Learn the sounds" zeigt jetzt auch Zeichen, die
+   * noch nicht im Training sind -- ein Klick auf eines davon darf es nicht
+   * einfuehren. `introducesCharacters` ist die Stelle, an der die UI das
+   * entscheidet; hier steht der Beleg dafuer ohne DOM.
+   */
+  it('fuehrt am Ende nichts ein -- reines Zuhoeren', () => {
+    let state = createLearnRun({ queue: ['P'], known: [...STARTING_CHARACTERS], requireEcho: false });
+    expect(introducesCharacters(state)).toBe(false);
+    state = nextCard(cardHeard(state));
+    expect(state.phase).toBe('done');
+    expect(introducesCharacters(state)).toBe(false);
+  });
+
+  it('ein Lauf mit Echo-Check fuehrt am Ende ein', () => {
+    let state = createLearnRun({ queue: ['P'], known: [...STARTING_CHARACTERS] });
+    state = runCard(state);
+    expect(state.phase).toBe('done');
+    expect(introducesCharacters(state)).toBe(true);
+  });
+
+  it('vor "done" fuehrt kein Zustand etwas ein', () => {
+    const state = beginEcho(cardHeard(createLearnRun({ queue: ['K'] })));
+    expect(introducesCharacters(state)).toBe(false);
   });
 });
 

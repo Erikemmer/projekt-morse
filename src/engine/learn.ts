@@ -162,6 +162,19 @@ export function answerEcho(state: LearnState, answer: string): LearnState {
 }
 
 /**
+ * Ob ein fertiger Lauf seine Zeichen einfuehrt (`markIntroduced` in der UI).
+ *
+ * Nur ein Lauf mit Echo-Check tut das. Das freie Wiederholen ("Learn the
+ * sounds", `requireEcho: false`) hoert einem Zeichen nur zu -- eine reine
+ * Neugier-Geste darf `introducedCharacters` nicht veraendern, sonst koennte
+ * man sich am Wachstum vorbeihoeren und die Zahl bedeutete nichts mehr
+ * (CLAUDE.md 2.6, Ruling Notion-Log #110).
+ */
+export function introducesCharacters(state: LearnState): boolean {
+  return state.phase === 'done' && state.requireEcho;
+}
+
+/**
  * Weiter: naechster Abruf, naechste Karte oder Ende.
  *
  * `random` kommt als Parameter herein, damit Tests nicht wuerfeln muessen

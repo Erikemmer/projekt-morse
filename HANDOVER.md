@@ -1,3 +1,199 @@
+# Übergabe — Stand nach Runde P3 (Lernmodus-Tastatur, Sende-Standardweg, alle 36 Klänge)
+
+**Repository:** https://github.com/Erikemmer/projekt-morse
+**Stand:** `main` steht bei `df16be6` (P2 ist gemergt) — der Owner hat diesen
+Build unter der Kennung `c97c686afacb` getestet und den Fehler trotzdem
+gemeldet; nachgebaut und bestätigt, die Kennung gehört zu `df16be6`. **Runde
+P3 liegt als drei Commits obendrauf auf `claude/morse-handover-alignment-nbkk6o`**
+— noch nicht gemergt, Review kommt von Fable.
+
+Drei Rulings (Notion-Log #108–#110), drei Commits:
+
+- **Commit 1 (#108) — der Lernmodus verschluckt Tasten und löst seit P2 einen
+  Phantom-Ton aus.** Ursache: `learn !== null` wird technisch **innerhalb**
+  von `view === 'practice'` gerendert (App.tsx) — der Trainings-Listener
+  unterschied Ansichten, nicht Schirme, und reagierte seit Ruling #105 in
+  jeder Phase, auch wenn die Lernkarte oder der Echo-Check gerade davor
+  stand. Das Gate ist jetzt strenger, und der Lernmodus hat seine eigene
+  Tastatur bekommen.
+- **Commit 2 (#109) — die zwei Tasten werden der Normalweg des
+  Sende-Trainings.** Der Owner hat sie hinter einem leisen Textlink nicht
+  gefunden; der Owner kehrt die eigene Priorität aus Ruling #90 um. Eine neue
+  Einheit startet jetzt im Tastenweg (`.`/`-` am Laptop), die Morsetaste ist
+  die Ausbaustufe ("Use real keying").
+- **Commit 3 (#110) — "Learn the sounds" zeigt alle 36 Zeichen.** Es ist ein
+  Nachschlagewerk, keine Prüfung: Zuhören führt nicht mehr ein.
+
+An **Backend, Sync-API, Konto, dem Wort-Modus, der Timing-Bewertung des
+Sende-Trainings und den Learn-/Rechts-Seiten ist nichts angefasst.** Berührt
+sind:
+
+| Datei | Warum |
+|---|---|
+| `src/ui/App.tsx` | der Trainings-Keydown-Listener prüft jetzt zusätzlich `learn === null`, `!reviewing`, `introSeen` (über den bestehenden Ref, nicht als zusätzliche Effekt-Abhängigkeit); neue, gehobene Lernmodus-Callbacks (`continueLearnCard`, `answerLearnEcho`, `advanceLearnEcho`, `learnOnPlay`) für `useLearnKeyboard`; `canTapSend` neben `canKeySend`; `ReviewPicker` bekommt `characters={CHARACTER_ORDER}` und `introduced={session.progress.introducedCharacters}` statt `session.pool` |
+| **`src/ui/Learn.tsx`** | **neu:** `useLearnKeyboard` (Card, Echo-Answering, Echo-Feedback); `ReviewPicker` zeigt alle 36 aus `CHARACTER_ORDER`, unterscheidet eingeführt/unbekannt (`.keypad`-Raster statt `.answers`, `data-active`), plus eine eigene `keydown`-Bindung (ein Zeichen aus der Liste öffnet dessen Karte) |
+| `src/engine/learn.ts` | **neu:** `introducesCharacters(state)` — die reine Entscheidung, ob ein fertiger Lauf `markIntroduced` auslösen darf |
+| `src/engine/learn.test.ts` | +3 Fälle für `introducesCharacters` |
+| `src/engine/sendSession.ts` | `createSendSession`: Standard-`mode` `'keyed'` → `'tapped'` (Ruling #109) |
+| `src/engine/sendSession.test.ts` | Default-Erwartung angepasst; `keyPerfectR` und drei weitere Fälle schalten jetzt explizit auf `mode: 'keyed'`, bevor sie `appendSendInterval` rufen (das tut seit dem neuen Standard sonst nichts) |
+| `src/ui/Send.tsx` | `useSendKeyboard` bekommt `tapEnabled`/`onTapDit`/`onTapDah` (`.`/`-`); Knopf-Beschriftungen getauscht ("Use real keying" / "Use the two keys") |
+| `tools/amber/check.mjs` | Sende-Ansichten auf den Tastenweg umgestellt (5 → 7, inkl. einer über `.`/`-` per Tastatur erreichten Eingabe), "Learn the sounds" wartet jetzt auf `.keypad` (35 → 37 Ansichten) |
+| `FINDINGS.md` | #6, Punkt 2 als behoben markiert (derselbe Umbau, den der Fund schon am 02.09. beschrieben hatte) |
+
+Dazu drei Screenshots:
+[`review-all-36-390.png`](./docs/screenshots/review-all-36-390.png)
+(Klang-Auswahl, alle 36 Zeichen, 390 × 844),
+[`review-all-36-1440.png`](./docs/screenshots/review-all-36-1440.png)
+(dieselbe Ansicht, 1440 × 900, zwölf statt sechs Spalten),
+[`send-tapped-default-390.png`](./docs/screenshots/send-tapped-default-390.png)
+(Sende-Training, Standard-Tastenweg, 390 × 844).
+
+**Bundle-Delta** (gegen `main` = `df16be6`, `vite build`, gzip in Klammern):
+JS 227,91 kB → 230,20 kB (**+2,29 kB**, gzip 69,82 → 70,29 kB, **+0,47 kB**);
+CSS **unverändert**, byte-identisch (18,38 kB, gzip 3,96 kB) — beide neuen
+Ansichten (Klang-Auswahl, Sende-Umschaltung) rendern ausschließlich
+bestehende Klassen (`.keypad`, `.answer[data-active]`, `.note`). Kein neues
+Paket.
+
+**Tests:** 459 (18 Dateien), davon 3 neu (`introducesCharacters`). `npm test`,
+`npm run build`, `npm run verify:amber` (**37** Ansichten, Budget gehalten)
+und `npm run verify:learn` (18 Seiten, alle Pflichten erfüllt) sind grün.
+
+**Kein Scrollen gemessen** (headless Chromium, `document.documentElement.scrollHeight`
+gegen die Fensterhöhe) im jeweils dichtesten neuen Zustand, an allen drei
+verlangten Breiten:
+
+| Zustand | 390 × 844 | 1280 × 720 | 1440 × 900 |
+|---|---|---|---|
+| Klang-Auswahl, 36 Zeichen | 844 px | 720 px | 900 px |
+| Sende-Training, Tastenweg, mit Eingabe | 844 px | 720 px | 900 px |
+| Sende-Training, Auflösung (Tastenweg) | 844 px | 720 px | 900 px |
+
+Alle drei treffen die Fensterhöhe exakt — kein Rest, aber auch kein Überlauf.
+
+> ### Was Fable an dieser Runde sehen muss
+>
+> 1. **Der Fehler war meiner, wie im Auftrag schon benannt** — Ruling #105
+>    (P2) hat den Trainings-Listener in jeder Phase reagieren lassen, ohne zu
+>    prüfen, ob der Trainings-*Screen* überhaupt vorne steht. `view ===
+>    'practice'` unterscheidet nur die **Ansicht** (Training/Wörter/Senden/…),
+>    nicht, was gerade **darüber** liegt (Lernkarte, Echo-Check, Klang-Auswahl).
+>    Vor P2 lief ein Tastendruck dort ins Leere (kein Listener reagierte
+>    überhaupt außerhalb 'answering'); seit P2 trifft er die verdeckte
+>    Trainings-Sitzung — verschluckt und, weil `'ready'` jetzt `play()`
+>    auslöst, ein Ton, den niemand angefordert hat. Behoben mit drei
+>    zusätzlichen Bedingungen (`learn === null`, `!reviewing`, `introSeen`),
+>    die über denselben Ref laufen wie Phase und Pool — kein neuer Effekt,
+>    keine zusätzliche An-/Abmelde-Zyklen des Fenster-Listeners.
+> 2. **Die verlangte Inventur steht unten als vollständige Tabelle** (nicht
+>    nur der eine gemeldete Fall) — jede Zelle trägt entweder eine benannte
+>    Wirkung oder eine Begründung für "bewusst nichts". Zwei Runden zuvor
+>    wurde je ein Einzelfall beauftragt und behoben; diesmal wurde jeder
+>    Zustand aller fünfzehn genannten Schirme einzeln durchgegangen, bevor
+>    Code entstand.
+> 3. **Ein zweiter, eigenständiger Fehler wurde beim Bauen des Sende-Commits
+>    gefunden, nicht am Auge:** `useSendKeyboard`s Effekt hing an `[enabled,
+>    advanceEnabled]` — `tapEnabled` fehlte in der Abhängigkeitsliste. Beim
+>    ersten Rendern des Sende-Screens sind alle drei Schalter noch `false`
+>    (die Einheit existiert erst einen Tick später), der Effekt läuft einmal,
+>    meldet keinen Listener an und **lief nie wieder**, weil sich `enabled`
+>    und `advanceEnabled` (beide dauerhaft `false` im Tastenweg) nie ändern.
+>    `.`/`-` taten buchstäblich nichts — bestätigt mit einem eigenen
+>    Playwright-Durchlauf gegen den gebauten Stand (`event.key`/
+>    `defaultPrevented` mitgeloggt), *bevor* der Fix stand, und danach dieselbe
+>    Probe grün. Der jetzt korrekte Verify-Lauf tippt `.`/`-` über
+>    `page.keyboard.press`, nicht nur per Klick auf `.tap-button` — sonst hätte
+>    genau dieser Fehler die Prüfung unbemerkt passiert.
+> 4. **`introducesCharacters` ist eine reine Funktion in der Engine, keine
+>    View-Bedingung in App.tsx.** Die einfachere Version wäre gewesen, im
+>    "done"-Effekt auf den React-Zustand `reviewing` zu schauen — das hätte
+>    funktioniert, wäre aber eine zweite Wahrheit gewesen (die Karte kennt
+>    ihren eigenen Zweck über `requireEcho`, das App.tsx sowieso schon setzt).
+>    Getestet ohne DOM (`learn.test.ts`), wie CLAUDE.md 4 es für die Engine
+>    verlangt.
+> 5. **Die Klang-Auswahl wechselt auf das Tastenfeld-Raster (`.keypad` statt
+>    `.answers`)** — nicht nur, weil es hübscher wäre, sondern weil 36 Tasten
+>    im Dreier-Gitter (64 px) den Bildschirm bei 390 × 844 gesprengt hätten
+>    (FINDINGS #6 hatte das für den alten, kleineren Zustand schon mit
+>    1223 px belegt). Die Reihenfolge bleibt `CHARACTER_ORDER`
+>    (Einführungsreihenfolge), nicht das alphabetische `KEYPAD_LAYOUT` des
+>    Trainings-Tastenfelds — der Auftrag nennt ausdrücklich `CHARACTER_ORDER`,
+>    und es hat einen Nebeneffekt, der zum Zweck passt: eingeführte Zeichen
+>    stehen vorn zusammen.
+> 6. **Die leise Zeile "Greyed-out sounds are not in your practice yet." ist
+>    eine Zeile unter dem ganzen Raster, nicht 30 einzelne Bildunterschriften**
+>    unter jeder gedimmten Taste — der Auftrag nennt nur den Text, nicht die
+>    Wiederholung. Dieselbe Entscheidung wie beim Tastenfeld des Trainings
+>    selbst (dort steht "not in this round" nur als Screenreader-Text, hier
+>    zusätzlich sichtbar, weil es hier — anders als im Training — kein
+>    Frage/Antwort-Kontext gibt, der es sonst erklären würde). Wortlaut ist
+>    meiner.
+> 7. **Der Wortlaut der beiden Knopf-Beschriftungen ist meiner, nicht
+>    Fables.** Der Auftrag nennt "Use real keying" und "Use the two keys"
+>    wörtlich — übernommen unverändert.
+
+## Die vollständige Tastatur-Inventur (Punkt 3 des Auftrags)
+
+Jede Zelle: eine benannte Wirkung, oder **kursiv** eine Begründung für
+"bewusst nichts". Modifizierte Anschläge (⌘/Strg/Alt) sind überall
+ausgenommen (jeder Listener prüft das zuerst) und stehen deshalb nicht
+einzeln in der Tabelle.
+
+| Schirm | Taste | Wirkung |
+|---|---|---|
+| **Intro** | Tab / Shift+Tab | *native Fokusbewegung — kein eigener Listener* |
+| | Enter/Leertaste auf "Skip intro"/"Next"/"Begin" | native Knopf-Aktivierung → weiter/überspringen |
+| | jede andere Taste | *bewusst nichts — kein Übungs-Loop, der reagieren müsste* |
+| **Lernkarte, `card`** (Ton noch nicht gehört) | Leertaste | spielt die Karte (`replayCard`) — **neu** |
+| | Enter | spielt die Karte (`replayCard`) — **neu**, dieselbe Wirkung wie Leertaste, solange noch nichts gehört wurde |
+| | Zeichen-/andere Tasten | *bewusst nichts* |
+| **Lernkarte, `card-heard`** (Muster sichtbar) | Leertaste | spielt die Karte erneut — **neu** |
+| | Enter | weiter (Echo-Check bzw. nächste Karte, je nach `requireEcho`) — **neu** |
+| | andere Tasten | *bewusst nichts* |
+| **Echo-Check, `echo-ready`/`echo-listening`** | Leertaste/Enter | *bewusst kein eigener Listener — der Play-Kreis trägt in diesen Phasen ohnehin den Fokus (`Learn.tsx`), native Aktivierung spielt bereits ab* |
+| **Echo-Check, Antwort offen** (`echo-answering`) | ein Zeichen aus `answerPool` | beantwortet mit diesem Zeichen — **neu** |
+| | ein Zeichen außerhalb der Optionen | *bewusst nichts — nur was auf dem Schirm als Option steht* |
+| **Echo-Check, Auflösung** (`echo-feedback`) | Enter oder Leertaste | weiter (nächster Abruf oder nächste Karte) — **neu** |
+| | andere Tasten | *bewusst nichts* |
+| **Klang-Auswahl** (ReviewPicker) | ein Zeichen aus den 36 (auch ein noch nicht eingeführtes) | öffnet dessen Karte — **neu**, dieselbe Geste wie ein Klick |
+| | Enter/Leertaste auf "Back to practice" | native Knopf-Aktivierung → zurück zum Training |
+| | Escape | *bewusst nichts — nicht beauftragt, anders als beim Menü* |
+| **Training, `ready`** | ein Zeichen aus dem Pool | startet die Wiedergabe (`play()`), dieselbe Geste wie der Play-Kreis |
+| **Training, `listening`** | ein Zeichen aus dem Pool | gepuffert (Ruling #103a), zählt beim Wechsel nach `answering` |
+| **Training, `answering`** | ein Zeichen aus dem Pool | beantwortet die Aufgabe |
+| **Training, `feedback`** | ein Zeichen aus dem Pool | weiter (wie "Next character"/"Finish"), zählt nicht als Antwort |
+| **Training, `finished`** | jede Taste | *bewusst nichts — "noch eine Runde" ist eine eigene Geste (Zusammenfassung, siehe unten)* |
+| **Drill-Einladung** ("Try a speed round?", Teil des `ready`-Schirms) | ein Zeichen aus dem Pool | startet die reguläre Wiedergabe (wie überall in `ready`), **nicht** den Drill |
+| | Tab zum Knopf, dann Enter/Leertaste | native Knopf-Aktivierung → startet die Speed round |
+| **Speed round** (`session.kind === 'drill'`) | wie Training, alle Phasen | dieselbe Tabelle wie Training — derselbe Listener, dieselbe Engine |
+| **Zusammenfassung** (`finished`) | jede Taste (Trainings-Listener) | *bewusst nichts* |
+| | Tab zum Knopf, dann Enter/Leertaste auf "Practise again"/"Back to practice" | native Knopf-Aktivierung |
+| **Wort-Modus, `ready`/`listening`** | jede Taste | *bewusst nichts — nur "Play the word" startet die Wiedergabe (CLAUDE.md 5, Ruling #83)* |
+| **Wort-Modus, `answering`** | ein Zeichen aus dem Pool | tippt es an die Antwortzeile |
+| | Backspace | löscht das letzte getippte Zeichen |
+| | Enter | schickt die Antwort ab |
+| **Wort-Modus, `feedback`** | Enter oder Leertaste | weiter ("Next word") |
+| | ein Buchstabe | *bewusst nichts — er ist die erste Eingabe des nächsten Worts, kein "weiter"* |
+| **Sende-Modus, `ready`/`sending`, `mode: tapped`** (Standard seit #109) | `.` | tippt einen Punkt an — **neu** |
+| | `-` | tippt einen Strich an — **neu** |
+| | Leertaste | *bewusst nichts, mit `preventDefault` — bleibt der Morsetaste vorbehalten, auch wenn sie hier nichts täte* |
+| **Sende-Modus, `ready`/`sending`, `mode: keyed`** ("Use real keying") | Leertaste (gehalten) | tastet einen Ton (`keyDown`/`keyUp`), wie seit F4 |
+| | `.`/`-` | *bewusst nichts — diese Tasten gehören dem Tastenweg, nicht der Morsetaste* |
+| **Sende-Modus, `feedback`** (beide Eingabewege) | Enter | weiter ("Next") |
+| | Leertaste | *bewusst nichts, mit `preventDefault` — Ruling #105 gilt unverändert: die Leertaste bleibt die Morsetaste, kein zweites "weiter"* |
+| **Sende-Modus, `listening`** ("Hear it" spielt) | jede Taste | *bewusst nichts — dieselbe Zurückhaltung wie beim Wort-Modus* |
+| **Progress** | — | *bewusst kein eigener Listener — reine Ansicht, Standard-Tab genügt* |
+| **Settings** | — | *bewusst kein eigener Listener — Regler und Knöpfe sind native Formularelemente* |
+| **Account** | — | *bewusst kein eigener Listener* |
+| **About** | — | *bewusst kein eigener Listener* |
+| **Menü offen** | Escape | schließt das Menü, Fokus zurück auf den Trigger |
+| | Tab/Shift+Tab | native Fokusbewegung zwischen den Einträgen |
+| | Enter/Leertaste auf einem Eintrag | native Aktivierung → navigiert dorthin |
+| | ein Zeichen | *bewusst nichts — keine Tastenkürzel für Menüeinträge* |
+
+<details>
+<summary><b>Die Übergabe nach Runde P2</b> (kein Tastendruck bleibt im Loop wirkungslos — jetzt in `main`; unverändert gültig, Historie)</summary>
+
 # Übergabe — Stand nach Runde P2 (kein Tastendruck bleibt wirkungslos)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
@@ -98,6 +294,8 @@ Playwright-Durchlauf gegen den gebauten Stand, nicht committet:**
 > P2 wurde deshalb wirklich jeder Zustand aller drei Screens einzeln
 > durchgegangen (siehe Punkt 4), und der Nachweis lief als **ein** Durchlauf
 > über fünf Aufgaben statt eines Einzelfalls.
+
+</details>
 
 <details>
 <summary><b>Die Übergabe nach Runde L2</b> (Impressum und Datenschutz — Review 18 bestanden, Notion-Log #104, jetzt in main; unverändert gültig, Historie)</summary>

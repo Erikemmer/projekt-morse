@@ -39,6 +39,7 @@ import {
   createLearnRun,
   currentCharacter,
   echoPromptFinished,
+  introducesCharacters,
   nextCard,
   type LearnState,
 } from '../engine/learn';
@@ -688,11 +689,20 @@ export function App() {
     );
   }, [learnDue, pending, session.progress.introducedCharacters]);
 
-  // Ein fertiger Lauf schreibt genau ein Feld: was jetzt vorgestellt ist.
+  /*
+   * Ein fertiger Lauf schreibt genau ein Feld: was jetzt vorgestellt ist --
+   * aber nur, wenn der Lauf wirklich eine Einfuehrung war. `introducesCharacters`
+   * ist `false` fuer das freie Wiederholen (`requireEcho: false`, die
+   * Klang-Auswahl seit Ruling #110): reines Zuhoeren darf `introducedCharacters`
+   * nicht veraendern, sonst koennte man sich am Wachstum vorbeihoeren
+   * (CLAUDE.md 2.6).
+   */
   useEffect(() => {
     if (learn?.phase !== 'done') return;
-    const introduced = learn.queue;
-    setSession((current) => ({ ...current, progress: markIntroduced(current.progress, introduced) }));
+    if (introducesCharacters(learn)) {
+      const introduced = learn.queue;
+      setSession((current) => ({ ...current, progress: markIntroduced(current.progress, introduced) }));
+    }
     setLearn(null);
   }, [learn]);
 
@@ -1252,7 +1262,8 @@ export function App() {
         <About headingRef={focusTarget} />
       ) : reviewing ? (
         <ReviewPicker
-          characters={session.pool}
+          characters={CHARACTER_ORDER}
+          introduced={session.progress.introducedCharacters}
           onPick={openReview}
           onClose={() => setReviewing(false)}
           headingRef={focusTarget}

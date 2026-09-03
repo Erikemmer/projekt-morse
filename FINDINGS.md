@@ -136,7 +136,7 @@ bleiben. Deshalb Bericht statt Eingriff (CLAUDE.md §5, §2.9).
 in der vorgelesenen Form ausgeben. Braucht eine Freigabe von Fable, weil es
 den vorgelesenen Inhalt der Seite ändert.
 
-## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter
+## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter — Punkt 2 BEHOBEN (Ruling #110)
 
 **Gefunden:** 02.09.2026, beim Umsetzen von Ruling #75 (das feste Tastenfeld im
 Training).
@@ -151,10 +151,17 @@ Tastenfeld (`src/ui/keypad.ts`). **Zwei andere Flächen benutzen dieselbe
    **alles bisher Eingeführte** an, und das ist irgendwann alles. Gemessen
    (headless Chromium, 390 × 844): bei 15 eingeführten Zeichen 15 Optionen, bei
    36 sind es **36 Optionen und eine 1311 px hohe Seite**.
-2. **„Learn the sounds"** (`ReviewPicker`, dieselbe Datei) listet alle aktiven
+2. ~~**„Learn the sounds"** (`ReviewPicker`, dieselbe Datei) listet alle aktiven
    Zeichen. Bei 36 sind das **36 Tasten und 1223 px** — die Liste ist dort
    allerdings ein Auswahlmenü und keine Antwortfläche, es wird keine
-   Reaktionszeit daran gemessen.
+   Reaktionszeit daran gemessen.~~ — **behoben, Ruling Notion-Log #110.**
+   „Learn the sounds" zeigt jetzt ohnehin immer alle 36 Zeichen (nicht mehr
+   nur die aktiven) und musste dafür auf das Tastenfeld-Raster wechseln
+   (`.keypad` statt `.answers`, sechs statt drei Spalten) — genau der Umbau,
+   den dieser Fund schon 02.09. als „wenig, und genau deshalb eine
+   Entscheidung" beschrieben hatte. Nachgemessen (headless Chromium):
+   **844 px bei 390 × 844, 720 px bei 1280 × 720, 900 px bei 1440 × 900** —
+   kein Scrollen mehr, in keiner der drei Breiten.
 
 **Warum es zählt:** Für den Echo-Check ist es der Kern des Rulings — dieselbe
 wandernde Taste, dieselbe mitgemessene Suchzeit. Der Unterschied ist, dass der
@@ -163,15 +170,15 @@ Statistik nicht an"), die verschobene Suche also keine Zahl verfälscht. Sie
 kostet nur die Übung: wer im Training an feste Positionen gewöhnt ist, greift
 im Echo-Check ins Leere. Bei „Learn the sounds" geht es allein um das Scrollen.
 
-**Vorläufiger Umgang:** unverändert gelassen. Das Ruling nennt die Echo-Checks
-namentlich als unberührt, und die zweite Fläche nennt die Aufgabe überhaupt
-nicht (CLAUDE.md 5: nicht mitreparieren).
+**Vorläufiger Umgang (Punkt 1, weiterhin offen):** unverändert gelassen. Das
+Ruling nennt die Echo-Checks namentlich als unberührt (CLAUDE.md 5: nicht
+mitreparieren) — dabei bleibt es auch in dieser Runde, sie stand nicht im
+Auftrag.
 
-**Was es kosten würde:** wenig, und genau deshalb ist es eine Entscheidung und
-keine Arbeit. Beide Flächen rendern schon dieselbe `.answer`-Taste; sie
-bräuchten dieselben zwei Zeilen wie `Answers` — die Klasse `keypad`, die
-Positionen aus `KEYPAD_LAYOUT`, `data-active` je Zugehörigkeit. Für den
-Echo-Check wäre zusätzlich zu entscheiden, was „aktiv" dort heißt: die
+**Was es kosten würde:** wenig, wie Punkt 2 jetzt belegt (derselbe Umbau, eine
+Runde später erledigt). Der Echo-Check bräuchte dieselben zwei Zeilen wie
+`ReviewPicker` jetzt schon hat — die Klasse `keypad`, `data-active` je
+Zugehörigkeit. Zusätzlich zu entscheiden waere, was „aktiv" dort heißt: die
 Optionen des Checks oder der ganze aktive Satz. **Gehört Fable, nicht dem
 nächsten Commit.**
 

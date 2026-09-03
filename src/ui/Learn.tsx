@@ -391,24 +391,64 @@ function Echo({
 }
 
 /**
- * Das freie Wiederholen: ein Gitter der aktiven Zeichen im Stil der
- * Antwort-Tasten. Ein Tipp oeffnet die Karte -- ohne Pflicht-Echo-Check.
+ * Das freie Wiederholen: alle 36 Zeichen aus `CHARACTER_ORDER`, im Stil des
+ * Tastenfelds. Ein Tipp oeffnet die Karte -- ohne Pflicht-Echo-Check.
+ *
+ * **Ein Nachschlagewerk, keine Pruefung** (Ruling Notion-Log #110). Bisher
+ * stand hier nur `introducedCharacters` -- wer neugierig auf einen Klang war,
+ * den das Training noch nicht abfragt, hatte keinen Weg, ihn zu hoeren. Jetzt
+ * stehen alle 36 da; noch nicht eingefuehrte Zeichen sind **sichtbar
+ * unterschieden** (dasselbe gedimmte Muster wie eine gesperrte Taste im
+ * Tastenfeld, `.keypad .answer[data-active='false']`), aber genauso
+ * anklickbar wie jedes andere -- gesperrt ist hier nichts, nur ruhiger
+ * gesetzt. **Entscheidend: Zuhoeren fuehrt nicht ein.** `App.tsx` prueft das
+ * ueber `introducesCharacters` (engine/learn.ts) -- diese Komponente
+ * rechnet nicht, sie zeigt nur, was schon eingefuehrt ist.
  *
  * Heisst seit der Menue-Runde "Learn the sounds" (vorher "Review the
  * sounds"): der Menue-Eintrag ist jetzt der einzige Einstieg, und er soll
  * auch fuer den Erstkontakt nicht nach Wiederholung klingen.
+ *
+ * **Das Tastenfeld-Raster statt des Dreier-Gitters, aus Platzgruenden.** 36
+ * Zeichen im Dreier-Gitter (64 px je Taste) sprengten den Bildschirm bei
+ * 390 x 844 deutlich (FINDINGS #6, 1223 px gemessen); das sechsspaltige
+ * Tastenfeld (46 px) haelt das Budget. Die Reihenfolge bleibt trotzdem die aus
+ * `CHARACTER_ORDER` (Einfuehrungsreihenfolge), nicht die alphabetische aus
+ * `KEYPAD_LAYOUT`: eingefuehrte Zeichen stehen dadurch vorn zusammen, und wer
+ * durchblaettert, sieht zuerst Bekanntes.
  */
 export function ReviewPicker({
   characters,
+  introduced,
   onPick,
   onClose,
   headingRef,
 }: {
+  /** Alle 36 Zeichen aus `CHARACTER_ORDER`, in dessen Reihenfolge. */
   characters: readonly string[];
+  /** Was schon eingefuehrt ist -- entscheidet nur die Optik, nie die Bedienbarkeit. */
+  introduced: readonly string[];
   onPick: (char: string) => void;
   onClose: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
+  const known = new Set(introduced);
+
+  // Ein Zeichen aus der Liste oeffnet dessen Karte -- dieselbe Geste wie der
+  // Klick, fuer alle 36 Positionen gleich (auch die noch nicht eingefuehrten,
+  // siehe Kopf: gesperrt ist hier nichts).
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const key = event.key.toUpperCase();
+      if (!characters.includes(key)) return;
+      event.preventDefault();
+      onPick(key);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [characters, onPick]);
+
   return (
     <section className="learn" aria-labelledby="review-heading">
       <div className="stage">
@@ -418,14 +458,30 @@ export function ReviewPicker({
         <p className="learn-copy">Pick a character to hear it again.</p>
       </div>
 
-      <div className="answers">
-        {characters.map((char) => (
-          <button key={char} type="button" className="answer" onClick={() => onPick(char)}>
-            <span aria-hidden="true">{char}</span>
-            <span className="visually-hidden">{`Review ${char}`}</span>
-          </button>
-        ))}
+      <div className="keypad">
+        {characters.map((char) => {
+          const active = known.has(char);
+          return (
+            <button
+              key={char}
+              type="button"
+              className="answer"
+              data-active={String(active)}
+              onClick={() => onPick(char)}
+            >
+              <span aria-hidden="true">{char}</span>
+              <span className="visually-hidden">
+                {active ? `Review ${char}` : `Listen to ${char}`}
+                {!active && ' — not in your practice yet'}
+              </span>
+            </button>
+          );
+        })}
       </div>
+      {/* Eine leise Zeile statt eines Symbols je Taste (CLAUDE.md 6: nie Farbe
+          allein) -- das gedimmte Grau traegt schon die Form, diese Zeile sagt
+          fuer alle 30 gedimmten Tasten zugleich, was das bedeutet. */}
+      <p className="note">Greyed-out sounds are not in your practice yet.</p>
 
       <div className="actions">
         <button type="button" className="button-go" onClick={onClose}>
