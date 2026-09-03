@@ -281,11 +281,26 @@ async function main() {
     const css = await readFile(join(DIST, cssPath), 'utf8');
     check(!css.includes('/* @tokens */'), 'learn.css: der Token-Marker steht noch drin');
     check(css.includes('--paper: #F6F1E8'), 'learn.css: der Token-Block fehlt');
-    // Kein Farbliteral außerhalb des Token-Blocks (CLAUDE.md 2.9). Der eine
-    // erlaubte Treffer außerhalb ist theme-color im HTML, nicht hier.
-    const tokenBlock = css.slice(css.indexOf(':root {'), css.indexOf('\n}', css.indexOf(':root {')));
+    /*
+     * Kein Farbliteral außerhalb der Token-Blöcke (CLAUDE.md 2.9). Der eine
+     * erlaubte Treffer außerhalb ist theme-color im HTML, nicht hier. Zwei
+     * `:root { ... }`-Blöcke sind erlaubt, nicht nur einer: der helle, vom
+     * Build eingesetzte (Ruling Notion-Log #111 fand ihn schon vor), und der
+     * dunkle unter `@media (prefers-color-scheme: dark)`, von Hand gepflegt
+     * (Punkt 8 -- keine Themewahl auf den redaktionellen Seiten, nur
+     * Paper/Night übers Betriebssystem).
+     */
+    const tokenBlocks = [];
+    let searchFrom = 0;
+    for (;;) {
+      const start = css.indexOf(':root {', searchFrom);
+      if (start === -1) break;
+      const end = css.indexOf('\n}', start);
+      tokenBlocks.push(css.slice(start, end === -1 ? undefined : end));
+      searchFrom = (end === -1 ? css.length : end) + 1;
+    }
     const literals = [...css.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].filter(
-      (match) => !tokenBlock.includes(match[0]),
+      (match) => !tokenBlocks.some((block) => block.includes(match[0])),
     );
     check(
       literals.length === 0,

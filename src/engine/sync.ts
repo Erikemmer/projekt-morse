@@ -93,6 +93,14 @@
  * Tageszähler `day.sent` reist dagegen mit dem ganzen Tages-Eimer (oben),
  * genau wie `day.words` — auch er ist eine Momentaufnahme des jüngeren
  * Standes, keine Summe.
+ *
+ * **Was hier nie ankommt: Tonhöhe, Lautstärke und, seit Ruling Notion-Log
+ * #111, das Theme.** Kein fehlendes Feld, keine Lücke im Merge — sie stehen
+ * in einem eigenen Eintrag (`engine/deviceSettings.ts`) und gehen nie zum
+ * Konto (Produktentscheidung, Notion-Log #66). Wie hell ein Bildschirm sein
+ * muss, ist eine Eigenschaft des Raums, in dem er steht, nicht des Menschen,
+ * der lernt: ein an einem dunklen Schreibtisch gewähltes Night-Theme soll
+ * nicht auf ein zweites Gerät am hellen Fenster mitreisen.
  */
 
 import {

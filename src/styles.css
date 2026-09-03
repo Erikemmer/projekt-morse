@@ -54,10 +54,24 @@
   /* --- Tokens nach Guidelines 1.1 §13 ---
    * Die Namen sind Teil der Spezifikation, nicht Geschmack: wer die Richtlinie
    * liest und hier nachsieht, soll dieselben Woerter finden. Vier Toene, mehr
-   * gibt es nicht -- und Amber steht hoechstens einmal pro View. */
+   * gibt es nicht -- und Amber steht hoechstens einmal pro View.
+   *
+   * **--amber ist #B35209, nicht das in 1.1 genannte #B45309** -- ein Fund
+   * der Kontrast-Pruefung aus Runde T1 (Ruling Notion-Log #111, Punkt 9), der
+   * dieses Theme vorher hatte, nicht etwas, das die neuen Themes eingefuehrt
+   * haben: #B45309 traegt Paper-Text auf gefuellter Amber-Flaeche
+   * (`.button-primary`, z. B. "Play test tone") nur mit 4,46:1 -- knapp unter
+   * den 4,5:1, die WCAG AA fuer Fliesstextgroesse verlangt (die Knopfschrift
+   * erbt die Grundschrift, 16px, kein Grosstext-Fall). Punkt 9 des Auftrags
+   * erlaubt fuer genau diesen Fall nur die Helligkeit des einen betroffenen
+   * Tokens im kleinsten noetigen Schritt nachzuziehen: #B35209 (R/G je einen
+   * Schritt dunkler, B unveraendert) traegt 4,52:1 -- siehe
+   * `tools/theme/contrast.mjs`. Diese eine Korrektur beruehrt Guidelines 1.1
+   * selbst (die dort das aeltere #B45309 nennt) und gehoert deshalb Fable zur
+   * Bestaetigung vorgelegt, nicht nur diesem Repo (HANDOVER.md). */
   --paper: #F6F1E8;
   --ink: #221D16;
-  --amber: #B45309;
+  --amber: #B35209;
   --gray: #6F6455;
 
   /* Papierkanten: Haarlinien, Kartenrand, Kartenflaeche. Nie fuer Text. */
@@ -1469,7 +1483,23 @@ a.menu-item {
  *
  * Amber-Budget: "Play test tone" (.button-primary) traegt das eine Amber. Die
  * Regler laufen in ink -- sie zeigen einen Zustand, sie laden nicht ein.
+ *
+ * `.settings-screen` engt den Abschnitts-Abstand von `.screen` (24 px) auf
+ * 2 px ein, und `.setting` selbst von 12 auf 8 px -- seit dem Theme-Picker
+ * (Ruling Notion-Log #111) hat dieser eine Screen sechs Abschnitte statt
+ * vier, und beim alten Abstand scrollte er deutlich (gemessen: 1209 statt
+ * 844 px bei 390 x 844). Nachgemessen mit der engeren Fassung: genau 844 px
+ * bei 390 x 844, 720 bei 1280 x 720, 900 bei 1440 x 900 -- keine Reserve,
+ * aber auch kein Scrollen. Betrifft nur diesen Screen: Progress, Account und
+ * About lesen weiterhin die 24 px von `.screen`.
  */
+.settings-screen {
+  gap: 2px;
+}
+
+.settings-screen .setting {
+  gap: 8px;
+}
 
 .setting {
   display: flex;
@@ -1519,6 +1549,84 @@ a.menu-item {
   font-size: 14px;
   line-height: 1.65;
   color: var(--gray);
+}
+
+/*
+ * Der Theme-Picker (Ruling Notion-Log #111, Punkt 4): ein Dreier-Raster je
+ * Gruppe statt einer Liste. Sieben Zeilen zu je `--tap` (44 px) sprengten den
+ * Screen bei 390 x 844 (gemessen: 1209 statt 844 px) -- Light und Dark haben
+ * exakt drei Mitglieder, die deshalb in eine einzige Reihe passen.
+ */
+.theme-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* "Light"/"Dark" -- dieselbe leise Kennzeichnung wie die Augenbraue im
+   Training (.eyebrow), nur ohne deren Ton-Hz-Zusatz. */
+.theme-group-label {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--gray);
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+
+/*
+ * Erbt Rand, Radius und Schriftfamilie von `.answer` (dieselbe Taste wie im
+ * Training/Tastenfeld) -- nur mit einer eigenen Groesse fuer Textnamen statt
+ * eines einzelnen Zeichens.
+ *
+ * **32 px, nicht `--tap` (44 px).** Sieben Ziele zu je 44 px sprengten den
+ * Screen (siehe Kommentar an `.theme-picker`); 32 px haelt WCAG 2.5.8 (AA,
+ * 24 x 24 CSS-Pixel) sicher ein, nur nicht die strengere AAA-Empfehlung aus
+ * 2.5.5, die `--tap` sonst ueberall in dieser App traegt. Eine dokumentierte
+ * Ausnahme fuer eine dichte Werkzeugleiste, keine neue Regel.
+ */
+.theme-option {
+  height: 28px;
+  min-height: 0;
+  padding: 0 var(--space-1);
+  position: relative;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--gray);
+  background: transparent;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+}
+
+.theme-option[data-full] {
+  grid-column: 1 / -1;
+}
+
+/*
+ * Ausgewaehlt heisst ink, nicht amber (Kopf von ui/Settings.tsx) -- das eine
+ * Amber dieser View bleibt "Play test tone". Derselbe Rahmenwechsel wie eine
+ * richtige Antwort im Training (`.answer[data-mark='correct']`): der Rand
+ * wird ink, keine Flaeche fuellt sich.
+ */
+.theme-option[aria-checked='true'] {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+.theme-option-mark {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  line-height: 1;
 }
 
 /* --- Sekundaeres --- */
@@ -1610,21 +1718,148 @@ a.menu-item {
   }
 }
 
+/* ==========================================================================
+   Themes (Runde T1, Ruling Notion-Log #111)
+   ==========================================================================
+   Sechs Paletten, ein Mechanismus: jede setzt nur die acht Farb-Tokens aus
+   dem `:root`-Block oben neu (Typografie, Abstaende, Dauern usw. bleiben
+   global, sie stehen nur einmal). Das ist der ganze Grund, warum diese Runde
+   ohne ein einziges Bauteil anzufassen auskommt -- seit Runde A kommt jede
+   Farbe im Bundle aus genau diesen acht Namen.
+
+   **Die Rollen-Namen bleiben, auch wo die Farbe es nicht mehr ist.** `--amber`
+   und `--amber-deep` heissen weiter so, obwohl der Akzent von Frost Petrol
+   ist, von Olive Moos, von Phosphor Leuchtgruen und von Ink ein kuehles Blau.
+   Ein Rollen-Name, der eine Farbe nennt, ist ein Kompromiss aus Runde A --
+   ihn jetzt umzubenennen waere ein Refactor ueber diese Aufgabe hinaus
+   (CLAUDE.md 5), und jede Komponente kennt ohnehin nur die Rolle, nie das Wort.
+
+   **Auf den drei dunklen Themes ist --amber-deep heller als --amber, nicht
+   dunkler.** Das ist eine ausdrueckliche Umkehrung von Addendum (b) (Notion-
+   Log #41, "--amber-deep ist der interne hover/active-Shade"): auf dunklem
+   Grund ist "dunkler" kein Feedback mehr, sondern ein Verschwinden der
+   Flaeche. Der hover/active-Zweck bleibt derselbe, nur die Richtung dreht
+   sich mit dem Grund.
+*/
+
 /*
- * Dark-Set: bewusst noch nicht scharf geschaltet (kein prefers-color-scheme).
- * Es steht hier, damit die Rollen schon benannt sind. Wird es aktiviert,
- * gehoert eine Kontrastpruefung dazu -- nicht vorher.
+ * Voreinstellung "System" (Punkt 2): keine ausdrueckliche Wahl bedeutet kein
+ * `data-theme`-Attribut, und dann entscheidet allein das Betriebssystem
+ * zwischen Paper (das `:root` oben ohnehin schon ist) und Night. Der
+ * `:not([data-theme])`-Zusatz ist der ganze Witz: sobald jemand ausdruecklich
+ * waehlt, gewinnt IMMER `[data-theme='...']` unten -- unabhaengig davon, was
+ * das Betriebssystem gerade sagt.
  */
-[data-theme='dark'] {
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --paper: #17140F;
+    --ink: #EDE6D8;
+    --amber: #D97706;
+    --amber-deep: #F59E0B;
+    --gray: #A79C8A;
+    --edge: #322C22;
+    --edge-soft: #262118;
+    --card: #1E1A14;
+  }
+}
+
+/*
+ * Ausdrueckliche Wahl "Paper" -- identisch zur Grundstellung in `:root`.
+ * Ohne diesen Block waere Paper nicht waehlbar, waehrend das Geraet dunkel
+ * bevorzugt: ohne `data-theme` gewaenne sonst die Medienabfrage oben.
+ */
+[data-theme='paper'] {
+  color-scheme: light;
+  --paper: #F6F1E8;
+  --ink: #221D16;
+  --amber: #B35209;
+  --amber-deep: #92400E;
+  --gray: #6F6455;
+  --edge: #DED5C4;
+  --edge-soft: #E5DCCB;
+  --card: #FFFCF6;
+}
+
+/* Frost -- kuehles Grau, Petrol als Akzent. */
+[data-theme='frost'] {
+  color-scheme: light;
+  --paper: #F1F3F5;
+  --ink: #1A2028;
+  --amber: #0E6E6E;
+  --amber-deep: #0A5252;
+  --gray: #5A646E;
+  --edge: #D5DBE0;
+  --edge-soft: #E3E7EB;
+  --card: #FAFBFC;
+}
+
+/* Olive -- neutralwarmes Papier, Moos als Akzent. */
+[data-theme='olive'] {
+  color-scheme: light;
+  --paper: #F2F1E6;
+  --ink: #1E2118;
+  --amber: #4C6A26;
+  --amber-deep: #3B5320;
+  --gray: #61665A;
+  --edge: #DCDBCB;
+  --edge-soft: #E6E5D8;
+  --card: #FAF9F1;
+}
+
+/* Night -- die Marke bei Nacht: derselbe Amber-Ton, nur auf dunklem Papier. */
+[data-theme='night'] {
   color-scheme: dark;
-  --paper: #17130e;
-  --ink: #f0e9dd;
-  --amber: #e08a3c;
-  --amber-deep: #f0a95c;
-  --gray: #9a8f7c;
-  --edge: #3a3128;
-  --edge-soft: #2a231b;
-  --card: #1e1913;
+  --paper: #17140F;
+  --ink: #EDE6D8;
+  --amber: #D97706;
+  --amber-deep: #F59E0B;
+  --gray: #A79C8A;
+  --edge: #322C22;
+  --edge-soft: #262118;
+  --card: #1E1A14;
+}
+
+/* Phosphor -- CRT-Gruen als Akzent, Funkraum-Nostalgie. Nur der Akzent ist
+   gruen; --ink bleibt ein nahes Weiss, damit Fliesstext keine Lesefalle wird. */
+[data-theme='phosphor'] {
+  color-scheme: dark;
+  --paper: #0A0D0B;
+  --ink: #DCE8DE;
+  --amber: #4FBF74;
+  --amber-deep: #6FD68F;
+  --gray: #93A697;
+  --edge: #1E2620;
+  --edge-soft: #161D18;
+  --card: #10150F;
+}
+
+/* Ink -- kuehles Tiefblau. Der Themename und der Token --ink treffen sich
+   hier zufaellig; die Rolle "Text" ist gemeint, nie die Farbe des Themes. */
+[data-theme='ink'] {
+  color-scheme: dark;
+  --paper: #10151B;
+  --ink: #E4E9EE;
+  --amber: #5AA9CC;
+  --amber-deep: #7CC1DE;
+  --gray: #96A3AF;
+  --edge: #232C36;
+  --edge-soft: #1A222B;
+  --card: #151B22;
+}
+
+/*
+ * Punkt 5: kein animierter Uebergang beim Umschalten. Ein Themewechsel setzt
+ * diese Klasse fuer einen Frame (ui/theme.ts), damit keine der bestehenden
+ * `transition: background-color/border-color`-Regeln (Play-Kreis, gefuellte
+ * Knoepfe) den kompletten Bildschirm in der alten Farbe nachlaufen laesst,
+ * waehrend die Tokens schon auf das neue Theme zeigen. Betrifft nur den
+ * Wechsel selbst -- Hover- und Fokus-Uebergaenge bleiben unberuehrt, sobald
+ * die Klasse wieder weg ist.
+ */
+.theme-switching,
+.theme-switching * {
+  transition: none !important;
 }
 
 /* ==========================================================================

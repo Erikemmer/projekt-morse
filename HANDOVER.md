@@ -1,4 +1,69 @@
-# Übergabe — Stand nach Runde P3 (Lernmodus-Tastatur, Sende-Standardweg, alle 36 Klänge)
+# Übergabe — Stand nach Runde T1 (Themes und Dark Mode)
+
+**Repository:** https://github.com/Erikemmer/projekt-morse
+**Stand:** P3 ist gemergt (`main` = `5d4e719`). **Runde T1 setzt Ruling
+Notion-Log #111 um** und ist auf ausdrücklichen Nutzerwunsch direkt gemergt,
+ohne auf Fables Review zu warten.
+
+Sechs Paletten (Paper/Frost/Olive hell, Night/Phosphor/Ink dunkel) über
+`data-theme` auf `<html>`; Voreinstellung "System" folgt `prefers-color-scheme`
+zwischen Paper und Night. **Kein Bauteil wurde angefasst** — seit Runde A kommt
+jede Farbe aus den acht Tokens in `src/styles.css`, ein Theme ist nur ein
+neuer Satz derselben Werte.
+
+Berührt:
+
+| Datei | Warum |
+|---|---|
+| `src/styles.css` | sechs `[data-theme='...']`-Blöcke + `@media (prefers-color-scheme: dark)`-Fallback ersetzen den alten, nie scharfgeschalteten `[data-theme='dark']`-Platzhalter; `.theme-switching` unterdrückt den Übergang beim Umschalten (Punkt 5); `--amber` in Paper auf `#B35209` korrigiert (siehe unten); `.theme-picker`/`.theme-options`/`.theme-option` fürs Settings-Raster; `.settings-screen` engt den Abschnittsabstand ein (Platzbudget) |
+| **`src/ui/theme.ts`** | **neu:** wendet `data-theme` an, zieht `<meta name="theme-color">` aus dem berechneten `--paper` nach |
+| `src/engine/deviceSettings.ts` | **neu:** `Theme`-Typ, `THEMES`, `DEFAULT_THEME='system'`, additives `DeviceSettings.theme`, `withTheme`, Validierung in `parseDeviceSettings` |
+| `src/engine/sync.ts` | Kopf-Kommentar: Theme geht nie zum Konto, wie Tonhöhe/Lautstärke |
+| `src/ui/Settings.tsx` | Theme-Radiogroup: System, dann Light/Dark mit je drei Kacheln im Dreier-Raster (nicht als Liste — siehe Platzbudget), Auswahl markiert durch Rahmenwechsel nach ink + Häkchen (nie Farbe allein) |
+| `src/ui/App.tsx` | Theme-Effekt (`applyTheme`, matchMedia-Listener im System-Modus), `onTheme`-Callback |
+| `index.html` | Inline-Skript gegen Aufblitzen vor dem ersten Rendern (Punkt 7) |
+| `tools/learn/learn.css` + `tools/learn/verify.mjs` | eigener `@media (prefers-color-scheme: dark)`-Block mit den Night-Werten von Hand (Punkt 8: nur Paper/Night, keine Auswahl auf den redaktionellen Seiten); der bestehende Farbliteral-Wächter in `verify.mjs` erlaubt jetzt zwei `:root`-Blöcke statt einem |
+| **`tools/theme/contrast.mjs`** | **neu:** 24 Kontrastwerte (18 verlangt + 6 Fokusring-Bonus), alle über ihrer Grenze |
+| **`tools/theme/no-literal-colors.mjs`** | **neu:** der Wächter aus Punkt 11 — scannt `src/` nach Farbliteralen außerhalb der Token-Blöcke, jetzt Teil von `npm run build` |
+| `tools/amber/check.mjs` | `AMBER_THEME`-Schalter: ohne gesetzt läuft der volle 37-Ansichten-Durchlauf, mit gesetzt (`paper`/`frost`/`olive`/`night`/`phosphor`/`ink`) laufen sechs Kern-Ansichten in diesem Theme |
+
+**Ein Fund unterwegs, nicht von den neuen Themes verursacht:** `--amber`
+(`#B45309`, aus Guidelines 1.1) trägt Paper-Text auf gefüllter Amber-Fläche
+(`.button-primary`, z. B. "Play test tone") nur 4,46:1 — knapp unter der
+4,5:1-Grenze von WCAG AA für Fließtextgröße. Punkt 9 des Auftrags erlaubt für
+genau diesen Fall die kleinstmögliche Korrektur an einem Token: `#B35209`
+(4,52:1). **Diese eine Zeile weicht von Guidelines 1.1 ab und gehört Fable zur
+Bestätigung vorgelegt** — alles andere folgt den in dieser Runde vorgegebenen
+Werten unverändert.
+
+**Settings musste komprimiert werden, um nicht zu scrollen:** sieben
+Radiogroup-Zeilen zu je 44 px hätten den Screen bei 390 × 844 auf 1209 px
+gebracht. Gelöst über ein Dreier-Raster (Light/Dark haben je genau drei
+Mitglieder), 28 px hohe Kacheln (WCAG 2.5.8 AA erfüllt, nicht die strengere
+2.5.5-AAA-Empfehlung von `--tap`) und einen engeren Abschnittsabstand nur auf
+diesem Screen (`.settings-screen`). Nachgemessen: **exakt 844 px bei
+390 × 844, 720 bei 1280 × 720, 900 bei 1440 × 900** — kein Scrollen, aber auch
+keine Reserve mehr.
+
+**Tests:** 465 (18 Dateien, +6 für `Theme`). `npm test`, `npm run build`
+(ruft jetzt auch `verify:colors` auf), `npm run verify:amber` (37 Ansichten im
+Standard-Theme plus sechs Kern-Ansichten in jedem der fünf anderen Themes,
+alle Budget gehalten), `npm run verify:contrast` (24/24 über Grenze) und
+`npm run verify:learn` sind grün.
+
+Screenshots: [`settings-theme-picker-390.png`](./docs/screenshots/settings-theme-picker-390.png),
+Training bei 390 in allen sechs Themes
+([paper](./docs/screenshots/training-theme-paper-390.png),
+[frost](./docs/screenshots/training-theme-frost-390.png),
+[olive](./docs/screenshots/training-theme-olive-390.png),
+[night](./docs/screenshots/training-theme-night-390.png),
+[phosphor](./docs/screenshots/training-theme-phosphor-390.png),
+[ink](./docs/screenshots/training-theme-ink-390.png)).
+
+**Nicht mitgeändert:** die Rollen-Namen `--amber`/`--amber-deep` bleiben, auch
+wo die Farbe es nicht mehr ist (Frost: Petrol, Olive: Moos, Phosphor: Grün,
+Ink: Blau) — sie umzubenennen wäre ein Refactor über die Aufgabe hinaus.
+
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
 **Stand:** `main` steht bei `df16be6` (P2 ist gemergt) — der Owner hat diesen

@@ -61,6 +61,32 @@
 
 /* @tokens */
 
+/*
+ * Dunkel folgt nur dem Geraet (Ruling Notion-Log #111, Punkt 8) -- keine
+ * Themewahl auf den redaktionellen Seiten, nur Paper/Night ueber
+ * `prefers-color-scheme`. Die App hat sechs Paletten und eine Auswahl dafuer
+ * (`src/styles.css`, `[data-theme]`); dieses Stylesheet bekommt bewusst nur
+ * die zwei System-Werte, von Hand hierher kopiert, weil `tools/learn/build.mjs`
+ * ausschliesslich den `:root`-Block (den hellen Marker oben) automatisch
+ * uebernimmt -- ein zweiter Marker fuer einen einzelnen `@media`-Block waere
+ * mehr Mechanik, als sieben Werte zweimal zu pflegen kosten. Die Zahlen
+ * muessen von Hand mit `[data-theme='night']` in src/styles.css
+ * uebereinstimmen; `tools/theme/contrast.mjs` prueft nur die App-Seite davon.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: #17140F;
+    --ink: #EDE6D8;
+    --amber: #D97706;
+    --amber-deep: #F59E0B;
+    --gray: #A79C8A;
+    --edge: #322C22;
+    --edge-soft: #262118;
+    --card: #1E1A14;
+  }
+}
+
 *,
 *::before,
 *::after {

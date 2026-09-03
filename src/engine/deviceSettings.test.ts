@@ -1,17 +1,22 @@
 /**
- * Tests für die Geräte-Einstellungen: Tonhöhe und Lautstärke.
+ * Tests für die Geräte-Einstellungen: Tonhöhe, Lautstärke und Theme.
  *
  * Der Kern ist nicht das Speichern, sondern die Grenze: **die Einstellung
  * trägt Stufe 0, die HVPT-Bänder ab Stufe 1 nicht.** Das wird hier
  * ausdrücklich geprüft, weil es die Zeile in der UI ist, die es behauptet
- * (CLAUDE.md 2.6).
+ * (CLAUDE.md 2.6). Das Theme (Ruling Notion-Log #111) braucht dieselbe
+ * additive Lese-Garantie wie jedes andere Feld hier: ein alter Eintrag ohne
+ * das Feld bekommt die Voreinstellung, nicht einen verworfenen Datensatz.
  */
 
 import { describe, expect, it } from 'vitest';
 
 import {
+  DEFAULT_THEME,
+  THEMES,
   defaultDeviceSettings,
   parseDeviceSettings,
+  withTheme,
   withToneHz,
   withVolume,
 } from './deviceSettings';
@@ -33,7 +38,11 @@ function stageOneProgress() {
 
 describe('Geräte-Einstellungen', () => {
   it('startet bei der Voreinstellung des Trainings', () => {
-    expect(defaultDeviceSettings()).toEqual({ toneHz: DEFAULT_TONE_HZ, volume: DEFAULT_VOLUME });
+    expect(defaultDeviceSettings()).toEqual({
+      toneHz: DEFAULT_TONE_HZ,
+      volume: DEFAULT_VOLUME,
+      theme: DEFAULT_THEME,
+    });
   });
 
   it('hält die Tonhöhe in der Spanne', () => {
@@ -58,7 +67,7 @@ describe('Geräte-Einstellungen', () => {
 
   it('ändert die jeweils andere Einstellung nicht mit', () => {
     const loud = withVolume(defaultDeviceSettings(), 0.8);
-    expect(withToneHz(loud, 700)).toEqual({ toneHz: 700, volume: 0.8 });
+    expect(withToneHz(loud, 700)).toEqual({ toneHz: 700, volume: 0.8, theme: DEFAULT_THEME });
   });
 
   it('liest einen gespeicherten Eintrag verlustfrei zurück', () => {
@@ -76,7 +85,42 @@ describe('Geräte-Einstellungen', () => {
     expect(parseDeviceSettings({ toneHz: 2000, volume: 9 })).toEqual({
       toneHz: TONE_HZ_RANGE.max,
       volume: VOLUME_RANGE.max,
+      theme: DEFAULT_THEME,
     });
+  });
+});
+
+describe('Theme (Ruling Notion-Log #111)', () => {
+  it('startet bei "system"', () => {
+    expect(defaultDeviceSettings().theme).toBe('system');
+  });
+
+  it('withTheme setzt genau das eine Feld', () => {
+    const settings = withTheme(defaultDeviceSettings(), 'phosphor');
+    expect(settings.theme).toBe('phosphor');
+    expect(settings.toneHz).toBe(DEFAULT_TONE_HZ);
+    expect(settings.volume).toBe(DEFAULT_VOLUME);
+  });
+
+  it('kennt alle sechs Themes plus "system"', () => {
+    expect(THEMES).toEqual(['system', 'paper', 'frost', 'olive', 'night', 'phosphor', 'ink']);
+  });
+
+  it('liest ein gespeichertes Theme verlustfrei zurück', () => {
+    for (const theme of THEMES) {
+      const settings = withTheme(defaultDeviceSettings(), theme);
+      expect(parseDeviceSettings(JSON.parse(JSON.stringify(settings)))).toEqual(settings);
+    }
+  });
+
+  it('ist additiv: ein alter Eintrag ohne das Feld bekommt "system"', () => {
+    expect(parseDeviceSettings({ toneHz: 700, volume: 0.5 }).theme).toBe('system');
+  });
+
+  it('faellt bei einem unbekannten Wert auf "system" zurueck, statt den Eintrag zu verwerfen', () => {
+    const settings = parseDeviceSettings({ toneHz: 700, theme: 'sepia' });
+    expect(settings.theme).toBe('system');
+    expect(settings.toneHz).toBe(700);
   });
 });
 

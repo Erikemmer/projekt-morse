@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && tsc -p functions --noEmit && vite build && npm run build:learn && npm run verify:learn",
+    "build": "tsc --noEmit && tsc -p functions --noEmit && npm run verify:colors && vite build && npm run build:learn && npm run verify:learn",
     "build:learn": "node tools/learn/build.mjs",
     "verify:learn": "node tools/learn/verify.mjs",
     "verify:amber": "node tools/amber/check.mjs",
+    "verify:contrast": "node tools/theme/contrast.mjs",
+    "verify:colors": "node tools/theme/no-literal-colors.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"

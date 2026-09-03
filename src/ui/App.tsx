@@ -43,7 +43,7 @@ import {
   nextCard,
   type LearnState,
 } from '../engine/learn';
-import { withToneHz, withVolume, type DeviceSettings } from '../engine/deviceSettings';
+import { withTheme, withToneHz, withVolume, type DeviceSettings } from '../engine/deviceSettings';
 import {
   DRILL_INVITATION_MIN_SLOW,
   DRILL_ROUNDS,
@@ -119,6 +119,7 @@ import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressS
 import { loadDeviceSettings, saveDeviceSettings } from './deviceStorage';
 import { Settings } from './Settings';
 import { dayQuotaLine, streakLine } from './statusLines';
+import { applyTheme, syncThemeColorMeta } from './theme';
 import { todayISO } from './today';
 
 export function App() {
@@ -879,6 +880,32 @@ export function App() {
     setSend((current) => (current === null ? null : retuneSendHomeTone(current, device.toneHz)));
   }, [device.toneHz]);
 
+  /**
+   * Das Theme auf den DOM ziehen (Ruling Notion-Log #111) -- rein imperativ
+   * (`ui/theme.ts`), weil weder `data-theme` noch
+   * `<meta name="theme-color">` React-Zustand sind. Laeuft auch beim
+   * allerersten Rendern einmal: das Inline-Skript in `index.html` hat
+   * `data-theme` fuer eine ausdrueckliche Wahl schon vor dem ersten Zeichnen
+   * gesetzt (Punkt 7), dieser Effekt zieht danach nur noch die Meta-Farbe
+   * nach und uebernimmt jeden spaeteren Wechsel.
+   *
+   * Im Modus 'system' haengt sich zusaetzlich ein Listener an die
+   * Medienabfrage: wechselt das Betriebssystem mitten in der Sitzung
+   * zwischen hell und dunkel (z. B. der automatische Wechsel bei
+   * Sonnenuntergang), zieht das nur die Meta-Farbe nach -- `data-theme`
+   * bleibt abwesend, die Medienabfrage in styles.css uebernimmt den Rest
+   * ohnehin selbststaendig.
+   */
+  useEffect(() => {
+    applyTheme(device.theme);
+    if (device.theme !== 'system') return undefined;
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const onChange = () => syncThemeColorMeta();
+    media.addEventListener('change', onChange);
+    return () => media.removeEventListener('change', onChange);
+  }, [device.theme]);
+
   /*
    * Das Tempo zuruecksetzen (Ruling #83, B.9) -- der eine Weg abwaerts, und er
    * gehoert dem Nutzer.
@@ -1254,6 +1281,7 @@ export function App() {
           effectiveWpm={session.progress.effectiveWpm}
           onToneHz={(hz) => applySettings(withToneHz(device, hz))}
           onVolume={(volume) => applySettings(withVolume(device, volume))}
+          onTheme={(theme) => applySettings(withTheme(device, theme))}
           onPreview={playPreview}
           onResetSpeed={resetSpeed}
           headingRef={focusTarget}

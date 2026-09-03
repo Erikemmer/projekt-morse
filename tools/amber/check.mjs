@@ -28,6 +28,13 @@
  *
  * Aufruf: `npm run verify:amber` (nach `npm run build`).
  *
+ * **Themes (Ruling Notion-Log #111, Punkt 10):** ohne `AMBER_THEME` läuft der
+ * volle Durchlauf über alle Ansichten im Standard-Theme. `AMBER_THEME=night
+ * npm run verify:amber` schaltet stattdessen auf die sechs Kern-Ansichten in
+ * `CORE_VIEW_NAMES` um, jetzt im genannten Theme (`paper`, `frost`, `olive`,
+ * `night`, `phosphor` oder `ink`) -- ein Schalter im bestehenden Skript, keine
+ * Kopie davon (CLAUDE.md 4).
+ *
  * Zwei Dinge, die nicht im Projekt liegen und deshalb konfigurierbar sind:
  *
  * - **playwright-core** ist ein Werkzeug, keine Projektabhängigkeit
@@ -55,6 +62,33 @@ const BASE_URL = `http://localhost:${PORT}`;
 
 /** Der Schlüssel, unter dem die App ihren Fortschritt hält. */
 const STORAGE_KEY = 'projekt-morse:progress';
+/** Der Schlüssel der Geräte-Einstellungen -- Tonhöhe, Lautstärke, Theme. */
+const DEVICE_STORAGE_KEY = 'projekt-morse:device';
+
+/**
+ * Themes (Ruling Notion-Log #111, Punkt 10). `null` heißt: kein `data-theme`
+ * gesetzt, also das Standard-Theme (System, in dieser Umgebung ohne
+ * `prefers-color-scheme: dark` gleich Paper) -- darauf läuft der volle
+ * Durchlauf über alle Ansichten. Jedes benannte Theme läuft nur über die
+ * sechs Kern-Ansichten unten: sieben volle Durchläufe wären derselbe Ton
+ * sechsmal wiederholt, keine sechsmal so gute Prüfung.
+ */
+const AMBER_THEME = process.env.AMBER_THEME ?? null;
+
+/**
+ * Die sechs Ansichten, die jedes der fünf benannten Themes einzeln durchläuft
+ * -- eine je Übungsmodus, dazu das Menü. Namen müssen exakt zu `VIEWS` unten
+ * passen; ein Tippfehler hier ließe eine Ansicht beim Kurzdurchlauf still
+ * verschwinden statt laut zu scheitern (siehe `main`, das dagegen prüft).
+ */
+const CORE_VIEW_NAMES = [
+  'Training, bereit',
+  'Training, Ton läuft',
+  'Tastenfeld, Auflösung falsch (U1)',
+  'Wort-Training, Eingabe offen (F2)',
+  'Send, bereit (Tastenweg, Standard)',
+  'Menü offen',
+];
 
 const LETTERS = 'KMRSUA';
 const KEYPAD_LETTERS = 'KMRSUAPTLOWIN'; // 13 -- ab hier zeigt die App das Tastenfeld
@@ -727,13 +761,24 @@ async function openBrowser() {
 }
 
 async function main() {
+  let views = VIEWS;
+  if (AMBER_THEME !== null) {
+    views = VIEWS.filter((view) => CORE_VIEW_NAMES.includes(view.name));
+    // Ein Tippfehler in CORE_VIEW_NAMES ließe eine Ansicht still verschwinden
+    // statt laut zu scheitern -- das darf nicht unbemerkt bleiben.
+    const missing = CORE_VIEW_NAMES.filter((name) => !VIEWS.some((view) => view.name === name));
+    if (missing.length > 0) {
+      throw new Error(`CORE_VIEW_NAMES nennt unbekannte Ansichten: ${missing.join(', ')}`);
+    }
+  }
+
   const server = await startPreview();
   const browser = await openBrowser();
   const failures = [];
   const rows = [];
 
   try {
-    for (const view of VIEWS) {
+    for (const view of views) {
       const context = await browser.newContext({
         viewport: view.viewport ?? { width: 390, height: 844 },
       });
@@ -745,6 +790,15 @@ async function main() {
         await page.addInitScript(
           ([key, value]) => window.localStorage.setItem(key, value),
           [STORAGE_KEY, JSON.stringify(view.seed)],
+        );
+      }
+      if (AMBER_THEME !== null) {
+        // Dieselbe Form wie engine/deviceSettings.ts -- ein Duplikat, wie
+        // `progress()` oben schon eins ist (siehe dessen Kommentar): das
+        // Skript prüft die ausgelieferte App, nicht die Engine.
+        await page.addInitScript(
+          ([key, value]) => window.localStorage.setItem(key, value),
+          [DEVICE_STORAGE_KEY, JSON.stringify({ toneHz: 620, volume: 0.25, theme: AMBER_THEME })],
         );
       }
 
@@ -779,6 +833,8 @@ async function main() {
     server.kill();
   }
 
+  const themeLabel = AMBER_THEME === null ? 'Standard-Theme' : `Theme: ${AMBER_THEME}`;
+  console.log(`${themeLabel} — ${views.length} Ansicht(en)`);
   const width = Math.max(...rows.map((row) => row.name.length));
   console.log(`${'Ansicht'.padEnd(width)}  Amber  Wo`);
   console.log('-'.repeat(width + 30));
@@ -799,7 +855,9 @@ async function main() {
     return;
   }
 
-  console.log(`Amber-Budget gehalten: ${rows.length} Ansichten, höchstens eine Fläche je View.`);
+  console.log(
+    `Amber-Budget gehalten (${themeLabel}): ${rows.length} Ansichten, höchstens eine Fläche je View.`,
+  );
 }
 
 await main();

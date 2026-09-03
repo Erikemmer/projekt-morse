@@ -12,6 +12,12 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <!-- Schriften liegen als woff2 im Repo (@font-face in styles.css) -- kein Fremdabruf. -->
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!--
+      Startwert fuer <meta name="theme-color"> -- Paper, dieselbe Farbe wie
+      die Grundstellung in styles.css. `ui/theme.ts` zieht sie nach jedem
+      Rendern auf das tatsaechlich wirksame Theme nach; dieser Wert traegt
+      nur den allerersten Moment, bevor React ueberhaupt lief.
+    -->
     <meta name="theme-color" content="#f6f1e8" />
     <!--
       Die Build-Kennung fuer den About-Screen. Der Produktionsbuild ersetzt
@@ -21,6 +27,33 @@
       erzeugt damit weiter keinen Cache-Wechsel).
     -->
     <meta name="build" content="dev" />
+    <!--
+      Gegen das Aufblitzen des falschen Themes (Ruling Notion-Log #111,
+      Punkt 7): das gespeicherte Theme muss am <html> stehen, BEVOR der
+      Browser zum ersten Mal zeichnet -- danach ist es zu spaet, React laeuft
+      erst nach diesem ersten Anstrich. Ein Modul-Skript waere dafuer zu spaet
+      (es laedt asynchron); nur ein synchrones Inline-Skript im <head> kommt
+      rechtzeitig. Es dupliziert zwangslaeufig den Storage-Schluessel aus
+      ui/deviceStorage.ts und die Feldform aus engine/deviceSettings.ts --
+      es kann von dort nicht importieren, ohne selbst ein Modul zu werden.
+      Faellt "theme" auf "system" oder fehlt es, passiert nichts: dann
+      entscheidet allein die CSS-Medienabfrage (prefers-color-scheme), ganz
+      ohne dieses Skript.
+    -->
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem('projekt-morse:device');
+          var theme = raw && JSON.parse(raw).theme;
+          if (theme && theme !== 'system') {
+            document.documentElement.setAttribute('data-theme', theme);
+          }
+        } catch (error) {
+          // Kein Speicher (privater Modus), kaputtes JSON -- dann bleibt es
+          // bei "system", nicht bei einer stehenden Seite.
+        }
+      })();
+    </script>
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>Morse Lab</title>
   </head>
