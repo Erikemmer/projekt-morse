@@ -16,7 +16,11 @@ import { dirname, join } from 'node:path';
 
 import { parseFrontmatter, pathFor, renderPage, renderSitemap } from './pages.mjs';
 
-const CONTENT_DIR = 'content/learn';
+// Zwei Inhaltsordner (Ruling L2): `learn` sind die redaktionellen Artikel
+// (Fable), `legal` sind Impressum/Datenschutz (Ruling L2, Punkt 1) -- beide
+// laufen durch denselben Generator und landen in derselben Seitenliste, damit
+// die Pendant- und hreflang-Pruefung unten beide Baeume gemeinsam sieht.
+const CONTENT_DIRS = ['content/learn', 'content/legal'];
 const DIST = 'dist';
 const STYLESHEET = 'tools/learn/learn.css';
 const FONT_DIR = 'src/fonts';
@@ -69,18 +73,20 @@ async function write(relativePath, contents) {
 }
 
 async function main() {
-  const files = (await readdir(CONTENT_DIR)).filter((name) => name.endsWith('.md')).sort();
-  if (files.length === 0) throw new Error(`${CONTENT_DIR}: keine Markdown-Dateien`);
-
   const pages = [];
-  for (const file of files) {
-    const source = await readFile(join(CONTENT_DIR, file), 'utf8');
-    const { meta, body } = parseFrontmatter(source, file);
-    // Der Dateiname trägt Slug und Sprache; weicht er vom Frontmatter ab, ist
-    // eine der beiden Angaben falsch, und beide werden gebraucht.
-    const expected = `${meta.slug}.${meta.lang}.md`;
-    if (file !== expected) throw new Error(`${file}: Frontmatter erwartet den Namen ${expected}`);
-    pages.push({ meta, body, name: file });
+  for (const dir of CONTENT_DIRS) {
+    const files = (await readdir(dir)).filter((name) => name.endsWith('.md')).sort();
+    if (files.length === 0) throw new Error(`${dir}: keine Markdown-Dateien`);
+
+    for (const file of files) {
+      const source = await readFile(join(dir, file), 'utf8');
+      const { meta, body } = parseFrontmatter(source, file);
+      // Der Dateiname trägt Slug und Sprache; weicht er vom Frontmatter ab, ist
+      // eine der beiden Angaben falsch, und beide werden gebraucht.
+      const expected = `${meta.slug}.${meta.lang}.md`;
+      if (file !== expected) throw new Error(`${file}: Frontmatter erwartet den Namen ${expected}`);
+      pages.push({ meta, body, name: file });
+    }
   }
 
   // Jedes Paar muss sich gegenseitig nennen — sonst zeigt hreflang ins Leere.
@@ -97,7 +103,8 @@ async function main() {
   const written = [];
   for (const page of pages) {
     const html = renderPage(page);
-    written.push(await write(`${pathFor(page.meta.lang, page.meta.slug)}index.html`, html));
+    const path = pathFor(page.meta.lang, page.meta.slug, page.meta.section);
+    written.push(await write(`${path}index.html`, html));
   }
 
   written.push(await write('sitemap.xml', renderSitemap(pages)));

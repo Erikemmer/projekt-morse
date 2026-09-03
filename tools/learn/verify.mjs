@@ -27,7 +27,10 @@ import { join } from 'node:path';
 import { PAGE_ORDER, SITE, otherLang, parseFrontmatter, pathFor } from './pages.mjs';
 
 const DIST = 'dist';
-const CONTENT_DIR = 'content/learn';
+// Zwei Inhaltsordner wie im Generator (build.mjs, Ruling L2): `learn` die
+// Artikel, `legal` Impressum/Datenschutz -- geprüft wird beides zusammen,
+// damit die hreflang-Gegenprobe beide Bäume sieht.
+const CONTENT_DIRS = ['content/learn', 'content/legal'];
 
 const problems = [];
 const notes = [];
@@ -59,6 +62,7 @@ function headTags(html) {
     title: tag(html, /<title>([^<]*)<\/title>/),
     description: tag(html, /<meta name="description" content="([^"]*)"/),
     keywords: tag(html, /<meta name="keywords" content="([^"]*)"/),
+    robots: tag(html, /<meta name="robots" content="([^"]*)"/),
     canonical: tag(html, /<link rel="canonical" href="([^"]+)"/),
     xDefault: tag(html, /<link rel="alternate" hreflang="x-default" href="([^"]+)"/),
     ogTitle: tag(html, /<meta property="og:title" content="([^"]*)"/),
@@ -80,31 +84,37 @@ function headTags(html) {
 
 async function main() {
   // 1. Was der Inhalt verspricht — daraus ergibt sich, was in dist liegen muss.
-  const files = (await readdir(CONTENT_DIR)).filter((name) => name.endsWith('.md')).sort();
-
   const pages = [];
-  for (const name of files) {
-    const { meta } = parseFrontmatter(await readFile(join(CONTENT_DIR, name), 'utf8'), name);
-    const path = `${pathFor(meta.lang, meta.slug)}index.html`;
-    if (!(await exists(path))) {
-      problems.push(`${path} fehlt in dist/ — ist "npm run build" gelaufen?`);
-      continue;
+  for (const dir of CONTENT_DIRS) {
+    const files = (await readdir(dir)).filter((name) => name.endsWith('.md')).sort();
+    for (const name of files) {
+      const { meta } = parseFrontmatter(await readFile(join(dir, name), 'utf8'), name);
+      const path = `${pathFor(meta.lang, meta.slug, meta.section)}index.html`;
+      if (!(await exists(path))) {
+        problems.push(`${path} fehlt in dist/ — ist "npm run build" gelaufen?`);
+        continue;
+      }
+      const html = await readFile(join(DIST, path), 'utf8');
+      pages.push({ meta, name, path, html, head: headTags(html) });
     }
-    const html = await readFile(join(DIST, path), 'utf8');
-    pages.push({ meta, name, path, html, head: headTags(html) });
   }
 
-  check(pages.length === 14, `14 Seiten erwartet, ${pages.length} gefunden`);
+  const learnPages = pages.filter((page) => page.meta.section !== 'legal');
+  const legalPages = pages.filter((page) => page.meta.section === 'legal');
+  check(learnPages.length === 14, `14 Learn-Seiten erwartet, ${learnPages.length} gefunden`);
+  check(legalPages.length === 4, `4 Rechtsseiten erwartet, ${legalPages.length} gefunden (Ruling L2)`);
 
-  const byUrl = new Map(pages.map((page) => [`${SITE}${pathFor(page.meta.lang, page.meta.slug)}`, page]));
+  const byUrl = new Map(
+    pages.map((page) => [`${SITE}${pathFor(page.meta.lang, page.meta.slug, page.meta.section)}`, page]),
+  );
 
   console.log('Seite                                     h1  canonical  hreflang  og  ld  Titel');
   console.log('-'.repeat(86));
 
   for (const page of pages) {
     const { head, meta } = page;
-    const canonical = `${SITE}${pathFor(meta.lang, meta.slug)}`;
-    const pairUrl = `${SITE}${pathFor(otherLang(meta.lang), meta.pair)}`;
+    const canonical = `${SITE}${pathFor(meta.lang, meta.slug, meta.section)}`;
+    const pairUrl = `${SITE}${pathFor(otherLang(meta.lang), meta.pair, meta.section)}`;
     const enUrl = meta.lang === 'en' ? canonical : pairUrl;
 
     const okH1 = check(head.h1.length === 1, `${page.path}: ${head.h1.length} h1`);
@@ -184,7 +194,26 @@ async function main() {
       previous = level;
     }
 
-    // Berichte, keine Fehler.
+    // Rechtsseiten: `noindex, follow` (Ruling L2, Punkt 2) -- eine private
+    // Wohnanschrift soll nicht in den Suchindex, die Verweise darin aber
+    // gültig bleiben. Learn-Artikel tragen umgekehrt gar kein robots-Meta.
+    if (meta.section === 'legal') {
+      check(
+        head.robots === 'noindex, follow',
+        `${page.path}: robots ist "${head.robots}", erwartet "noindex, follow"`,
+      );
+    } else {
+      check(head.robots === undefined, `${page.path}: trägt unerwartet ein robots-Meta`);
+    }
+
+    // Ein nicht ersetzter Platzhalter ist schlimmer als keine Angabe (Ruling
+    // L2, Punkt 8) -- eine Anbieterkennzeichnung mit "[[…]]" darf nicht
+    // ausgeliefert werden. Bricht hart ab, kein Bericht.
+    check(!page.html.includes('[['), `${page.path}: enthält einen ungefüllten Platzhalter "[["`);
+
+    // Berichte, keine Fehler -- auf `noindex` (Rechtsseiten) ohnehin nicht
+    // Pflicht (Ruling L2, Punkt 7), die vorgegebenen Werte bleiben aber
+    // unverändert, also wird trotzdem berichtet.
     if (meta.metaTitle.length > 60) {
       notes.push(`${page.name}: metaTitle ist ${meta.metaTitle.length} Zeichen (§4 nennt ≤ 60)`);
     }
@@ -205,16 +234,21 @@ async function main() {
   }
 
   // 2. Sitemap: jede genannte Adresse muss als Datei existieren, und jede
-  //    Seite muss genannt sein.
+  //    Learn-Seite muss genannt sein -- die vier Rechtsseiten ausdrücklich
+  //    nicht (Ruling L2, Punkt 2).
   const sitemapPath = 'sitemap.xml';
   if (check(await exists(sitemapPath), 'dist/sitemap.xml fehlt')) {
     const xml = await readFile(join(DIST, sitemapPath), 'utf8');
     const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
-    check(locs.length === 15, `sitemap: ${locs.length} <loc>, erwartet 15 (Wurzel + 14 Seiten)`);
+    check(locs.length === 15, `sitemap: ${locs.length} <loc>, erwartet 15 (Wurzel + 14 Learn-Seiten)`);
     check(locs.includes(`${SITE}/`), 'sitemap: die Wurzel fehlt');
-    for (const page of pages) {
-      const url = `${SITE}${pathFor(page.meta.lang, page.meta.slug)}`;
+    for (const page of learnPages) {
+      const url = `${SITE}${pathFor(page.meta.lang, page.meta.slug, page.meta.section)}`;
       check(locs.includes(url), `sitemap: ${url} fehlt`);
+    }
+    for (const page of legalPages) {
+      const url = `${SITE}${pathFor(page.meta.lang, page.meta.slug, page.meta.section)}`;
+      check(!locs.includes(url), `sitemap: ${url} steht drin, Rechtsseiten gehören nicht in die Sitemap`);
     }
     for (const loc of locs) {
       const path = loc.replace(SITE, '').replace(/\/$/, '/index.html') || 'index.html';
@@ -224,6 +258,21 @@ async function main() {
       PAGE_ORDER.length === 13,
       `PAGE_ORDER hat ${PAGE_ORDER.length} Einträge, erwartet 13 (index zählt für beide Sprachen)`,
     );
+  }
+
+  // 2b. Learn-Index: die vier Rechtsseiten stehen nicht in der Artikelliste
+  //     (Ruling L2, Punkt 2) -- geprüft wird nur der Artikelinhalt, nicht die
+  //     ganze Seite, denn die neue Fußzeile (Punkt 4) verlinkt sie dort
+  //     absichtlich, auf jeder statischen Seite gleichermaßen.
+  for (const hub of learnPages.filter((page) => page.meta.slug === 'index')) {
+    const article = /<article class="article">([\s\S]*?)<\/article>/.exec(hub.html)?.[1] ?? '';
+    for (const legal of legalPages) {
+      const legalPath = pathFor(legal.meta.lang, legal.meta.slug, legal.meta.section);
+      check(
+        !article.includes(`href="${legalPath}"`),
+        `${hub.path}: Rechtsseite ${legalPath} steht im Learn-Index`,
+      );
+    }
   }
 
   // 3. Assets: Stylesheet mit eingesetztem Token-Block, und die vier Schriften.
