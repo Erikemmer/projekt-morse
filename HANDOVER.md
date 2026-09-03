@@ -1,3 +1,50 @@
+# Übergabe — Stand nach Runde P4 (Wort-Modus verschluckt Buchstaben während der Wiedergabe nicht mehr)
+
+**Stand:** T1 ist gemergt (`main` = `8c272c4`). **Runde P4 setzt Ruling
+Notion-Log #112 um** und ist auf Nutzerwunsch direkt gemergt.
+
+**Ursache (Ruling #112):** `typeCharacter`/`deleteCharacter`
+(`engine/wordSession.ts`) und `useWordKeyboard`/das Tastenfeld
+(`ui/Words.tsx`) sperrten Eingaben während `'listening'` — eine
+Fehlentscheidung, denn der Wort-Modus misst nie eine Reaktionszeit
+(`reactionSeconds: null` seit Runde F2), die diese Sperre hätte schützen
+können. Ein Wort dauert bei niedrigem Tempo mehrere Sekunden; wer mitschrieb,
+verlor seine ersten Buchstaben, und die Auflösung meldete sie fälschlich als
+"zu kurz gehört". Mitschreiben während der Rest noch läuft ("copy behind")
+ist im Funkverkehr das übliche Verhalten.
+
+**Behoben:** `typeCharacter`/`deleteCharacter` akzeptieren jetzt `'listening'`
+zusätzlich zu `'answering'`; `submitWord` bleibt bewusst auf `'answering'`
+beschränkt. `useWordKeyboard` lässt Buchstaben/Backspace in beiden Phasen
+wirken, Enter schickt nur in `'answering'` ab (in `'listening'` bewusst
+nichts, mit `preventDefault`). Neu: Leertaste/Enter starten in `'ready'` die
+Wiedergabe (vorher fehlte das ganz — dieselbe Geste wie im Einzelzeichen-
+Training). Das Tastenfeld/Dreier-Gitter ist während `'listening'` nicht mehr
+gesperrt, Fingertippen verhält sich wie die physische Tastatur.
+
+**Nachweis (Playwright, gegen den gebauten Stand):**
+- Zwei Buchstaben während laufender Wiedergabe getippt (`K`, `M`) →
+  Antwortzeile zeigt sofort `"K M"`.
+- Beim Übergang nach `'answering'` unverändert `"K M"` — nichts ging verloren.
+- Abgeschickt, Auflösung: Position 1 (`K` statt `A`) und Position 2 (`M`
+  statt `L`) korrekt als getippt markiert, nicht als "nicht gehört" — der
+  Fehler ist weg.
+- Regression aus P2 bestätigt: Enter startet jetzt zusätzlich `'ready'`
+  (neu, gewollt); ein Buchstabe lässt die Auflösung in `'feedback'` stehen,
+  Enter schaltet weiter (unverändert).
+
+**Tests:** 472 (18 Dateien, +4 in `wordSession.test.ts`: Tippen/Löschen in
+`listening`, `submitWord` dort wirkungslos, `typed` bleibt beim Übergang
+erhalten). `npm test`, `npm run build`, `npm run verify:amber` (37 Ansichten,
+Standard-Theme) und `npm run verify:learn` sind grün.
+
+Berührt: `src/engine/wordSession.ts`, `src/engine/wordSession.test.ts`,
+`src/ui/Words.tsx` (Hook + Kopf-Kommentar), `src/ui/App.tsx`
+(`useWordKeyboard` bekommt `onPlay`). Die P3-Inventurtabelle unten ist an der
+Zelle „Wort-Modus × `ready`/`listening`" korrigiert, mit Verweis auf #112.
+
+---
+
 # Übergabe — Stand nach Runde T1 (Themes und Dark Mode)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
@@ -233,7 +280,11 @@ einzeln in der Tabelle.
 | **Speed round** (`session.kind === 'drill'`) | wie Training, alle Phasen | dieselbe Tabelle wie Training — derselbe Listener, dieselbe Engine |
 | **Zusammenfassung** (`finished`) | jede Taste (Trainings-Listener) | *bewusst nichts* |
 | | Tab zum Knopf, dann Enter/Leertaste auf "Practise again"/"Back to practice" | native Knopf-Aktivierung |
-| **Wort-Modus, `ready`/`listening`** | jede Taste | *bewusst nichts — nur "Play the word" startet die Wiedergabe (CLAUDE.md 5, Ruling #83)* |
+| **Wort-Modus, `ready`** | Enter oder Leertaste | startet die Wiedergabe — **korrigiert, Ruling Notion-Log #112** (vorher hier fälschlich als „bewusst nichts" gelistet) |
+| | ein Buchstabe | *bewusst nichts, mit `preventDefault` — vor dem ersten Ton wäre er nur Rauschen* |
+| **Wort-Modus, `listening`** | ein Zeichen aus dem Pool | tippt es an die Antwortzeile — **korrigiert, Ruling Notion-Log #112** (vorher „bewusst nichts"; die alte Sperre schützte keine Reaktionszeit, die es hier nie gab, und kostete nur die ersten Buchstaben eines Worts — „copy behind") |
+| | Backspace | löscht das letzte getippte Zeichen, genau wie in `answering` |
+| | Enter | *bewusst nichts, mit `preventDefault` — „weiter" wäre ein Abbruch mitten im Ton; `submitWord` bleibt auf `answering` beschränkt* |
 | **Wort-Modus, `answering`** | ein Zeichen aus dem Pool | tippt es an die Antwortzeile |
 | | Backspace | löscht das letzte getippte Zeichen |
 | | Enter | schickt die Antwort ab |

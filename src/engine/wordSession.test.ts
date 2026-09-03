@@ -137,10 +137,32 @@ describe('Wort-Modus: der Anfang', () => {
 });
 
 describe('Wort-Einheit: hoeren', () => {
-  it('erlaubt keine Eingabe, solange der Ton laeuft', () => {
+  /*
+   * Ruling Notion-Log #112: waehrend der Ton noch laeuft, darf mitgetippt
+   * werden ("copy behind") -- es gibt in diesem Modus keine Reaktionszeit,
+   * die eine Sperre rechtfertigen wuerde.
+   */
+  it('nimmt Eingaben schon waehrend der Ton laeuft an', () => {
     const listening = beginWordPlayback(unit());
     expect(listening.phase).toBe('listening');
-    expect(typeCharacter(listening, 'K').typed).toBe('');
+    expect(typeCharacter(listening, 'K').typed).toBe('K');
+  });
+
+  it('loescht auch waehrend der Ton laeuft', () => {
+    const listening = type(beginWordPlayback(unit()), 'KM');
+    expect(deleteCharacter(listening).typed).toBe('K');
+  });
+
+  it('schickt waehrend der Ton laeuft nichts ab', () => {
+    const listening = type(beginWordPlayback(unit()), 'KM');
+    expect(submitWord(listening)).toBe(listening);
+  });
+
+  it('behaelt das waehrend der Wiedergabe Getippte beim Uebergang nach answering', () => {
+    const listening = type(beginWordPlayback(unit()), 'KM');
+    const answering = wordPromptFinished(listening);
+    expect(answering.phase).toBe('answering');
+    expect(answering.typed).toBe('KM');
   });
 
   it('zaehlt eine Wiederholung vor dem Abschicken', () => {

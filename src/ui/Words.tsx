@@ -11,12 +11,18 @@
  * `engine/wordSession.ts`; was gespielt wird, entscheidet `engine/words.ts`.
  * Hier wird gerendert und gemeldet (CLAUDE.md 4).
  *
- * Vier Dinge, die sonst wie Zufall aussehen:
+ * Fuenf Dinge, die sonst wie Zufall aussehen:
  *
- * - **Waehrend des Tons ist der Bildschirm leer.** Kein mitlaufender Text, kein
- *   Zeichen, das auftaucht, waehrend es klingt (CLAUDE.md 2.2, und Addendum (a)
- *   von Fable: kein Live-Sync im Hoertraining). Erst nach dem Abschicken kommt
- *   die Aufloesung.
+ * - **Waehrend des Tons zeigt niemand das Muster oder die Aufgabe selbst.**
+ *   Kein Zeichen aus Punkten und Strichen, kein vorab sichtbares Zielwort
+ *   (CLAUDE.md 2.2, Addendum (a) von Fable: kein Live-Sync im Hoertraining).
+ *   **Seit Ruling Notion-Log #112 gilt das nicht mehr fuers eigene Tippen:**
+ *   Antwortzeile und Tasten reagieren schon in 'listening', nicht erst in
+ *   'answering' -- "copy behind", das Mitschreiben waehrend der Rest noch
+ *   spielt, ist im Funkverkehr das uebliche Verhalten, und dieser Modus misst
+ *   ohnehin nie eine Reaktionszeit, die eine Sperre haette schuetzen koennen
+ *   (engine/wordSession.ts). Erst nach dem Abschicken -- weiterhin nur aus
+ *   'answering' moeglich -- kommt die Aufloesung.
  * - **Die Antwortflaeche ist dieselbe wie im Training** -- festes Tastenfeld ab
  *   `KEYPAD_MIN_CHARACTERS` aktiven Zeichen, darunter das Dreier-Gitter
  *   (Ruling #75, `ui/keypad.ts`). Eine zweite Tastenordnung waere eine zweite
@@ -24,10 +30,11 @@
  *   **Nur flacher:** 46 px statt 52, weil das Feld hier eine Eingabetastatur
  *   ist und kein Antwortfeld (Ruling #94, begruendet in styles.css).
  * - **Loeschen und Abschicken erscheinen erst, wenn es etwas zu loeschen und
- *   abzuschicken gibt** (1.1 §7: "hide what can't be used"). Das ist hier
- *   nicht nur Stil: waehrend der Ton laeuft, ist der Play-Kreis gefuellt und
- *   traegt das eine Amber der View -- ein gleichzeitig sichtbarer
- *   Amber-Knopf waere das zweite (1.1 §4).
+ *   abzuschicken gibt** (1.1 §7: "hide what can't be used") -- das gilt jetzt
+ *   schon waehrend der Ton laeuft, sobald ein erstes Zeichen getippt wurde.
+ *   Das ist hier nicht nur Stil: waehrend der Ton laeuft, ist der Play-Kreis
+ *   gefuellt und traegt das eine Amber der View -- ein gleichzeitig
+ *   sichtbarer Amber-Knopf waere das zweite (1.1 §4).
  * - **Die Aufloesung markiert Position fuer Position, in ink.** Die
  *   ✓/✗-Semantik ist die bestehende; Amber traegt sie **nicht**. Im
  *   Einzelzeichen-Feedback ist Amber die *eine* richtige Antwort; bei fuenf
@@ -68,6 +75,15 @@ export function Words({
 }) {
   const attempt = state.phase === 'feedback' ? state.lastAttempt : null;
   const answering = state.phase === 'answering';
+  /*
+   * Ruling Notion-Log #112: Tippen und Loeschen wirken schon waehrend der Ton
+   * noch laeuft ("copy behind") -- die Antwortzeile und die Tasten reagieren
+   * deshalb in 'listening' genauso wie in 'answering'. Nur `submitWord`
+   * (engine/wordSession.ts) bleibt auf 'answering' beschraenkt; ein Klick auf
+   * "Check" waehrend der Wiedergabe bleibt deshalb wirkungslos, statt etwas
+   * abzuschicken, das noch nicht zu Ende gehoert wurde.
+   */
+  const typingAllowed = answering || state.phase === 'listening';
 
   return (
     <>
@@ -107,7 +123,7 @@ export function Words({
       {attempt === null && (
         <AnswerLine
           typed={state.typed}
-          enabled={answering}
+          enabled={typingAllowed}
           onDelete={onDelete}
           onSubmit={onSubmit}
         />
@@ -116,7 +132,7 @@ export function Words({
       <Keys
         pool={state.pool}
         keypad={usesKeypad(activeCharacterCount)}
-        enabled={answering}
+        enabled={typingAllowed}
         onType={onType}
       />
 
@@ -419,10 +435,20 @@ function Keys({
  * in die naechste Aufgabe -- die erste echte Eingabe dorthinein bleibt Sache
  * von 'answering'.
  *
- * **In 'ready' und 'listening' tut kein Tastendruck etwas** -- bewusst: das
- * Ruling nennt fuer diese beiden Modi ausdruecklich nur die Aufloesung
- * ("dort aber mit anderen Tasten"), nicht das Starten der Wiedergabe per
- * Tastatur. Eine Ausweitung darauf waere ueber die Aufgabe hinaus (CLAUDE.md 5).
+ * **In 'listening' tippen und loeschen dieselben Tasten wie in 'answering'**
+ * (Ruling Notion-Log #112, "copy behind"): die alte Sperre waehrend der
+ * Wiedergabe schuetzte nichts (dieser Modus misst nie eine Reaktionszeit)
+ * und kostete nur die ersten Buchstaben, wenn jemand frueh mitschrieb. **Nur
+ * Enter bleibt dort ohne Wirkung** -- "weiter" waere ein Abbruch mitten im
+ * Ton, kein Abschicken; `submitWord` selbst bleibt auf 'answering'
+ * beschraenkt (engine/wordSession.ts), diese Zeile spiegelt das nur.
+ *
+ * **In 'ready' starten Leertaste oder Enter die Wiedergabe** -- dieselbe
+ * Geste wie der Play-Kreis, aus demselben Grund wie beim Einzelzeichen-
+ * Training (App.tsx: ein Anschlag in 'ready' spielt ab). Ein Buchstabe bleibt
+ * dort wirkungslos (vor dem ersten Ton waere er nur Rauschen), bekommt aber
+ * trotzdem `preventDefault` -- ein "tut nichts"-Zweig ohne das liesse die
+ * *native* Tastenbelegung durch, genau die Lehre aus Ruling #105 (P2).
  */
 export function useWordKeyboard({
   active,
@@ -432,6 +458,7 @@ export function useWordKeyboard({
   onDelete,
   onSubmit,
   onAdvance,
+  onPlay,
 }: {
   active: boolean;
   phase: WordPhase;
@@ -440,11 +467,12 @@ export function useWordKeyboard({
   onDelete: () => void;
   onSubmit: () => void;
   onAdvance: () => void;
+  onPlay: () => void;
 }) {
   // Die Rueckrufe wandern durch ein Ref, damit der Listener nicht bei jedem
   // Tastendruck oder Phasenwechsel neu haengt.
-  const handlers = useRef({ phase, pool, onType, onDelete, onSubmit, onAdvance });
-  handlers.current = { phase, pool, onType, onDelete, onSubmit, onAdvance };
+  const handlers = useRef({ phase, pool, onType, onDelete, onSubmit, onAdvance, onPlay });
+  handlers.current = { phase, pool, onType, onDelete, onSubmit, onAdvance, onPlay };
 
   useEffect(() => {
     if (!active) return undefined;
@@ -452,9 +480,10 @@ export function useWordKeyboard({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const current = handlers.current;
+      const isSpace = event.key === ' ' || event.key === 'Spacebar';
 
       if (current.phase === 'feedback') {
-        if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar') {
+        if (event.key === 'Enter' || isSpace) {
           event.preventDefault();
           current.onAdvance();
         }
@@ -462,8 +491,22 @@ export function useWordKeyboard({
         return;
       }
 
-      if (current.phase !== 'answering') return; // 'ready'/'listening': bewusst nichts (siehe Kopf).
+      if (current.phase === 'ready') {
+        if (event.key === 'Enter' || isSpace) {
+          event.preventDefault();
+          current.onPlay();
+          return;
+        }
+        const key = event.key.toUpperCase();
+        if (key.length === 1 && current.pool.includes(key)) {
+          // Wirkungslos, aber nicht wortlos: preventDefault haelt die native
+          // Tastenbelegung fern (siehe Kopf).
+          event.preventDefault();
+        }
+        return;
+      }
 
+      // 'listening' und 'answering': dieselbe Eingabe, live sichtbar.
       if (event.key === 'Backspace') {
         event.preventDefault();
         current.onDelete();
@@ -471,7 +514,8 @@ export function useWordKeyboard({
       }
       if (event.key === 'Enter') {
         event.preventDefault();
-        current.onSubmit();
+        if (current.phase === 'answering') current.onSubmit();
+        // In 'listening' bewusst nichts weiter (siehe Kopf).
         return;
       }
 

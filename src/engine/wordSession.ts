@@ -189,13 +189,25 @@ export function wordPromptFinished(state: WordSessionState): WordSessionState {
 /**
  * Ein Zeichen anfuegen.
  *
- * Nur in 'answering', nur Zeichen aus dem geuebten Satz, und nicht mehr als
+ * **Seit Ruling Notion-Log #112 auch in `'listening'`, nicht mehr nur in
+ * `'answering'`.** Die Sperre auf `'listening'` war eine Fehlentscheidung:
+ * ihr einziger Grund waere gewesen, eine Reaktionszeit zu schuetzen -- und
+ * die gibt es in diesem Modus grundsaetzlich nicht (`reactionSeconds: null`,
+ * siehe Kopf). Ohne diesen Grund sperrte die alte Regel nur, ohne etwas zu
+ * gewinnen: ein Wort dauert bei niedrigem Tempo mehrere Sekunden, und wer
+ * mitschreibt, was er schon gehoert hat, verlor seine ersten Buchstaben --
+ * die Aufloesung meldete sie faelschlich als "zu kurz gehoert". Mitschreiben,
+ * waehrend der Rest noch laeuft, ist im Funkverkehr sogar das *richtige*
+ * Verhalten ("copy behind"). `submitWord` bleibt bewusst auf `'answering'`
+ * beschraenkt -- abgeschickt wird erst, wenn die Aufgabe zu Ende gespielt ist.
+ *
+ * Sonst unveraendert: nur Zeichen aus dem geuebten Satz, und nicht mehr als
  * `PROMPT_MAX_LENGTH` -- laenger als die laengste moegliche Aufgabe kann keine
- * richtige Antwort sein. Aus allen drei Faellen kommt der Zustand identisch
- * (===) zurueck.
+ * richtige Antwort sein. Aus jedem ablehnenden Fall kommt der Zustand
+ * identisch (===) zurueck.
  */
 export function typeCharacter(state: WordSessionState, char: string): WordSessionState {
-  if (state.phase !== 'answering') return state;
+  if (state.phase !== 'answering' && state.phase !== 'listening') return state;
   if (state.typed.length >= PROMPT_MAX_LENGTH) return state;
 
   const upper = char.toUpperCase();
@@ -204,9 +216,17 @@ export function typeCharacter(state: WordSessionState, char: string): WordSessio
   return { ...state, typed: state.typed + upper };
 }
 
-/** Das letzte Zeichen loeschen. Bei leerer Eingabe passiert nichts. */
+/**
+ * Das letzte Zeichen loeschen. Bei leerer Eingabe passiert nichts.
+ *
+ * Auch in `'listening'` (Ruling Notion-Log #112) -- aus demselben Grund wie
+ * `typeCharacter`: wer waehrend der Wiedergabe mitschreibt, muss sich dort
+ * genauso korrigieren koennen wie danach.
+ */
 export function deleteCharacter(state: WordSessionState): WordSessionState {
-  if (state.phase !== 'answering' || state.typed === '') return state;
+  if ((state.phase !== 'answering' && state.phase !== 'listening') || state.typed === '') {
+    return state;
+  }
   return { ...state, typed: state.typed.slice(0, -1) };
 }
 

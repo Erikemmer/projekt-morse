@@ -469,6 +469,7 @@ export function App() {
     onDelete: deleteWordCharacter,
     onSubmit: submitWordAnswer,
     onAdvance: nextWord,
+    onPlay: () => void playWord(),
   });
 
   // --- Sende-Training (Ruling Notion-Log #90) -----------------------------
