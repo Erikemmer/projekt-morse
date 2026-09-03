@@ -1213,6 +1213,31 @@ a.menu-item {
   background: var(--amber);
 }
 
+/*
+ * "Imprint · Privacy" -- der nach § 5 DDG von jeder Seite mit einem Klick
+ * erreichbare Weg (Ruling L2, Punkt 3). Klein, gray, per Haarlinie deutlich
+ * von den Uebungs-Eintraegen abgesetzt -- kein Eintrag in `ENTRIES`, das sind
+ * Wege hinaus. Kein Amber: der Hover geht nach ink, nicht nach amber-deep,
+ * anders als `.menu-item:hover` -- diese Zeile ist keine Uebungsflaeche.
+ */
+.menu-footer {
+  margin: 0;
+  padding-top: var(--space-3);
+  border-top: var(--hairline);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.menu-footer a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.menu-footer a:hover {
+  color: var(--ink);
+}
+
 /* Der Grundriss eines Gehaeuse-Screens (Progress, About): eine linksbuendige
  * Spalte, oben beginnend -- gelesen wird hier, nicht geuebt. */
 .screen {
@@ -1749,6 +1774,31 @@ a.menu-item {
   /* Der stille Hinweis am gesperrten Eintrag -- dieselbe Regel wie im Menue. */
   .nav-rail-item .menu-hint {
     margin-left: var(--space-1);
+  }
+
+  /*
+   * "Imprint · Privacy" am Fuss der Schiene (Ruling L2, Punkt 3) --
+   * `margin-top: auto` schiebt sie in der Flex-Spalte ans untere Ende, egal
+   * wie hoch der Viewport ist. Dieselbe Zurueckhaltung wie `.menu-footer`:
+   * kein Amber, Hover nach ink.
+   */
+  .nav-rail-footer {
+    margin: auto 0 0;
+    padding-top: var(--space-3);
+    padding-left: 16px;
+    border-top: var(--hairline);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--gray);
+  }
+
+  .nav-rail-footer a {
+    color: inherit;
+    text-decoration: underline;
+  }
+
+  .nav-rail-footer a:hover {
+    color: var(--ink);
   }
 
   /* --- Die Uebungsflaeche, groesser --- */

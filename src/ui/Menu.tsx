@@ -70,6 +70,20 @@ type MenuEntry =
  * **eine** Navigations-Wahrheit. Die Schiene rendert aus derselben Liste wie
  * das Menü-Panel -- keine zweite Liste, die auseinanderlaufen könnte.
  */
+/**
+ * Der Weg zum Impressum (Ruling L2) -- kein Eintrag in `ENTRIES`: das sind
+ * Wege hinaus, keine Orte der App, und die Liste der Übungsmodi bleibt ruhig.
+ * Von jeder Seite aus mit einem Klick erreichbar (§ 5 DDG), deshalb am Fuß
+ * des einen Orts, der von überall erreichbar ist -- Menü-Panel und Schiene.
+ */
+function LegalLinks() {
+  return (
+    <>
+      <a href="/imprint/">Imprint</a> · <a href="/privacy/">Privacy</a>
+    </>
+  );
+}
+
 export const ENTRIES: readonly MenuEntry[] = Object.freeze([
   { kind: 'place', location: 'practice', label: 'Practice' },
   { kind: 'place', location: 'learn', label: 'Learn the sounds' },
@@ -196,6 +210,10 @@ export function NavRail({
           );
         })}
       </div>
+
+      <p className="nav-rail-footer">
+        <LegalLinks />
+      </p>
     </nav>
   );
 }
@@ -301,6 +319,10 @@ export function MenuPanel({
           );
         })}
       </nav>
+
+      <p className="menu-footer">
+        <LegalLinks />
+      </p>
     </div>
   );
 }
