@@ -298,18 +298,29 @@ td {
   border-color: var(--amber-deep);
 }
 
-/* --- Fußzeile: Sprachwechsel, Hub, © --- */
+/* --- Fußzeile: Sprachwechsel, Hub, © — und, als eigene Zeile darunter,
+   Impressum/Datenschutz (Ruling L2, Punkt 4) --- */
 
 .page-footer {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
   padding: 24px 0 48px;
   border-top: var(--hairline);
 }
 
-.page-footer span:last-child {
+.page-footer-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.page-footer-row span:last-child {
   margin-left: auto;
+}
+
+/* Eigene Zeile statt Anhängsel an die erste: `.page-footer-row span:last-child`
+ * schiebt das Copyright an den rechten Rand, ein viertes Element dort würde
+ * diese Regel durcheinanderbringen. Gleiche Optik wie die Zeile darüber. */
+.page-footer-legal {
+  margin: 12px 0 0;
 }
 
 @media (prefers-reduced-motion: reduce) {

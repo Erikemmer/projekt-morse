@@ -39,6 +39,20 @@ export const OG_IMAGE = '/og-morse-lab.png';
 /** Wurzeln der beiden Sprachbäume (CONCEPT-LEARN §2). */
 const ROOTS = { en: '/learn/', de: '/de/lernen/' };
 
+/**
+ * Wurzeln der Rechtsseiten (Ruling L2). Eigener, flacher Baum -- Impressum und
+ * Datenschutz sind keine Learn-Artikel und stehen deshalb nicht unter
+ * `/learn/`/`/de/lernen/`, sondern an der Wurzel bzw. unter `/de/`.
+ */
+const LEGAL_ROOTS = { en: '/', de: '/de/' };
+
+/** Welche Wurzeln eine Seite benutzt -- `section: legal` im Frontmatter
+ * entscheidet, alles andere bleibt beim Learn-Baum (Rückwärtskompatibilität:
+ * bestehende Seiten tragen den Schlüssel nicht). */
+function rootsFor(section) {
+  return section === 'legal' ? LEGAL_ROOTS : ROOTS;
+}
+
 /** Was in beiden Sprachen im Rahmen steht — die Artikeltexte kommen aus dem
  * Markdown, das hier ist Navigation. Die zwei App-Links stehen wörtlich so im
  * Konzept (§5). */
@@ -46,6 +60,34 @@ const CHROME = {
   en: { app: 'Open the app', hub: 'Learn', other: 'Deutsch', locale: 'en_US' },
   de: { app: 'Zur App', hub: 'Lernen', other: 'English', locale: 'de_DE' },
 };
+
+/**
+ * Die Slugs der vier Rechtsseiten je Sprache (Ruling L2) -- an einer Stelle,
+ * damit die Fusszeile sie nicht als Text-Literale trägt, sondern über
+ * `pathFor` denselben Weg wie jede andere Adresse im Generator geht.
+ */
+const LEGAL_PAGES = {
+  en: [
+    { slug: 'imprint', label: 'Imprint' },
+    { slug: 'privacy', label: 'Privacy' },
+  ],
+  de: [
+    { slug: 'impressum', label: 'Impressum' },
+    { slug: 'datenschutz', label: 'Datenschutz' },
+  ],
+};
+
+/**
+ * Die leise Zeile „Impressum · Datenschutz"/„Imprint · Privacy" am Fuß jeder
+ * statischen Seite (Ruling L2, Punkt 4) -- sprachrichtig zur Seite, auf der
+ * sie steht, unabhängig davon, ob diese Seite selbst eine Rechtsseite ist.
+ */
+function legalFooterLine(lang) {
+  const links = LEGAL_PAGES[lang]
+    .map((page) => `<a href="${pathFor(lang, page.slug, 'legal')}">${page.label}</a>`)
+    .join(' · ');
+  return `<p class="page-footer-legal">${links}</p>`;
+}
 
 /** Reihenfolge der Seiten in der Sitemap: Hub, Pillar, dann der Rest wie im
  * Hub aufgezählt. Sie ist keine Rangfolge für Suchmaschinen (die gibt es
@@ -66,26 +108,23 @@ export const PAGE_ORDER = [
   'lernforschung',
 ];
 
-const REQUIRED_KEYS = [
-  'slug',
-  'lang',
-  'pair',
-  'metaTitle',
-  'metaDescription',
-  'keywords',
-  'datePublished',
-];
+const REQUIRED_KEYS = ['slug', 'lang', 'pair', 'metaTitle', 'metaDescription', 'datePublished'];
 
-/** Pfad einer Seite. Der Hub liegt auf der Wurzel seines Sprachbaums. */
-export function pathFor(lang, slug) {
-  const root = ROOTS[lang];
+/**
+ * Pfad einer Seite. Der Hub liegt auf der Wurzel seines Sprachbaums.
+ *
+ * `section` ist optional und defaultet auf den Learn-Baum -- bestehende
+ * Aufrufe (`pathFor('en', 'koch-method')`) bleiben also unverändert gültig.
+ */
+export function pathFor(lang, slug, section = 'learn') {
+  const root = rootsFor(section)[lang];
   if (!root) throw new Error(`unbekannte Sprache: ${lang}`);
   return slug === 'index' ? root : `${root}${slug}/`;
 }
 
 /** Absolute URL, wie canonical und hreflang sie brauchen. */
-export function urlFor(lang, slug) {
-  return `${SITE}${pathFor(lang, slug)}`;
+export function urlFor(lang, slug, section = 'learn') {
+  return `${SITE}${pathFor(lang, slug, section)}`;
 }
 
 /** Die andere Sprache. Zwei Sprachen, also ein Zeilenausdruck — wird es
@@ -117,7 +156,17 @@ export function parseFrontmatter(source, name = 'unbenannt') {
   for (const key of REQUIRED_KEYS) {
     if (!meta[key]) throw new Error(`${name}: Frontmatter ohne ${key}`);
   }
-  if (!ROOTS[meta.lang]) throw new Error(`${name}: lang ist weder en noch de: ${meta.lang}`);
+  // `section` ist optional -- ohne Angabe ist eine Seite ein Learn-Artikel
+  // (Rückwärtskompatibilität mit den vierzehn bestehenden Dateien).
+  if (!meta.section) meta.section = 'learn';
+  if (!rootsFor(meta.section)[meta.lang]) {
+    throw new Error(`${name}: lang ist weder en noch de: ${meta.lang}`);
+  }
+  // `keywords` speist nur <meta name="keywords">, die auf `noindex` ohnehin
+  // nichts bewirkt (Punkt 7 des Rulings) -- fuer Rechtsseiten nicht Pflicht.
+  if (meta.section !== 'legal' && !meta.keywords) {
+    throw new Error(`${name}: Frontmatter ohne keywords`);
+  }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(meta.datePublished)) {
     throw new Error(`${name}: datePublished ist kein ISO-Datum: ${meta.datePublished}`);
   }
@@ -278,7 +327,13 @@ export function renderHead({ meta, title, canonical, pairUrl, enUrl }) {
     '<meta name="viewport" content="width=device-width, initial-scale=1.0" />',
     `<title>${escapeHtml(meta.metaTitle)}</title>`,
     `<meta name="description" content="${escapeHtml(meta.metaDescription)}" />`,
-    `<meta name="keywords" content="${escapeHtml(meta.keywords)}" />`,
+    // `keywords` ist auf Rechtsseiten nicht Pflicht (Punkt 7 des Rulings zu
+    // L2) -- ohne Wert steht hier nichts, statt `content="undefined"`.
+    meta.keywords ? `<meta name="keywords" content="${escapeHtml(meta.keywords)}" />` : '',
+    // `robots` ist neu (Ruling L2, Punkt 2): nur gesetzt, wenn das Frontmatter
+    // es verlangt -- eine private Wohnanschrift soll nicht indexiert werden,
+    // die Verweise darin aber gueltig bleiben ("noindex, follow").
+    meta.robots ? `<meta name="robots" content="${escapeHtml(meta.robots)}" />` : '',
     `<link rel="canonical" href="${canonical}" />`,
     // hreflang wechselseitig: jede Seite nennt sich selbst und ihr Pendant,
     // x-default ist die englische Fassung (EN-first, CONCEPT-LEARN §4).
@@ -301,6 +356,7 @@ export function renderHead({ meta, title, canonical, pairUrl, enUrl }) {
     '<link rel="stylesheet" href="/learn/assets/learn.css" />',
     `<script type="application/ld+json">${JSON.stringify(jsonLd, null, 2).replace(/</g, '\\u003c')}</script>`,
   ]
+    .filter(Boolean)
     .map((line) => `    ${line}`)
     .join('\n');
 }
@@ -327,21 +383,30 @@ function ornament() {
 export function renderPage({ meta, body, name = 'unbenannt' }) {
   const { html, title, cta } = renderArticle(body, name, meta.lang);
   const chrome = CHROME[meta.lang];
-  const canonical = urlFor(meta.lang, meta.slug);
-  const pairUrl = urlFor(otherLang(meta.lang), meta.pair);
+  const canonical = urlFor(meta.lang, meta.slug, meta.section);
+  const pairUrl = urlFor(otherLang(meta.lang), meta.pair, meta.section);
   const enUrl = meta.lang === 'en' ? canonical : pairUrl;
 
-  const footer = indent(
+  const footerRow = indent(
     [
-      `<a href="${pathFor(otherLang(meta.lang), meta.pair)}" hreflang="${otherLang(meta.lang)}">${chrome.other}</a>`,
-      // Auf dem Hub selbst wäre der Hub-Link ein Link auf sich.
-      meta.slug === 'index' ? '' : `<a href="${pathFor(meta.lang, 'index')}">${chrome.hub}</a>`,
+      `<a href="${pathFor(otherLang(meta.lang), meta.pair, meta.section)}" hreflang="${otherLang(meta.lang)}">${chrome.other}</a>`,
+      // Auf dem Hub selbst wäre der Hub-Link ein Link auf sich; auf einer
+      // Rechtsseite gibt es keinen Learn-Hub-Bezug (eigener, flacher Baum).
+      meta.slug === 'index' || meta.section === 'legal'
+        ? ''
+        : `<a href="${pathFor(meta.lang, 'index', meta.section)}">${chrome.hub}</a>`,
       '<span>© Morse Lab</span>',
     ]
       .filter(Boolean)
       .join('\n'),
-    8,
+    10,
   );
+
+  // Die leise Zeile zu Impressum/Datenschutz -- auf jeder statischen Seite,
+  // sprachrichtig (Ruling L2, Punkt 4). Eine eigene Zeile, kein Anhaengsel an
+  // die erste: die dortige `span:last-child`-Regel schiebt das Copyright an
+  // den rechten Rand, ein viertes Element wuerde das durcheinanderbringen.
+  const legalFooter = indent(legalFooterLine(meta.lang), 10);
 
   // Der CTA hängt am Inhalt: fehlt die Zeile im Markdown, steht hier nichts —
   // und dann auch kein Ornament, das sonst ins Leere trennte.
@@ -366,7 +431,10 @@ ${indent(html.trimEnd(), 10)}${ctaHtml}
         </article>
       </main>
       <footer class="page-footer">
-${footer}
+        <div class="page-footer-row">
+${footerRow}
+        </div>
+${legalFooter}
       </footer>
     </div>
   </body>
@@ -380,14 +448,17 @@ ${footer}
  * eine erfundene Zahl ist hier so unehrlich wie überall sonst (CLAUDE.md 2.6).
  */
 export function renderSitemap(pages) {
-  const byOrder = [...pages].sort(
+  // Rechtsseiten stehen bewusst nicht in der Sitemap (Ruling L2, Punkt 2):
+  // eine private Wohnanschrift muss kein Adress-Sammler einlesen.
+  const listed = pages.filter((page) => page.meta.section !== 'legal');
+  const byOrder = [...listed].sort(
     (a, b) => PAGE_ORDER.indexOf(a.meta.slug) - PAGE_ORDER.indexOf(b.meta.slug),
   );
   const entries = [
     `  <url>\n    <loc>${SITE}/</loc>\n  </url>`,
     ...byOrder.map((page) => {
-      const loc = urlFor(page.meta.lang, page.meta.slug);
-      const pair = urlFor(otherLang(page.meta.lang), page.meta.pair);
+      const loc = urlFor(page.meta.lang, page.meta.slug, page.meta.section);
+      const pair = urlFor(otherLang(page.meta.lang), page.meta.pair, page.meta.section);
       const enUrl = page.meta.lang === 'en' ? loc : pair;
       return [
         '  <url>',

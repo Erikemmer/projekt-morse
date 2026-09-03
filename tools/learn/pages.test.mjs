@@ -106,6 +106,14 @@ describe('Adressen', () => {
     expect(otherLang('de')).toBe('en');
     expect(() => pathFor('fr', 'index')).toThrow(/unbekannte Sprache/);
   });
+
+  it('legt Rechtsseiten in einen eigenen, flachen Baum (Ruling L2)', () => {
+    expect(pathFor('en', 'imprint', 'legal')).toBe('/imprint/');
+    expect(pathFor('en', 'privacy', 'legal')).toBe('/privacy/');
+    expect(pathFor('de', 'impressum', 'legal')).toBe('/de/impressum/');
+    expect(pathFor('de', 'datenschutz', 'legal')).toBe('/de/datenschutz/');
+    expect(urlFor('en', 'imprint', 'legal')).toBe(`${SITE}/imprint/`);
+  });
 });
 
 describe('renderArticle', () => {
@@ -247,6 +255,90 @@ describe('renderSitemap', () => {
     expect(xml).not.toContain('priority');
     expect(xml).not.toContain('changefreq');
   });
+
+  it('lässt Rechtsseiten aus (Ruling L2, Punkt 2)', () => {
+    const pages = [
+      { meta: { slug: 'index', lang: 'en', pair: 'index', datePublished: '2026-09-02' } },
+      {
+        meta: {
+          slug: 'imprint',
+          lang: 'en',
+          pair: 'impressum',
+          section: 'legal',
+          datePublished: '2026-09-03',
+        },
+      },
+    ];
+    const xml = renderSitemap(pages);
+    expect(xml).toContain(`<loc>${SITE}/learn/</loc>`);
+    expect(xml).not.toContain('/imprint/');
+    expect(xml.match(/<url>/g)).toHaveLength(2); // Wurzel + der eine Learn-Eintrag
+  });
+});
+
+/**
+ * Rechtsseiten (Ruling L2): eigener, flacher Adressbaum, `noindex, follow`,
+ * `keywords` nicht Pflicht -- an Miniaturbeispielen, die echten vier Dateien
+ * prüft `verify.mjs` gegen den gebauten Stand in `dist/`.
+ */
+describe('Rechtsseiten (Ruling L2)', () => {
+  const LEGAL_FRONTMATTER = `---
+slug: imprint
+lang: en
+pair: impressum
+section: legal
+robots: "noindex, follow"
+metaTitle: "Imprint | Morse Lab"
+metaDescription: "Legal notice."
+datePublished: 2026-09-03
+---
+
+# Imprint
+
+Text ohne Suchmaschinen-Schlüsselwörter.
+`;
+
+  it('braucht keine keywords, andere Learn-Seiten weiterhin schon', () => {
+    const { meta } = parseFrontmatter(LEGAL_FRONTMATTER, 'imprint.en.md');
+    expect(meta.keywords).toBeUndefined();
+
+    const ohneKeywords = FRONTMATTER.replace('keywords: "demo, morse"\n', '');
+    expect(() => parseFrontmatter(ohneKeywords)).toThrow(/ohne keywords/);
+  });
+
+  it('defaultet section auf "learn", wenn das Frontmatter nichts sagt', () => {
+    const { meta } = parseFrontmatter(FRONTMATTER);
+    expect(meta.section).toBe('learn');
+  });
+
+  it('gibt robots nur aus, wenn das Frontmatter es verlangt', () => {
+    const { meta, body } = parseFrontmatter(LEGAL_FRONTMATTER, 'imprint.en.md');
+    const html = renderPage({ meta, body, name: 'imprint.en.md' });
+    expect(html).toContain('<meta name="robots" content="noindex, follow" />');
+    expect(html).not.toContain('name="keywords"');
+
+    expect(pageFrom(FRONTMATTER)).not.toContain('name="robots"');
+  });
+
+  it('lässt auf einer Rechtsseite den Learn-Hub-Link weg, behält das Sprachpendant', () => {
+    const { meta, body } = parseFrontmatter(LEGAL_FRONTMATTER, 'imprint.en.md');
+    const html = renderPage({ meta, body, name: 'imprint.en.md' });
+    expect(html).toContain('<a href="/de/impressum/" hreflang="de">Deutsch</a>');
+    expect(html).not.toContain('>Learn</a>');
+  });
+
+  it('trägt auf jeder statischen Seite dieselbe Zeile, sprachrichtig (Punkt 4)', () => {
+    expect(pageFrom(FRONTMATTER)).toContain(
+      '<p class="page-footer-legal"><a href="/imprint/">Imprint</a> · <a href="/privacy/">Privacy</a></p>',
+    );
+    const de = pageFrom(
+      FRONTMATTER.replace('lang: en', 'lang: de').replace('pair: vorlage', 'pair: template'),
+      'demo.de.md',
+    );
+    expect(de).toContain(
+      '<p class="page-footer-legal"><a href="/de/impressum/">Impressum</a> · <a href="/de/datenschutz/">Datenschutz</a></p>',
+    );
+  });
 });
 
 describe('die echten Inhalte', async () => {
@@ -309,6 +401,13 @@ describe('die echten Inhalte', async () => {
   it('verlinkt intern nur auf Adressen, die es gibt', () => {
     const known = new Set(pages.map((page) => pathFor(page.meta.lang, page.meta.slug)));
     known.add('/');
+    // Die vier Rechtsseiten (Ruling L2, `content/legal/`) liegen außerhalb
+    // dieses Fixture-Ordners, sind aber echte Seiten -- die neue Fußzeile
+    // (Punkt 4) verlinkt sie auf jeder statischen Seite, dieser auch.
+    known.add(pathFor('en', 'imprint', 'legal'));
+    known.add(pathFor('en', 'privacy', 'legal'));
+    known.add(pathFor('de', 'impressum', 'legal'));
+    known.add(pathFor('de', 'datenschutz', 'legal'));
     for (const page of pages) {
       for (const match of page.html.matchAll(/href="(\/[^"]*)"/g)) {
         const href = match[1];
