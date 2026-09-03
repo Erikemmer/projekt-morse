@@ -101,6 +101,16 @@ export function ProgressScreen({
           <p className="footnote">
             Reaction time is an approximation of confidence — it includes finding the key.
           </p>
+          {/*
+            Ruling #103c: das Tastenfeld (ab dreizehn aktiven Zeichen) verbucht
+            seit dieser Runde keine Reaktionszeit mehr -- die Zahl war dort
+            ueberwiegend Suchzeit, keine Kopfhoer-Sicherheit. Der Median-Strich
+            fuer ein Zeichen ohne Messung erklaert sich sonst nicht von selbst;
+            Wortlaut aus der Aufgabenstellung, nicht umformulieren.
+          */}
+          <p className="footnote">
+            Median from typed answers only — tapping a key includes the time to find it.
+          </p>
         </>
       ) : (
         <p className="empty-note">

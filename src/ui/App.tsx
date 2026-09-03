@@ -377,6 +377,17 @@ export function App() {
     setSession((current) => submitAnswer(current, choice, at));
   }, []);
 
+  /**
+   * Eine Antwort ueber das Tastenfeld (Ruling #103c): die Zeit bis dahin ist
+   * vor allem Suchzeit auf 36 Positionen, nicht Kopfhoer-Sicherheit -- sie
+   * wird deshalb nicht als Reaktionszeit verbucht. Richtig oder falsch zaehlt
+   * unveraendert voll. Die physische Tastatur (Handler oben) und das
+   * Dreier-Gitter (`answer`, bis zwoelf aktive Zeichen) bleiben gemessen.
+   */
+  const answerViaKeypad = useCallback((choice: string) => {
+    setSession((current) => submitAnswer(current, choice, null));
+  }, []);
+
   // --- Wort-Training ------------------------------------------------------
 
   /*
@@ -1183,7 +1194,10 @@ export function App() {
             keypad={usesKeypad(session.progress.activeCharacters.length)}
             enabled={session.phase === 'answering'}
             attempt={session.phase === 'feedback' ? attempt : null}
-            onAnswer={answer}
+            /* Nur das Tastenfeld (ab 13 aktiven Zeichen) verbucht ohne
+               Reaktionszeit (Ruling #103c) -- das Dreier-Gitter bleibt
+               gemessen wie bisher. */
+            onAnswer={usesKeypad(session.progress.activeCharacters.length) ? answerViaKeypad : answer}
           />
 
           {session.phase === 'feedback' && (
