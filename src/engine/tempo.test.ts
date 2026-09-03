@@ -81,9 +81,9 @@ describe('Tempo-Progression: die Regel', () => {
     expect(isReadyToSpeedUp(ready({ recentAnswers: short }))).toBe(false);
   });
 
-  it('liegt genau an der Schwelle richtig (90 % von 30 sind 27)', () => {
+  it('liegt genau an der Schwelle richtig (85 % von 30 sind 26, Ruling #103d)', () => {
     const exactly = Math.ceil(GROWTH_WINDOW_ACCURACY * RECENT_ANSWER_WINDOW);
-    expect(exactly).toBe(27);
+    expect(exactly).toBe(26);
     expect(isReadyToSpeedUp(ready({ recentAnswers: window(exactly) }))).toBe(true);
     expect(isReadyToSpeedUp(ready({ recentAnswers: window(exactly - 1) }))).toBe(false);
   });
@@ -95,7 +95,9 @@ describe('Tempo-Progression: die Regel', () => {
 
   it('nutzt dieselbe Sperre wie die Wachstumsregel -- keine zweite Zahl', () => {
     expect(SPEED_LOCKOUT_ANSWERS).toBe(GROWTH_LOCKOUT_ANSWERS);
-    expect(SPEED_LOCKOUT_ANSWERS).toBe(20);
+    // 10 statt der frueheren 20 (Ruling #103d) -- steigt mit, wenn die
+    // Wachstumsregel ihre Sperre aendert, absichtlich (siehe growth.ts).
+    expect(SPEED_LOCKOUT_ANSWERS).toBe(10);
   });
 
   it('endet am Zeichentempo -- der Deckel ist CHARACTER_WPM', () => {
