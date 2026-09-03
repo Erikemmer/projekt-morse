@@ -17,8 +17,8 @@
  *   AudioContext noch DOM.
  */
 
+import { drawFromBag, type Bag } from './bag';
 import { maybeGrow } from './growth';
-import { pickNext } from './selection';
 import { beginSession, recordAttempt, type Progress } from './stats';
 import { recordPracticeDay } from './streak';
 import { maybeSpeedUp } from './tempo';
@@ -76,6 +76,11 @@ export interface SessionState {
   /** Laufende Runde, 1-basiert. */
   readonly round: number;
   readonly prompt: string;
+  /**
+   * Der Beutel des laufenden Zyklus (engine/bag.ts, Ruling #103b) -- die noch
+   * nicht gezogenen Lose. Leer heisst: der naechste Zug fuellt neu.
+   */
+  readonly bag: Bag;
   readonly phase: Phase;
   /** Ende des Tons auf der Audio-Uhr, oder null solange nichts geplant ist. */
   readonly promptEndsAt: number | null;
@@ -167,12 +172,15 @@ export function createSession(options: SessionOptions): SessionState {
   const showVariabilityNotice = sound.stage >= 1 && !progress.variabilityNoticeSeen;
   if (showVariabilityNotice) progress = { ...progress, variabilityNoticeSeen: true };
 
+  const draw = drawFromBag(pool, [], progress, { random: options.random });
+
   return {
     kind: options.kind ?? 'practice',
     pool,
     totalRounds: options.totalRounds,
     round: 1,
-    prompt: pickNext(pool, progress, { random: options.random }),
+    prompt: draw.char,
+    bag: draw.bag,
     phase: 'ready',
     promptEndsAt: null,
     replays: 0,
@@ -331,10 +339,13 @@ export function advance(state: SessionState, random: () => number): SessionState
     };
   }
 
+  const draw = drawFromBag(state.pool, state.bag, state.progress, { random, avoid: state.prompt });
+
   return {
     ...state,
     round: state.round + 1,
-    prompt: pickNext(state.pool, state.progress, { random, avoid: state.prompt }),
+    prompt: draw.char,
+    bag: draw.bag,
     phase: 'ready',
     promptEndsAt: null,
     replays: 0,

@@ -138,6 +138,13 @@ describe('Persistenz', () => {
   });
 });
 
+/*
+ * `weightFor`/`pickNext` (selection.ts) treffen seit Ruling #103b nur noch
+ * die Positionen im Wort-Modus (words.ts, `drawGroup`) -- der
+ * Einzelzeichen-Loop zieht jetzt aus dem Beutel (engine/bag.ts, siehe
+ * "Beutel im Einzelzeichen-Loop" unten). Diese Tests bleiben, weil die
+ * Funktionen selbst unveraendert sind.
+ */
 describe('Auswahl nach Schwaeche', () => {
   it('bevorzugt ein noch nie gehoertes Zeichen', () => {
     let progress = emptyProgress();
@@ -190,6 +197,31 @@ describe('Auswahl nach Schwaeche', () => {
 
   it('lehnt einen leeren Zeichensatz ab', () => {
     expect(() => pickNext([], emptyProgress(), { random: () => 0 })).toThrow(RangeError);
+  });
+});
+
+describe('Beutel im Einzelzeichen-Loop (Ruling #103b)', () => {
+  it('wiederholt kein Zeichen ueber viele Runden hinweg -- auch nicht an einer Zyklusgrenze', () => {
+    const pool = ['K', 'M', 'R', 'S'];
+    const advanceRandom = sequence([0.2, 0.8, 0.4, 0.6, 0.1, 0.9, 0.35, 0.55]);
+    let state = createSession({
+      totalRounds: 20,
+      progress: progressWith(pool),
+      random: sequence([0.9, 0.1, 0.6, 0.3, 0.7]),
+      today: '2026-09-01',
+    });
+
+    const drawn = [state.prompt];
+    for (let round = 0; round < 19; round += 1) {
+      state = promptFinished(beginPlayback(state, round));
+      state = submitAnswer(state, state.prompt, round + 0.5);
+      state = advance(state, advanceRandom);
+      drawn.push(state.prompt);
+    }
+
+    for (let i = 1; i < drawn.length; i += 1) {
+      expect(drawn[i]).not.toBe(drawn[i - 1]);
+    }
   });
 });
 
