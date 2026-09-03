@@ -736,6 +736,144 @@ button:disabled {
   border-color: var(--ink);
 }
 
+/* --- Sende-Training: Taste, "Tap it in", Aufloesung (Ruling #90) ---
+ *
+ * Die Aufgabe zeigt das Zeichen selbst (`.reveal`, dieselbe Rolle wie im
+ * Trainings-Feedback -- zweiter Bedarf, CLAUDE.md 4), "Hear it" ist derselbe
+ * Play-Kreis wie ueberall (`.play`), nur kleiner: die Buehne traegt hier
+ * schon den grossen Buchstaben, ein zweiter Kreis in Trainingsgroesse waere
+ * zu viel Flaeche fuer denselben Bildschirm.
+ */
+.send-hear-it {
+  width: 64px;
+  height: 64px;
+}
+
+.send-hear-it .play-mark {
+  margin-left: 3px;
+  border-top-width: 9px;
+  border-bottom-width: 9px;
+  border-left-width: 16px;
+}
+
+/*
+ * Die Sende-Taste: eine Flaeche statt eines Kreises -- press-and-hold
+ * braucht keine runde Zielgeste, sondern eine grosszuegige, die sich klar
+ * von "Hear it" unterscheidet. Fuellt Amber genau waehrend sie gedrueckt
+ * ist (`data-pressed`) -- das eine Amber dieser View in diesem Zustand
+ * (Teil B.7). `touch-action: none` haelt Touch-Gesten (Scrollen, Zoomen)
+ * waehrend des Haltens fern.
+ */
+.send-key {
+  flex: none;
+  margin-top: var(--space-3);
+  width: 100%;
+  height: 120px;
+  min-height: var(--tap);
+  padding: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: var(--radius);
+  background: transparent;
+  touch-action: none;
+  /*
+   * Kein Uebergang, anders als der Play-Kreis: die Taste ist ein
+   * Tast-Instrument, kein Anzeige-Element -- die Fuellung soll dieselbe
+   * Instanz wie der Anschlag sein, keine 150 ms spaeter (CLAUDE.md 2.1,
+   * "Timing ist heilig"). Ohne Uebergang ist die Fuellung ausserdem exakt
+   * dann amber, wenn `data-pressed` es sagt -- ohne einen Zwischenzustand,
+   * den eine Pruefung zufaellig in der Mitte erwischen koennte.
+   */
+}
+
+.send-key[data-pressed='true'] {
+  background: var(--amber);
+  border-color: var(--amber);
+}
+
+/* "Tap it in instead" (Teil E.16) -- eine leise Zeile unter der Eingabe. */
+.send-switch {
+  margin: 8px 0 0;
+  display: flex;
+  justify-content: center;
+}
+
+/*
+ * "Tap it in": zwei Tasten fuer · und −, plus das bisher Getippte darueber
+ * -- anders als beim Senden per Taste (kein Live-Muster, siehe Kopf von
+ * Send.tsx) gibt es hier keinen Zeitdruck und damit kein Mitzaehl-Problem;
+ * ohne die Anzeige waere der Weg nicht bedienbar.
+ */
+.tap-pad {
+  flex: none;
+  margin-top: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tap-typed {
+  margin: 0;
+  min-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tap-buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tap-button {
+  width: 88px;
+  height: 64px;
+  min-height: var(--tap);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius);
+  background: transparent;
+}
+
+.tap-button:hover:not(:disabled) {
+  border-color: var(--amber);
+}
+
+/* Die Loeschen-Taste steht in derselben Reihe wie die beiden Eingabetasten. */
+.tap-delete {
+  margin: 0;
+}
+
+/*
+ * Die Aufloesung: Zielmuster und gesendetes Muster in zwei ausgerichteten
+ * Zeilen (Teil D.13) -- die Formen sind dieselben wie ueberall
+ * (`.pattern-element`), FINDINGS #8 darf sich hier nicht wiederholen. Kein
+ * Amber: dieselbe Regel wie beim Wort-Training -- die Unterscheidung traegt
+ * Haken/Kreuz und der Text, nicht die Farbe (CLAUDE.md 6, 1.1 §4).
+ */
+.send-solution {
+  gap: var(--space-2);
+}
+
+.send-solution-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.send-solution-label {
+  min-width: 68px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gray);
+  text-align: right;
+}
+
 /* --- Lernmodus: Einfuehrungskarte, Echo-Check, Wiederholen --- */
 
 .learn {
@@ -1629,6 +1767,24 @@ a.menu-item {
 
   .question {
     font-size: 30px;
+  }
+
+  /*
+   * "Hear it" bleibt klein, unabhaengig vom Breakpoint -- ohne diese
+   * Wiederholung gewaenne die generische `.play`-Regel oben (gleiche
+   * Spezifitaet, aber spaeter in der Kaskade) und liesse den Kreis auf
+   * Trainingsgroesse anwachsen.
+   */
+  .send-hear-it {
+    width: 64px;
+    height: 64px;
+  }
+
+  .send-hear-it .play-mark {
+    margin-left: 3px;
+    border-top-width: 9px;
+    border-bottom-width: 9px;
+    border-left-width: 16px;
   }
 
   /* --- Das Tastenfeld: zwoelf Spalten statt sechs (Teil B.6, #75) --- */

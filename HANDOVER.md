@@ -1,3 +1,109 @@
+# Übergabe — Stand nach Runde F4 (das Sende-Training)
+
+**Repository:** https://github.com/Erikemmer/projekt-morse
+**Stand:** `main` ist bei `00b63e6` — **B2, F3 und D1 sind jetzt in `main`**
+(Review 16 hat die Runde D1 offenbar passiert: `main` und der Kopf dieses
+Branches sind identisch). **Runde F4 (das Sende-Training) liegt darauf als
+neue Commits auf `claude/morse-handover-alignment-nbkk6o`** — noch nicht
+gemergt, Review 17 (Fable) steht aus. Linear entwickelt, kein Merge von
+`main` zurück in den Branch.
+
+- **F4 setzt Konzept-Ruling Notion-Log #90 um** (Präzisierungen #101): der
+  Modus „Send" — ein Zeichen aus dem aktiven Satz senden, entweder getastet
+  (echtes Timing, dekodiert relativ) oder getippt ohne Zeitdruck („Tap it in
+  instead"). Das ist die letzte der vier gewählten Ausbaustufen und die
+  **erste, die Audio erzeugt statt abzuspielen** — „Timing ist heilig"
+  (CLAUDE.md 2.1) ist hier die Hauptregel, nicht eine Randnotiz.
+
+An **Backend, Sync-API, Konto, dem Learn-Bereich, dem Einzelzeichen-Loop, dem
+Wort-Modus und der Tempo-Progression ist nichts angefasst** — die
+Sende-Statistik ist bewusst eine eigene, getrennte Wahrheit (Teil F.17).
+Berührt sind:
+
+| Datei | Warum |
+|---|---|
+| **`src/engine/sending.ts`** | **neu:** die Dekodierung — relative Verhältnisse, Sitzungs-Schätzung des eigenen dits (#101a), größte Abweichung. Rein, DOM-frei |
+| **`src/engine/sending.test.ts`** | **neu:** 18 Fälle, darunter der Beleg für #101a (E gegen T) |
+| **`src/audio/player.ts`** | **neu:** `keyDown()`/`keyUp()` — die Tastung, Zeitpunkte von der Audio-Uhr, keine Vorlaufzeit wie `play()` |
+| **`src/audio/player.test.ts`** | **neu:** 6 Fälle gegen eine kontrollierte `AudioContext`-Attrappe (Node kennt keine echte) — die Entscheidung „sauber getrennt" ist hier belegt |
+| **`src/engine/sendSession.ts`** | **neu:** der Sende-Loop als Zustandsautomat — offen wie der Wort-Modus, zwei Eingabewege (`keyed`/`tapped`) |
+| **`src/engine/sendSession.test.ts`** | **neu:** 31 Fälle, darunter der Beleg für Teil F.17 (Hör-Statistik bleibt unberührt) |
+| **`src/ui/Send.tsx`** | **neu:** der Sende-Screen — Taste, „Tap it in", Auflösung als CSS-Formen |
+| `src/engine/stats.ts` | additiv: `DayStats.sent`, `SendCharacterRecord`, `Progress.sendCharacters`, `recordSendAttempt` — parsen und defaulten wie überall |
+| `src/engine/sync.ts` | `mergeSendCharacters` (dieselbe „mehr Versuche gewinnt"-Regel wie bei den Hör-Zeichen, aber eigene Funktion — Begründung im Kopf) |
+| `src/engine/words.ts` | zwei Kommentarzeilen: `WORDS_MIN_CHARACTERS`/`WORDS_STREAK_MIN_ANSWERS` jetzt auch vom Sende-Modus gelesen |
+| `src/engine/session.test.ts`, `src/engine/sync.test.ts`, `src/engine/wordSession.test.ts` | `day.sent` in Fixtures und Erwartungen nachgezogen (additives Feld, siehe oben) |
+| `src/ui/Menu.tsx` | `'send'` als `MenuLocation`, Eintrag „Send" direkt hinter „Words & groups", dieselbe Sperre |
+| `src/ui/App.tsx` | Sende-Einheit anlegen/wiederaufnehmen, Taste (Pointer + globale Leertaste), 1,5-s-Stille-Timer, Fokusführung |
+| `src/styles.css` | **neu:** `.send-key`, `.send-hear-it`, `.tap-pad`/`.tap-button`, `.send-solution*` |
+| `tools/amber/check.mjs` | 6 neue Ansichten (390 × 844 ×5, plus 1440 × 900 „Taste gedrückt") |
+
+Dazu zehn Screenshots (fünf Zustände × zwei Breiten) und diese Übergabe.
+
+Screenshots bei 390 × 844:
+[`send-ready-390.png`](./docs/screenshots/send-ready-390.png),
+[`send-key-pressed-390.png`](./docs/screenshots/send-key-pressed-390.png),
+[`send-solution-clean-390.png`](./docs/screenshots/send-solution-clean-390.png),
+[`send-solution-deviation-390.png`](./docs/screenshots/send-solution-deviation-390.png),
+[`send-tap-390.png`](./docs/screenshots/send-tap-390.png).
+Dieselben fünf Zustände bei 1440 × 900:
+[`send-ready-1440.png`](./docs/screenshots/send-ready-1440.png),
+[`send-key-pressed-1440.png`](./docs/screenshots/send-key-pressed-1440.png),
+[`send-solution-clean-1440.png`](./docs/screenshots/send-solution-clean-1440.png),
+[`send-solution-deviation-1440.png`](./docs/screenshots/send-solution-deviation-1440.png),
+[`send-tap-1440.png`](./docs/screenshots/send-tap-1440.png).
+
+**Bundle-Delta** (gegen `main` = `00b63e6`, `vite build`, gzip in Klammern):
+JS 211,03 kB → 225,80 kB (**+14,77 kB**, gzip 65,61 → 69,16 kB, **+3,55 kB**);
+CSS 16,26 kB → 17,69 kB (**+1,43 kB**, gzip 3,66 → 3,86 kB, **+0,20 kB**).
+Kein neues Paket — der ganze Zuwachs ist eigener Code.
+
+> ### Was Fable an dieser Runde sehen muss
+>
+> 1. **Punkt B.4 verlangte eine Entscheidung mit Begründung: `keyDown()`
+>    während einer laufenden `play()`-Wiedergabe — gesperrt oder sauber
+>    getrennt? Entschieden: sauber getrennt.** Beide Pfade bauen eigene
+>    Oszillatoren und teilen sich nur den `AudioContext`; eine Sperre hätte
+>    dem Player eine zweite Zustandsmaschine gegeben, obwohl er laut
+>    CLAUDE.md 4 nicht rechnet, sondern abspielt. Die UI hält die beiden
+>    Wege ohnehin auseinander (die Taste ist deaktiviert, während „Hear it"
+>    läuft). Ausführlich am Kopf von `MorsePlayer.keyDown()` und belegt in
+>    `player.test.ts`.
+> 2. **Vier feste Sätze zur größten Abweichung, das Ruling nannte wörtlich
+>    zwei** („your dahs are short…", „your gaps … are wide"). Die anderen
+>    zwei (`dah-long`, `gap-narrow`) habe ich im selben Ton ergänzt, weil die
+>    Engine alle vier Fälle unterscheidet (`biggestSendDeviation`) — ohne
+>    einen Satz dafür bliebe eine echte Abweichung stumm. Wortlaut ist meiner,
+>    keiner von Fable — eine Korrektur ist ein Einzeiler in `ui/Send.tsx`,
+>    `deviationSentence`.
+> 3. **„Tap it in" bleibt über „Next" hinweg gewählt**, statt bei jeder neuen
+>    Aufgabe auf die Taste zurückzuspringen. Das Ruling sagt nur, dass der Weg
+>    existiert, nicht, ob er pro Aufgabe oder pro Sitzung gilt — entschieden
+>    für „pro Sitzung", weil eine selbstgesteuerte Alternative (CLAUDE.md 6),
+>    die sich bei jeder Aufgabe neu erklicken lässt, keine echte Alternative
+>    mehr ist. Ein symmetrischer Rückweg („Use timing instead") ist dazu
+>    ergänzt, den das Ruling nicht ausdrücklich nennt.
+> 4. **Die Ziel-Zeichenwahl ist gleichverteilt, nicht nach Schwäche
+>    gewichtet.** `selection.ts` gewichtet nach der *Hör*-Statistik; sie hier
+>    heranzuziehen würde die beiden getrennten Fertigkeiten wieder koppeln,
+>    die Teil F.17 bewusst auseinanderhält. Nur Wiederholungssperre (nicht
+>    zweimal dasselbe Zeichen hintereinander), sonst reiner Zufall.
+> 5. **„Hear it" ist derselbe Play-Kreis wie überall, nur kleiner** (64 statt
+>    88/112 px) — die Bühne trägt hier schon den großen Zielbuchstaben, ein
+>    zweiter Kreis in Trainingsgröße wäre zu viel Fläche für denselben
+>    Bildschirm. Reine Platzentscheidung, keine neue Farbe oder Form.
+> 6. **`event.repeat`, `pointercancel` und Fenster-`blur` sind von Hand im
+>    Browser geprüft**, nicht mit einem Vitest-Fall: dieses Repo hat keine
+>    React-Komponententests (kein `@testing-library`, `environment: 'node'`
+>    in `vitest.config.ts`), UI-Verhalten wird hier durchgängig per
+>    Playwright-Durchlauf geprüft, nicht per Komponententest. Belegt: fünf
+>    simulierte OS-Wiederholungen bei gehaltener Leertaste ergaben ein
+>    Element, keine Kette; `pointercancel` und `blur` beendeten den
+>    gehaltenen Ton beide zuverlässig.
+
+<details>
+<summary><b>Die Übergabe nach Runde D1</b> (jetzt in `main` — B2, F3, D1 unverändert gültig, Historie)</summary>
+
 # Übergabe — Stand nach Runde D1 (das Laptop-Layout)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
@@ -382,6 +488,8 @@ stammen unverändert aus der Runde davor und sind hier nicht neu geprüft worden
 Die verbindlichen Regeln stehen in [CLAUDE.md](./CLAUDE.md). Nebenbefunde in
 [FINDINGS.md](./FINDINGS.md) — alle drei Einträge sind entschieden und behoben.
 
+</details>
+
 ---
 
 ## 1. Wo das Projekt steht
@@ -391,7 +499,26 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde (B2 + F3):**
+**Neu aus dieser Runde (F4): das Sende-Training.**
+
+- **Der Modus „Send"** (#90) — ab denselben acht aktiven Zeichen wie
+  „Words & groups" (`WORDS_MIN_CHARACTERS`, keine zweite Zahl). Ein Zeichen
+  wird gezeigt, „Hear it" spielt die Referenz auf Zuruf, gesendet wird per
+  gehaltener Taste (Maus, Touch, Leertaste) oder getippt ohne Zeitdruck
+  („Tap it in instead"). Offen wie der Wort-Modus: keine Runden, keine
+  stille Auskunft „N sent today", Streak-Tag nach fünf Versuchen.
+- **Die erste Engine, die Audio *erzeugt*, nicht nur abspielt.**
+  `MorsePlayer.keyDown()`/`keyUp()` tasten einen Ton direkt auf der Audio-Uhr;
+  `engine/sending.ts` dekodiert die Intervalle relativ — das eigene dit wird
+  geschätzt (kürzestes Element bei Kontrast), ein dah beginnt ab dem
+  Doppelten. Eine Sitzungs-Schätzung übernimmt, wenn eine Eingabe keinen
+  Kontrast hat (ein einzelnes „E" oder „T" lässt sich sonst nicht
+  unterscheiden, #101a) — und die Auflösung sagt das dann auch.
+- **Eine eigene, getrennte Sende-Statistik je Zeichen** (`sendCharacters`)
+  fließt nirgends in Gewichtung, Wachstum, ICR-Drills oder Tempo-Progression
+  des Hörtrainings ein — belegt in `sendSession.test.ts`.
+
+**Aus Runde D1 (B2 + F3) gilt weiter:**
 
 - **Die Bildmarke kommt aus den Owner-Dateien** (#88). Die im Repo
   konstruierte Marke war an vier Stellen falsch; Favicon, App-Icons, Lockup
@@ -401,6 +528,8 @@ von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
   Fortschrittsbalken, kein Abschluss-Screen: hören, antworten, „Next word", so
   lange man mag. Statt der Forderung steht rechts oben eine Auskunft, und der
   Streak-Tag fällt nach fünf abgeschickten Aufgaben (§3l).
+- **Das Laptop-Layout** (#95/#96) — Navigations-Schiene ab 900 px, Randspalte
+  ab 1280 px. Am Handy ändert sich nichts.
 
 **Aus Runde F2 gilt weiter: Wörter, Tempo und der Weg in den Learn-Bereich.**
 
@@ -526,35 +655,38 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `src/engine/timing.ts` | Farnsworth-Timing nach ARRL | unverändert |
 | `src/engine/schedule.ts` | Text → Zeitachse | unverändert |
 | `src/engine/settings.ts` | Tempo, Start-Satz, Kandidatenreihe, **Spannen für Ton und Lautstärke** | erweitert |
-| `src/engine/stats.ts` | Statistik, Tag/Sitzung/Intro, Streak-Feld, `RecordOptions`, **Tempo-Niveau, Sperr-Zähler, `reactionSeconds: null`** | erweitert |
+| `src/engine/stats.ts` | Statistik, Tag/Sitzung/Intro, Streak-Feld, `RecordOptions`, Tempo-Niveau, Sperr-Zähler, `reactionSeconds: null`, **`day.sent`, `SendCharacterRecord`, `recordSendAttempt` (F4)** | erweitert |
 | `src/engine/growth.ts` | Die Wachstumsregel | unverändert |
 | `src/engine/learn.ts` | Der Lernmodus: Karte, Echo-Check | unverändert |
 | `src/engine/variability.ts` | Klang-Variabilität in Stufen (HVPT), Heimton auf Stufe 0, **Streuung um das Tempo-Niveau** | erweitert |
 | `src/engine/selection.ts` | Gewichtung nach Schwäche | unverändert |
 | `src/engine/session.ts` | Loop-Zustandsautomat, Drill-Art, Pool, `retuneHomeTone`, Streak-Tag, **Tempo-Stufe (`speedUp`)** | erweitert |
-| `src/engine/sync.ts` | Merge zweier Lernstände; Lern-Kennung, Streak, **plus Tempo-Niveau (Maximum)** | erweitert |
+| `src/engine/sync.ts` | Merge zweier Lernstände; Lern-Kennung, Streak, Tempo-Niveau (Maximum), **`mergeSendCharacters` (F4, eigene Funktion, dieselbe Regel)** | erweitert |
 | **`src/engine/streak.ts`** | **Streak mit Freeze-Gnade, Kalenderarithmetik, Merge** | **neu, getestet** |
 | **`src/engine/drill.ts`** | **Langsame Zeichen, Drill-Satz, ehrlicher Vergleich** | **neu, getestet** |
-| **`src/engine/words.ts`** | **Wortliste (230) und die Auswahl von Wörtern und Gruppen** | **neu, getestet** |
+| `src/engine/words.ts` | Wortliste (230) und die Auswahl von Wörtern und Gruppen, **`WORDS_MIN_CHARACTERS`/`WORDS_STREAK_MIN_ANSWERS` jetzt auch vom Sende-Modus gelesen (F4)** | erweitert |
 | **`src/engine/wordSession.ts`** | **Der Wort-Loop als reiner Zustandsautomat** | **neu, getestet** |
 | **`src/engine/tempo.ts`** | **Tempo-Progression: Bedingung, Sperre, Deckel, Reset** | **neu, getestet** |
 | **`src/engine/deviceSettings.ts`** | **Tonhöhe und Lautstärke als reine Daten** | **neu, getestet** |
-| `src/audio/player.ts` | Wiedergabe mit Audio-Uhr, **Lautstärke veränderlich** | erweitert |
+| **`src/engine/sending.ts`** | **(F4) Dekodierung der Sende-Eingabe: relative Verhältnisse, Sitzungs-Schätzung des dits, größte Abweichung** | **neu, getestet** |
+| **`src/engine/sendSession.ts`** | **(F4) Der Sende-Loop als Zustandsautomat, zwei Eingabewege** | **neu, getestet** |
+| `src/audio/player.ts` | Wiedergabe mit Audio-Uhr, Lautstärke veränderlich, **`keyDown()`/`keyUp()` — die Tastung (F4)** | erweitert |
 | `functions/_lib/`, `functions/api/` | Env, HTTP, Passkeys, Sitzungen, Sync-API | unverändert |
 | `migrations/0001_accounts.sql` | users, credentials, sessions, progress | unverändert |
 | `wrangler.toml` | D1-Bindung `DB`; echte `database_id` (config-as-code) | unverändert |
-| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, Streak-Zeile, Settings, Drill, `Answers` mit Tastenfeld, **Wort-Modus, Tempo in der Fußzeile, Tempo-Reset** | erweitert |
+| `src/ui/App.tsx` | Lernloop-Screen, View-State, Push, Streak-Zeile, Settings, Drill, `Answers` mit Tastenfeld, Wort-Modus, Tempo in der Fußzeile, Tempo-Reset, **Sende-Modus: Taste (Pointer + Leertaste), Stille-Timer, `keyDown`/`keyUp` (F4)** | erweitert |
 | **`src/ui/Words.tsx`** | **Der Wort-Screen: Antwortzeile, Tasten, Auflösung, Tastatur-Hook** | **neu** |
+| **`src/ui/Send.tsx`** | **(F4) Der Sende-Screen: Taste, „Tap it in", Auflösung als CSS-Formen, `useSendKeyboard`** | **neu** |
 | **`src/ui/SessionHeader.tsx`** | **Die Kopfzeile eines Übungs-Screens — aus `App.tsx` gezogen** | **neu** |
 | **`src/ui/keypad.ts`** | **Schwelle und die 36 Positionen des Tastenfelds — reine Daten** | **neu, getestet** |
 | `src/ui/Account.tsx`, `src/ui/account.ts` | Account-Screen und Passkeys | unverändert |
 | `src/ui/Settings.tsx` | Zwei Regler, ein Probeton, ehrliche Zeilen, **Tempo-Stand und Reset** | erweitert |
 | **`src/ui/deviceStorage.ts`** | **Eigener localStorage-Schlüssel, nie im Sync** | **neu** |
-| `src/ui/Menu.tsx` | Kopfzeile und Menü, Settings-Zeile, **sperrbare Einträge und ein Link nach draußen** | erweitert |
+| `src/ui/Menu.tsx` | Kopfzeile und Menü, Settings-Zeile, sperrbare Einträge und ein Link nach draußen, **`'send'` als `MenuLocation` (F4)** | erweitert |
 | `src/ui/progressStorage.ts` | localStorage rein/raus, plus Lern-Zeitstempel | unverändert |
 | `src/ui/Progress.tsx`, `Intro.tsx`, `Learn.tsx`, `Pattern.tsx` | — | unverändert |
-| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, `.quiet-link`, `.keypad`, **`.answer-line`, `.button-check`, `.solution*`, `.menu-hint`** | erweitert |
-| `tools/amber/check.mjs` | Das Amber-Budget am gerenderten Bild, **jetzt 28 Ansichten** | erweitert |
+| `src/styles.css` | Tokens nach 1.1 §13, Regler- und Zeilen-Rollen, `.quiet-link`, `.keypad`, `.answer-line`, `.button-check`, `.solution*`, `.menu-hint`, **`.send-key`, `.send-hear-it`, `.tap-pad`/`.tap-button`, `.send-solution*` (F4)** | erweitert |
+| `tools/amber/check.mjs` | Das Amber-Budget am gerenderten Bild, **jetzt 35 Ansichten (F4: +6)** | erweitert |
 | **`content/learn/*.md`** | **Die 14 Texte des Learn-Bereichs (Fable), unverändert** | **neu** |
 | **`tools/learn/pages.mjs`** | **Frontmatter, Markdown, Head-Tags, Sitemap — reine Funktionen** | **neu, getestet** |
 | **`tools/learn/build.mjs`** | **Ein- und Ausgabe: schreibt nach `dist/`, prüft die Paare** | **neu** |
@@ -569,8 +701,8 @@ Stufen, der Lernmodus mit Karte und Echo-Check, Marke und Tokens nach 1.1.
 | `public/logo-key.svg`, `logo-lockup.svg`, `favicon.svg`, `icons/*` | Aus den Originalen neu erzeugt (#88) | erneuert |
 | **`public/logo-mark-inverse.svg`** | **Die Marke für dunkle Flächen; noch nirgends verwendet** | **neu** |
 | ~~`docs/brand/logo.py`~~ | Der Rekonstruktions-Zeichner — eine zweite Wahrheit (#88) | **gelöscht** |
-| `docs/screenshots/` | …, acht Learn-Screenshots, **zwei Tastenfeld-Screenshots** | erweitert |
-| `src/**/*.test.ts`, `tools/learn/pages.test.mjs` | **375 Tests** (278 vorher, **97 neu** in dieser Runde) | grün |
+| `docs/screenshots/` | …, acht Learn-Screenshots, zwei Tastenfeld-Screenshots, **zehn Sende-Screenshots (F4)** | erweitert |
+| `src/**/*.test.ts`, `tools/learn/pages.test.mjs` | **440 Tests** (381 vorher, **59 neu** in F4: 18 `sending.test.ts`, 6 `player.test.ts`, 31 `sendSession.test.ts`, 4 neue Fälle in `sync.test.ts`) | grün |
 
 Richtung unverändert: `src/engine/` DOM-frei, Player kennt die Engine, die
 Engine kennt niemanden, die UI rechnet nicht. **Neu dazu: der Server rechnet
@@ -2623,12 +2755,17 @@ ist offline, die Artikel sind eine Website.
 
 ## 7. Nächster Schritt
 
-**Runde D1 liegt auf dem Branch, fünfter Commit (der Nachtrag aus §3n), und
-wartet erneut auf Review** — der erste Bericht war nicht vollständig (§3n),
-Fable prüft jetzt den Nachtrag. **Nicht gemergt.** Die Messungen stehen in
-§4, die Begründungen in §3m und §3n. **Laut Plan folgt danach F4
-(Sende-Training)** — genau in der Reihenfolge, die vermeiden sollte, dass
-dessen Oberfläche zweimal gebaut wird.
+**Runde D1 ist inzwischen in `main`** (`main` = `00b63e6`, identisch mit dem
+Stand, den D1 hinterlassen hat — Review 16 muss demnach bestanden haben,
+auch wenn diese Übergabe den Bestätigungs-Kommentar selbst nicht sieht).
+**Runde F4 (Sende-Training) liegt jetzt auf dem Branch, noch nicht
+gemergt, Review 17 (Fable) steht aus.** Die Messungen und Entscheidungen
+dieser Runde stehen im Kopf der Übergabe (Bundle-Delta, die sechs
+„Was Fable sehen muss"-Punkte). **Mit F4 sind alle vier gewählten
+Ausbaustufen umgesetzt** (Streak/Settings/ICR, Wörter & Gruppen,
+Sende-Training, Learn-Artikel) — offen aus der ursprünglichen Auswahl bleibt
+nur noch das **Visual-Practice-Paket** (opt-in-Modus, CLAUDE.md 2.9,
+Addendum a) als eigene, noch nicht beauftragte Runde.
 
 **Aus D1 offen gewesene Sache — durch Ruling #99 entschieden, kein offener
 Punkt mehr:**
@@ -2670,6 +2807,28 @@ Punkt mehr:**
 
 **Menschliche Prüfung, die von hier aus nicht geht:**
 
+- **Neu aus F4: die Taste auf echtem Gerät, nicht nur per simuliertem
+  Playwright-Zeiger.** Fühlt sich das Halten für ein dit gegen ein dah
+  natürlich an, oder ist 120 px Höhe auf einem kleinen Telefon-Display zu
+  groß/klein für einen sicheren Daumen-Anschlag? Trifft ein Finger die Taste
+  zuverlässig, ohne aus Versehen den Bildschirm zu scrollen (`touch-action:
+  none` sollte das verhindern, ungeprüft auf echtem iOS/Android)?
+- **Neu aus F4: klingt die eigene Sendung ehrlich?** Die Dekodierung ist
+  gegen synthetische Zeitachsen getestet (`sending.test.ts`), nicht gegen
+  echte, leicht zittrige menschliche Anschläge über viele Versuche. Ob sich
+  die Sitzungs-Schätzung des dits nach ein paar Dutzend echten Zeichen
+  *richtig* anfühlt (statt zu träge oder zu nervös auf Ausreißer zu
+  reagieren), entscheidet eine echte Übungssitzung, kein Test.
+- **Neu aus F4: Screenreader über die Sende-Auflösung.** Die vorgelesene Form
+  ist ein Satz („Target: dit dah dit. You sent: dit dit."), nicht die
+  Formen selbst — ob das an dieser Stelle die richtige Auskunft ist (und ob
+  „Sending…"/„Your turn" als Live-Ansage beim Halten der Taste eher hilft
+  oder stört), entscheidet ein Mensch mit Screenreader.
+- **Neu aus F4: eine echte Design-Frage, kein technischer Zwang** — bleibt
+  „Tap it in" über „Next" hinweg gewählt (so umgesetzt, §-Kopf Punkt 3), oder
+  soll jede neue Aufgabe wieder mit der Taste beginnen? Beides ist vertretbar;
+  diese Übergabe hat sich für die weniger reibungsvolle Variante entschieden,
+  nicht für die einzig mögliche.
 - **Neu aus D1: ein echter Laptop, nicht nur ein 1440×900-Viewport.** Trackpad
   statt Maus über die Schiene, ein Fenster, das der Nutzer selbst verkleinert
   (springt das Layout beim Überschreiten von 900 px oder 1280 px sauber, oder

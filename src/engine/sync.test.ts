@@ -16,11 +16,21 @@ import {
   emptyProgress,
   type CharacterRecord,
   type Progress,
+  type SendCharacterRecord,
 } from './stats';
 import { emptySnapshot, learningRevision, mergeProgress, type Snapshot } from './sync';
 
 function record(attempts: number, hits: number, reactions: number[] = [1]): CharacterRecord {
   return { attempts, hits, recentReactions: reactions };
+}
+
+function sendRecord(
+  attempts: number,
+  correct: number,
+  lastDahDitRatio: number | null = 3,
+  lastGapRatio: number | null = 1,
+): SendCharacterRecord {
+  return { attempts, correct, lastDahDitRatio, lastGapRatio };
 }
 
 /** Ein Stand, den man Feld für Feld verstellen kann, ohne alles zu schreiben. */
@@ -44,7 +54,7 @@ function fullProgress(): Progress {
     recentAnswers: [true, true, false, true],
     answersSinceGrowth: 12,
     sessionsStarted: 9,
-    day: { date: '2026-08-30', attempts: 24, hits: 21, characters: ['K', 'M'], words: 3 },
+    day: { date: '2026-08-30', attempts: 24, hits: 21, characters: ['K', 'M'], words: 3, sent: 2 },
     introSeen: true,
     introducedCharacters: [...STARTING_CHARACTERS, 'P', 'T'],
     variabilityNoticeSeen: true,
@@ -88,7 +98,7 @@ describe('Kante: beide Stände voll', () => {
       recentAnswers: [true, false],
       answersSinceGrowth: 4,
       sessionsStarted: 9,
-      day: { date: '2026-08-30', attempts: 10, hits: 9, characters: ['K'], words: 1 },
+      day: { date: '2026-08-30', attempts: 10, hits: 9, characters: ['K'], words: 1, sent: 4 },
       introSeen: true,
       introducedCharacters: [...STARTING_CHARACTERS, 'P'],
     },
@@ -102,7 +112,7 @@ describe('Kante: beide Stände voll', () => {
       recentAnswers: [false, true, true],
       answersSinceGrowth: 17,
       sessionsStarted: 4,
-      day: { date: '2026-09-01', attempts: 30, hits: 28, characters: ['M', 'U'], words: 6 },
+      day: { date: '2026-09-01', attempts: 30, hits: 28, characters: ['M', 'U'], words: 6, sent: 9 },
       introSeen: true,
       introducedCharacters: [...STARTING_CHARACTERS, 'T', 'L'],
     },
@@ -129,9 +139,10 @@ describe('Kante: beide Stände voll', () => {
       attempts: 30,
       hits: 28,
       characters: ['M', 'U'],
-      // Die Wort-Aufgaben des Tages wandern mit dem Eimer, nicht summiert
-      // (Ruling #87): 6 vom juengeren Stand, nicht 1 + 6.
+      // Die Wort- und Sende-Aufgaben des Tages wandern mit dem Eimer, nicht
+      // summiert (Ruling #87 bzw. #90): vom juengeren Stand, nicht addiert.
       words: 6,
+      sent: 9,
     });
   });
 
@@ -165,6 +176,51 @@ describe('Regel: pro Zeichen wandert der Datensatz als Ganzes', () => {
     const remote = snapshot({ characters: { K: record(20, 10, [2.5]) } }, 9_000);
 
     expect(mergeProgress(local, remote).characters.K).toEqual(record(20, 20, [0.5]));
+  });
+});
+
+describe('Regel: die Sende-Statistik merged wie die Hoer-Statistik, aber getrennt (#90, F.17)', () => {
+  it('nimmt pro Zeichen den Sende-Datensatz mit mehr Versuchen -- als Ganzes', () => {
+    const local = snapshot({ sendCharacters: { R: sendRecord(5, 4, 2.0, 0.5) } }, 1_000);
+    const remote = snapshot({ sendCharacters: { R: sendRecord(9, 8, 3.1, 1.0) } }, 2_000);
+
+    // Nicht vermischt: "correct" vom einen, "attempts" vom anderen waere eine
+    // Quote, die niemand erlebt hat.
+    expect(mergeProgress(local, remote).sendCharacters.R).toEqual(sendRecord(9, 8, 3.1, 1.0));
+  });
+
+  it('behaelt Zeichen, die nur einer der beiden Staende gesendet hat', () => {
+    const local = snapshot({ sendCharacters: { R: sendRecord(5, 4) } }, 1_000);
+    const remote = snapshot({ sendCharacters: { S: sendRecord(3, 3) } }, 2_000);
+
+    const merged = mergeProgress(local, remote);
+    expect(merged.sendCharacters.R).toEqual(sendRecord(5, 4));
+    expect(merged.sendCharacters.S).toEqual(sendRecord(3, 3));
+  });
+
+  it('nimmt bei Gleichstand den lokalen Datensatz', () => {
+    const local = snapshot({ sendCharacters: { R: sendRecord(5, 5) } }, 1_000);
+    const remote = snapshot({ sendCharacters: { R: sendRecord(5, 1) } }, 9_000);
+
+    expect(mergeProgress(local, remote).sendCharacters.R).toEqual(sendRecord(5, 5));
+  });
+
+  it('laesst die Hoer-Statistik voellig unberuehrt vom Gewinner der Sende-Statistik', () => {
+    // Der Gegenbeleg zu F.17: mehr Sende-Versuche auf der einen Seite duerfen
+    // nicht den Hoer-Datensatz mitziehen -- beide Statistiken wandern fuer
+    // sich, jede nach ihrer eigenen "mehr Versuche"-Regel.
+    const local = snapshot(
+      { characters: { R: record(50, 48) }, sendCharacters: { R: sendRecord(2, 1) } },
+      1_000,
+    );
+    const remote = snapshot(
+      { characters: { R: record(10, 9) }, sendCharacters: { R: sendRecord(9, 8) } },
+      2_000,
+    );
+
+    const merged = mergeProgress(local, remote);
+    expect(merged.characters.R).toEqual(record(50, 48)); // Hoeren: lokal gewinnt
+    expect(merged.sendCharacters.R).toEqual(sendRecord(9, 8)); // Senden: remote gewinnt
   });
 });
 

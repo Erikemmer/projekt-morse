@@ -45,6 +45,11 @@ import { hitRate, recordFor, type Progress } from './stats';
  * in `growth.ts` "in den abgefragten Satz aufgenommen" -- und der aktive Satz
  * ist auch der, aus dem dieser Modus baut. Ein Modus auf Zeichen
  * freizuschalten, die er nicht verwenden darf, waere ein leeres Versprechen.
+ *
+ * **Seit Ruling #90 auch die Schwelle des Sende-Trainings** (Teil A.1) --
+ * dieselbe Konstante, keine zweite Zahl. Der Modus ist von hier aus nicht
+ * erreichbar (Engine kennt keine UI), aber `ui/App.tsx` fragt genau diese
+ * Konstante fuer beide Modi ab.
  */
 export const WORDS_MIN_CHARACTERS = 8;
 
@@ -59,6 +64,9 @@ export const WORDS_MIN_CHARACTERS = 8;
  * ist die Zahl bewusst klein gehalten: eine Schwelle, die man nur mit
  * Ausdauer erreicht, waere genau die Erpressung, die dieses Produkt nicht
  * betreibt.
+ *
+ * **Seit Ruling #90 auch die Schwelle des Sende-Trainings** -- dieselbe Zahl,
+ * angewandt auf `day.sent` statt `day.words` (engine/sendSession.ts).
  */
 export const WORDS_STREAK_MIN_ANSWERS = 5;
 

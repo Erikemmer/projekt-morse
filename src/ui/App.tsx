@@ -78,6 +78,20 @@ import {
 } from '../engine/wordSession';
 import { WORDS_MIN_CHARACTERS, wordsUnlocked } from '../engine/words';
 import {
+  advanceSend,
+  appendSendInterval,
+  appendTap,
+  beginSendPlayback,
+  createSendSession,
+  deleteTap,
+  retuneSendHomeTone,
+  sendPlaybackFinished,
+  setSendMode as setSendSessionMode,
+  submitSend,
+  type SendMode,
+  type SendSessionState,
+} from '../engine/sendSession';
+import {
   dayFor,
   markIntroSeen,
   markIntroduced,
@@ -97,6 +111,7 @@ import { AppHeader, MenuPanel, NavRail, type MenuLocation } from './Menu';
 import { MarginColumn } from './MarginColumn';
 import { Pattern } from './Pattern';
 import { ProgressScreen } from './Progress';
+import { Send, useSendKeyboard } from './Send';
 import { SessionHeader } from './SessionHeader';
 import { Words, useWordKeyboard } from './Words';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
@@ -153,6 +168,19 @@ export function App() {
    * sie, wenn der Abschluss-Screen verlassen wird.
    */
   const [words, setWords] = useState<WordSessionState | null>(null);
+  /**
+   * Die laufende Sende-Einheit (Ruling Notion-Log #90) -- oder `null`. Laeuft
+   * wie die Wort-Einheit neben der Sitzung her, angelegt beim Betreten des
+   * Modus und nur, wenn es noch keine gibt.
+   */
+  const [send, setSend] = useState<SendSessionState | null>(null);
+  /**
+   * Ob die Sende-Taste gerade physisch gedrueckt ist -- reine Anzeige
+   * (welche Flaeche Amber fuellt), unabhaengig von `send.phase`: zwischen
+   * zwei Elementen desselben Zeichens ist die Taste ebenfalls kurz
+   * losgelassen, waehrend die Aufgabe weiter `'sending'` ist (Teil B.7).
+   */
+  const [sendKeyPressed, setSendKeyPressed] = useState(false);
   const [reviewing, setReviewing] = useState(false);
   const [tonePlaying, setTonePlaying] = useState(false);
 
@@ -163,7 +191,7 @@ export function App() {
    * unberührt weiter; Progress und About lesen nur.
    */
   const [view, setView] = useState<
-    'practice' | 'words' | 'progress' | 'account' | 'settings' | 'about'
+    'practice' | 'words' | 'send' | 'progress' | 'account' | 'settings' | 'about'
   >('practice');
   const [menuOpen, setMenuOpen] = useState(false);
   /** Der Menü-Trigger — Fokusziel nach dem Schließen ohne Ortswechsel. */
@@ -266,7 +294,8 @@ export function App() {
     // Play-Kreis, Aufloesung und Weiter-Taste, und ohne dieses Nachziehen
     // fiele der Fokus nach jedem Ton auf <body>. Die Aufgabe steht dabei fuer
     // die Runde, die es seit Ruling #87 nicht mehr gibt: sie wechselt genau
-    // dann, wenn die naechste Aufgabe beginnt.
+    // dann, wenn die naechste Aufgabe beginnt. `send.phase`/`send.prompt`
+    // aus demselben Grund fuer das Sende-Training (Ruling #90).
   }, [
     session.phase,
     session.round,
@@ -274,6 +303,8 @@ export function App() {
     session.progress.introSeen,
     words?.phase,
     words?.prompt,
+    send?.phase,
+    send?.prompt,
     view,
     reviewing,
     menuOpen,
@@ -422,6 +453,153 @@ export function App() {
     onDelete: deleteWordCharacter,
     onSubmit: submitWordAnswer,
   });
+
+  // --- Sende-Training (Ruling Notion-Log #90) -----------------------------
+
+  /*
+   * Das Timing der Sende-Einheit -- eigener Klang, dieselbe Rechnung wie
+   * ueberall. Gespielt wird hier immer nur *ein* Zeichen ("Hear it"): die
+   * Farnsworth-Luecken kommen trotzdem aus derselben Funktion, es gibt nur
+   * keine Zeichenpause, die sie strecken koennten.
+   */
+  const sendEffectiveWpm = send?.sound.effectiveWpm ?? null;
+  const sendTiming = useMemo(
+    () =>
+      sendEffectiveWpm === null
+        ? null
+        : computeTiming({ characterWpm: CHARACTER_WPM, effectiveWpm: sendEffectiveWpm }),
+    [sendEffectiveWpm],
+  );
+  const sendSchedule = useMemo(
+    () => (send === null || sendTiming === null ? null : buildSchedule(send.prompt, sendTiming)),
+    [send?.prompt, sendTiming],
+  );
+
+  /* Der Fortschritt der Einheit wandert in die Sitzung zurueck, wie beim Wort-Training. */
+  const sendProgress = send?.progress;
+  useEffect(() => {
+    if (sendProgress === undefined) return;
+    setSession((current) =>
+      current.progress === sendProgress ? current : { ...current, progress: sendProgress },
+    );
+  }, [sendProgress]);
+
+  /** "Hear it": spielt die Referenz einmal, wie im Training. */
+  const playSendReference = useCallback(async () => {
+    if (sendSchedule === null || send === null) return;
+    const player = ensurePlayer();
+    await player.resume();
+
+    const handle = player.play(sendSchedule, () => {}, send.promptToneHz);
+    setSend((current) => (current === null ? null : beginSendPlayback(current)));
+
+    await handle.finished;
+    setSend((current) => (current === null ? null : sendPlaybackFinished(current)));
+  }, [sendSchedule, send?.promptToneHz, ensurePlayer]);
+
+  /**
+   * Ob die Sende-Taste gerade bedient werden darf: nur im Tastungsweg, nur
+   * auf diesem Screen, nur solange keine Referenz spielt oder die Aufloesung
+   * schon steht. Dieselbe Bedingung traegt Maus/Touch (Send.tsx, `disabled`)
+   * und die globale Leertaste (`useSendKeyboard`) -- eine Wahrheit, kein
+   * zweites Mal geprueft.
+   */
+  const canKeySend =
+    view === 'send' &&
+    !menuOpen &&
+    send !== null &&
+    send.mode === 'keyed' &&
+    (send.phase === 'ready' || send.phase === 'sending');
+
+  /**
+   * Ob die Taste gerade wirklich gehalten wird -- als Ref, nicht als
+   * Zustand: er entscheidet, ob `keyDown()` noch ankommen darf, nachdem
+   * `resume()` durch ist (siehe `pressSendKey`), und braucht dafuer den
+   * *aktuellen* Wert, nicht den aus der Runde, in der der Callback gebaut
+   * wurde.
+   */
+  const sendKeyHeldRef = useRef(false);
+  /** Der Startzeitpunkt des laufenden Elements auf der Audio-Uhr, oder null. */
+  const sendKeyDownAtRef = useRef<number | null>(null);
+
+  /**
+   * Die Taste wird gedrueckt. `keyDown()` selbst braucht den AudioContext in
+   * derselben Geste (Browser-Autoplay-Regel) -- deshalb `resume()` hier und
+   * nicht vorher; ist die Taste beim Ankommen der Antwort schon wieder los
+   * (sehr kurzer Antipp), bleibt der Ton stumm, statt verspaetet doch noch zu
+   * klingen (`sendKeyHeldRef`).
+   */
+  const pressSendKey = useCallback(() => {
+    if (!canKeySend || sendKeyHeldRef.current) return;
+    sendKeyHeldRef.current = true;
+    setSendKeyPressed(true);
+
+    const player = ensurePlayer();
+    void player.resume().then(() => {
+      if (!sendKeyHeldRef.current) return;
+      sendKeyDownAtRef.current = player.keyDown(send?.promptToneHz);
+    });
+  }, [canKeySend, send?.promptToneHz, ensurePlayer]);
+
+  /** Die Taste wird losgelassen -- beendet den Ton und verbucht das Element. */
+  const releaseSendKey = useCallback(() => {
+    if (!sendKeyHeldRef.current) return;
+    sendKeyHeldRef.current = false;
+    setSendKeyPressed(false);
+
+    const downAt = sendKeyDownAtRef.current;
+    sendKeyDownAtRef.current = null;
+    // resume() war noch nicht durch -- es kam nie ein Ton an, also auch kein Element.
+    if (downAt === null) return;
+
+    const upAt = ensurePlayer().keyUp();
+    setSend((current) => (current === null ? null : appendSendInterval(current, { downAt, upAt })));
+  }, [ensurePlayer]);
+
+  // Die Leertaste als Sende-Taste, global -- wie useWordKeyboard, und aus
+  // demselben Grund (ui/Send.tsx: event.repeat, preventDefault, blur).
+  useSendKeyboard({ enabled: canKeySend, onPress: pressSendKey, onRelease: releaseSendKey });
+
+  /**
+   * Abschluss einer Eingabe nach 1,5 s Stille (Teil B.8) -- zusaetzlich zu
+   * "Done" (weiter unten). "Stille" heisst: seit dem letzten *Loslassen*,
+   * nicht seit dem letzten Tastendruck -- solange die Taste noch gehalten
+   * wird (`sendKeyPressed`), laeuft kein Timer, sonst schnitte ein langer
+   * dah mitten im Halten ab.
+   */
+  useEffect(() => {
+    if (view !== 'send' || menuOpen || sendKeyPressed) return undefined;
+    if (send === null || send.mode !== 'keyed' || send.phase !== 'sending') return undefined;
+
+    const timer = window.setTimeout(() => {
+      setSend((current) => (current === null ? null : submitSend(current)));
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [view, menuOpen, sendKeyPressed, send?.mode, send?.phase, send?.intervals.length]);
+
+  const switchSendMode = useCallback((mode: SendMode) => {
+    setSend((current) => (current === null ? null : setSendSessionMode(current, mode)));
+  }, []);
+
+  const tapSendDit = useCallback(() => {
+    setSend((current) => (current === null ? null : appendTap(current, '.')));
+  }, []);
+
+  const tapSendDah = useCallback(() => {
+    setSend((current) => (current === null ? null : appendTap(current, '-')));
+  }, []);
+
+  const deleteSendTap = useCallback(() => {
+    setSend((current) => (current === null ? null : deleteTap(current)));
+  }, []);
+
+  const submitSendAttempt = useCallback(() => {
+    setSend((current) => (current === null ? null : submitSend(current)));
+  }, []);
+
+  const nextSend = useCallback(() => {
+    setSend((current) => (current === null ? null : advanceSend(current, Math.random)));
+  }, []);
 
   const next = useCallback(() => setSession((current) => advance(current, Math.random)), []);
 
@@ -607,6 +785,7 @@ export function App() {
   useEffect(() => {
     setSession((current) => retuneHomeTone(current, device.toneHz));
     setWords((current) => (current === null ? null : retuneWordHomeTone(current, device.toneHz)));
+    setSend((current) => (current === null ? null : retuneSendHomeTone(current, device.toneHz)));
   }, [device.toneHz]);
 
   /*
@@ -668,7 +847,11 @@ export function App() {
   const wordsOpen = wordsUnlocked(session.progress.activeCharacters.length);
   const menuLocked = wordsOpen
     ? undefined
-    : { words: `from ${WORDS_MIN_CHARACTERS} characters` };
+    : {
+        words: `from ${WORDS_MIN_CHARACTERS} characters`,
+        // Dieselbe Schwelle wie „Words & groups" (Teil A.1) -- keine zweite Zahl.
+        send: `from ${WORDS_MIN_CHARACTERS} characters`,
+      };
 
   const dismissMenu = useCallback(() => {
     focusMenuTrigger.current = true;
@@ -696,6 +879,19 @@ export function App() {
         setWords((current) =>
           current ??
           createWordSession({
+            progress: session.progress,
+            random: Math.random,
+            today: todayISO(),
+            homeToneHz: device.toneHz,
+          }),
+        );
+      }
+
+      /* Dieselbe Ruecksicht wie bei der Wort-Einheit: nur anlegen, wenn keine offen ist. */
+      if (target === 'send') {
+        setSend((current) =>
+          current ??
+          createSendSession({
             progress: session.progress,
             random: Math.random,
             today: todayISO(),
@@ -844,6 +1040,22 @@ export function App() {
           onDelete={deleteWordCharacter}
           onSubmit={submitWordAnswer}
           onNext={nextWord}
+          headingRef={focusTarget}
+        />
+      ) : view === 'send' && send !== null ? (
+        <Send
+          state={send}
+          keyPressed={sendKeyPressed}
+          onHearIt={() => void playSendReference()}
+          onKeyPress={pressSendKey}
+          onKeyRelease={releaseSendKey}
+          onSwitchToTapped={() => switchSendMode('tapped')}
+          onSwitchToKeyed={() => switchSendMode('keyed')}
+          onTapDit={tapSendDit}
+          onTapDah={tapSendDah}
+          onDeleteTap={deleteSendTap}
+          onDone={submitSendAttempt}
+          onNext={nextSend}
           headingRef={focusTarget}
         />
       ) : view === 'progress' ? (

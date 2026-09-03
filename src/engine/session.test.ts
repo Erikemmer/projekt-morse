@@ -444,7 +444,7 @@ describe('Tagesstatistik, Sitzungszaehler, Intro-Merker', () => {
     expect(parsed.characters.K.attempts).toBe(4);
     expect(parsed.sessionsStarted).toBe(0);
     expect(parsed.introSeen).toBe(false);
-    expect(parsed.day).toEqual({ date: '', attempts: 0, hits: 0, characters: [], words: 0 });
+    expect(parsed.day).toEqual({ date: '', attempts: 0, hits: 0, characters: [], words: 0, sent: 0 });
   });
 
   it('ein Tages-Eimer ohne brauchbares Datum wird verworfen, nicht falsch beschriftet', () => {

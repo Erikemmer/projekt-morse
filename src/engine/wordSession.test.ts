@@ -109,7 +109,7 @@ describe('Wort-Modus: der Anfang', () => {
 
   it('zieht den Tages-Eimer auf heute nach', () => {
     const progress = fullProgress({
-      day: { date: '2026-08-30', attempts: 40, hits: 39, characters: ['K'], words: 7 },
+      day: { date: '2026-08-30', attempts: 40, hits: 39, characters: ['K'], words: 7, sent: 3 },
     });
     expect(unit(progress).progress.day).toEqual({
       date: TODAY,
@@ -117,6 +117,7 @@ describe('Wort-Modus: der Anfang', () => {
       hits: 0,
       characters: [],
       words: 0,
+      sent: 0,
     });
   });
 

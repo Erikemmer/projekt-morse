@@ -284,6 +284,78 @@ const VIEWS = [
       await page.waitForSelector('.keypad');
     },
   },
+  /*
+   * Sende-Training (Ruling Notion-Log #90, Praezisierungen #101). Fuenf
+   * Ansichten am Handy: der gefuellte "Done"-Knopf darf nie neben dem
+   * gefuellten "Hear it" stehen (er erscheint erst mit der Eingabe), die
+   * Sende-Taste selbst traegt Amber nur waehrend sie gedrueckt ist, und die
+   * Aufloesung zeichnet Punkte/Striche als Formen, nie in Amber.
+   *
+   * Ein einzelnes Element (dit oder dah) hat per Definition kein
+   * Dah:Dit- und kein Pausen-Verhaeltnis (engine/sending.ts) und ist damit
+   * *immer* "sauber" -- unabhaengig von der genauen Druckdauer. Das macht die
+   * "sauber"-Ansicht ohne heikles Timing reproduzierbar. Fuer "mit
+   * Abweichung" braucht es echten Kontrast: ein kurzer und ein deutlich zu
+   * langer Druck (Verhaeltnis weit ausserhalb 2,5-3,5), so grosszuegig
+   * bemessen, dass ein paar Millisekunden Jitter der Browser-Zeitgeber daran
+   * nichts aendern.
+   */
+  {
+    name: 'Send, bereit',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Send');
+      await page.waitForSelector('.send-key');
+    },
+  },
+  {
+    name: 'Send, Taste gedrückt',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Send');
+      await pressSendKey(page);
+      await page.waitForSelector('.send-key[data-pressed="true"]');
+    },
+  },
+  {
+    name: 'Send, Auflösung sauber',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Send');
+      await sendElement(page, 60);
+      await page.getByRole('button', { name: 'Done' }).click();
+      await page.waitForSelector('.send-solution');
+    },
+  },
+  {
+    /*
+     * Der dichteste Fall der Aufloesung: zwei fast gleich lange Elemente ohne
+     * Kontrast (die Sitzungs-Schaetzung entscheidet, #101a) und eine weite
+     * Luecke dazwischen -- zeigt Abweichungssatz *und* den Schaetzungs-Hinweis
+     * zugleich. 90 ms liegt bequem unter der Schwelle von 120 ms (2 x
+     * Zieldit), 300 ms Luecke bequem ueber dem sauberen Bereich -- robust
+     * gegen ein paar Millisekunden Zeitgeber-Jitter.
+     */
+    name: 'Send, Auflösung mit Abweichung',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Send');
+      await sendElement(page, 90);
+      await page.waitForTimeout(300);
+      await sendElement(page, 90);
+      await page.getByRole('button', { name: 'Done' }).click();
+      await page.waitForSelector('.send-solution');
+    },
+  },
+  {
+    name: 'Send, Tap it in',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Send');
+      await page.getByRole('button', { name: 'Tap it in instead' }).click();
+      await page.waitForSelector('.tap-pad');
+    },
+  },
   {
     name: 'Learn the sounds',
     seed: progress(),
@@ -391,6 +463,16 @@ const VIEWS = [
       await page.waitForSelector('.play[data-sounding="true"]', { timeout: 10000 });
     },
   },
+  {
+    name: 'Laptop 1440x900, Send Taste gedrückt',
+    seed: progress({ characters: WORD_LETTERS }),
+    viewport: { width: 1440, height: 900 },
+    async reach(page) {
+      await navigateRail(page, 'Send');
+      await pressSendKey(page);
+      await page.waitForSelector('.send-key[data-pressed="true"]');
+    },
+  },
 ];
 
 /**
@@ -406,6 +488,25 @@ async function playWord(page) {
     null,
     { timeout: 40000 },
   );
+}
+
+/**
+ * Haelt die Sende-Taste per simuliertem Maus-Zeiger gedrueckt -- echte
+ * `pointerdown`/`pointerup`-Ereignisse, wie sie auch ein Finger oder eine
+ * Maus ausloest (engine/sending.ts liest die Audio-Uhr, nicht den Zeiger,
+ * das Skript hier steuert nur, *wann* gedrueckt und losgelassen wird).
+ */
+async function pressSendKey(page) {
+  const key = page.locator('.send-key');
+  await key.hover();
+  await page.mouse.down();
+}
+
+/** Ein einzelnes Element senden: Taste `holdMs` lang halten, dann loslassen. */
+async function sendElement(page, holdMs) {
+  await pressSendKey(page);
+  await page.waitForTimeout(holdMs);
+  await page.mouse.up();
 }
 
 /** Wartet, bis der Ton durch ist und die Frage steht. */

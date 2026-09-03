@@ -57,6 +57,8 @@ export class MorsePlayer {
   private readonly frequency: number;
   private readonly rampSeconds: number;
   private current: { stop: () => void } | null = null;
+  /** Der aktuell gehaltene Ton des Sende-Trainings (keyDown/keyUp), oder null. */
+  private keyed: { oscillator: OscillatorNode; envelope: GainNode; downAt: number } | null = null;
 
   /**
    * Die Lautstaerke, 0..1 -- als einziger Wert hier veraenderlich.
@@ -197,6 +199,99 @@ export class MorsePlayer {
   stop(): void {
     this.current?.stop();
     this.current = null;
+  }
+
+  /**
+   * Beginnt einen gehaltenen Ton -- die Tastung des Sende-Trainings
+   * (engine/sending.ts). Gibt den Zeitpunkt des Rampenstarts auf der Audio-Uhr
+   * zurueck, damit die Dauer des Elements exakt aus zwei Zeitstempeln
+   * hervorgeht (CLAUDE.md 2.1: nie `Date.now()`).
+   *
+   * **Keine Vorlaufzeit wie bei `play()`.** Dort ist die ganze Zeitachse im
+   * Voraus bekannt, hier nicht -- wann `keyUp()` kommt, weiss niemand vorher.
+   * Der Ton beginnt deshalb bei `context.currentTime` selbst: die einzige
+   * verbleibende Abweichung zwischen dem angeforderten Gate-Zeitpunkt (der
+   * Tastendruck) und dem tatsaechlichen Rampenstart ist die Zeit, die diese
+   * Zeile hier braucht, um zu laufen -- und die liegt bei einem synchronen
+   * Aufruf ohne zusaetzliche Wartezeit im Mikrosekundenbereich (siehe
+   * player.test.ts, das genau das gegen eine kontrollierte Uhr misst).
+   *
+   * **`keyDown()` waehrend einer laufenden `play()`-Wiedergabe ist bewusst
+   * sauber getrennt, nicht gesperrt.** Beide Pfade bauen ihren eigenen
+   * Oszillator und ihre eigene Huellkurve und teilen sich nichts als den
+   * `AudioContext` -- `play()` ruft nie in `keyed` hinein und umgekehrt. Eine
+   * Sperre haette hier eine zweite Zustandsmaschine gebraucht (wer darf
+   * gerade, wer wartet), obwohl der Player selbst nicht rechnet -- er spielt
+   * ab, er entscheidet nicht, was wann darf (CLAUDE.md 4: Wiedergabe rechnet
+   * nicht). Diese Entscheidung trifft die UI: der Sende-Screen deaktiviert
+   * die Taste, waehrend die Referenz ("Hear it") laeuft -- dasselbe Muster,
+   * mit dem auch das Antwort-Gitter des Trainings waehrend des Tons
+   * deaktiviert ist. Zwei gleichzeitig klingende Toene sind damit ein
+   * UI-Zustand, den es nicht gibt, keine Eigenschaft, die der Player selbst
+   * durchsetzen muesste.
+   *
+   * Ein wiederholter Aufruf, waehrend schon ein Ton gehalten wird, ist
+   * unschaedlich und liefert denselben Startzeitpunkt zurueck: er baut
+   * keinen zweiten Oszillator. Das ist Verteidigung in der Tiefe -- die UI
+   * filtert wiederholte `keydown`-Ereignisse bei gehaltener Taste selbst
+   * ueber `event.repeat` (sonst wuerde aus einem Strich eine Kette von
+   * Punkten, #101e).
+   */
+  keyDown(frequencyHz?: number): number {
+    const context = this.context;
+    if (context === null) {
+      throw new Error('resume() muss vor keyDown() aufgerufen werden (Browser-Autoplay-Regel)');
+    }
+    // Verteidigung in der Tiefe (#101e): der Player selbst antwortet auf
+    // einen wiederholten keyDown() waehrend gehaltener Taste mit dem
+    // *urspruenglichen* Startzeitpunkt, nicht mit einem neuen -- er baut
+    // keinen zweiten Ton.
+    if (this.keyed !== null) return this.keyed.downAt;
+
+    const now = context.currentTime;
+    const oscillator = context.createOscillator();
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequencyHz ?? this.frequency;
+
+    const envelope = context.createGain();
+    envelope.gain.setValueAtTime(0, now);
+    envelope.gain.linearRampToValueAtTime(this.currentVolume, now + this.rampSeconds);
+
+    oscillator.connect(envelope);
+    envelope.connect(context.destination);
+    oscillator.start(now);
+
+    this.keyed = { oscillator, envelope, downAt: now };
+    return now;
+  }
+
+  /**
+   * Beendet den gehaltenen Ton. Ohne einen laufenden ist der Aufruf
+   * unschaedlich und liefert die aktuelle Audio-Uhr zurueck (0 ohne Kontext).
+   *
+   * Dieselbe Ausblendrampe wie beim Abbruch einer Wiedergabe (`abort` in
+   * `play()`): kurz ausblenden statt hart trennen, sonst knackt es.
+   */
+  keyUp(): number {
+    const context = this.context;
+    if (context === null || this.keyed === null) return context?.currentTime ?? 0;
+
+    const { oscillator, envelope } = this.keyed;
+    const now = context.currentTime;
+
+    envelope.gain.cancelScheduledValues(now);
+    envelope.gain.setValueAtTime(envelope.gain.value, now);
+    envelope.gain.linearRampToValueAtTime(0, now + this.rampSeconds);
+
+    const stopAt = now + this.rampSeconds;
+    oscillator.stop(stopAt);
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      envelope.disconnect();
+    };
+
+    this.keyed = null;
+    return now;
   }
 
   /** Ein einzelner Ton: eigener Oszillator, Huellkurve auf der Audio-Uhr. */

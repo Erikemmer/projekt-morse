@@ -61,6 +61,14 @@ export interface DayStats {
    * Additiv mit Default 0 -- ein Stand von vor dieser Regel hat sie nicht.
    */
   words: number;
+  /**
+   * Abgeschickte Sende-Versuche an diesem Tag (Ruling #90, Teil A.2) --
+   * dieselbe Rolle wie `words`, nur fuer den Sende-Modus: die stille Auskunft
+   * "N sent today" und die Schwelle, ab der der Tag als geuebt gilt
+   * (`WORDS_STREAK_MIN_ANSWERS`, dieselbe Konstante wie beim Wort-Modus).
+   * Additiv mit Default 0.
+   */
+  sent: number;
 }
 
 export interface CharacterRecord {
@@ -70,6 +78,37 @@ export interface CharacterRecord {
   hits: number;
   /** Die letzten Reaktionszeiten in Sekunden -- nur von richtigen Antworten. */
   recentReactions: number[];
+}
+
+/**
+ * Die Sende-Statistik eines Zeichens (Ruling #90, Teil F.17) -- **getrennt**
+ * von `CharacterRecord`, nicht als weiteres Feld darin. Zwei Gruende:
+ *
+ * 1. **Zwei verschiedene Fertigkeiten.** Ein Zeichen zu hoeren und es zu
+ *    senden sind unterschiedliche motorische Aufgaben; sie in denselben
+ *    Zaehlern zu fuehren wuerde eine Trefferquote behaupten, die niemand so
+ *    erlebt hat (CLAUDE.md 2.6).
+ * 2. **Diese Zahlen duerfen nirgends mitrechnen.** Sie fliessen nie in die
+ *    Gewichtung nach Schwaeche (selection.ts), die Wachstumsregel
+ *    (growth.ts), ICR-Drills (drill.ts) oder die Tempo-Progression
+ *    (tempo.ts) des Hoertrainings ein -- waeren sie Teil von
+ *    `CharacterRecord`, muesste jede dieser Stellen sie explizit ausschliessen.
+ *    Getrennt gehalten, muss keine es tun: sie lesen dieses Feld schlicht nie.
+ */
+export interface SendCharacterRecord {
+  /** Wie oft dieses Zeichen zum Senden aufgegeben wurde. */
+  attempts: number;
+  /** Wie oft die Eingabe richtig dekodiert wurde. */
+  correct: number;
+  /**
+   * Die Verhaeltnisse des juengsten **getasteten** Versuchs (engine/sending.ts)
+   * -- null ohne einen einzigen, oder wenn der letzte Versuch ueber "Tap it
+   * in" kam (dort gibt es kein Timing zu berichten, siehe Ruling Teil E.16).
+   * "Juengste", nicht gemittelte Werte: ein Mittelwert ueber viele Versuche
+   * waere eine Zahl ohne einen Moment, den sie beschreibt.
+   */
+  lastDahDitRatio: number | null;
+  lastGapRatio: number | null;
 }
 
 /**
@@ -149,14 +188,25 @@ export interface Progress {
    * Wachstumsfenster zaehlen; siehe `RecordOptions`).
    */
   answersSinceSpeedUp: number;
+  /**
+   * Die Sende-Statistik je Zeichen (Ruling #90, Teil F.17) -- additiv mit
+   * Default `{}`. Getrennt von `characters` und ohne jede Wirkung auf
+   * Gewichtung, Wachstum, ICR-Drills oder Tempo-Progression des
+   * Hoertrainings (siehe `SendCharacterRecord`).
+   */
+  sendCharacters: Record<string, SendCharacterRecord>;
 }
 
 export function emptyRecord(): CharacterRecord {
   return { attempts: 0, hits: 0, recentReactions: [] };
 }
 
+export function emptySendRecord(): SendCharacterRecord {
+  return { attempts: 0, correct: 0, lastDahDitRatio: null, lastGapRatio: null };
+}
+
 export function emptyDay(date = ''): DayStats {
-  return { date, attempts: 0, hits: 0, characters: [], words: 0 };
+  return { date, attempts: 0, hits: 0, characters: [], words: 0, sent: 0 };
 }
 
 export function emptyProgress(): Progress {
@@ -174,6 +224,7 @@ export function emptyProgress(): Progress {
     streak: emptyStreak(),
     effectiveWpm: STARTING_EFFECTIVE_WPM,
     answersSinceSpeedUp: 0,
+    sendCharacters: {},
   };
 }
 
@@ -195,6 +246,11 @@ export function markIntroduced(progress: Progress, characters: readonly string[]
 /** Liest den Datensatz zu einem Zeichen -- fehlt er, kommt ein leerer zurueck. */
 export function recordFor(progress: Progress, char: string): CharacterRecord {
   return progress.characters[char] ?? emptyRecord();
+}
+
+/** Liest die Sende-Statistik eines Zeichens -- fehlt sie, kommt eine leere zurueck. */
+export function sendRecordFor(progress: Progress, char: string): SendCharacterRecord {
+  return progress.sendCharacters[char] ?? emptySendRecord();
 }
 
 export interface RecordOptions {
@@ -273,9 +329,10 @@ export function recordAttempt(
       attempts: day.attempts + 1,
       hits: day.hits + (correct ? 1 : 0),
       characters: day.characters.includes(char) ? day.characters : [...day.characters, char],
-      // Wort-Aufgaben zaehlt `recordWordPrompt`, nicht diese Funktion: eine
-      // Aufgabe schreibt hier mehrere Versuche, waere also mehrfach gezaehlt.
+      // Wort-Aufgaben zaehlt `recordWordPrompt`, Sende-Versuche
+      // `recordSendAttempt` -- nicht diese Funktion.
       words: day.words,
+      sent: day.sent,
     },
   };
 }
@@ -292,6 +349,45 @@ export function recordAttempt(
 export function recordWordPrompt(progress: Progress, today: string): Progress {
   const day = dayFor(progress, today);
   return { ...progress, day: { ...day, date: today, words: day.words + 1 } };
+}
+
+/**
+ * Verbucht einen Sende-Versuch (Ruling #90, Teil F.17) -- ein Zeichen, ein
+ * Versuch, unabhaengig vom Eingabeweg ("Hear it" + Taste oder "Tap it in").
+ *
+ * **Ruehrt `progress.characters` nicht an** -- das ist die ganze Pointe der
+ * Trennung (siehe `SendCharacterRecord`): diese Zahlen duerfen nie in die
+ * Gewichtung, die Wachstumsregel, ICR-Drills oder die Tempo-Progression des
+ * Hoertrainings einfliessen, und der sicherste Weg, das zu garantieren, ist,
+ * gar nicht erst in dieselben Felder zu schreiben.
+ *
+ * `ratios` ist `null` bei einem getippten Versuch ("Tap it in") -- dort gibt
+ * es kein Timing, und die zuletzt gemessenen Verhaeltnisse bleiben stehen
+ * (eine Schaetzung durch Abwesenheit zu ersetzen waere eine erfundene Null,
+ * CLAUDE.md 2.6).
+ */
+export function recordSendAttempt(
+  progress: Progress,
+  char: string,
+  correct: boolean,
+  ratios: { readonly dahDitRatio: number | null; readonly gapRatio: number | null } | null,
+  today: string,
+): Progress {
+  const previous = sendRecordFor(progress, char);
+  const day = dayFor(progress, today);
+
+  const record: SendCharacterRecord = {
+    attempts: previous.attempts + 1,
+    correct: previous.correct + (correct ? 1 : 0),
+    lastDahDitRatio: ratios === null ? previous.lastDahDitRatio : ratios.dahDitRatio,
+    lastGapRatio: ratios === null ? previous.lastGapRatio : ratios.gapRatio,
+  };
+
+  return {
+    ...progress,
+    sendCharacters: { ...progress.sendCharacters, [char]: record },
+    day: { ...day, date: today, sent: day.sent + 1 },
+  };
 }
 
 /**
@@ -418,7 +514,39 @@ export function parseProgress(raw: unknown): Progress {
       characters,
       activeCharacters,
     ),
+    sendCharacters: parseSendCharacters((raw as { sendCharacters?: unknown }).sendCharacters),
   };
+}
+
+/**
+ * Die Sende-Statistik aus unbekannten Daten -- additiv mit Default `{}`
+ * (Ruling #90, Teil F.17). Ein Stand von vor diesem Feld kennt es nicht, und
+ * das ist kein Fehler, sondern noch nie gesendet.
+ */
+function parseSendCharacters(raw: unknown): Record<string, SendCharacterRecord> {
+  if (typeof raw !== 'object' || raw === null) return {};
+
+  const result: Record<string, SendCharacterRecord> = {};
+  for (const [char, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value !== 'object' || value === null) continue;
+    const entry = value as Partial<SendCharacterRecord>;
+
+    const attempts = finiteOrZero(entry.attempts);
+    // Mehr richtige als Versuche waere unmoeglich -- dann lieber deckeln als luegen.
+    const correct = Math.min(finiteOrZero(entry.correct), attempts);
+
+    result[char] = {
+      attempts,
+      correct,
+      lastDahDitRatio: finitePositiveOrNull(entry.lastDahDitRatio),
+      lastGapRatio: finitePositiveOrNull(entry.lastGapRatio),
+    };
+  }
+  return result;
+}
+
+function finitePositiveOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : null;
 }
 
 /**
@@ -473,6 +601,8 @@ function parseDay(raw: unknown): DayStats {
     // Wort-Modus kennt das Feld nicht -- das ist kein Fehler, sondern ein
     // Tag, an dem der Modus noch nicht gezaehlt hat.
     words: finiteOrZero(entry.words),
+    // Additiv mit Default 0 (Ruling #90): derselbe Gedanke fuer den Sende-Modus.
+    sent: finiteOrZero(entry.sent),
   };
 }
 

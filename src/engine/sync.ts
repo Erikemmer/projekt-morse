@@ -83,9 +83,26 @@
  * später geschrieben wurde, sagt darüber nichts. Die Regel steht in
  * `mergeStreak` (engine/streak.ts): der jüngere Tag führt, und
  * zurückgestuft wird nie.
+ *
+ * Die **Sende-Statistik** (`sendCharacters`, Ruling #90, Teil F.17) merged
+ * genau wie `characters`: pro Zeichen gewinnt der Datensatz mit mehr
+ * `attempts`, als Ganzes. Es ist bewusst dieselbe Regel und nicht dieselbe
+ * Funktion — die beiden Statistiken bleiben getrennte Wahrheiten (Hören
+ * gegen Senden, siehe `stats.ts`), und ein gemeinsamer Merge-Pfad würde genau
+ * die Kopplung herstellen, die die Trennung eigentlich vermeiden soll. Der
+ * Tageszähler `day.sent` reist dagegen mit dem ganzen Tages-Eimer (oben),
+ * genau wie `day.words` — auch er ist eine Momentaufnahme des jüngeren
+ * Standes, keine Summe.
  */
 
-import { emptyProgress, recordFor, type CharacterRecord, type Progress } from './stats';
+import {
+  emptyProgress,
+  recordFor,
+  sendRecordFor,
+  type CharacterRecord,
+  type Progress,
+  type SendCharacterRecord,
+} from './stats';
 import { mergeStreak } from './streak';
 
 /**
@@ -136,6 +153,8 @@ export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
     effectiveWpm: Math.max(local.progress.effectiveWpm, remote.progress.effectiveWpm),
     // Momentaufnahme eines Verlaufs, wie `answersSinceGrowth`.
     answersSinceSpeedUp: younger.answersSinceSpeedUp,
+    // Dieselbe Regel wie bei `characters`, siehe Kopf und `mergeSendCharacters`.
+    sendCharacters: mergeSendCharacters(local.progress, remote.progress),
   };
 }
 
@@ -154,6 +173,29 @@ function mergeCharacters(
     const theirs = recordFor(remote, char);
     const winner = theirs.attempts > mine.attempts ? theirs : mine;
     merged[char] = { ...winner, recentReactions: [...winner.recentReactions] };
+  }
+
+  return merged;
+}
+
+/**
+ * Pro Zeichen die Sende-Statistik mit mehr Versuchen -- als Ganzes, dieselbe
+ * Regel wie `mergeCharacters` (Ruling #90, Teil F.17). Die beiden Statistiken
+ * bleiben dabei, was sie schon in `stats.ts` sind: getrennte Wahrheiten. Ein
+ * Merge, der sie mischen würde ("hits vom Hören, attempts vom Senden"), ergäbe
+ * eine Quote, die niemand erlebt hat (CLAUDE.md 2.6) -- deshalb eine eigene
+ * Funktion statt eines gemeinsamen Parameters mit `mergeCharacters`.
+ */
+function mergeSendCharacters(
+  local: Progress,
+  remote: Progress,
+): Record<string, SendCharacterRecord> {
+  const merged: Record<string, SendCharacterRecord> = {};
+
+  for (const char of union(Object.keys(local.sendCharacters), Object.keys(remote.sendCharacters))) {
+    const mine = sendRecordFor(local, char);
+    const theirs = sendRecordFor(remote, char);
+    merged[char] = theirs.attempts > mine.attempts ? theirs : mine;
   }
 
   return merged;

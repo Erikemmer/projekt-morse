@@ -23,6 +23,7 @@ export type MenuLocation =
   | 'practice'
   | 'learn'
   | 'words'
+  | 'send'
   | 'progress'
   | 'account'
   | 'settings'
@@ -56,6 +57,10 @@ type MenuEntry =
  * gesperrt sein — dann steht er gedimmt da, mit dem stillen Hinweis, ab wann
  * er aufgeht.
  *
+ * „Send" (Ruling Notion-Log #90) steht direkt dahinter, aus demselben Grund
+ * und mit derselben Sperre — dieselbe Konstante (`WORDS_MIN_CHARACTERS`),
+ * keine zweite Zahl (Teil A.1).
+ *
  * „Learn" ist der redaktionelle Bereich unter `/learn/` und damit kein Ort
  * dieser App, sondern ein Weg hinaus. Er steht bei den sekundären Einträgen
  * und direkt vor „About": beides ist Lesestoff, kein Üben (Ruling #83, C).
@@ -69,6 +74,7 @@ export const ENTRIES: readonly MenuEntry[] = Object.freeze([
   { kind: 'place', location: 'practice', label: 'Practice' },
   { kind: 'place', location: 'learn', label: 'Learn the sounds' },
   { kind: 'place', location: 'words', label: 'Words & groups' },
+  { kind: 'place', location: 'send', label: 'Send' },
   { kind: 'place', location: 'progress', label: 'Progress' },
   { kind: 'place', location: 'account', label: 'Account' },
   { kind: 'place', location: 'settings', label: 'Settings' },
