@@ -1,3 +1,103 @@
+# Übergabe — Stand nach Runde L2 (Impressum und Datenschutz)
+
+**Repository:** https://github.com/Erikemmer/projekt-morse
+**Stand:** `main` bleibt unverändert bei `49592e8` — diese Runde merged nicht.
+**Runde L2 liegt als fünf weitere Commits auf `claude/morse-handover-alignment-nbkk6o`**,
+direkt auf den sechs Commits der Runde P1 (Tip zuvor `f4d287c`). Weder P1 noch
+L2 sind gemergt; Review kommt von Fable.
+
+- **L2 setzt vier statische Rechtsseiten um** — Impressum und Datenschutz,
+  Deutsch und Englisch, samt einem leisen, von jeder Seite aus erreichbaren
+  Weg dorthin (§ 5 DDG verlangt genau das für die Anbieterkennzeichnung). Kein
+  Konzept-Zuwachs am Lernloop — die Seiten stehen außerhalb des Übens, im
+  Menü nur als zwei zusätzliche Zeilen am Fuß.
+
+An **Backend, Sync-API, Konto, der Engine, dem Lernloop und den Learn-Artikeln
+selbst ist nichts angefasst.** Berührt sind:
+
+| Datei | Warum |
+|---|---|
+| **`content/legal/impressum.de.md`, `imprint.en.md`, `datenschutz.de.md`, `privacy.en.md`** | **neu:** die vier Rechtstexte, wörtlich aus der Aufgabenstellung übernommen — nur die beiden Anschrift-Platzhalter sind durch die echte Adresse ersetzt |
+| `tools/learn/pages.mjs` | **neu:** ein zweiter, flacher Adressbaum (`LEGAL_ROOTS`, `/` bzw. `/de/`) für `section: legal`; `robots`-Meta nur wenn gesetzt; `keywords` nicht mehr Pflicht für Rechtsseiten; `renderSitemap` lässt `section: legal` aus; jede statische Seite bekommt zusätzlich die Zeile „Impressum · Datenschutz"/„Imprint · Privacy" (Punkt 4) |
+| `tools/learn/build.mjs` | liest jetzt zwei Inhaltsordner (`content/learn` **und** `content/legal`) in eine gemeinsame Seitenliste — dieselbe Pendant- und hreflang-Prüfung sieht beide Bäume |
+| `tools/learn/verify.mjs` | neue Prüfungen: die vier Rechtsseiten tragen `noindex, follow`, stehen **nicht** in der Sitemap und **nicht** in der Learn-Index-Artikelliste; **bricht mit Fehlercode ab, wenn eine ausgelieferte Seite noch `"[["` enthält** (Punkt 8) |
+| `tools/learn/learn.css` | `.page-footer` in zwei Zeilen aufgeteilt (`.page-footer-row` bestehend, `.page-footer-legal` neu) — die bestehende `span:last-child`-Regel hätte sonst die neue Zeile ans rechte Ende geschoben statt das Copyright |
+| `tools/learn/pages.test.mjs` | +7 Fälle für die neue Logik; die bestehende Verlinkungs-Prüfung kennt jetzt auch die vier Rechtsseiten als gültige Ziele |
+| `package.json` | `npm run build` ruft jetzt `verify:learn` mit auf (Punkt 8: die Platzhalter-Sperre muss beim Ausliefern greifen, nicht nur wenn jemand daran denkt, sie separat aufzurufen) |
+| `src/ui/Menu.tsx` | **neu:** `LegalLinks` — „Imprint · Privacy" am Fuß von `MenuPanel` und `NavRail`, kein Eintrag in `ENTRIES` |
+| `src/styles.css` | **neu:** `.menu-footer`/`.nav-rail-footer` — klein, gray, per Haarlinie abgesetzt, Hover nach `ink`, nie nach Amber |
+
+Dazu vier Screenshots und diese Übergabe:
+[`menu-legal-footer-390.png`](./docs/screenshots/menu-legal-footer-390.png)
+(Menü-Panel bei 390 × 844, die neue Fußzeile ohne Umbruch),
+[`nav-rail-legal-footer-1440.png`](./docs/screenshots/nav-rail-legal-footer-1440.png)
+(Schiene bei 1440 × 900, die Fußzeile an ihrem unteren Rand),
+[`imprint-390.png`](./docs/screenshots/imprint-390.png),
+[`privacy-390.png`](./docs/screenshots/privacy-390.png).
+
+**Bundle-Delta** (gegen den Stand vor dieser Runde, P1-Tip `f4d287c`, `vite
+build`, gzip in Klammern — die vier Rechtsseiten selbst zählen nicht mit, sie
+sind statisches HTML außerhalb des SPA-Bundles):
+JS 227,07 kB → 227,35 kB (**+0,28 kB**, gzip 69,61 → 69,68 kB, **+0,07 kB**);
+CSS 17,88 kB → 18,38 kB (**+0,50 kB**, gzip 3,88 → 3,96 kB, **+0,08 kB**).
+Kein neues Paket.
+
+**Tests:** 456 (18 Dateien), davon 7 neu für diese Runde (`tools/learn/pages.test.mjs`).
+`npm test`, `npm run build` (ruft jetzt `verify:learn` selbst mit auf),
+`npm run verify:amber` (35 Ansichten, Budget gehalten unverändert) und
+`npm run verify:learn` (18 Seiten — 14 Learn + 4 Recht —, alle Pflichten
+erfüllt) sind grün.
+
+> ### Was Fable an dieser Runde sehen muss
+>
+> 1. **Die vier Rechtsseiten liegen in einem eigenen, flachen Adressbaum**
+>    (`/imprint/`, `/privacy/`, `/de/impressum/`, `/de/datenschutz/`), nicht
+>    unter `/learn/`/`/de/lernen/` — das folgt aus den `path:`-Werten der
+>    Aufgabenstellung, ist aber im Generator selbst hergeleitet
+>    (`pathFor(lang, slug, 'legal')`), nicht als Literal übernommen: das
+>    `path:`-Feld im Frontmatter steht deshalb unbenutzt da (informativ, nicht
+>    Quelle der Wahrheit) — eine zweite Wahrheit wäre CLAUDE.md 4 zuwider.
+> 2. **`keywords` ist jetzt nur noch für Learn-Artikel Pflicht.** Die vier
+>    gelieferten Frontmatter-Blöcke tragen keinen `keywords`-Schlüssel — folgerichtig,
+>    denn `<meta name="keywords">` wirkt auf `noindex`-Seiten ohnehin nicht
+>    (Punkt 7 des Rulings). `parseFrontmatter` verlangt ihn deshalb nur noch,
+>    wenn `section !== 'legal'`.
+> 3. **`npm run build` ruft ab jetzt `verify:learn` selbst auf.** Vorher tat es
+>    das nicht — die Zusage aus Punkt 8 („es kann also nichts Halbes live
+>    gehen") wäre ohne diese Änderung nicht eingelöst gewesen, weil ein Build,
+>    der die Prüfung nicht selbst aufruft, einen Platzhalter klaglos ausliefern
+>    würde. Das ist mehr als Punkt 8 wörtlich verlangt, aber ohne das hält die
+>    Zusage nicht, die Punkt 8 macht.
+> 4. **Der Beweis für Punkt 8 wurde geführt, nicht behauptet:** ein
+>    `[[TELEFON]]`-Platzhalter wurde absichtlich in `impressum.de.md`
+>    eingefügt, `npm run build:learn && npm run verify:learn` danach ausgeführt
+>    — Ergebnis: `FEHLER (1): × /de/impressum/index.html: enthält einen
+>    ungefüllten Platzhalter "[["`, Exitcode 1. Direkt danach zurückgesetzt und
+>    sauber neu gebaut; die vier ausgelieferten Seiten enthalten kein `[[`.
+> 5. **Auf einer Rechtsseite selbst fehlt der „Learn"-Link in der bestehenden
+>    Fußzeile** (Sprachpendant und © bleiben) — es gibt keine Rechts-Hub-Seite,
+>    auf die er zeigen könnte, der eigene Baum ist flach. Die neue Zeile
+>    „Impressum · Datenschutz" verlinkt dort bewusst auch auf die Seite selbst,
+>    wie auf jeder anderen statischen Seite auch — dieselbe Zeile überall war
+>    ausdrücklich verlangt (Punkt 4), eine Ausnahme für die eigene Seite hätte
+>    sie zu einer zweiten Form gemacht.
+> 6. **Im Menü und in der Schiene geht der Hover auf `ink`, nicht auf
+>    `amber-deep`** — anders als bei `.menu-item:hover` direkt darüber. Der
+>    Auftrag verlangte für diese eine Zeile ausdrücklich „Kein Amber"; ein
+>    Hover-Zustand wird vom Amber-Budget-Skript zwar nicht mitgezählt (siehe
+>    dessen Kopfkommentar), aber „kein Amber" ist hier als Zusage für jeden
+>    Zustand gelesen, nicht nur für den ruhenden Bildschirm.
+> 7. **Ein neuer FINDINGS-Eintrag: #10.** Die Anschrift in
+>    `impressum.de.md`/`imprint.en.md` steht auf vier eigenen Markdown-Zeilen
+>    ohne harte Zeilenumbrüche und läuft deshalb ausgeliefert zu einem Satz
+>    zusammen (Standard-Markdown-Verhalten, kein Generator-Fehler). Nicht
+>    mitgeändert, weil das eine Entscheidung an einem fremden Rechtstext wäre
+>    (CLAUDE.md 3) — gemeldet statt still repariert.
+
+<details>
+<summary><b>Die Übergabe nach Runde P1</b> (fünf Owner-Befunde aus dem echten Gebrauch — noch nicht gemergt, Review 18 steht aus; unverändert gültig, Historie)</summary>
+
+
 # Übergabe — Stand nach Runde P1 (fünf Owner-Befunde aus dem echten Gebrauch)
 
 **Repository:** https://github.com/Erikemmer/projekt-morse
@@ -102,6 +202,8 @@ nicht erst am Ende.
 
 **Kein neuer FINDINGS-Eintrag aus dieser Runde** — unterwegs ist nichts
 Fremdes aufgefallen, das nicht zur Aufgabe gehört hätte.
+
+</details>
 
 <details>
 <summary><b>Die Übergabe nach Runde F4</b> (das Sende-Training — jetzt in `main`; B2, F3, D1, F4 unverändert gültig, Historie)</summary>
@@ -610,7 +712,23 @@ ist live und sieht aus wie das Mockup. Unverändert gilt: der Zeichensatz wächs
 von selbst, die App ist eine offline nutzbare PWA ohne jeden Fremdabruf,
 `--gray` besteht AA auch für kleinen Text.
 
-**Neu aus dieser Runde (P1): fünf Korrekturen aus dem echten Gebrauch (#103a–e).**
+**Neu aus dieser Runde (L2): Impressum und Datenschutz.**
+
+- **Vier statische Rechtsseiten** — Impressum und Datenschutz, Deutsch und
+  Englisch (`/de/impressum/`, `/imprint/`, `/de/datenschutz/`, `/privacy/`),
+  vom bestehenden Learn-Generator erzeugt, aber auf `noindex, follow` und
+  außerhalb von Sitemap und Learn-Index (§ 5 DDG verlangt die Erreichbarkeit,
+  nicht die Auffindbarkeit über Suchmaschinen).
+- **Ein leiser Weg dorthin von überall** — „Imprint · Privacy" am Fuß des
+  Menü-Panels und der Laptop-Schiene, kein Eintrag unter den Übungsmodi, kein
+  Amber. Dieselbe Zeile, sprachrichtig, auch am Fuß jeder statischen Seite
+  (Learn und Recht).
+- **Eine Build-Sperre gegen halbe Wahrheit.** `npm run build` bricht jetzt
+  selbst ab, sobald eine ausgelieferte Seite noch einen ungefüllten
+  `[[…]]`-Platzhalter trägt — geprüft, indem die Sperre einmal absichtlich
+  ausgelöst wurde (siehe unten).
+
+**Aus Runde P1 gilt weiter: fünf Korrekturen aus dem echten Gebrauch (#103a–e).**
 
 - **Verlorene Tasteneingaben behoben** (#103a). Wer während des Tons tippt,
   tippt nicht mehr ins Leere — der Anschlag wird gepuffert und beim Übergang

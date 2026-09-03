@@ -299,3 +299,28 @@ bewusst unberührt gelassen, ist über die *allgemeine* Korrektur aus FINDINGS
 Durchläufe mit fünf Fehlpositionen blieb die natürliche Inhaltskante
 durchgehend bei **820 px** — 24 px Luft statt der vorherigen 1 px. Kein
 weiterer Handlungsbedarf.
+
+## 10. Die Anschrift in Impressum/Imprint läuft optisch zu einer Zeile zusammen
+
+**Gefunden:** 03.09.2026, beim Sichtprüfen der vier neuen Rechtsseiten (Runde L2).
+
+`impressum.de.md` und `imprint.en.md` schreiben die Anschrift auf vier eigene
+Zeilen (Name, Straße, PLZ/Ort, Land) — einfache Zeilenumbrüche im Markdown,
+ohne zwei Leerzeichen oder `<br>` am Zeilenende. Der Generator (`marked`,
+Standardeinstellung, kein `breaks: true`) fasst einfache Zeilenumbrüche
+innerhalb eines Absatzes zu Leerzeichen zusammen — Standardverhalten von
+Markdown, kein Fehler des Generators. Ausgeliefert steht die Anschrift also
+als ein durchlaufender Satz: „Erik Emmer Tegernseer Str. 2 83607 Holzkirchen
+Deutschland" statt vier Zeilen. `datenschutz.de.md`/`privacy.en.md` sind davon
+nicht betroffen — dort steht die Anschrift ohnehin als ein Satz mit Kommas.
+
+**Warum es hier nicht mitgeändert wurde:** Die Texte gehören dem Konzept-Owner
+(CLAUDE.md 3, Ruling L2 Punkt 5) — „kein Umformulieren, kein Kürzen, keine
+eigenen Ergänzungen". Zwei Leerzeichen oder ein `<br>` am Zeilenende zu
+ergänzen wäre keine Wortänderung, aber eine Entscheidung an einem Rechtstext,
+die die Aufgabe nicht ausdrücklich erteilt hat — deshalb hier gemeldet statt
+still mitgeändert.
+
+**Was es kosten würde:** vier Zeilenenden mit zwei Leerzeichen (oder `<br>`)
+in `impressum.de.md` und `imprint.en.md` — kein Code, nur die zwei
+Markdown-Dateien. Eine Zeile Bestätigung genügt.
