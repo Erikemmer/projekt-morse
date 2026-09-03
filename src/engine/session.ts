@@ -55,8 +55,14 @@ export interface Attempt {
   /**
    * Sekunden zwischen dem Ende des Tons und der Antwort. Naeherungswert fuer
    * Sicherheit -- er enthaelt auch Motorik und die Suche auf dem Antwort-Gitter.
+   *
+   * **`null`, wenn kein ehrlicher Wert existiert** (Ruling #103a/#103c): ein
+   * gepufferter Anschlag, der vor dem Tonende begann, oder eine Antwort ueber
+   * das Tastenfeld, deren Zeit vor allem Suchzeit ist. Richtig oder falsch
+   * zaehlt trotzdem voll -- nur die Messreihe bleibt unberuehrt
+   * (stats.ts, `recordAttempt`).
    */
-  reactionSeconds: number;
+  reactionSeconds: number | null;
   /** Wie oft der Ton vor der Antwort wiederholt wurde. */
   replays: number;
 }
@@ -207,7 +213,10 @@ export function promptFinished(state: SessionState): SessionState {
 }
 
 /**
- * Verbucht die Antwort. `atAudioTime` ist der Zeitpunkt auf der Audio-Uhr.
+ * Verbucht die Antwort. `atAudioTime` ist der Zeitpunkt auf der Audio-Uhr --
+ * oder `null`, wenn diese Antwort keine ehrliche Reaktionszeit hat (Ruling
+ * #103a: ein gepufferter Anschlag aus 'listening'; #103c: eine Antwort ueber
+ * das Tastenfeld). Richtig oder falsch wird davon nicht beruehrt.
  *
  * Ausserhalb von 'answering' passiert nichts -- ein zweiter Klick auf dieselbe
  * Antwort darf keinen zweiten Versuch erzeugen.
@@ -215,7 +224,7 @@ export function promptFinished(state: SessionState): SessionState {
 export function submitAnswer(
   state: SessionState,
   answer: string,
-  atAudioTime: number,
+  atAudioTime: number | null,
 ): SessionState {
   if (state.phase !== 'answering' || state.promptEndsAt === null) return state;
 
@@ -225,7 +234,7 @@ export function submitAnswer(
     answer,
     correct,
     // Negativ kann sie nicht sein; ein Vorzeichen hier waere ein Uhrenfehler.
-    reactionSeconds: Math.max(0, atAudioTime - state.promptEndsAt),
+    reactionSeconds: atAudioTime === null ? null : Math.max(0, atAudioTime - state.promptEndsAt),
     replays: state.replays,
   };
 
@@ -375,7 +384,12 @@ export interface SessionSummary {
 /** Fasst die laufende Sitzung zusammen. Reine Ableitung, kein Zustand. */
 export function summarize(state: SessionState): SessionSummary {
   const hits = state.attempts.filter((attempt) => attempt.correct);
-  const reactions = hits.map((attempt) => attempt.reactionSeconds).sort((a, b) => a - b);
+  // Ungemessene Treffer (Ruling #103a/#103c) gehen nicht in den Median ein --
+  // dieselbe Regel wie in `recordAttempt` (stats.ts).
+  const reactions = hits
+    .map((attempt) => attempt.reactionSeconds)
+    .filter((value): value is number => value !== null)
+    .sort((a, b) => a - b);
 
   const middle = Math.floor(reactions.length / 2);
   const medianReactionSeconds =

@@ -138,7 +138,8 @@ export function attemptMedianOver(
   return median(
     attempts
       .filter((attempt) => attempt.correct && characters.includes(attempt.char))
-      .map((attempt) => attempt.reactionSeconds),
+      .map((attempt) => attempt.reactionSeconds)
+      .filter((value): value is number => value !== null),
   );
 }
 

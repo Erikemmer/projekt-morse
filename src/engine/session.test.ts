@@ -230,6 +230,20 @@ describe('Lernloop', () => {
     expect(state.lastAttempt?.reactionSeconds).toBeCloseTo(0.6, 12);
   });
 
+  it('verbucht eine Antwort ohne Audio-Zeitpunkt ohne Reaktionszeit (Ruling #103a/#103c)', () => {
+    let state = promptFinished(beginPlayback(start(), 10));
+    const sent = state.prompt;
+    state = submitAnswer(state, sent, null);
+
+    expect(state.phase).toBe('feedback');
+    expect(state.lastAttempt?.correct).toBe(true);
+    expect(state.lastAttempt?.reactionSeconds).toBeNull();
+    // Richtig zaehlt trotzdem voll -- nur die Messreihe des Zeichens bleibt unberuehrt.
+    expect(recordFor(state.progress, sent).attempts).toBe(1);
+    expect(recordFor(state.progress, sent).hits).toBe(1);
+    expect(recordFor(state.progress, sent).recentReactions).toEqual([]);
+  });
+
   it('nimmt waehrend des Hoerens keine Antwort an', () => {
     let state = beginPlayback(start(), 10);
     const unchanged = submitAnswer(state, state.prompt, 10.2);
@@ -309,6 +323,22 @@ describe('Lernloop', () => {
     expect(summary.hits).toBe(2);
     expect(summary.accuracy).toBeCloseTo(2 / 3, 12);
     expect(summary.medianReactionSeconds).toBeCloseTo(1, 12);
+  });
+
+  it('laesst Treffer ohne Reaktionszeit aus dem Median (Ruling #103a/#103c)', () => {
+    let state = start();
+    state = promptFinished(beginPlayback(state, 0));
+    state = submitAnswer(state, state.prompt, null);
+    state = advance(state, () => 0);
+    state = promptFinished(beginPlayback(state, 0));
+    state = submitAnswer(state, state.prompt, 3);
+    state = advance(state, () => 0);
+
+    const summary = summarize(state);
+    expect(summary.hits).toBe(2);
+    // Nur der gemessene Treffer bestimmt den Median -- der ungemessene zaehlt
+    // fuer Trefferquote und Runden, aber nicht fuer die Zeit.
+    expect(summary.medianReactionSeconds).toBeCloseTo(3, 12);
   });
 
   it('hat vor der ersten Antwort keine Quote zu behaupten', () => {

@@ -903,27 +903,64 @@ export function App() {
     [menuLocation, session.progress, device.toneHz],
   );
 
+  /**
+   * Ein Anschlag waehrend 'listening' -- gepuffert, bis 'answering' beginnt
+   * (Ruling #103a). Nur der letzte zaehlt: mehrfaches Tippen waehrend des
+   * Tons haeuft nichts an.
+   */
+  const bufferedKeyRef = useRef<string | null>(null);
+
+  /*
+   * Die aktuelle Phase und der aktuelle Pool ueber ein Ref -- derselbe Griff
+   * wie bei `useWordKeyboard`/`useSendKeyboard` (ui/Words.tsx, ui/Send.tsx):
+   * der Listener soll nicht bei jedem Phasenwechsel ab- und wieder anhaengen,
+   * sondern die ganze Zeit am Fenster liegen und trotzdem den *aktuellen*
+   * Stand lesen.
+   */
+  const keyboardStateRef = useRef({ phase: session.phase, pool: session.pool });
+  keyboardStateRef.current = { phase: session.phase, pool: session.pool };
+
   // Tippen statt Zielen: die Buchstaben des Zeichensatzes beantworten direkt.
   //
-  // Nur, solange der Trainings-Screen wirklich vorne ist. Erreichbar ist das
-  // Menue heute ohnehin nur auf dem Start-Screen (headerShown), eine Sitzung
-  // kann also nicht im Hintergrund in 'answering' stehen -- aber ein Listener
-  // am *Fenster* soll das nicht voraussetzen, sondern sagen.
+  // Der Listener haengt jetzt immer am Fenster, solange der Trainings-Screen
+  // vorne ist und das Menue zu -- nicht mehr nur waehrend 'answering'. Wer
+  // waehrend des Tons tippt (schnell antwortet), tippte sonst ins Leere
+  // (Ruling #103a); die Phasenpruefung wandert deshalb in den Handler.
   useEffect(() => {
     if (view !== 'practice' || menuOpen) return undefined;
-    if (session.phase !== 'answering') return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
       const key = event.key.toUpperCase();
-      if (!session.pool.includes(key)) return;
+      const { phase, pool } = keyboardStateRef.current;
+      if (!pool.includes(key)) return;
       event.preventDefault();
-      answer(key);
+
+      if (phase === 'answering') {
+        answer(key);
+      } else if (phase === 'listening') {
+        bufferedKeyRef.current = key;
+      }
+      // In 'ready', 'feedback' und 'finished' passiert nichts, wie bisher.
     };
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [session.phase, session.pool, answer, view, menuOpen]);
+  }, [view, menuOpen, answer]);
+
+  /*
+   * Sobald 'answering' beginnt, wird ein gepufferter Anschlag angewandt --
+   * mit `reactionSeconds: null` (Ruling #103a): eine Zeit, die vor dem
+   * Tonende begann, ist keine Reaktionszeit. Richtig oder falsch zaehlt
+   * trotzdem voll (`recordAttempt`, stats.ts, seit Runde F2).
+   */
+  useEffect(() => {
+    if (session.phase !== 'answering') return;
+    const buffered = bufferedKeyRef.current;
+    if (buffered === null) return;
+    bufferedKeyRef.current = null;
+    setSession((current) => submitAnswer(current, buffered, null));
+  }, [session.phase]);
 
   const attempt = session.lastAttempt;
   const summary = summarize(session);
