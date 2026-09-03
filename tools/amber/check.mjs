@@ -285,11 +285,18 @@ const VIEWS = [
     },
   },
   /*
-   * Sende-Training (Ruling Notion-Log #90, Praezisierungen #101). Fuenf
-   * Ansichten am Handy: der gefuellte "Done"-Knopf darf nie neben dem
-   * gefuellten "Hear it" stehen (er erscheint erst mit der Eingabe), die
-   * Sende-Taste selbst traegt Amber nur waehrend sie gedrueckt ist, und die
-   * Aufloesung zeichnet Punkte/Striche als Formen, nie in Amber.
+   * Sende-Training (Ruling Notion-Log #90, Praezisierungen #101; Ruling #109
+   * dreht die Reihenfolge der beiden Eingabewege um). Sieben Ansichten am
+   * Handy: der gefuellte "Done"-Knopf darf nie neben dem gefuellten "Hear it"
+   * stehen (er erscheint erst mit der Eingabe), die Sende-Taste selbst traegt
+   * Amber nur waehrend sie gedrueckt ist, und die Aufloesung zeichnet
+   * Punkte/Striche als Formen, nie in Amber.
+   *
+   * **Der Tastenweg (`mode: tapped`) ist seit #109 der Standard** -- eine
+   * neue Einheit landet direkt dort, nicht mehr bei der Morsetaste. Die drei
+   * "Use real keying"-Ansichten holen die vorige Standardansicht (Taste,
+   * Aufloesung sauber/mit Abweichung) weiterhin ein, jetzt ueber den
+   * ausdruecklichen Umweg-Klick.
    *
    * Ein einzelnes Element (dit oder dah) hat per Definition kein
    * Dah:Dit- und kein Pausen-Verhaeltnis (engine/sending.ts) und ist damit
@@ -301,27 +308,64 @@ const VIEWS = [
    * nichts aendern.
    */
   {
-    name: 'Send, bereit',
+    name: 'Send, bereit (Tastenweg, Standard)',
     seed: progress({ characters: WORD_LETTERS }),
     async reach(page) {
       await openMenu(page, 'Send');
+      await page.waitForSelector('.tap-pad');
+    },
+  },
+  {
+    name: 'Send, Eingabe getippt (Tastenweg, per Tastatur `.`/`-`)',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Send');
+      await page.waitForSelector('.tap-pad');
+      // Belegt Ruling #109, Teil B.6: `.`/`-` bedienen die zwei Tasten am
+      // Laptop genauso wie ein Klick auf `.tap-button`.
+      await page.keyboard.press('.');
+      await page.keyboard.press('-');
+      await page.waitForSelector('button:has-text("Done")');
+    },
+  },
+  {
+    name: 'Send, Auflösung getippt',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Send');
+      await page.waitForSelector('.tap-pad');
+      await page.keyboard.press('.');
+      await page.keyboard.press('-');
+      await page.keyboard.press('.');
+      await page.getByRole('button', { name: 'Done' }).click();
+      await page.waitForSelector('.send-solution');
+    },
+  },
+  {
+    name: 'Send, Use real keying',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Send');
+      await page.getByRole('button', { name: 'Use real keying' }).click();
       await page.waitForSelector('.send-key');
     },
   },
   {
-    name: 'Send, Taste gedrückt',
+    name: 'Send, Taste gedrückt (Use real keying)',
     seed: progress({ characters: WORD_LETTERS }),
     async reach(page) {
       await openMenu(page, 'Send');
+      await page.getByRole('button', { name: 'Use real keying' }).click();
       await pressSendKey(page);
       await page.waitForSelector('.send-key[data-pressed="true"]');
     },
   },
   {
-    name: 'Send, Auflösung sauber',
+    name: 'Send, Auflösung sauber (Use real keying)',
     seed: progress({ characters: WORD_LETTERS }),
     async reach(page) {
       await openMenu(page, 'Send');
+      await page.getByRole('button', { name: 'Use real keying' }).click();
       await sendElement(page, 60);
       await page.getByRole('button', { name: 'Done' }).click();
       await page.waitForSelector('.send-solution');
@@ -336,24 +380,16 @@ const VIEWS = [
      * Zieldit), 300 ms Luecke bequem ueber dem sauberen Bereich -- robust
      * gegen ein paar Millisekunden Zeitgeber-Jitter.
      */
-    name: 'Send, Auflösung mit Abweichung',
+    name: 'Send, Auflösung mit Abweichung (Use real keying)',
     seed: progress({ characters: WORD_LETTERS }),
     async reach(page) {
       await openMenu(page, 'Send');
+      await page.getByRole('button', { name: 'Use real keying' }).click();
       await sendElement(page, 90);
       await page.waitForTimeout(300);
       await sendElement(page, 90);
       await page.getByRole('button', { name: 'Done' }).click();
       await page.waitForSelector('.send-solution');
-    },
-  },
-  {
-    name: 'Send, Tap it in',
-    seed: progress({ characters: WORD_LETTERS }),
-    async reach(page) {
-      await openMenu(page, 'Send');
-      await page.getByRole('button', { name: 'Tap it in instead' }).click();
-      await page.waitForSelector('.tap-pad');
     },
   },
   {
@@ -464,11 +500,14 @@ const VIEWS = [
     },
   },
   {
-    name: 'Laptop 1440x900, Send Taste gedrückt',
+    name: 'Laptop 1440x900, Send Taste gedrückt (Use real keying)',
     seed: progress({ characters: WORD_LETTERS }),
     viewport: { width: 1440, height: 900 },
     async reach(page) {
       await navigateRail(page, 'Send');
+      // Seit Ruling #109 landet eine neue Einheit im Tastenweg -- die
+      // Morsetaste ist jetzt der ausdrueckliche Umweg.
+      await page.getByRole('button', { name: 'Use real keying' }).click();
       await pressSendKey(page);
       await page.waitForSelector('.send-key[data-pressed="true"]');
     },

@@ -6,20 +6,27 @@
  * `engine/sendSession.ts`; wie eine Eingabe dekodiert wird, in
  * `engine/sending.ts`. Hier wird gerendert und gemeldet (CLAUDE.md 4).
  *
+ * **Seit Ruling Notion-Log #109 ist die Reihenfolge der beiden Eingabewege
+ * umgekehrt.** Die zwei Tasten fuer · und − ("Use the two keys", am Laptop
+ * `.` und `-`) sind jetzt der Standard einer neuen Einheit; die echte,
+ * zeitgetastete Morsetaste ("Use real keying") ist die Ausbaustufe. Der
+ * Owner hatte den Weg mit den zwei Tasten hinter einem leisen Textlink nicht
+ * gefunden -- didaktisch ist die neue Reihenfolge ohnehin richtiger: erst
+ * das Muster sicher treffen, dann den Rhythmus.
+ *
  * Vier Dinge, die sonst wie Zufall aussehen:
  *
  * - **Die Aufgabe zeigt das Zeichen, nicht sein Muster.** Anders als das
  *   Hoertraining ist hier bekannt, *was* gesendet werden soll -- geuebt wird
  *   die Produktion. "Hear it" spielt die Referenz auf Zuruf; das Muster aus
  *   Punkten und Strichen wird vor dem Versuch nie gezeigt (CLAUDE.md 2.2).
- * - **Waehrend des Sendens erscheint kein Live-Muster.** Wer mitzaehlen
- *   koennte, waehrend er tastet, hoert nicht mehr auf den eigenen Rhythmus.
- *   Die Taste selbst ist das einzige Signal -- sie fuellt Amber, solange sie
- *   gedrueckt ist (das eine Amber dieser View), sonst nichts.
- * - **"Tap it in" zeigt sein Muster sehr wohl live.** Das ist die
- *   selbstgesteuerte, zeitlose Alternative (CLAUDE.md 6): ohne Zeitdruck gibt
- *   es kein Mitzaehl-Problem, und ohne eine Anzeige dessen, was schon steht,
- *   waere der Weg nicht bedienbar.
+ * - **Waehrend des Sendens (mode: keyed) erscheint kein Live-Muster.** Wer
+ *   mitzaehlen koennte, waehrend er tastet, hoert nicht mehr auf den eigenen
+ *   Rhythmus. Die Taste selbst ist das einzige Signal -- sie fuellt Amber,
+ *   solange sie gedrueckt ist (das eine Amber dieser View), sonst nichts.
+ * - **Die zwei Tasten (mode: tapped) zeigen ihr Muster sehr wohl live.**
+ *   Ohne Zeitdruck gibt es kein Mitzaehl-Problem, und ohne eine Anzeige
+ *   dessen, was schon steht, waere der Weg nicht bedienbar.
  * - **Die Aufloesung zeichnet Punkte und Striche als Formen, nie als
  *   Schriftzeichen** (Teil D.13, FINDINGS #8): ein Modus, der komplett aus ·
  *   und − besteht, darf nicht von der Fallback-Schrift eines Zeichensatzes
@@ -120,11 +127,11 @@ export function Send({
         <p className="send-switch">
           {state.mode === 'keyed' ? (
             <button type="button" className="quiet-action" onClick={onSwitchToTapped}>
-              Tap it in instead
+              Use the two keys
             </button>
           ) : (
             <button type="button" className="quiet-action" onClick={onSwitchToKeyed}>
-              Use timing instead
+              Use real keying
             </button>
           )}
         </p>
@@ -260,10 +267,12 @@ function SendKey({
 }
 
 /**
- * "Tap it in instead" (Teil E.16): zwei Tasten fuer · und −, ohne Zeitdruck.
- * Anders als beim Senden per Taste zeigt dieser Weg das bisher Getippte
- * live -- ohne Zeitdruck gibt es kein Mitzaehl-Problem, und ohne die Anzeige
- * waere der Weg nicht bedienbar (siehe Kopf).
+ * "Use the two keys" (Teil E.16, seit Ruling #109 der Standardweg): zwei
+ * Tasten fuer · und −, ohne Zeitdruck. Anders als beim Senden per Taste zeigt
+ * dieser Weg das bisher Getippte live -- ohne Zeitdruck gibt es kein
+ * Mitzaehl-Problem, und ohne die Anzeige waere der Weg nicht bedienbar
+ * (siehe Kopf). Am Laptop bedienen `.` und `-` dieselben zwei Tasten
+ * (`useSendKeyboard`).
  */
 function TapPad({
   taps,
@@ -437,6 +446,17 @@ function deviationSentence(kind: SendDeviationKind): string {
  * Grund wie bei `useWordKeyboard`: das Ruling nennt nur die Aufloesung, eine
  * Ausweitung auf das Starten von "Hear it" per Tastatur waere ueber die
  * Aufgabe hinaus (CLAUDE.md 5).
+ *
+ * **`.` und `-` bedienen seit Ruling Notion-Log #109 die zwei Tasten am
+ * Laptop** -- der jetzt bevorzugte Eingabeweg braucht eine eigene Tastatur,
+ * so wie die Morsetaste schon die Leertaste hat. `tapEnabled` ist ein
+ * eigener Schalter, unabhaengig von `enabled` (das nur den Tastungsweg
+ * betrifft): beide Wege gelten nie gleichzeitig (`SendSessionState.mode`),
+ * aber beide brauchen ihre eigene Bedingung, aus demselben Grund wie
+ * `advanceEnabled`. `event.repeat` wird verworfen, damit ein gehaltener
+ * Finger auf der Taste nicht ein Vielfaches derselben Eingabe antippt --
+ * anders als bei der Morsetaste ist eine gehaltene Taste hier keine gueltige
+ * Geste, jeder Tastendruck ist genau ein Element.
  */
 export function useSendKeyboard({
   enabled,
@@ -444,18 +464,25 @@ export function useSendKeyboard({
   onRelease,
   advanceEnabled,
   onAdvance,
+  tapEnabled,
+  onTapDit,
+  onTapDah,
 }: {
   enabled: boolean;
   onPress: () => void;
   onRelease: () => void;
   advanceEnabled: boolean;
   onAdvance: () => void;
+  /** Ob `.`/`-` gerade ein Element antippen duerfen (mode: tapped, ready/sending). */
+  tapEnabled: boolean;
+  onTapDit: () => void;
+  onTapDah: () => void;
 }) {
-  const handlers = useRef({ onPress, onRelease, onAdvance });
-  handlers.current = { onPress, onRelease, onAdvance };
+  const handlers = useRef({ onPress, onRelease, onAdvance, onTapDit, onTapDah });
+  handlers.current = { onPress, onRelease, onAdvance, onTapDit, onTapDah };
 
   useEffect(() => {
-    if (!enabled && !advanceEnabled) return undefined;
+    if (!enabled && !advanceEnabled && !tapEnabled) return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -464,6 +491,14 @@ export function useSendKeyboard({
         if (!advanceEnabled) return;
         event.preventDefault();
         handlers.current.onAdvance();
+        return;
+      }
+      if (event.key === '.' || event.key === '-') {
+        if (!tapEnabled) return;
+        event.preventDefault();
+        if (event.repeat) return;
+        if (event.key === '.') handlers.current.onTapDit();
+        else handlers.current.onTapDah();
         return;
       }
       if (event.key !== ' ' && event.key !== 'Spacebar') return;
@@ -501,5 +536,5 @@ export function useSendKeyboard({
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('blur', onBlur);
     };
-  }, [enabled, advanceEnabled]);
+  }, [enabled, advanceEnabled, tapEnabled]);
 }

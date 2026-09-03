@@ -53,19 +53,26 @@ function unitFor(char: string, progress = fullProgress()): SendSessionState {
   return { ...state, prompt: char };
 }
 
-/** Ein sauber getastetes R (dit-dah-dit) bei 20 WPM, Element fuer Element. */
+/**
+ * Ein sauber getastetes R (dit-dah-dit) bei 20 WPM, Element fuer Element.
+ *
+ * Schaltet zuerst explizit auf `mode: 'keyed'` -- seit Ruling #109 ist
+ * `'tapped'` der Standard einer frischen Einheit, und `appendSendInterval`
+ * tut in diesem Modus nichts (siehe unten, "ignoriert Intervalle im
+ * getippten Modus").
+ */
 function keyPerfectR(state: SendSessionState): SendSessionState {
-  let current = appendSendInterval(state, { downAt: 0, upAt: DIT });
+  let current = appendSendInterval(setSendMode(state, 'keyed'), { downAt: 0, upAt: DIT });
   current = appendSendInterval(current, { downAt: DIT * 2, upAt: DIT * 2 + DAH });
   current = appendSendInterval(current, { downAt: DIT * 2 + DAH + DIT, upAt: DIT * 2 + DAH + DIT * 2 });
   return current;
 }
 
 describe('Sende-Modus: der Anfang', () => {
-  it('steht bereit, ohne Eingabe, im Tastungsweg', () => {
+  it('steht bereit, ohne Eingabe, im Tastenweg -- dem Standard seit Ruling #109', () => {
     const state = unit();
     expect(state.phase).toBe('ready');
-    expect(state.mode).toBe('keyed');
+    expect(state.mode).toBe('tapped');
     expect(state.intervals).toEqual([]);
     expect(state.taps).toEqual([]);
     expect(state.attempts).toEqual([]);
@@ -120,7 +127,7 @@ describe('"Hear it": nur aus dem Ausgangszustand', () => {
 
 describe('Tastung (mode: keyed)', () => {
   it('hebt die Aufgabe beim ersten Element von ready nach sending', () => {
-    const state = appendSendInterval(unit(), { downAt: 0, upAt: DIT });
+    const state = appendSendInterval(setSendMode(unit(), 'keyed'), { downAt: 0, upAt: DIT });
     expect(state.phase).toBe('sending');
     expect(state.intervals).toHaveLength(1);
   });
@@ -150,7 +157,9 @@ describe('Tastung (mode: keyed)', () => {
 
   it('erkennt eine falsche Antwort und meldet, was stattdessen dekodiert wurde', () => {
     // Sauberes "T" (ein einzelnes dah) statt des verlangten "R".
-    const state = submitSend(appendSendInterval(unitFor('R'), { downAt: 0, upAt: DAH }));
+    const state = submitSend(
+      appendSendInterval(setSendMode(unitFor('R'), 'keyed'), { downAt: 0, upAt: DAH }),
+    );
     expect(state.lastAttempt?.correct).toBe(false);
     expect(state.lastAttempt?.decodedCharacter).toBe('T');
   });
@@ -283,7 +292,7 @@ describe('Sitzungs-Schaetzung ueber mehrere Versuche (#101a: E gegen T)', () => 
   });
 
   it('unterscheidet E und T allein ueber die Sitzungs-Schaetzung, ohne jeden Kontrast', () => {
-    const state = unitFor('E');
+    const state = setSendMode(unitFor('E'), 'keyed');
     const asE = submitSend(appendSendInterval(state, { downAt: 0, upAt: DIT }));
     const asT = submitSend(appendSendInterval({ ...state, prompt: 'T' }, { downAt: 0, upAt: DAH }));
 

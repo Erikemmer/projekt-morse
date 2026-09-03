@@ -14,13 +14,17 @@
  * `WORDS_STREAK_MIN_ANSWERS` abgeschickten Versuchen -- **dieselbe
  * Konstante** wie beim Wort-Modus (Teil A.1/A.2), keine zweite Zahl.
  *
- * **Zwei Eingabewege, eine Aufgabe.** `mode: 'keyed'` ist der Kern -- Timing
- * ist heilig (CLAUDE.md 2.1), die Dekodierung uebernimmt
- * `engine/sending.ts`. `mode: 'tapped'` ("Tap it in instead", Teil E.16) ist
- * die selbstgesteuerte Alternative (CLAUDE.md 6): zwei Tasten fuer · und −,
- * ohne Zeitdruck, bewertet wird nur die Richtigkeit. Beide Wege muenden in
- * denselben Zustandsautomaten und dieselbe Statistik -- ein Versuch ist ein
- * Versuch, gleich auf welchem Weg er kam.
+ * **Zwei Eingabewege, eine Aufgabe -- und seit Ruling Notion-Log #109 ist
+ * `mode: 'tapped'` der Standard, nicht mehr `mode: 'keyed'`.** Der Owner hat
+ * die eigene Prioritaet von #90 umgekehrt: die zwei Tasten fuer · und − sind
+ * jetzt der Normalweg (am Laptop `.` und `-`), die zeitgetastete Morsetaste
+ * ("Use real keying") die Ausbaustufe. Didaktisch ist das die richtige
+ * Reihenfolge -- erst das Muster sicher treffen, dann den Rhythmus, so wie
+ * es auch am Menschen gelehrt wird. Timing bleibt heilig (CLAUDE.md 2.1): die
+ * Dekodierung in `engine/sending.ts` und die volle Timing-Bewertung sind
+ * unveraendert, sie gelten nur nicht auf dem jetzt bevorzugten Weg. Beide
+ * Wege muenden in denselben Zustandsautomaten und dieselbe Statistik -- ein
+ * Versuch ist ein Versuch, gleich auf welchem Weg er kam.
  *
  * **Was dieser Modus mit der Statistik macht -- und was nicht** (Teil F.17):
  * Versuche und Treffer gehen in eine **eigene** Sende-Statistik je Zeichen
@@ -152,7 +156,10 @@ export function createSendSession(options: SendSessionOptions): SendSessionState
     pool,
     prompt: pickPrompt(pool, options.random, null),
     phase: 'ready',
-    mode: 'keyed',
+    // Ruling Notion-Log #109: die zwei Tasten sind ab jetzt der Standard,
+    // nicht mehr die Morsetaste. Wer die Taste sucht, findet sie ueber
+    // "Use real keying" (setSendMode).
+    mode: 'tapped',
     intervals: [],
     taps: [],
     attempts: [],

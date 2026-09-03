@@ -527,6 +527,19 @@ export function App() {
     (send.phase === 'ready' || send.phase === 'sending');
 
   /**
+   * Ob `.`/`-` gerade ein Element antippen duerfen (Ruling Notion-Log #109) --
+   * dieselbe Bedingung wie `canKeySend`, nur fuer den jetzt bevorzugten
+   * Eingabeweg. Traegt Maus/Touch (`TapPad`, Send.tsx) und die physische
+   * Tastatur (`useSendKeyboard`) gleichermassen.
+   */
+  const canTapSend =
+    view === 'send' &&
+    !menuOpen &&
+    send !== null &&
+    send.mode === 'tapped' &&
+    (send.phase === 'ready' || send.phase === 'sending');
+
+  /**
    * Ob die Taste gerade wirklich gehalten wird -- als Ref, nicht als
    * Zustand: er entscheidet, ob `keyDown()` noch ankommen darf, nachdem
    * `resume()` durch ist (siehe `pressSendKey`), und braucht dafuer den
@@ -622,6 +635,9 @@ export function App() {
     onRelease: releaseSendKey,
     advanceEnabled: view === 'send' && !menuOpen && send?.phase === 'feedback',
     onAdvance: nextSend,
+    tapEnabled: canTapSend,
+    onTapDit: tapSendDit,
+    onTapDah: tapSendDah,
   });
 
   const next = useCallback(() => setSession((current) => advance(current, Math.random)), []);
