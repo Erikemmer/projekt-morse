@@ -508,43 +508,35 @@ button:disabled {
  * Feedback-Zustaende -- und aendert nur Raster, Hoehe und Schriftgrad.
  *
  * 390 px Schale minus 2 x 24 px Rand ergibt 342 px; sechs Spalten mit fuenf
- * Luecken von 8 px lassen 50 px je Taste. Mit 52 px Hoehe liegt jede Taste
+ * Luecken von 8 px lassen 50 px je Taste. Mit 46 px Hoehe liegt jede Taste
  * ueber der Zielgroesse aus WCAG 2.5.5 (--tap: 44px), die als min-height
  * darunter steht und auch bei groesserer Schrift haelt.
+ *
+ * **Eine Hoehe fuer alle Modi -- Ruling #98 nimmt Ruling #94 zurueck.** Die
+ * fruehere Trennung (52 px Training, 46 px Wort-Modus) war die Rechtfertigung
+ * einer Zahl, die #94 gebraucht hat, kein eigenstaendiges Prinzip: Sie loeste
+ * nur das Scrollen des *Wort*-Screens und verschwieg, dass der Bereit-Zustand
+ * des Trainings dasselbe Problem hatte (FINDINGS #7). Grund ist die immer
+ * gleiche Hoehe des Tastenfelds: alle 36 Positionen stehen immer da (sieben
+ * Reihen -- A-F, G-L, M-R, S-X, Y-Z, 0-5, 6-9 --, unabhaengig davon, wie viele
+ * Zeichen aktiv sind), plus die App-Kopfzeile im Bereit-Zustand. 46 px ueberall
+ * plus ein kleinerer Abstand darueber (24 statt 32 px) bringen beide Faelle
+ * unter 844 px bei 390 x 844 -- siehe HANDOVER §3n.
  */
 .keypad {
   flex: none;
-  margin-top: 32px;
+  margin-top: 24px;
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   gap: var(--space-1);
 }
 
 .keypad .answer {
-  height: 52px;
+  height: 46px;
   min-height: var(--tap);
   /* Eine Stufe kleiner als im Dreier-Gitter (26 px): die Taste ist schmaler,
    * und 20 px stehen darin ohne Enge. Newsreader bleibt Newsreader. */
   font-size: 20px;
-}
-
-/* --- Die Tastenhoehe im Wort-Modus: 46 px statt 52 (Ruling #94) ---
- *
- * Dieselben 36 Positionen, dieselbe Ordnung -- nur flacher. Der Grund ist die
- * Rolle, die das Feld hier hat: **im Training ist das Tastenfeld die Antwort**
- * (ein Tipp = eine Antwort), **im Wort-Modus ist es eine Eingabetastatur**
- * (viele Tipps je Antwort). Eine Tastatur darf kompakter sein; ein Antwortfeld,
- * auf das eine gemessene Reaktionszeit faellt, nicht.
- *
- * Sechs Reihen mal 6 px sparen 36 px -- genau der Platz, den die App-Kopfzeile
- * kostet, seit der Modus offen ist und der Weg hinaus ueber das Menue fuehrt
- * (Ruling #87, HANDOVER §3l). 46 px liegen weiterhin ueber der Zielgroesse aus
- * WCAG 2.5.5 (--tap: 44px), die als min-height ohnehin darunter steht.
- *
- * **Nur hier.** Das Einzelzeichen-Training bleibt bei 52 px.
- */
-.keypad.keypad-typing .answer {
-  height: 46px;
 }
 
 /*
@@ -1518,8 +1510,19 @@ a.menu-item {
     min-height: 100dvh;
   }
 
+  /*
+   * Nachtrag Notion-Log #97 (Fable, per Nachmessung): `margin: 0 auto` allein
+   * hebt auf einem Grid-Item das Stretchen der Inline-Achse auf -- ohne
+   * eigenes `width` wird `.shell` content-sized statt spaltenbreit, und
+   * `max-width` kommt nie zum Tragen. Gemessen war die Spalte dadurch 378 px
+   * breit statt der beabsichtigten 600, das Tastenfeld entsprechend eng
+   * (22 px je Taste). `width: 100%` erzwingt das Fuellen der Spalte bis zur
+   * Grenze; `margin: 0 auto` zentriert danach nur noch, wenn die Spalte
+   * breiter als `max-width` ist. Grenze zugleich auf 640 px angehoben.
+   */
   .shell {
-    max-width: 600px;
+    width: 100%;
+    max-width: 640px;
     margin: 0 auto;
   }
 
@@ -1636,12 +1639,11 @@ a.menu-item {
   }
 
   /*
-   * Eine Hoehe fuer beide Modi -- die Unterscheidung 52/46 px (Ruling #94)
-   * gilt nur unter 900 px (Teil B.6). Deshalb beide Selektoren, gleiche
-   * Spezifitaet wie unten: die Reihenfolge im Quelltext entscheidet.
+   * Seit Ruling #98 gibt es nur noch eine Tastenhoehe je Breakpoint --
+   * 44 px hier, 46 px darunter (Teil B.6). Kein zweiter Selektor mehr noetig:
+   * `.keypad-typing` ist mit der Ruling-#94-Trennung mit weggefallen.
    */
-  .keypad .answer,
-  .keypad.keypad-typing .answer {
+  .keypad .answer {
     height: 44px;
   }
 
@@ -1708,5 +1710,22 @@ a.menu-item {
     font-size: 15px;
     line-height: 1.5;
     color: var(--gray);
+  }
+
+  /*
+   * Nachtrag Notion-Log #97: dieselben Zahlen standen doppelt -- einmal hier
+   * in der Randspalte, einmal als `.streak-note` (Start-Screen und
+   * Abschluss-Screen) und `.footer-stats` (Fusszeile) in der Mittelspalte.
+   * Ausgeblendet werden nur die beiden direkten Duplikate; die
+   * Sitzungspunkte (`.dots`, ebenfalls in `.footer`) bleiben stehen, und die
+   * Drill-Einladung -- die zufaellig dieselbe `.streak-note`-Klasse nutzt,
+   * aber einen anderen Satz zeigt -- bleibt ueber die Kindselektoren
+   * unberuehrt (`.shell > .streak-note` trifft sie nicht, sie steckt in
+   * `.drill-invite`).
+   */
+  .shell > .streak-note,
+  .shell > .stage > .streak-note,
+  .footer-stats {
+    display: none;
   }
 }

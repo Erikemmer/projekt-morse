@@ -1544,7 +1544,134 @@ Bildmarke, die Wortliste, die Tempo-Progression. D1 ist eine reine
 CSS-plus-zwei-Komponenten-Runde — kein Zustand ist neu, nur seine Darstellung
 ab zwei Breakpoints.
 
+## 3n. Runde D1, Nachtrags-Commit — drei Fehler aus eigener Nachmessung, ein übersprungener Auftrag
+
+**Der erste Bericht zu D1 war nicht vollständig, und Fable hat das per eigener
+Nachmessung gefunden, nicht per Vertrauen in den Bericht.** Drei technische
+Punkte und ein Prozesspunkt — letzterer wiegt schwerer als die drei anderen
+zusammen.
+
+**(a) Die Schiene war 378 statt 600 px breit — `margin: 0 auto` auf einem
+Grid-Item hebt das Stretchen auf.** `.shell` saß als Grid-Item in
+`.app-layout` und trug `max-width: 600px; margin: 0 auto;`. Was fehlte: ein
+eigenes `width`. Ohne das behandelt CSS Grid ein Item mit `margin: auto` in
+der Inline-Achse nicht als „strecke bis zur Spaltenbreite, dann kappe bei
+`max-width`", sondern als content-sized — die Spalte war 600 px breit
+verfügbar, `.shell` füllte sie aber nie, sondern schrumpfte auf den Inhalt.
+Gemessen: 378 px. Folge: das flache Tastenfeld aus §3m (zwölf Spalten) hatte
+nur 22 px pro Taste — enger als das Handy-Problem, das D1 lösen sollte, und
+zwar auf dem Laptop. **Behoben:** `width: 100%` zusätzlich zu `max-width:
+640px` (die Grenze zugleich leicht angehoben) erzwingt das Füllen der Spalte
+zuerst; `margin: 0 auto` zentriert danach nur noch, wenn die Spalte breiter
+als 640 px ist. Nachgemessen: `.shell` jetzt 640 px bei 1024/1280/1440 px,
+Tastenbreite **43,83 px** bei allen dreien (§4) — über der 40-px-Vorgabe.
+
+**(b) Tagesquote, Streak und Tempo standen ab 1280 px doppelt.** Die
+Randspalte (`MarginColumn`, §3m) sollte dieselben drei Zahlen *statt* einer
+Zeile unter der Übung zeigen — stattdessen standen sie zusätzlich weiter,
+als `.streak-note` (Start- und Abschluss-Screen) und `.footer-stats`
+(Fußzeile) in der Mittelspalte. **Behoben** über Kindselektoren, die nur die
+beiden Duplikate treffen: `.shell > .streak-note`, `.shell > .stage >
+.streak-note` und `.footer-stats` bekommen ab 1280 px `display: none`. Die
+Sitzungspunkte (`.dots`, ebenfalls in der Fußzeile) bleiben stehen — sie
+haben keine Entsprechung in der Randspalte. Die Drill-Einladung, die
+zufällig dieselbe `.streak-note`-Klasse trägt, aber einen anderen Satz und
+eine andere Elternposition hat (`.drill-invite`, nicht direktes Kind von
+`.shell`), bleibt unberührt.
+
+**(c) Der übersprungene Auftrag, offen benannt.** Der D1-Auftrag verlangte zu
+FINDINGS #7 (Punkt C.9): „Ursache messen, nennen, beheben — oder anhalten und
+melden." Keines von beidem ist passiert. Der erste Bericht, HANDOVER §3m und
+§4 erwähnten den Punkt nicht, FINDINGS.md wurde dazu nicht angerührt. Das ist
+kein Rechenfehler, sondern ein stillschweigend fallengelassener Auftrag —
+genau das Verhalten, das die eigene Nachmessung von Fable aufgedeckt hat und
+das hier ausdrücklich als das benannt wird, was es ist, statt es im
+Nachtrag zu verstecken. Ab jetzt gilt: ein nicht bearbeiteter Auftragspunkt
+wird immer explizit als „nicht geschafft" oder „ist eine Gestaltungsfrage"
+gemeldet — nie stillschweigend ausgelassen.
+
+Bei der Nachmessung zu (c) stellte sich zusätzlich heraus, dass die
+**Diagnose seit Runde F2 falsch war.** FINDINGS #7 hatte den Start-Screen-
+Scroll (890 px bei 390×844) auf „alle 36 Zeichen aktiv" zurückgeführt. Fables
+Nachmessung: 890 px steht bei 15 *und* bei 36 aktiven Zeichen exakt gleich —
+die Zeichenzahl ist nicht die Ursache. Die tatsächliche: das Tastenfeld
+rendert immer alle 36 Positionen in sieben Reihen (A–F, G–L, M–R, S–X, Y–Z,
+0–5, 6–9 — Ziffern beginnen laut `KEYPAD_ROW_BREAK` eine neue Reihe),
+unabhängig davon, wie viele Zeichen aktiv sind; hinzu kommt die App-
+Kopfzeile (44 px + 24 px Rand = 68 px), die nur im Bereit-Zustand steht, nicht
+während einer laufenden Runde. 890 − 68 = 822 px, dieselbe Höhe wie die
+Zustände ohne Kopfzeile.
+
+**Ruling #98 (Fable): die 52/46-Trennung aus Ruling #94 wird zurückgenommen.**
+Wörtlich: „Die 52/46-Trennung aus #94 zurückgenommen … Sie war die
+Rechtfertigung einer Zahl, die ich gebraucht habe, kein Prinzip. Ab jetzt:
+eine Tastenhöhe am Handy, 46 px, überall." Umgesetzt: `.keypad .answer`
+bekommt einheitlich `height: 46px` (Training wie Wort-Modus), die
+Wort-Modus-only-Regel `.keypad.keypad-typing .answer { height: 46px; }`
+entfällt ersatzlos (samt der `keypad-typing`-Klasse in `Words.tsx` — sie
+hatte keinen anderen Zweck mehr). Zusätzlich sinkt `.keypad`s `margin-top`
+von 32 auf 24 px. Nachgemessen: Bereit-Zustand jetzt **844 px** bei sowohl
+15 als auch 36 aktiven Zeichen (vorher 890 px bei beiden), alle anderen
+Handy-Zustände unverändert bei 844 px (§4). FINDINGS #7 ist dazu vollständig
+neu geschrieben, nicht nur mit einem „behoben"-Vermerk versehen.
+
+**Nebeneffekt, dieselbe Ursache:** die allgemeine Reduktion des
+`margin-top` verbessert auch den in D1 selbst schon behobenen Fall aus
+FINDINGS #9 (Wort-Auflösung mit fünf Fehlpositionen) weiter — die natürliche
+Inhaltskante liegt jetzt konstant bei 820 px (24 px Luft) statt bei den
+vorherigen 843 px (1 px Luft). Kein eigener Code dafür nötig, siehe FINDINGS
+#9.
+
+**Ruling #99 (Fable): die Progress-Tabelle bleibt bei 342 px — bestätigt,
+kein offener Punkt mehr.** §7 hatte die Frage aufgeworfen, ob der Weißraum
+rechts neben der schmalen Tabelle ab 900 px die richtige Gestaltung ist.
+Fables Antwort, wörtlich: „Der Weißraum rechts ist Marginalie wie im
+gedruckten Satz, kein Loch, das Inhalt braucht." Keine Code-Änderung — die
+Frage aus §7 ist damit entschieden, nicht mehr offen.
+
 ## 4. Was nachgewiesen ist (und wie)
+
+**Aus Runde D1, Nachtrags-Commit (§3n, Ruling #97/#98/#99):**
+
+- **`npm test` → 381/381 grün** (unverändert — auch der Nachtrag rührt keine
+  Engine- oder Zustandslogik an, nur Darstellung). **`npm run build`**
+  sauber, **`npm run verify:learn`** unverändert grün, **`npm run
+  verify:amber` → 29/29 Ansichten**, höchstens eine Amber-Fläche je View
+  (unverändert — keine der vier Korrekturen berührt Amber-Flächen).
+- **(a) Schienenbreite:** `.shell` misst jetzt **640 px** bei 1024, 1280 und
+  1440 px Viewportbreite (vorher 378 px bei allen dreien). Tastenbreite im
+  zwölfspaltigen Laptop-Tastenfeld: **43,83 px** bei allen drei Breiten —
+  über der geforderten Mindestgrenze von 40 px (vorher 22 px).
+- **(b) Doppelte Zahlen:** bei ≥1280 px sind `.streak-note` (Start- und
+  Abschluss-Screen) und `.footer-stats` (Fußzeile) in der Mittelspalte jetzt
+  `display: none` (per Computed-Style bestätigt); die Randspalte zeigt die
+  drei Zahlen weiterhin einmal. Die Sitzungspunkte (`.dots`) bleiben
+  sichtbar, die Drill-Einladung (eigener DOM-Pfad, gleiche CSS-Klasse) bleibt
+  unberührt und funktionsfähig.
+- **(c) FINDINGS #7 / Ruling #98:** Bereit-Zustand bei 390×844 jetzt **844 px**
+  sowohl bei 15 als auch bei 36 aktiven Zeichen (vorher **890 px** bei
+  beiden — die Zeichenzahl war nie die Ursache, siehe §3n). Alle übrigen
+  Handy-Zustände: Pixel-Vergleich gegen den Stand vor dem Nachtrag zeigt
+  **0 Pixel** Abweichung außerhalb der Tastenfeld-Reihen selbst. FINDINGS #9
+  (Wort-Auflösung, fünf Fehlpositionen): natürliche Inhaltskante über zehn
+  Durchläufe konstant bei **820 px** (vorher 843 px) — Nebeneffekt derselben
+  `margin-top`-Reduktion, kein eigener Fix.
+- **(d) Ruling #99:** keine Code-Änderung, keine Messung nötig — die
+  342-px-Breite der Progress-Tabelle ab 900 px ist als Randnotiz-Gestaltung
+  bestätigt (§3n, §7).
+- **Sechs Screenshots neu gezogen und geprüft:**
+  [`desktop-rail-1024.png`](./docs/screenshots/desktop-rail-1024.png),
+  [`desktop-training-1440.png`](./docs/screenshots/desktop-training-1440.png),
+  [`desktop-words-1440.png`](./docs/screenshots/desktop-words-1440.png),
+  [`desktop-progress-1440.png`](./docs/screenshots/desktop-progress-1440.png),
+  [`desktop-keypad-1280.png`](./docs/screenshots/desktop-keypad-1280.png)
+  (alle fünf überschrieben, zeigen jetzt die 640-px-Schiene und die
+  einfache Randspalte ohne Duplikate), plus neu
+  [`training-ready-36-chars-390.png`](./docs/screenshots/training-ready-36-chars-390.png)
+  (Beleg für den behobenen Bereit-Zustand bei 36 aktiven Zeichen, 390×844,
+  ohne Scroll).
+- **Timing-Budget: unberührt.** Kein Ton-, Zeitachsen- oder Player-Code
+  angefasst.
 
 **Aus Runde D1 (das Laptop-Layout, Ruling #95/#96):**
 
@@ -2496,19 +2623,20 @@ ist offline, die Artikel sind eine Website.
 
 ## 7. Nächster Schritt
 
-**Runde D1 (das Laptop-Layout) liegt auf dem Branch und wartet auf Review 16**
-— vierter Commit, nicht gemergt. Die Messungen stehen in §4, die
-Begründungen in §3m. **Laut Plan folgt jetzt F4 (Sende-Training)** — genau in
-der Reihenfolge, die vermeiden sollte, dass dessen Oberfläche zweimal gebaut
-wird.
+**Runde D1 liegt auf dem Branch, fünfter Commit (der Nachtrag aus §3n), und
+wartet erneut auf Review** — der erste Bericht war nicht vollständig (§3n),
+Fable prüft jetzt den Nachtrag. **Nicht gemergt.** Die Messungen stehen in
+§4, die Begründungen in §3m und §3n. **Laut Plan folgt danach F4
+(Sende-Training)** — genau in der Reihenfolge, die vermeiden sollte, dass
+dessen Oberfläche zweimal gebaut wird.
 
-**Eine Sache aus D1 braucht ein Urteil:**
+**Aus D1 offen gewesene Sache — durch Ruling #99 entschieden, kein offener
+Punkt mehr:**
 
-1. **Die Progress-Tabelle bleibt bei 342 px, obwohl ab 900 px Platz für mehr
-   wäre** (§3m, §4). Nachgemessen: eine hälftige Aufteilung ließe die vier
-   Spaltenköpfe ineinanderlaufen. Der Weißraum rechts ist eine bewusste
-   Leere, keine vergessene Gestaltung — aber ob das für große Bildschirme das
-   richtige Bild ist, ist eine Design-Frage.
+1. ~~Die Progress-Tabelle bleibt bei 342 px, obwohl ab 900 px Platz für mehr
+   wäre~~ — **entschieden durch Ruling #99** (§3n): der Weißraum rechts ist
+   Marginalie wie im gedruckten Satz, keine vergessene Gestaltung. Keine
+   Code-Änderung.
 
 **Aus Runde B2 + F3 offen** — eine Sache, der Rest hat sich erledigt:
 

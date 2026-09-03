@@ -175,44 +175,57 @@ Echo-Check wäre zusätzlich zu entscheiden, was „aktiv" dort heißt: die
 Optionen des Checks oder der ganze aktive Satz. **Gehört Fable, nicht dem
 nächsten Commit.**
 
-## 7. Der Start-Screen scrollt, sobald alle 36 Zeichen aktiv sind
+## 7. Der Start-Screen scrollt, sobald das Tastenfeld gilt — BEHOBEN (Ruling #98)
 
 **Gefunden:** 02.09.2026, beim Vermessen des Wort-Screens (Runde F2). **Nicht
 neu und nicht von dieser Runde** — auf `main` (66d0af4) genauso gemessen.
+**Übersprungen, ohne es zu sagen:** Der Auftrag zu Runde D1 verlangte für
+diesen Punkt ausdrücklich Ursache messen, nennen, beheben — oder anhalten und
+melden. Keins von beidem ist in D1 passiert; der Punkt fehlte im Report, in
+§3m, in §4 und hier. Das war der eine Prozessfehler der Runde, nicht dieser
+Befund selbst — festgehalten in HANDOVER §3n.
 
-Bei 390 × 844 und 36 aktiven Zeichen ist der **Start-Screen 890 px** hoch, also
-46 px zu viel. Betroffen ist nur dieser eine Zustand: Kopfzeile mit Wortmarke
-und Menü, dazu die Streak-Zeile *und* das siebenreihige Tastenfeld. Der
-Trainings-Screen derselben Sitzung passt exakt (gemessen: **844 px**) — dort
-fehlt die Kopfzeile, weil sie mitten in einer Sitzung nicht dasteht.
+**Die ursprüngliche Diagnose war falsch.** Sie lautete „ab 36 aktiven
+Zeichen" — nachgemessen (Review 16, Fable) kommen bei 390 × 844 aber **exakt
+890 px heraus, egal ob 15 oder 36 Zeichen aktiv sind.** Die Zeichenzahl war
+nie die Ursache. Zwei Dinge sind konstant, sobald das Tastenfeld überhaupt
+gilt (ab `KEYPAD_MIN_CHARACTERS = 13`):
 
-**Warum es zählt:** Die Übergabe der Runde U1 (§3j) hält fest, dass „sieben
-Reihen à 52 px bei 390 × 844 **ohne Scrollen** passen". Gemessen wurde damals
-der Zustand mit offener Antwort — und der stimmt. Für den Start-Screen gilt es
-nicht, und dort steht der Play-Kreis, der als erstes gefunden werden soll.
+1. **Das Tastenfeld hat immer sieben Reihen** — alle 36 Positionen stehen
+   immer da (A–F, G–L, M–R, S–X, Y–Z, 0–5, 6–9; Ziffern beginnen eine eigene
+   Reihe, `KEYPAD_ROW_BREAK`), unabhängig davon, wie viele davon aktiv sind.
+2. **Der Start-Screen zeigt zusätzlich die App-Kopfzeile** (44 px plus 24 px
+   Abstand) — anders als mitten in einer Sitzung, wo sie nicht dasteht.
 
-**Warum es hier nicht behoben wurde:** Die Aufgabe der Runde F2 nennt diese
-Fläche nicht (CLAUDE.md 5). Und die naheliegende Lösung wäre eine
-Gestaltungsentscheidung, keine technische: das Tastenfeld auf dem Start-Screen
-gar nicht zu zeigen (es beantwortet dort nichts) wäre die sauberste, widerspricht
-aber dem Review-6-Ruling (#43), das die Tasten ausdrücklich als „Kontext der
-Frage" sichtbar hält. Für Runde F2 ist derselbe Konflikt im Wort-Screen
-entschieden worden: dort **fehlt die Kopfzeile während einer laufenden
-Einheit**, wie im Training und im Drill — damit passt er.
+890 px minus diese 68 px Kopfzeile ergibt 822 — genau die Größenordnung, in
+der auch der Antwort-Zustand ohne Kopfzeile lag. Das ist die eigentliche
+Rechnung hinter der Zahl, nicht die Zeichenzahl.
 
-**Was es kosten würde:** wenig Code, aber eine Entscheidung. Drei Wege, alle
-eine Zeile bis ein Dutzend: die Kopfzeile auf dem Start-Screen bei großem
-Zeichensatz weglassen (dann fehlt der Menü-Zugang), die Streak-Zeile dort
-weglassen (eine leise Zeile für 46 px — und der Streak wäre auf dem
-Start-Screen weg), oder die Tastenhöhe im Tastenfeld von 52 auf 46 px nehmen
-(bleibt über `--tap`, ändert aber die Formfamilie).
-**Gehört Fable.**
+**Warum es hier ursprünglich nicht behoben wurde:** Die Aufgabe der Runde F2
+nannte diese Fläche nicht (CLAUDE.md 5), und Ruling #94 löste zunächst nur den
+Wort-Screen (46 px Tasten, *nur dort*) — der Start-Screen des Trainings blieb
+bei 890 px, weiterhin ungelöst.
 
-**Nachtrag 02.09.2026 (Ruling #94):** Der dritte Weg ist inzwischen **im
-Wort-Modus** gegangen — dort sind die Tasten 46 px hoch, begründet über die
-Rolle der Fläche (Eingabetastatur statt Antwortfeld). **Für den Start-Screen
-ändert das nichts:** das Einzelzeichen-Training bleibt bei 52 px, und der
-Start-Screen misst unverändert 890 px.
+**Behoben in Runde D1, per Ruling #98.** Die 52/46-Trennung aus Ruling #94
+war die Rechtfertigung einer Zahl, die #94 gebraucht hat, kein eigenständiges
+Prinzip — sie löste nur die Hälfte des eigentlichen Problems. Jetzt: **eine
+Tastenhöhe für alle Modi, 46 px**, dazu der Abstand über dem Tastenfeld
+32 → 24 px. `.keypad-typing` (die CSS-Klasse hinter der alten Trennung) ist
+ersatzlos entfernt.
+
+**Nachgemessen (390 × 844, headless Chromium):**
+
+| Zustand | vorher | nachher |
+|---|---|---|
+| Training, Start-Screen, 15 aktive Zeichen | 890 | **844** |
+| Training, Start-Screen, 36 aktive Zeichen | 890 | **844** |
+| Training, Ton läuft / Antwort offen / Auflösung | 844 | **844** (unverändert) |
+| Wort-Modus, alle Zustände (bereit, Eingabe, Auflösung) | 844 | **844** (unverändert) |
+| Wort-Auflösung, worst case (5 von 5 Positionen falsch, über zehn Durchläufe) | 843 (FINDINGS #9) | **844**, natürliche Inhaltskante bei **820 px** — 24 px Luft, unabhängig davon, wie viele Positionen danebenliegen |
+
+Kein Zustand überschreitet 844 px mehr. Die zuvor grenzwertigen Fälle
+(Start-Screen, Wort-Auflösung mit vielen Fehlpositionen) haben jetzt
+Spielraum statt einer Zahl, die knapp unter dem Limit lag.
 
 ## 8. ✓ und ✗ fehlen ebenfalls in allen vier Schriftschnitten
 
@@ -279,3 +292,10 @@ Fehlpositionen: **843 px** (vorher 849). Alle anderen Zustände desselben
 Screens unverändert bei 844 px (Pixeldiff gegen den Stand vor der Runde:
 0 Pixel, bis auf zufälligen Inhalt wie Ton-Hz und die gesendete Folge).
 [`words-solution-wrong-5-390.png`](./docs/screenshots/words-solution-wrong-5-390.png).
+
+**Nachtrag, selbe Runde D1 (Ruling #98):** Der Tastenfeld-Abstand, hier
+bewusst unberührt gelassen, ist über die *allgemeine* Korrektur aus FINDINGS
+#7 doch gefallen (32 → 24 px, für alle Zustände, nicht nur diesen). Über zehn
+Durchläufe mit fünf Fehlpositionen blieb die natürliche Inhaltskante
+durchgehend bei **820 px** — 24 px Luft statt der vorherigen 1 px. Kein
+weiterer Handlungsbedarf.

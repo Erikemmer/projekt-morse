@@ -367,11 +367,7 @@ function Keys({
 
   return (
     <>
-    {/*
-      `keypad-typing` senkt die Tastenhoehe -- nur hier, nicht im Training
-      (styles.css nennt den Grund, Ruling #94).
-    */}
-    <div className={keypad ? 'keypad keypad-typing' : 'answers'}>
+    <div className={keypad ? 'keypad' : 'answers'}>
       {positions.map((char) => {
         const active = !keypad || asked.has(char);
 
