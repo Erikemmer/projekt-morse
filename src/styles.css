@@ -1817,11 +1817,19 @@ a.menu-item {
    * schmal, die Tabelle rechts. **Nicht hälftig:** die Tabelle trägt vier
    * Spalten und braucht dafür etwa ihre mobile Breite (342 px) wieder, sonst
    * laufen die Spaltenköpfe ineinander -- gemessen, nicht angenommen
-   * (CLAUDE.md 7). 180 px links lassen der Tabelle rechts genug Raum.
+   * (CLAUDE.md 7). 220 px links lassen der Tabelle rechts genug Raum.
+   *
+   * **220 statt der frueheren 180 px (FINDINGS #10 / Ruling #103e):** bei
+   * 180 px brach "20 answers · 100%" um, mit dem Mittelpunkt am Zeilenende.
+   * Die schmalere Spalte allein loest das nicht zuverlaessig -- eine lange
+   * Kennzahl kann auch bei 220 px noch an die Wand stossen --, deshalb
+   * stapelt `.stat-line` hier zusaetzlich: Beschriftung in Kapitälchen ueber
+   * dem Wert statt links/rechts mit `space-between`. Im schmalen Satz ist
+   * Stapeln die editoriale Loesung, nicht das Quetschen.
    */
   .progress-screen {
     display: grid;
-    grid-template-columns: 180px minmax(0, 1fr);
+    grid-template-columns: 220px minmax(0, 1fr);
     gap: var(--space-3) var(--space-2);
     align-items: start;
   }
@@ -1832,6 +1840,20 @@ a.menu-item {
 
   .progress-screen .stat-lines {
     grid-column: 1;
+  }
+
+  .progress-screen .stat-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  /* Label-Stil aus 1.1 §5, wie die Tabellenkoepfe daneben (.char-table th). */
+  .progress-screen .stat-line dt {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
   }
 
   .progress-screen .char-table,
