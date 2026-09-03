@@ -14,10 +14,12 @@ datePublished: 2026-09-03
 
 Angaben gemäß § 5 DDG.
 
-**Erik Emmer**
-Tegernseer Str. 2
-83607 Holzkirchen
+<address>
+Erik Emmer<br>
+Tegernseer Str. 2<br>
+83607 Holzkirchen<br>
 Deutschland
+</address>
 
 E-Mail: ee@die-lithothek.de
 

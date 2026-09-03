@@ -165,6 +165,12 @@ strong {
   font-weight: 600;
 }
 
+/* Browser kursivieren `<address>` von sich aus (User-Agent-Stylesheet) --
+ * hier falsch, eine Kontaktanschrift ist kein Zitat (FINDINGS #10, gelöst). */
+address {
+  font-style: normal;
+}
+
 /* Links: ein Akzent, Unterstreichung erst im Hover (CONCEPT-LEARN §5).
  * Farbe siehe Kopfkommentar (Amber-Budget). */
 .article a {

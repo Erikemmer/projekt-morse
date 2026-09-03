@@ -14,10 +14,12 @@ datePublished: 2026-09-03
 
 Legal notice under § 5 DDG (Germany). **The [German version](/de/impressum/) is the legally binding one.**
 
-**Erik Emmer**
-Tegernseer Str. 2
-83607 Holzkirchen
+<address>
+Erik Emmer<br>
+Tegernseer Str. 2<br>
+83607 Holzkirchen<br>
 Germany
+</address>
 
 Email: ee@die-lithothek.de
 

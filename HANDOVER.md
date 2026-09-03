@@ -87,12 +87,23 @@ erfüllt) sind grün.
 >    Hover-Zustand wird vom Amber-Budget-Skript zwar nicht mitgezählt (siehe
 >    dessen Kopfkommentar), aber „kein Amber" ist hier als Zusage für jeden
 >    Zustand gelesen, nicht nur für den ruhenden Bildschirm.
-> 7. **Ein neuer FINDINGS-Eintrag: #10.** Die Anschrift in
+> 7. ~~**Ein neuer FINDINGS-Eintrag: #10.** Die Anschrift in
 >    `impressum.de.md`/`imprint.en.md` steht auf vier eigenen Markdown-Zeilen
 >    ohne harte Zeilenumbrüche und läuft deshalb ausgeliefert zu einem Satz
 >    zusammen (Standard-Markdown-Verhalten, kein Generator-Fehler). Nicht
 >    mitgeändert, weil das eine Entscheidung an einem fremden Rechtstext wäre
->    (CLAUDE.md 3) — gemeldet statt still repariert.
+>    (CLAUDE.md 3) — gemeldet statt still repariert.~~ — **behoben, Review 18
+>    (Notion-Log #104).** Nutzerentscheidung: kein unsichtbares
+>    Zeilenende-Leerzeichen (geht beim nächsten Speichern verloren), sondern
+>    ein `<address>`-Block mit echten `<br>`-Umbrüchen — das semantisch
+>    richtige Element für eine Kontaktanschrift. Dazu `address { font-style:
+>    normal; }` im Generator-Stylesheet, weil Browser das Element sonst von
+>    sich aus kursivieren. Nachgemessen in `dist/de/impressum/index.html`:
+>    vier echte Zeilen (Name, Straße, PLZ/Ort, Land). Details in
+>    [FINDINGS #10](./FINDINGS.md).
+
+**Review 18 ist bestanden (Notion-Log #104) — Runde L2 ist damit
+abgeschlossen und lag beim Merge auf main auf geprüftem Grund.**
 
 <details>
 <summary><b>Die Übergabe nach Runde P1</b> (fünf Owner-Befunde aus dem echten Gebrauch — noch nicht gemergt, Review 18 steht aus; unverändert gültig, Historie)</summary>

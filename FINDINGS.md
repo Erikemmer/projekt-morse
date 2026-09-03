@@ -300,7 +300,33 @@ Durchläufe mit fünf Fehlpositionen blieb die natürliche Inhaltskante
 durchgehend bei **820 px** — 24 px Luft statt der vorherigen 1 px. Kein
 weiterer Handlungsbedarf.
 
-## 10. Die Anschrift in Impressum/Imprint läuft optisch zu einer Zeile zusammen
+## 10. Die Anschrift in Impressum/Imprint läuft optisch zu einer Zeile zusammen — BEHOBEN
+
+**Status: entschieden und behoben** (03.09.2026, Nutzerentscheidung). Der
+Anschriften-Block in `impressum.de.md`/`imprint.en.md` steht jetzt als
+`<address>`-Block mit echten `<br>`-Umbrüchen, statt auf vier einfachen
+Markdown-Zeilen ohne harten Umbruch. Begründung des Nutzers: zwei
+Leerzeichen am Zeilenende sind unsichtbar und gehen beim nächsten Speichern
+in einem Editor oder Formatierwerkzeug leicht verloren — `<address>` ist
+außerdem das semantisch richtige Element für eine Kontaktanschrift. Im
+Generator-Stylesheet (`tools/learn/learn.css`) dazu `address { font-style:
+normal; }`, weil Browser `<address>` sonst von sich aus kursivieren.
+
+Nachgemessen im gebauten `dist/de/impressum/index.html`:
+
+```html
+<address>
+Erik Emmer<br>
+Tegernseer Str. 2<br>
+83607 Holzkirchen<br>
+Deutschland
+</address>
+```
+
+Vier Zeilen, wie vorgesehen. `datenschutz.de.md`/`privacy.en.md` sind
+unverändert — dort steht die Anschrift als ein Satz mit Kommas, und als Satz
+ist sie dort richtig. Der Rest des Eintrags bleibt als Beleg der
+Ursachenanalyse stehen.
 
 **Gefunden:** 03.09.2026, beim Sichtprüfen der vier neuen Rechtsseiten (Runde L2).
 
