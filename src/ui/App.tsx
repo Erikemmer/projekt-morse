@@ -1098,6 +1098,7 @@ export function App() {
     reviewing,
     introSeen: session.progress.introSeen,
     lastAnswer: session.lastAttempt?.answer ?? null,
+    active: session.progress.activeCharacters,
   });
   keyboardStateRef.current = {
     phase: session.phase,
@@ -1108,6 +1109,7 @@ export function App() {
     reviewing,
     introSeen: session.progress.introSeen,
     lastAnswer: session.lastAttempt?.answer ?? null,
+    active: session.progress.activeCharacters,
   };
 
   // Tippen statt Zielen: die Buchstaben des Zeichensatzes beantworten direkt.
@@ -1137,7 +1139,7 @@ export function App() {
       const key = event.key.toUpperCase();
       const {
         phase,
-        pool,
+        active,
         next,
         play,
         learnActive,
@@ -1150,7 +1152,18 @@ export function App() {
       // Einfuehrung noch laeuft (dort gibt es ohnehin keine verdeckte
       // Sitzung, die reagieren duerfte).
       if (learnActive || isReviewing || !introSeen) return;
-      if (!pool.includes(key)) return;
+      /*
+       * Der geuebte Zeichensatz entscheidet (Ruling #105 wortwoertlich: "ein
+       * Anschlag aus dem geuebten Zeichensatz"), nicht der Pool der laufenden
+       * Uebung (Runde P5c). Im Training ist beides dasselbe. In einer Speed
+       * round ist der Pool bewusst drei Zeichen gross -- ein aktives E oder S
+       * ausserhalb davon wurde bis hierher stumm verschluckt, obwohl es eine
+       * ehrliche, falsche Antwort ist: wer K hoert und E tippt, hat E gehoert.
+       * `submitAnswer` verbucht sie als Fehlversuch beim gefragten Zeichen
+       * (der Pool ist dort nie ein Filter gewesen). Gemessen: der Owner
+       * meldete genau E und S als "reagieren nicht" -- in der Speed round.
+       */
+      if (!active.includes(key)) return;
       event.preventDefault();
 
       if (phase === 'answering') {

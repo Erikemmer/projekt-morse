@@ -1,3 +1,58 @@
+# Übergabe — Stand nach Runde P5c („E und S reagieren nicht" — die Speed round)
+
+**Stand:** P5b ist gemergt (`main` = `f5ad272`). **P5c antwortet auf die
+Owner-Meldung „E und S zum Beispiel reagieren noch immer nicht"** — direkt
+gemergt, Build-Hash **`91bd5bd80e88`**.
+
+**Befund, gemessen (Playwright, gebauter Stand, 18 aktive Zeichen):**
+
+- **Training:** alle 18 aktiven Zeichen einzeln in `answering` getippt — **jedes
+  verbucht**, E und S eingeschlossen. Dort ist kein Fehler.
+- **Speed round** (Drill-Pool 3 Zeichen, ab 13 aktiven Zeichen im vollen
+  Tastenfeld mit nur drei aktiven Tasten): **E getippt → nichts, S getippt →
+  nichts**, „Which character did you hear?" bleibt stehen, nichts verbucht.
+  Das ist Befund D aus P5 — dort als Konzeptfrage gemeldet, jetzt vom Owner
+  als der eigentliche Schmerz bestätigt. Mit langsamen Zeichen (der Owner hat
+  welche) lädt der Start-Screen ständig zur Speed round ein.
+
+**Behoben (`src/ui/App.tsx`, eine Bedingung):** Der Trainings-Handler
+prüft nicht mehr `session.pool.includes(key)`, sondern
+`progress.activeCharacters.includes(key)` — **den geübten Zeichensatz, wie
+Ruling #105 es wörtlich sagt** („ein Anschlag aus dem geübten Zeichensatz").
+Im Training ist beides dasselbe. In der Speed round ist ein aktives E in
+`answering`/`listening` jetzt eine **ehrliche, falsche Antwort**: `submitAnswer`
+verbucht sie als Fehlversuch beim *gefragten* Zeichen (der Pool war in der
+Engine nie ein Filter), die Statistik von E bleibt unberührt. In
+`ready`/`feedback` treibt es den Loop wie jeder andere Anschlag.
+
+**Nachweis nach dem Fix:** Speed round, E getippt → verbucht 1, „✗ Not quite
+— that was M."; S in `feedback` → „Ready when you are."; S in `ready` →
+„Listening…". `characters.E.attempts` unverändert 10.
+
+**Was Fable sehen muss:**
+
+1. **Das ist eine Änderung an der Drill-Semantik**, keine reine Reparatur:
+   bisher konnte man in der Speed round nur eines der drei angebotenen
+   Zeichen antworten (der Bildschirm bietet nur drei Tasten). Per Tastatur
+   ist jetzt jedes aktive Zeichen eine gültige — meist falsche — Antwort.
+   Entschieden, weil „stumm" die schlechtere Wahrheit war: wer K hört und E
+   tippt, hat E gehört, und ein Fehlversuch ist genau das, was der Drill
+   messen soll (CLAUDE.md 2.6). Per Tap/Klick bleibt alles wie es war.
+2. **Die Auflösung zeigt „you typed E" nicht als Taste**, wenn E nicht im
+   Dreier-Gitter steht (`Answers` markiert nur gerenderte Tasten). Der
+   Satz „Not quite — that was M." trägt die Auskunft trotzdem; im Tastenfeld
+   (ab 13 Zeichen) steht E ohnehin da. Nicht angefasst.
+3. **Derselbe stumme Fall existiert noch im Echo-Check des Lernmodus**
+   (`answerPool`, Learn.tsx: nur die angebotenen Optionen antworten). Dort
+   bewusst nicht geändert — die Optionen sind wenige und sichtbar, und das
+   Ruling zur Lernkarte (#108) hat das so beschlossen. Gemeldet.
+
+**Tests:** 470, unverändert. `npm test`, `vite build`, `verify:amber`
+(37 Ansichten; „Speed round, Antwort offen" weiter 0 Amber) grün. Die
+Inventur-Zeile „Speed round" unten ist nachgezogen.
+
+---
+
 # Übergabe — Stand nach Runde P5b (Zeichen auf Wunsch freischalten)
 
 **Stand:** P5 ist gemergt (`main` = `f1d1db1`). **P5b ist ein Owner-Wunsch
@@ -413,7 +468,7 @@ einzeln in der Tabelle.
 | **Training, `finished`** | jede Taste | *bewusst nichts — "noch eine Runde" ist eine eigene Geste (Zusammenfassung, siehe unten)* |
 | **Drill-Einladung** ("Try a speed round?", Teil des `ready`-Schirms) | ein Zeichen aus dem Pool | startet die reguläre Wiedergabe (wie überall in `ready`), **nicht** den Drill |
 | | Tab zum Knopf, dann Enter/Leertaste | native Knopf-Aktivierung → startet die Speed round |
-| **Speed round** (`session.kind === 'drill'`) | wie Training, alle Phasen | dieselbe Tabelle wie Training — derselbe Listener, dieselbe Engine |
+| **Speed round** (`session.kind === 'drill'`) | wie Training, alle Phasen | dieselbe Tabelle wie Training — derselbe Listener, dieselbe Engine. **Seit P5c:** ein *aktives* Zeichen außerhalb des Drill-Pools (z. B. E oder S bei Pool `RKM`) ist in `answering`/`listening` eine **falsche Antwort** (verbucht als Fehlversuch beim gefragten Zeichen), in `ready`/`feedback` treibt es den Loop wie jedes andere — vorher stumm verschluckt (Befund D, vom Owner als „E und S reagieren nicht" gemeldet) |
 | **Zusammenfassung** (`finished`) | jede Taste (Trainings-Listener) | *bewusst nichts* |
 | | Tab zum Knopf, dann Enter/Leertaste auf "Practise again"/"Back to practice" | native Knopf-Aktivierung |
 | **Wort-Modus, `ready`** | Enter oder Leertaste | startet die Wiedergabe — **korrigiert, Ruling Notion-Log #112** (vorher hier fälschlich als „bewusst nichts" gelistet) |
