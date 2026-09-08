@@ -1029,6 +1029,22 @@ export function App() {
    */
   const bufferedKeyRef = useRef<string | null>(null);
 
+  /**
+   * Wann die aktuelle Aufloesung erschienen ist (performance.now()). Gemessen,
+   * nicht angenommen (Runde P5, Befund A): wer waehrend des Tons tippt,
+   * bekommt bis zum Tonende keine sichtbare Rueckmeldung -- und drueckt
+   * denselben Buchstaben deshalb oft noch einmal nach, genau in dem Moment,
+   * in dem die Aufloesung erscheint. Seit Ruling #105 schaltete dieser
+   * Nachdruck sofort weiter: die Aufloesung war nach ~10 ms wieder weg, die
+   * Antwort wirkte "nicht erkannt". Der Zeitstempel erlaubt dem Handler, den
+   * Nachdruck *desselben* Buchstabens kurz nach der Aufloesung als Echo der
+   * Antwort zu lesen, nicht als "weiter".
+   */
+  const feedbackSinceRef = useRef(0);
+  useEffect(() => {
+    if (session.phase === 'feedback') feedbackSinceRef.current = performance.now();
+  }, [session.phase]);
+
   /*
    * Die aktuelle Phase, der aktuelle Pool und die beiden Gesten, die ein
    * Anschlag ausserhalb von 'answering'/'listening' ausloesen kann, ueber ein
@@ -1056,6 +1072,7 @@ export function App() {
     learnActive: learn !== null,
     reviewing,
     introSeen: session.progress.introSeen,
+    lastAnswer: session.lastAttempt?.answer ?? null,
   });
   keyboardStateRef.current = {
     phase: session.phase,
@@ -1065,6 +1082,7 @@ export function App() {
     learnActive: learn !== null,
     reviewing,
     introSeen: session.progress.introSeen,
+    lastAnswer: session.lastAttempt?.answer ?? null,
   };
 
   // Tippen statt Zielen: die Buchstaben des Zeichensatzes beantworten direkt.
@@ -1086,9 +1104,22 @@ export function App() {
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      // Auto-Repeat einer gehaltenen Taste ist kein zweiter Anschlag (Runde
+      // P5, Befund C): ungeschuetzt rauschte eine 1,3 s gehaltene Taste durch
+      // acht Runden und verbuchte acht Antworten -- weiter, spielen, puffern,
+      // weiter... Wort- und Sende-Modus schuetzen das laengst.
+      if (event.repeat) return;
       const key = event.key.toUpperCase();
-      const { phase, pool, next, play, learnActive, reviewing: isReviewing, introSeen } =
-        keyboardStateRef.current;
+      const {
+        phase,
+        pool,
+        next,
+        play,
+        learnActive,
+        reviewing: isReviewing,
+        introSeen,
+        lastAnswer,
+      } = keyboardStateRef.current;
       // Ruling #108: der Trainings-Screen ist nicht wirklich vorne, solange
       // der Lernmodus oder die Klang-Auswahl davor steht, oder solange die
       // Einfuehrung noch laeuft (dort gibt es ohnehin keine verdeckte
@@ -1102,6 +1133,13 @@ export function App() {
       } else if (phase === 'listening') {
         bufferedKeyRef.current = key;
       } else if (phase === 'feedback') {
+        // Derselbe Buchstabe wie die gerade gegebene Antwort, kurz nach dem
+        // Erscheinen der Aufloesung: das ist der Nachdruck eines Tippers, der
+        // waehrend des Tons keine Rueckmeldung bekam (siehe feedbackSinceRef)
+        // -- ein Echo der Antwort, kein "weiter". 500 ms: eine Rueckmeldung,
+        // die man nie gesehen hat, ist keine; wer wirklich weiter will, tippt
+        // ohnehin einen anderen Buchstaben oder wartet die Aufloesung ab.
+        if (key === lastAnswer && performance.now() - feedbackSinceRef.current < 500) return;
         // Weiterschalten, wie "Next character"/"Finish" -- ausdruecklich
         // *nicht* als Antwort auf die naechste Aufgabe gepuffert (anders als
         // 'listening'): was man noch nicht gehoert hat, kann man nicht

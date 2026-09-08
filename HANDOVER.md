@@ -1,3 +1,76 @@
+# Übergabe — Stand nach Runde P5 (zwei zeitliche Rennen im Trainings-Loop)
+
+**Stand:** P4 ist gemergt (`main` = `e6fb757`). **Runde P5 ist eine
+Diagnose-Runde auf Zuruf des Owners** („getippte Buchstaben werden teilweise
+noch immer nicht erkannt", nach P2/P3/P4) — ohne Notion-Ruling, deshalb
+tragen die Kommentare im Code „Runde P5, Befund A/C" statt einer Log-Nummer.
+Auf Nutzerwunsch direkt gemergt.
+
+**Der Ansatz:** Die P3-Inventur ist eine *statische* Tabelle (welche Taste
+tut in welcher Phase was) und war vollständig. Was sie nicht abdeckt, sind
+**zeitliche Rennen** — zwei Anschläge dicht hintereinander, Auto-Repeat,
+Anschläge während `play()` noch auf `resume()` wartet. Vier Kandidaten, per
+Playwright gegen den gebauten Stand gemessen, nicht angenommen:
+
+| | Kandidat | Ergebnis |
+|---|---|---|
+| **A** | Antwort während des Tons getippt (gepuffert, #103a) — **ohne sichtbare Rückmeldung bis zum Tonende** —, dann denselben Buchstaben nachgedrückt („hat's genommen?") | **Bestätigt.** 10 ms nach Erscheinen der Auflösung landete der Nachdruck in `feedback` → `next()` → Auflösung weg, „Ready when you are.", Runde 2. Der Nutzer sieht sein Ergebnis nie — das *ist* „nicht erkannt". Seit P2 macht der zweite Anschlag das; vorher war er harmlos. |
+| **B** | Zwei Anschläge in `ready` innerhalb weniger ms (doppeltes `play()`) | Kein Befund: 2 Oszillatoren = die 2 Elemente von „A", eine Wiedergabe. |
+| **C** | Gehaltene Taste (Auto-Repeat) | **Bestätigt.** 1,3 s gehalten (40 `keydown`, 39 `repeat`) → **8 Runden, 8 verbuchte Antworten** durchgerauscht: weiter → spielen → puffern → weiter … Wort- und Sende-Modus prüfen `event.repeat`, der Trainings-Handler nicht. |
+| **D** | Speed round: aktiver Buchstabe außerhalb des Drill-Pools | **Bestätigt, by design:** Pool `RKM`, `S` getippt → stumm verschluckt, nichts verbucht, keine Rückmeldung. Mit langsamen Zeichen (der Owner hat welche) kommt man oft in Speed rounds. **Nicht geändert — Konzeptfrage, siehe unten.** |
+
+**Behoben (A und C), `src/ui/App.tsx`, nur der Trainings-Handler:**
+
+- **C:** `if (event.repeat) return;` am Anfang des Handlers — dieselbe Regel,
+  die `useWordKeyboard`/`useSendKeyboard` längst haben.
+- **A:** ein Zeitstempel `feedbackSinceRef` (gesetzt beim Eintritt in
+  `feedback`) und `lastAnswer` im `keyboardStateRef`. In `feedback` gilt:
+  **derselbe Buchstabe wie die gerade gegebene Antwort, innerhalb von 500 ms
+  nach Erscheinen der Auflösung, ist ein Echo der Antwort, kein „weiter".**
+  Ein *anderer* Buchstabe schaltet sofort weiter, derselbe nach Ablauf der
+  500 ms ebenfalls. Der Klick auf „Next" ist unberührt.
+
+**Nachweis nach dem Fix (Playwright, gebauter Stand):** A1 Nachdruck
+desselben Buchstabens ~10 ms nach Auflösung → Auflösung **bleibt**, Runde 1,
+verbucht 1. A2 derselbe Buchstabe nach >500 ms → weiter, Runde 2. A3 anderer
+Buchstabe sofort → weiter, Runde 2. C Taste 1,3 s gehalten → Runde 1, verbucht
+0, Ton läuft/„Which character did you hear?" — nur der erste Anschlag zählt.
+
+**Was Fable sehen muss:**
+
+1. **Die 500 ms sind eine Setzung, keine Messung an Menschen.** Ein
+   Nachdruck „hat's genommen?" liegt erfahrungsgemäß bei 150–400 ms; wer
+   wirklich weiter will, tippt ohnehin einen anderen Buchstaben. Die
+   Alternative — jede Taste in `feedback` für eine Mindestanzeigezeit zu
+   sperren — hätte den schnellen „anderer Buchstabe = weiter"-Rhythmus
+   ebenfalls verschluckt; deshalb die engere Regel nur für den *gleichen*
+   Buchstaben.
+2. **Die eigentliche Ursache von A ist die fehlende Rückmeldung auf einen
+   gepufferten Anschlag während des Tons.** Eine leise Zeile („answer
+   noted") am Ende von `listening` würde das Nachdrücken überflüssig machen
+   — das wäre aber eine Gestaltungsentscheidung (und berührt CLAUDE.md 2.2
+   zumindest dem Buchstaben nach), also **nicht** gebaut, hier gemeldet.
+3. **D ist offen und gehört dem Konzept:** Soll ein aktiver Buchstabe
+   außerhalb des Drill-Pools per Tastatur als *falsche Antwort* zählen (die
+   Engine könnte das: `submitAnswer` prüft nur `answer === prompt`) oder
+   weiter stumm bleiben? Stumm ist konsistent mit dem Bildschirm (drei
+   Tasten), aber ohne Rückmeldung ist es ein weiterer „nicht erkannt"-Moment.
+4. **Deploy-Gegenprobe für den Owner:** `index.html` trägt
+   `<meta name="build" content="…">` (vite.config.ts). Der Stand dieser Runde
+   heißt **`78844f1b79b4`**; steht im Browser ein anderer Wert (DevTools →
+   Elements → `<head>`), läuft noch ein alter Stand — dann einmal neu laden
+   (der Service Worker ist network-first für die Navigation, ein Reload
+   genügt).
+
+**Tests:** 468 (18 Dateien, gemessen; unverändert zu vor dieser Runde — reine
+UI-Änderung). `npm test`, `npm run build`, `npm run verify:amber`
+(37 Ansichten, Standard-Theme) und `npm run verify:learn` sind grün.
+
+Berührt: `src/ui/App.tsx`, diese Übergabe (inkl. Inventur-Zeile „Training,
+`feedback`" unten).
+
+---
+
 # Übergabe — Stand nach Runde P4 (Wort-Modus verschluckt Buchstaben während der Wiedergabe nicht mehr)
 
 **Stand:** T1 ist gemergt (`main` = `8c272c4`). **Runde P4 setzt Ruling
@@ -273,7 +346,8 @@ einzeln in der Tabelle.
 | **Training, `ready`** | ein Zeichen aus dem Pool | startet die Wiedergabe (`play()`), dieselbe Geste wie der Play-Kreis |
 | **Training, `listening`** | ein Zeichen aus dem Pool | gepuffert (Ruling #103a), zählt beim Wechsel nach `answering` |
 | **Training, `answering`** | ein Zeichen aus dem Pool | beantwortet die Aufgabe |
-| **Training, `feedback`** | ein Zeichen aus dem Pool | weiter (wie "Next character"/"Finish"), zählt nicht als Antwort |
+| **Training, `feedback`** | ein Zeichen aus dem Pool | weiter (wie "Next character"/"Finish"), zählt nicht als Antwort — **Ausnahme seit P5:** derselbe Buchstabe wie die gerade gegebene Antwort innerhalb von 500 ms nach Erscheinen der Auflösung ist ein Echo der Antwort und tut nichts (Befund A) |
+| **Training, alle Phasen** | Auto-Repeat einer gehaltenen Taste (`event.repeat`) | *bewusst nichts — seit P5; vorher rauschte eine gehaltene Taste durch die Runden (Befund C)* |
 | **Training, `finished`** | jede Taste | *bewusst nichts — "noch eine Runde" ist eine eigene Geste (Zusammenfassung, siehe unten)* |
 | **Drill-Einladung** ("Try a speed round?", Teil des `ready`-Schirms) | ein Zeichen aus dem Pool | startet die reguläre Wiedergabe (wie überall in `ready`), **nicht** den Drill |
 | | Tab zum Knopf, dann Enter/Leertaste | native Knopf-Aktivierung → startet die Speed round |
