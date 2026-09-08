@@ -18,6 +18,7 @@ import {
   isReadyToGrow,
   maybeGrow,
   nextCandidate,
+  unlockNext,
 } from './growth';
 import { advance, beginPlayback, createSession, promptFinished, submitAnswer } from './session';
 import { CHARACTER_ORDER, STARTING_CHARACTERS } from './settings';
@@ -77,6 +78,27 @@ describe('Wachstumsregel', () => {
     expect(introduced).toBe(CHARACTER_ORDER[STARTING_CHARACTERS.length]);
     expect(grown.activeCharacters).toEqual([...STARTING_CHARACTERS, introduced]);
     expect(grown.answersSinceGrowth).toBe(0);
+  });
+
+  it('unlockNext fuehrt das naechste Zeichen auch ohne erfuellte Regel ein (Runde P5)', () => {
+    // Frischer Stand: kein Fenster, keine Versuche -- die Regel greift nicht.
+    const progress: Progress = { ...emptyProgress(), activeCharacters: [...STARTING_CHARACTERS] };
+    expect(isReadyToGrow(progress)).toBe(false);
+
+    const { progress: unlocked, introduced } = unlockNext(progress);
+    expect(introduced).toBe(CHARACTER_ORDER[STARTING_CHARACTERS.length]);
+    expect(unlocked.activeCharacters).toEqual([...STARTING_CHARACTERS, introduced]);
+    // Dieselbe Sperre wie bei jeder Einfuehrung: die Regel legt nicht sofort nach.
+    expect(unlocked.answersSinceGrowth).toBe(0);
+    // Reihenfolge bleibt die Koch-Reihe: der zweite Wunsch bringt das uebernaechste.
+    expect(unlockNext(unlocked).introduced).toBe(CHARACTER_ORDER[STARTING_CHARACTERS.length + 1]);
+  });
+
+  it('unlockNext laesst einen vollen Satz unveraendert (===)', () => {
+    const full: Progress = { ...emptyProgress(), activeCharacters: [...CHARACTER_ORDER] };
+    const result = unlockNext(full);
+    expect(result.introduced).toBeNull();
+    expect(result.progress).toBe(full);
   });
 
   it('wartet, bis das rollierende Fenster voll ist -- 9 von 10 sind kein Beleg', () => {

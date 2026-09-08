@@ -104,3 +104,29 @@ export function maybeGrow(progress: Progress): GrowthResult {
     introduced,
   };
 }
+
+/**
+ * Fuehrt das naechste Zeichen der Reihe **auf Wunsch** ein -- ohne die Regel
+ * zu pruefen (Runde P5, Owner-Wunsch: einzelne weitere Buchstaben aus den
+ * Einstellungen freischalten).
+ *
+ * Bewusst *dasselbe* naechste Zeichen wie beim automatischen Wachstum, kein
+ * freies Aussuchen: die Reihenfolge ist die Koch-Reihe (CHARACTER_ORDER), und
+ * die bleibt die eine Wahrheit darueber, was als naechstes kommt. Auch die
+ * Sperre setzt sich wie bei jeder Einfuehrung zurueck (`answersSinceGrowth`),
+ * damit die automatische Regel nicht unmittelbar ein zweites Zeichen
+ * obendrauf legt. Ist der Satz voll, kommt der Fortschritt unveraendert
+ * (===) zurueck.
+ */
+export function unlockNext(progress: Progress): GrowthResult {
+  const introduced = nextCandidate(progress);
+  if (introduced === null) return { progress, introduced: null };
+  return {
+    progress: {
+      ...progress,
+      activeCharacters: [...progress.activeCharacters, introduced],
+      answersSinceGrowth: 0,
+    },
+    introduced,
+  };
+}

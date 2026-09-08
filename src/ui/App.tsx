@@ -64,6 +64,7 @@ import {
   type SessionKind,
   type SessionState,
 } from '../engine/session';
+import { nextCandidate, unlockNext } from '../engine/growth';
 import { CHARACTER_ORDER, CHARACTER_WPM, ROUNDS_PER_GROUP, ROUNDS_PER_SESSION } from '../engine/settings';
 import { resetEffectiveWpm, speedProgressionActive } from '../engine/tempo';
 import {
@@ -927,6 +928,30 @@ export function App() {
   }, []);
 
   /**
+   * Das naechste Zeichen auf Wunsch freischalten (Runde P5, Settings). Sofort
+   * geschrieben wie der Tempo-Reset -- ein bewusster Eingriff in den
+   * Lernstand soll einen Reload ueberleben.
+   *
+   * Der Pool der laufenden Uebung zieht mit, wie beim automatischen Wachstum
+   * (`advance`, session.ts: `pool = progress.activeCharacters`) -- nur im
+   * Training, nie in einer Speed round, deren Pool bewusst klein ist. Der
+   * laufende Beutel behaelt seine restlichen Lose; das neue Zeichen kommt mit
+   * dem naechsten Neufuellen (dieselbe Regel wie Ruling #103b).
+   */
+  const unlockNextCharacter = useCallback(() => {
+    setSession((current) => {
+      const { progress: unlocked, introduced } = unlockNext(current.progress);
+      if (introduced === null) return current;
+      saveProgressNow(unlocked);
+      return {
+        ...current,
+        progress: unlocked,
+        pool: current.kind === 'practice' ? unlocked.activeCharacters : current.pool,
+      };
+    });
+  }, []);
+
+  /**
    * Der Probeton: **nur auf eine Geste**, nie beim Schieben des Reglers.
    *
    * Gespielt wird die eingestellte Tonhoehe selbst, nicht der Sitzungs-Ton --
@@ -1323,6 +1348,10 @@ export function App() {
           onTheme={(theme) => applySettings(withTheme(device, theme))}
           onPreview={playPreview}
           onResetSpeed={resetSpeed}
+          activeCharacterCount={session.progress.activeCharacters.length}
+          totalCharacterCount={CHARACTER_ORDER.length}
+          nextCharacter={nextCandidate(session.progress)}
+          onUnlockNext={unlockNextCharacter}
           headingRef={focusTarget}
         />
       ) : view === 'about' ? (

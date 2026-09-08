@@ -1,3 +1,65 @@
+# Übergabe — Stand nach Runde P5b (Zeichen auf Wunsch freischalten)
+
+**Stand:** P5 ist gemergt (`main` = `f1d1db1`). **P5b ist ein Owner-Wunsch
+ohne Notion-Ruling** („einfache Möglichkeit in den Einstellungen, einzelne
+weitere Buchstaben freizuschalten"), auf Zuruf „alles selbst machen" direkt
+gemergt. Build-Hash dieses Stands: **`7b9f3b01270d`**.
+
+**Was es ist:** In Settings, unter „Effective speed", ein Abschnitt
+**Characters — `N of 36 active`** mit dem leisen Knopf **„Add P now"**
+(`.quiet-action`, wie der Tempo-Reset). Ein Klick schaltet **das nächste
+Zeichen der Koch-Reihe** frei — eines je Klick, kein freies Aussuchen. Ist
+der Satz voll, steht dort „All 36 characters are active."
+
+**Engine:** `unlockNext(progress)` in `engine/growth.ts` — dieselbe
+Einführung wie `maybeGrow`, nur ohne Prüfung der Regel; setzt wie jede
+Einführung `answersSinceGrowth = 0`, damit die automatische Regel nicht
+sofort ein zweites Zeichen nachlegt. Voller Satz → Fortschritt unverändert
+(`===`). +2 Tests in `growth.test.ts` (470 gesamt).
+
+**UI/App:** `unlockNextCharacter` (App.tsx) schreibt sofort
+(`saveProgressNow`, wie der Tempo-Reset) und zieht den Pool der laufenden
+Übung mit — nur im Training, nie in einer Speed round. `nextCandidate` wird
+in App gerechnet und als `nextCharacter` hereingereicht; `Settings.tsx`
+rechnet nichts (CLAUDE.md 4).
+
+**Nachweis (Playwright, gebauter Stand, 390 × 844):** Klick auf „Add P now"
+→ Zeile „7 of 36 active", nächster Knopf „Add T now",
+`localStorage.activeCharacters = KMRSUAP` (gespeichert). Zurück im Training
+erscheint **zuerst die Lernkarte „NEW SOUND · 1 OF 1 — P"** — der bestehende
+Einführungsweg für ein neues Zeichen greift unverändert; danach ist P im
+Pool. Screenshot: `docs/screenshots/settings-characters-390.png`,
+`settings-unlock-learn-card-390.png`.
+
+**Was Fable sehen muss:**
+
+1. **„Einzelne Buchstaben" ist als „das nächste, eines je Klick" gebaut**,
+   nicht als freie Auswahl aus 36. Die Koch-Reihe bleibt die eine Wahrheit
+   darüber, was als nächstes kommt — freies Aussuchen hätte
+   `nextCandidate`/`isReadyToGrow` eine zweite Ordnung untergeschoben.
+2. **Settings scrollt jetzt bei 390 × 844:** 911 px mit 6 Zeichen (67 px
+   über), 942 px im dichtesten Fall (36 Zeichen + Tempo-Reset, 98 px über).
+   Vorher passte der Screen (T1 hat dafür gekämpft). Ein Gehäuse-Screen darf
+   scrollen (Progress tut es mit 36 Zeilen längst), die Notiz ist schon auf
+   einen Satz gekürzt — wer das Scrollen nicht will, streicht die Notiz
+   (−~40 px) oder legt „Characters" zu „Effective speed" in einen Block.
+   Gemessen, nicht angenommen; nicht still entschieden.
+3. **Keine Bestätigung vor dem Freischalten.** Ein Klick fügt ein Zeichen
+   dauerhaft hinzu (der Satz nimmt nie ab). Bewusst leise gehalten wie der
+   Tempo-Reset; wer das für zu leicht hält: ein „Undo" gäbe es nicht ohne
+   Bruch der Regel „`activeCharacters` schrumpft nie".
+
+**Tests:** 470. `npm test`, `npm run build` (inkl. `verify:learn`),
+`npm run verify:amber` (37 Ansichten) grün. Berührt: `src/engine/growth.ts`,
+`src/engine/growth.test.ts`, `src/ui/Settings.tsx`, `src/ui/App.tsx`.
+
+**Live-Verifikation von hier aus nicht möglich:** `morse-lab.com` und
+`projekt-morse.pages.dev` sind aus dieser Umgebung nicht erreichbar (Egress,
+wie seit Runde B dokumentiert). Der Owner prüft `<meta name="build">` im
+`<head>` gegen `7b9f3b01270d`.
+
+---
+
 # Übergabe — Stand nach Runde P5 (zwei zeitliche Rennen im Trainings-Loop)
 
 **Stand:** P4 ist gemergt (`main` = `e6fb757`). **Runde P5 ist eine

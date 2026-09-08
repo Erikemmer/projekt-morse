@@ -66,6 +66,10 @@ export function Settings({
   onTheme,
   onPreview,
   onResetSpeed,
+  activeCharacterCount,
+  totalCharacterCount,
+  nextCharacter,
+  onUnlockNext,
   headingRef,
 }: {
   settings: DeviceSettings;
@@ -78,6 +82,12 @@ export function Settings({
   onTheme: (theme: Theme) => void;
   onPreview: () => void;
   onResetSpeed: () => void;
+  /** Wie viele Zeichen aktiv sind, von wie vielen -- und welches als naechstes kaeme (null: Satz voll). */
+  activeCharacterCount: number;
+  totalCharacterCount: number;
+  nextCharacter: string | null;
+  /** Schaltet das naechste Zeichen der Reihe frei (engine/growth.ts, unlockNext). */
+  onUnlockNext: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
   const volumePercent = Math.round(settings.volume * 100);
@@ -192,6 +202,34 @@ export function Settings({
           <button type="button" className="quiet-action" onClick={onResetSpeed}>
             {`Reset to ${STARTING_EFFECTIVE_WPM} wpm`}
           </button>
+        )}
+      </div>
+
+      {/*
+        Der Zeichensatz (Runde P5, Owner-Wunsch): der Stand, und darunter der
+        eine Weg nach vorn -- immer das *naechste* Zeichen der Koch-Reihe, kein
+        freies Aussuchen (engine/growth.ts, unlockNext). Derselbe leise Knopf
+        wie der Tempo-Reset: ein Eingriff in den Lernstand, kein Regler. Was
+        als naechstes kaeme, rechnet die Engine (nextCandidate), hier steht es
+        nur.
+      */}
+      <div className="setting">
+        <div className="setting-head">
+          <span>Characters</span>
+          <span className="setting-value">
+            {activeCharacterCount} of {totalCharacterCount} active
+          </span>
+        </div>
+        {/* Ein Satz, nicht zwei: der Screen ist beim Platz knapp (T1). */}
+        <p className="setting-note">
+          The set grows on its own — or add the next character early, one at a time.
+        </p>
+        {nextCharacter !== null ? (
+          <button type="button" className="quiet-action" onClick={onUnlockNext}>
+            {`Add ${nextCharacter} now`}
+          </button>
+        ) : (
+          <p className="setting-note">All {totalCharacterCount} characters are active.</p>
         )}
       </div>
     </section>
