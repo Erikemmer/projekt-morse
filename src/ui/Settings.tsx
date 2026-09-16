@@ -32,6 +32,8 @@
  * vorsieht.
  */
 
+import { useState } from 'react';
+
 import {
   CHARACTER_WPM,
   STARTING_EFFECTIVE_WPM,
@@ -71,6 +73,7 @@ export function Settings({
   totalCharacterCount,
   nextCharacter,
   onUnlockNext,
+  onCopyInputLog,
   headingRef,
 }: {
   settings: DeviceSettings;
@@ -89,8 +92,18 @@ export function Settings({
   nextCharacter: string | null;
   /** Schaltet das naechste Zeichen der Reihe frei (engine/growth.ts, unlockNext). */
   onUnlockNext: () => void;
+  /** Gibt den Tastatur-Mitschnitt weiter (ui/keyLog.ts). Meldet, ob es geklappt hat. */
+  onCopyInputLog: () => Promise<boolean>;
   headingRef: (element: HTMLElement | null) => void;
 }) {
+  /*
+   * Nur Beschriftung, kein Zustand der App: ob der Mitschnitt gerade in der
+   * Zwischenablage liegt. Eine Rueckmeldung muss sein -- ein Knopf, der
+   * stumm bleibt, sieht aus wie einer, der nicht funktioniert, und ausgerechnet
+   * hier waere das die falsche Pointe.
+   */
+  const [logCopied, setLogCopied] = useState<'idle' | 'done' | 'failed'>('idle');
+
   const volumePercent = Math.round(settings.volume * 100);
   const raised = effectiveWpm > STARTING_EFFECTIVE_WPM;
 
@@ -247,6 +260,30 @@ export function Settings({
       */}
       <p className="settings-build">
         Build <span className="settings-build-id">{buildVersion()}</span>
+      </p>
+
+      {/*
+        Das Messgeraet zur offenen Tastatur-Meldung (ui/keyLog.ts). Es steht
+        hier, weil es hierhin gehoert: unter die Build-Kennung, zu den
+        Auskuenften ueber das Geraet, nicht zwischen die Regler.
+
+        Bewusst ohne Schalter und ohne Anzeige im Betrieb -- eine Liste von
+        Tastendruecken waehrend der Uebung waere genau die Art von
+        Mitlese-Hilfe, die CLAUDE.md 2.2 verbietet. Aufgezeichnet wird immer,
+        sichtbar wird es nur, wenn man es ausdruecklich holt.
+      */}
+      <p className="settings-build">
+        <button
+          type="button"
+          className="quiet-action settings-log-action"
+          onClick={() => {
+            void onCopyInputLog().then((ok) => setLogCopied(ok ? 'done' : 'failed'));
+          }}
+        >
+          {logCopied === 'done' && 'Input log copied'}
+          {logCopied === 'failed' && 'Could not copy — see the browser console'}
+          {logCopied === 'idle' && 'Copy input log'}
+        </button>
       </p>
     </section>
   );

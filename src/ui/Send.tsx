@@ -38,6 +38,7 @@ import { useEffect, useRef } from 'react';
 import type { SendAttempt, SendDeviationKind, SendSessionState } from '../engine/sendSession';
 import { sentToday } from '../engine/sendSession';
 import { Pattern, spellPattern } from './Pattern';
+import { isBrowserChord } from './keyChord';
 
 export function Send({
   state,
@@ -485,7 +486,7 @@ export function useSendKeyboard({
     if (!enabled && !advanceEnabled && !tapEnabled) return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isBrowserChord(event)) return;
 
       if (event.key === 'Enter') {
         if (!advanceEnabled) return;

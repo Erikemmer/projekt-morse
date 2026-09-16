@@ -16,6 +16,7 @@ import {
   type LearnState,
 } from '../engine/learn';
 import { Pattern } from './Pattern';
+import { isBrowserChord } from './keyChord';
 
 export function Learn({
   state,
@@ -151,7 +152,7 @@ export function useLearnKeyboard({
     if (!active) return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isBrowserChord(event)) return;
       // Auto-Repeat einer gehaltenen Taste ist kein zweiter Anschlag -- wie
       // im Trainings-, Wort- und Sende-Modus (Runde P5, Befund C). Ohne das
       // rauschte eine gehaltene Leertaste/Enter durch mehrere Echo-Runden.
@@ -466,7 +467,7 @@ export function ReviewPicker({
   // siehe Kopf: gesperrt ist hier nichts).
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isBrowserChord(event)) return;
       const key = event.key.toUpperCase();
       if (!characters.includes(key)) return;
       event.preventDefault();
