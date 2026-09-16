@@ -82,5 +82,6 @@ export function formatKeyLog(): string {
     }`;
   });
 
-  return [`Input log — last ${entries.length} keystrokes`, ...lines].join('\n');
+  const count = entries.length === 1 ? '1 keystroke' : `${entries.length} keystrokes`;
+  return [`Input log — last ${count}`, ...lines].join('\n');
 }
