@@ -220,3 +220,44 @@ function pickEchoPrompt(state: LearnState, random: () => number): string {
   const index = Math.min(weighted.length - 1, Math.floor(random() * weighted.length));
   return weighted[index];
 }
+
+/**
+ * Was ein Zeichen-Anschlag im Echo-Check bedeutet -- rein, ohne DOM.
+ *
+ * Der Echo-Check ist derselbe Loop wie das Training (hoeren, tippen,
+ * Rueckmeldung), hat aber keine der drei Regeln bekommen, die der
+ * Trainings-Loop inzwischen traegt. Ergebnis: Anschlaege, die ins Leere gehen
+ * -- genau das, was der Nutzer als "wird nicht erkannt" meldet. Diese
+ * Funktion ist die eine Wahrheit darueber, welche davon zaehlen:
+ *
+ * - `'play'` in `'echo-ready'` -- wie Ruling #105 im Training: ein Anschlag
+ *   aus dem Zeichensatz treibt den Loop, statt ihn auf die Maus zu vertagen.
+ *   Er ist ausdruecklich *keine* Antwort: was man noch nicht gehoert hat,
+ *   kann man nicht beantworten (CLAUDE.md 2.6).
+ * - `'buffer'` in `'echo-listening'` -- wie Ruling #103a im Training: wer
+ *   waehrend des Tons antwortet, tippte hier bisher ins Leere. Der Anschlag
+ *   wird gemerkt und gilt, sobald der Ton durch ist. Der Echo-Check misst
+ *   ohnehin keine Reaktionszeit, es geht also keine Zahl verloren.
+ * - `'answer'` in `'echo-answering'` -- wie bisher.
+ * - `null` sonst, und fuer jede Taste ausserhalb der angebotenen Optionen:
+ *   der Echo-Check bleibt bei seinem engen Antwortfeld (Ruling #108), anders
+ *   als die Speed round (Runde P5c). Die Optionen stehen hier sichtbar auf
+ *   dem Schirm, es gibt also keine unsichtbare Erwartung, die enttaeuscht.
+ */
+export function echoKeyAction(
+  state: LearnState,
+  key: string,
+): 'play' | 'buffer' | 'answer' | null {
+  if (key.length !== 1 || !answerPool(state).includes(key)) return null;
+
+  switch (state.phase) {
+    case 'echo-ready':
+      return 'play';
+    case 'echo-listening':
+      return 'buffer';
+    case 'echo-answering':
+      return 'answer';
+    default:
+      return null;
+  }
+}

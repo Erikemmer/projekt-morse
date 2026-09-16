@@ -19,6 +19,7 @@ import {
   cardHeard,
   createLearnRun,
   currentCharacter,
+  echoKeyAction,
   echoPromptFinished,
   introducesCharacters,
   nextCard,
@@ -293,5 +294,61 @@ describe('Wer steht zur Einfuehrung an', () => {
       introducedCharacters: ['K', 'K', 'M', 42, 'RR'],
     });
     expect(parsed.introducedCharacters).toEqual(['K', 'M']);
+  });
+});
+
+/**
+ * Der Echo-Check hatte drei Phasen, in denen ein Zeichen-Anschlag ins Leere
+ * ging -- dieselben, die der Trainings-Loop laengst abdeckt. Das ist der Kern
+ * der Owner-Meldung "Tastenanschlaege werden teilweise nicht erkannt".
+ */
+describe('echoKeyAction', () => {
+  /** Ein Lauf, der im Echo-Check steht. */
+  function echoRun(): LearnState {
+    return beginEcho(cardHeard(createLearnRun({ queue: ['M'], known: ['K', 'R', 'S'] })));
+  }
+
+  it('startet die Wiedergabe, wenn in "echo-ready" ein Zeichen getippt wird', () => {
+    const state = echoRun();
+    expect(state.phase).toBe('echo-ready');
+    expect(echoKeyAction(state, answerPool(state)[0])).toBe('play');
+  });
+
+  it('merkt sich einen Anschlag waehrend des Tons, statt ihn zu verschlucken', () => {
+    const state = beginEchoPlayback(echoRun());
+    expect(state.phase).toBe('echo-listening');
+    expect(echoKeyAction(state, answerPool(state)[0])).toBe('buffer');
+  });
+
+  it('antwortet, sobald der Ton durch ist', () => {
+    const state = echoPromptFinished(beginEchoPlayback(echoRun()));
+    expect(state.phase).toBe('echo-answering');
+    expect(echoKeyAction(state, answerPool(state)[0])).toBe('answer');
+  });
+
+  it('laesst das enge Antwortfeld des Echo-Checks unangetastet (Ruling #108)', () => {
+    const state = echoPromptFinished(beginEchoPlayback(echoRun()));
+    const outside = 'QWERTYUIOPZXCVBN0123456789'
+      .split('')
+      .find((char) => !answerPool(state).includes(char));
+    expect(outside).toBeDefined();
+    expect(echoKeyAction(state, outside as string)).toBeNull();
+  });
+
+  it('tut in der Aufloesung und auf der Karte nichts', () => {
+    const answering = echoPromptFinished(beginEchoPlayback(echoRun()));
+    const feedback = answerEcho(answering, answering.echoPrompt);
+    expect(feedback.phase).toBe('echo-feedback');
+    expect(echoKeyAction(feedback, answering.echoPrompt)).toBeNull();
+
+    const card = createLearnRun({ queue: ['M'], known: ['K', 'R', 'S'] });
+    expect(card.phase).toBe('card');
+    expect(echoKeyAction(card, 'M')).toBeNull();
+  });
+
+  it('ignoriert Tasten, die kein einzelnes Zeichen sind', () => {
+    const state = echoPromptFinished(beginEchoPlayback(echoRun()));
+    expect(echoKeyAction(state, 'ENTER')).toBeNull();
+    expect(echoKeyAction(state, '')).toBeNull();
   });
 });

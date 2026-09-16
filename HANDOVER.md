@@ -1,3 +1,77 @@
+# Übergabe — Stand nach Runde P6 (der Echo-Check des Lernmodus verschluckte Anschläge)
+
+**Stand:** P5c ist gemergt (`main` = `421bbd6`). **P6 antwortet auf die
+Owner-Meldung „Tastenanschläge werden teilweise nicht erkannt — besteht
+weiterhin"** nach P2–P5c. Build-Hash dieses Stands: **`d0a98ef01ca7`**.
+
+**Der Ansatz:** P2–P5c haben den *Trainings*-Loop repariert, Anschlag für
+Anschlag. Der Lernmodus hat seit Ruling #108 eine **eigene** Tastatur
+(`useLearnKeyboard`, `src/ui/Learn.tsx`) — und sein Echo-Check ist derselbe
+Loop (hören → tippen → Rückmeldung), hat aber **keine** der drei Regeln
+bekommen, die der Trainings-Loop inzwischen trägt. Genau dort gingen
+Anschläge weiter ins Leere.
+
+**Befund, gemessen (Playwright, gebauter Stand, Erstlauf, Karte K, Echo-Check):**
+
+| | Fall | Vorher | Nachher |
+|---|---|---|---|
+| **A** | Zeichen in `'echo-ready'` getippt | **Nichts.** „Ready when you are." bleibt stehen | „Listening…" — der Ton läuft |
+| **B** | Zeichen **während des Echo-Tons** getippt (`'echo-listening'`) | **Stumm verschluckt.** Nach dem Ton steht die Frage weiter offen, nichts verbucht | Gepuffert und eingelöst: „CHECK · 2 OF 3 … ✓ Correct." |
+| **C** | Gehaltene Taste (Auto-Repeat) | Kein `event.repeat`-Schutz — Enter/Leertaste rauschten durch mehrere Echo-Runden | Nur der erste Anschlag zählt |
+
+Der Lernmodus ist kein Randweg: er steht bei **jedem** freigeschalteten
+Zeichen vorne (drei Abrufe je Karte) und trägt „Learn the sounds" über alle
+36 Zeichen. Wer dort tippt statt zu klicken, tippte bis hierher ins Leere —
+das ist „wird teilweise nicht erkannt".
+
+**Behoben:**
+
+- **`src/engine/learn.ts` — `echoKeyAction(state, key)`**, rein und DOM-frei
+  (CLAUDE.md 4): die eine Wahrheit darüber, was ein Zeichen-Anschlag im
+  Echo-Check bedeutet — `'play'` in `'echo-ready'` (wie Ruling #105 im
+  Training), `'buffer'` in `'echo-listening'` (wie Ruling #103a), `'answer'`
+  in `'echo-answering'` (wie bisher), sonst `null`.
+- **`src/ui/Learn.tsx`** — der Handler fragt die Engine und führt aus;
+  `bufferedEchoRef` löst den gepufferten Anschlag ein, sobald der Ton durch
+  ist (verworfen, wenn der Abruf inzwischen ein anderer ist). Dazu
+  `if (event.repeat) return;` am Anfang, wie in Wort-, Sende- und
+  Trainings-Modus.
+
+**Was Fable sehen muss:**
+
+1. **Das enge Antwortfeld des Echo-Checks bleibt unangetastet** (Ruling #108):
+   nur die *angebotenen* Optionen antworten, nicht der ganze Zeichensatz —
+   anders als in der Speed round (P5c). Die Optionen stehen hier sichtbar auf
+   dem Schirm; es gibt keine unsichtbare Erwartung, die enttäuscht würde.
+   Ein Zeichen außerhalb der Optionen tut also weiter nichts — bewusst.
+2. **Neu ist eine Semantik-Änderung in `'echo-ready'`:** ein Zeichen startet
+   dort jetzt die Wiedergabe, statt nichts zu tun. Das ist der Wortlaut von
+   Ruling #105 („ein Anschlag aus dem geübten Zeichensatz treibt den Ablauf"),
+   auf den zweiten Loop übertragen. Er ist ausdrücklich **keine** Antwort:
+   was man noch nicht gehört hat, kann man nicht beantworten (CLAUDE.md 2.6).
+3. **In `'echo-feedback'` tut ein Zeichen weiter nichts**, anders als im
+   Training. Dort schaltet ein Buchstabe weiter — und hat genau deshalb den
+   Nachdruck-Bug A aus P5 erzeugt, der eine 500-ms-Sonderregel brauchte. Hier
+   trägt der „Next"-Knopf den Fokus, Enter und Leertaste genügen. Nicht
+   übertragen, damit nicht dieselbe Falle ein zweites Mal entsteht.
+4. **Der Echo-Check misst keine Reaktionszeit** — der gepufferte Anschlag
+   verliert deshalb, anders als im Training (#103a), gar keine Zahl.
+   `recordAttempt` fasst der Lernmodus ohnehin nicht an.
+
+**Tests:** 476 (+6 in `src/engine/learn.test.ts`, alle auf `echoKeyAction`).
+`npm test`, `npm run build` (inkl. `verify:colors`, `verify:learn`) und
+`npm run verify:amber` (37 Ansichten) grün. Reine Verhaltensänderung, kein
+Pixel bewegt, Bundle-Delta ~0 (+~0,4 kB Quelltext vor gzip).
+
+Berührt: `src/engine/learn.ts`, `src/engine/learn.test.ts`, `src/ui/Learn.tsx`,
+diese Übergabe.
+
+**Deploy-Gegenprobe für den Owner:** `<meta name="build">` im `<head>` muss
+**`d0a98ef01ca7`** zeigen. Steht dort etwas anderes, läuft ein alter Stand —
+einmal neu laden.
+
+---
+
 # Übergabe — Stand nach Runde P5c („E und S reagieren nicht" — die Speed round)
 
 **Stand:** P5b ist gemergt (`main` = `f5ad272`). **P5c antwortet auf die
@@ -453,7 +527,9 @@ einzeln in der Tabelle.
 | | Enter | weiter (Echo-Check bzw. nächste Karte, je nach `requireEcho`) — **neu** |
 | | andere Tasten | *bewusst nichts* |
 | **Echo-Check, `echo-ready`/`echo-listening`** | Leertaste/Enter | *bewusst kein eigener Listener — der Play-Kreis trägt in diesen Phasen ohnehin den Fokus (`Learn.tsx`), native Aktivierung spielt bereits ab* |
+| | ein Zeichen aus `answerPool` | **seit P6:** in `echo-ready` startet es die Wiedergabe (wie Ruling #105 im Training), in `echo-listening` wird es gepuffert und gilt, sobald der Ton durch ist (wie Ruling #103a) — vorher in beiden Phasen stumm verschluckt |
 | **Echo-Check, Antwort offen** (`echo-answering`) | ein Zeichen aus `answerPool` | beantwortet mit diesem Zeichen — **neu** |
+| | *jede Phase* | Auto-Repeat einer gehaltenen Taste zählt seit P6 nicht mehr als zweiter Anschlag |
 | | ein Zeichen außerhalb der Optionen | *bewusst nichts — nur was auf dem Schirm als Option steht* |
 | **Echo-Check, Auflösung** (`echo-feedback`) | Enter oder Leertaste | weiter (nächster Abruf oder nächste Karte) — **neu** |
 | | andere Tasten | *bewusst nichts* |
