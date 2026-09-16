@@ -1501,6 +1501,32 @@ a.menu-item {
   gap: 8px;
 }
 
+/*
+ * Die Build-Kennung als Fussnote des Settings-Screens (Owner-Wunsch): der
+ * Stand, der gerade laeuft, ohne Umweg ueber die DevTools. Sie steht als
+ * Letztes, durch eine Haarlinie abgesetzt, und traegt bewusst kein Amber --
+ * sie ist eine Auskunft, keine Einladung (1.1 Sect. 4).
+ *
+ * Erkennbar wird sie nicht durch Farbe, sondern durch Form: die Kennung
+ * selbst steht in Tinte und gesperrt, das Wort davor bleibt gray. `all` statt
+ * `text` fuer die Auswahl ist der eigentliche Dienst -- ein Klick markiert die
+ * ganze Kennung, gedacht zum Vergleichen mit dem erwarteten Stand.
+ */
+.settings-build {
+  margin: var(--space-2) 0 0;
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--edge-soft);
+  color: var(--gray);
+  font-size: 0.8125rem;
+}
+
+.settings-build-id {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  user-select: all;
+}
+
 .setting {
   display: flex;
   flex-direction: column;
