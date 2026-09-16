@@ -87,7 +87,25 @@ Berührt: `src/ui/keyChord.ts` (neu), `src/ui/keyChord.test.ts` (neu),
 `src/ui/Words.tsx`, `src/ui/Send.tsx`, `src/ui/Settings.tsx`,
 `src/styles.css`, diese Übergabe.
 
-**Für den Owner:** Build **`6806a3f35609`**. Falls es *doch* noch auftritt —
+**Gegengeprüft über alle vier Wege (Playwright + CDP, gebauter Stand, ein
+`keydown` mit gesetztem Alt-Flag — der Zustand, den Alt-Tab hinterlässt):**
+
+| Weg | Anschlag | Ergebnis |
+|---|---|---|
+| Training, `answering` | „K" | **verbucht** (vorher: nichts) |
+| Lernmodus, Karte | Enter | **schaltet weiter** (vorher: nichts) |
+| Wort-Modus, Eingabe | „K" | **angenommen** (vorher: nichts) |
+| Settings, „Copy input log" | — | Protokoll in der Zwischenablage, Zeile trägt `[ALT]` |
+
+Die vierte Zeile ist zugleich der Nachweis, dass das Messgerät funktioniert:
+`631ms  settings   K (KeyK)  [ALT]`.
+
+**Was dieser Nachweis nicht ist:** echtes Alt-Tab. Dafür bräuchte es einen
+Fenstermanager und einen zweiten Fokus-Empfänger; geprüft ist der *Zustand*,
+den Alt-Tab hinterlässt, nicht der Fensterwechsel selbst. Die letzte
+Bestätigung gehört dem Owner.
+
+**Für den Owner:** Build **`995d7d7674e9`**. Falls es *doch* noch auftritt —
 Settings → ganz unten → „Copy input log", direkt nach einem Anschlag, der
 verschluckt wurde. Die Zeile dieses Anschlags sagt dann, was der Browser
 geliefert hat.
