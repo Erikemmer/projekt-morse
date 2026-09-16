@@ -1,3 +1,99 @@
+# Übergabe — Stand nach Runde P8 (die Ursache: eine haengende Modifikator-Taste)
+
+**Stand:** P6 ist gemergt (`main` = `9ab9986`), P7 (Build-Kennung in den
+Settings) liegt unverändert im selben Branch davor. **P8 ist die Antwort auf
+„geht immer noch nicht" — und diesmal auf die Ursache, nicht auf ein
+Symptom.** Build-Hash dieses Stands: **`6806a3f35609`**.
+
+**Die entscheidende neue Auskunft kam vom Owner**, nicht aus dem Code: der
+Ausfall tritt in **allen** Modi auf — Training, Lernkarte/Echo-Check *und*
+Wort-/Sende-Training —, bei laufendem Build `d0a98ef01ca7` (P6 war also
+live). Damit war jede modusweise Erklärung erledigt: P2 bis P6 haben sechs
+echte Fehler gefunden und behoben, aber alle im falschen Stockwerk.
+
+**Was alle sechs Handler teilen — und als Einziges:**
+
+```
+if (event.metaKey || event.ctrlKey || event.altKey) return;
+```
+
+**Der Mechanismus.** Wer per **Alt-Tab** aus dem Browser heraus- und wieder
+hineinwechselt, lässt Alt los, *während die Seite den Fokus nicht hat*. Das
+`keyup` wird ihr nie zugestellt. Der Browser führt Alt daraufhin weiter als
+gedrückt: **jedes folgende `keydown` trägt `altKey: true`**, bis Alt einmal
+sauber im Fenster gedrückt und losgelassen wird. Dasselbe gilt für Ctrl nach
+Ctrl-Tab und Meta nach Cmd-Tab. Für den Nutzer sieht das aus wie eine
+Tastatur, die „teilweise nicht reagiert" — unreproduzierbar, in jedem Modus,
+und jede modusweise Reparatur überlebend.
+
+**Warum es sechs Runden durchgehalten hat:** kein Playwright-Lauf dieser App
+wechselt je das Fenster. Die Messung, die es gebraucht hätte, gab es nicht.
+
+**Gemessen, jetzt doch (Playwright + CDP, gebauter Stand, Training,
+`answering`, Anschlag „K" mit gesetztem Alt-Modifier):**
+
+| | Vorher | Nachher |
+|---|---|---|
+| Anschlag mit hängendem Alt | **Nichts.** „Which character did you hear?" bleibt stehen, nichts verbucht | Verbucht: „✗ Not quite — that was A." |
+
+**Behoben:**
+
+- **`src/ui/keyChord.ts` (neu) — `isBrowserChord(event)`**, rein und ohne DOM
+  (nimmt nur die Flaggen): `ctrlKey || metaKey`. **`altKey` zählt nicht mehr
+  mit.** Ctrl und Meta schützen weiter, was sie schützen sollen — Strg+R,
+  Cmd+S, die Kürzel von Browser und System, die eine Seite nicht kapern darf.
+  Alt+Buchstabe ist kein solches Kürzel, und AltGr ist auf Windows ohnehin
+  Ctrl+Alt und bleibt damit gefiltert. Der Schutz bleibt, wo er einen Zweck
+  hat, und fällt weg, wo er nur Anschläge gefressen hat.
+- **Alle fünf Fundstellen** (App, Learn ×2, Words, Send) rufen jetzt dieselbe
+  Funktion. Sechs Kopien einer Regel waren keine Regel (CLAUDE.md 4 — der
+  zweite Bedarf verallgemeinert; hier war es der sechste).
+
+**Und ein Messgerät, damit die nächste Runde nicht wieder rät:**
+
+- **`src/ui/keyLog.ts` (neu)** — ein Ringpuffer der letzten 60 `keydown`
+  (Taste, `code`, `repeat`, alle vier Modifikator-Flaggen, der Bildschirm).
+  Ein eigener Listener in der Capture-Phase, **unabhängig von jedem Modus**:
+  er entscheidet nichts, hält nichts auf, ruft kein `preventDefault`.
+  Absichtlich getrennt von den Handlern — ein Protokoll in denselben Handlern
+  könnte die offene Frage nicht beantworten, es teilte ihre Annahme.
+- **Settings, unter der Build-Kennung:** ein leiser Knopf **„Copy input log"**.
+  Nichts wird gesendet, nichts gespeichert, nichts überlebt einen Reload;
+  der Puffer liegt im Speicher und wird nach 60 Einträgen überschrieben
+  (CLAUDE.md 7). Aufgezeichnet wird immer, **sichtbar** wird es nur, wenn man
+  es ausdrücklich holt — eine Liste von Tastendrücken während der Übung wäre
+  genau die Mitlese-Hilfe, die CLAUDE.md 2.2 verbietet.
+
+**Was Fable sehen muss:**
+
+1. **Alt+Buchstabe erreicht die App jetzt.** Wer Alt hält und tippt, gibt eine
+   Antwort. Das ist der Preis dafür, dass ein *hängendes* Alt keine mehr
+   frisst — und der richtige Preis: die App hat keine Alt-Kürzel, das
+   Betriebssystem greift seine ohnehin vor dem Browser ab.
+2. **Das Messgerät ist kein Feature.** Es darf jederzeit wieder verschwinden;
+   es steht im Repo, solange die Tastatur-Frage offen ist. Wenn der Owner
+   bestätigt, dass es sitzt, ist der Ausbau eine eigene, kleine Aufgabe.
+3. **P2 bis P6 bleiben richtig.** Jede dieser Runden hat einen echten,
+   nachgemessenen Fehler behoben (verschluckte Anschläge während des Tons,
+   Auto-Repeat, der stumme Fall der Speed round, der Echo-Check). Sie waren
+   nur nicht *der* Fehler. Nichts davon wird zurückgenommen.
+
+**Tests:** 481 (+5 in `src/ui/keyChord.test.ts`, darunter der Alt-Tab-Fall
+selbst). `npm test`, `npm run build` (inkl. `verify:colors`, `verify:learn`)
+und `npm run verify:amber` (37 Ansichten) grün.
+
+Berührt: `src/ui/keyChord.ts` (neu), `src/ui/keyChord.test.ts` (neu),
+`src/ui/keyLog.ts` (neu), `src/ui/App.tsx`, `src/ui/Learn.tsx`,
+`src/ui/Words.tsx`, `src/ui/Send.tsx`, `src/ui/Settings.tsx`,
+`src/styles.css`, diese Übergabe.
+
+**Für den Owner:** Build **`6806a3f35609`**. Falls es *doch* noch auftritt —
+Settings → ganz unten → „Copy input log", direkt nach einem Anschlag, der
+verschluckt wurde. Die Zeile dieses Anschlags sagt dann, was der Browser
+geliefert hat.
+
+---
+
 # Übergabe — Stand nach Runde P7 (die Build-Kennung steht in den Settings)
 
 **Stand:** P6 ist gemergt (`main` = `9ab9986`). **P7 ist ein Owner-Wunsch ohne

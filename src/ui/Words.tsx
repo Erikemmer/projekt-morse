@@ -52,6 +52,7 @@ import {
   type WordSessionState,
 } from '../engine/wordSession';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
+import { isBrowserChord } from './keyChord';
 
 export function Words({
   state,
@@ -478,7 +479,7 @@ export function useWordKeyboard({
     if (!active) return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (isBrowserChord(event)) return;
       const current = handlers.current;
       const isSpace = event.key === ' ' || event.key === 'Spacebar';
 
