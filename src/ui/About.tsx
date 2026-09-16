@@ -11,11 +11,10 @@
  * Der Amber-Knopf des Tasters ist das eine Amber dieser View (1.1 §4).
  */
 
+import { buildVersion } from './build';
+
 export function About({ headingRef }: { headingRef: (element: HTMLElement | null) => void }) {
-  // Die Build-Kennung schreibt der Produktionsbuild in index.html
-  // (vite.config.ts) -- dieselbe deterministische Asset-Version, die auch den
-  // Service-Worker-Cache benennt. Im Dev-Server steht hier ehrlich "dev".
-  const build = document.querySelector('meta[name="build"]')?.getAttribute('content') ?? 'dev';
+  const build = buildVersion();
 
   return (
     <section className="screen" aria-labelledby="about-heading">

@@ -1,3 +1,69 @@
+# Übergabe — Stand nach Runde P7 (die Build-Kennung steht in den Settings)
+
+**Stand:** P6 ist gemergt (`main` = `9ab9986`). **P7 ist ein Owner-Wunsch ohne
+Notion-Ruling** („ganz unten in den Settings leicht erkennbar die aktuelle
+Version, um den neuen Stand schnell zu verifizieren"). Build-Hash dieses
+Stands: **`7688f8fbb491`**.
+
+**Was es ist:** Ganz unten im Settings-Screen, als Letztes und durch eine
+Haarlinie abgesetzt, eine Fussnote **„Build 7688f8fbb491"**. Das Wort „Build"
+steht in `gray`, die Kennung selbst in `ink` und leicht gesperrt — erkennbar
+wird sie über Form und Gewicht, nicht über Farbe (CLAUDE.md 6). Die Kennung
+trägt `user-select: all`: **ein Klick markiert sie vollständig**, gedacht zum
+Vergleichen, nicht zum Abtippen. Kein Knopf, kein Amber, keine eigene
+Überschrift.
+
+**Woher der Wert kommt:** unverändert aus `<meta name="build">`, das der
+Produktionsbuild schreibt (`vite.config.ts`) — dieselbe deterministische
+Asset-Version, die auch den Service-Worker-Cache benennt. **Kein zweiter
+Mechanismus**, damit Build-Kennung und Cache-Name per Konstruktion dieselbe
+Zahl bleiben. Im Dev-Server steht dort ehrlich `dev` (CLAUDE.md 2.6).
+
+**Neu ist ein winziges Modul `src/ui/build.ts` (`buildVersion()`)** — der
+Einzeiler stand bis hierher in `About.tsx`. Das ist der **zweite** Bedarf,
+nicht der erste (CLAUDE.md 4); `About` liest ihn jetzt von dort, der Text des
+About-Screens ist unverändert.
+
+**Gemessen (Playwright, gebauter Stand, 20 aktive Zeichen):**
+
+| Viewport | Dokumenthöhe vorher | nachher | Viewport-Höhe |
+|---|---|---|---|
+| 390 × 844 | 911 px | **960 px** (+49) | 844 |
+| 1440 × 900 | 900 px | **900 px** (±0) | 900 |
+
+Am Telefon scrollte der Screen schon vorher (seit P5b dokumentiert, 911 px);
+die Zeile macht daraus 960 px. **Kein neues Verhalten, nur 49 px mehr** — und
+sie steht bewusst ganz unten, also genau dort, wo man beim Scrollen ohnehin
+ankommt. Am Laptop ändert sich nichts. Screenshot:
+`docs/screenshots/settings-build-390.png`.
+
+**Was Fable sehen muss:**
+
+1. **Die Kennung ist ein Hash, kein Versionsname.** Sie sagt „dieser Build",
+   nicht „Version 1.2" — sie ist zum *Vergleichen* da. Ein sprechender
+   Versionsname wäre eine eigene Entscheidung (und ein zweiter Mechanismus).
+2. **Sie steht jetzt an zwei Stellen** (About und Settings). Das ist Absicht:
+   About ist die Visitenkarte, Settings der Ort, an dem man nach einem Deploy
+   nachsieht. Derselbe Wert aus derselben Quelle, keine zweite Wahrheit.
+3. **Der Screen scrollt am Telefon 116 px** (960 gegen 844). Wer das nicht
+   will, streicht die Notiz unter „Characters" (−~40 px) — die Alternative
+   wäre gewesen, die Kennung kleiner oder in `gray` zu setzen, und dann wäre
+   sie nicht mehr „leicht erkennbar", also nicht mehr das, was bestellt war.
+
+**Tests:** 476, unverändert (reine UI-/CSS-Änderung, nichts in der Engine).
+`npm test`, `npm run build` (inkl. `verify:colors`, `verify:learn`),
+`npm run verify:amber` (37 Ansichten) und `npm run verify:contrast`
+(24 Werte, `gray/paper` in allen sechs Themes zwischen 5,14:1 und 7,57:1)
+grün. Keine neue Farbe, kein Farbliteral, kein neues Token.
+
+Berührt: `src/ui/build.ts` (neu), `src/ui/Settings.tsx`, `src/ui/About.tsx`,
+`src/styles.css`, `docs/screenshots/settings-build-390.png`, diese Übergabe.
+
+**Deploy-Gegenprobe:** ab jetzt in den Settings selbst — dort muss
+**`7688f8fbb491`** stehen.
+
+---
+
 # Übergabe — Stand nach Runde P6 (der Echo-Check des Lernmodus verschluckte Anschläge)
 
 **Stand:** P5c ist gemergt (`main` = `421bbd6`). **P6 antwortet auf die

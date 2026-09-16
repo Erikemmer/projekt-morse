@@ -41,6 +41,7 @@ import {
   VOLUME_STEP,
 } from '../engine/settings';
 import type { DeviceSettings, Theme } from '../engine/deviceSettings';
+import { buildVersion } from './build';
 
 /** Anzeigenamen -- reine Beschriftung, keine Engine-Entscheidung. */
 const THEME_LABELS: Record<Theme, string> = {
@@ -232,6 +233,21 @@ export function Settings({
           <p className="setting-note">All {totalCharacterCount} characters are active.</p>
         )}
       </div>
+
+      {/*
+        Ganz unten, als Letztes: der Stand, der gerade laeuft (Owner-Wunsch).
+        Bisher stand die Kennung nur im About-Screen und im <head> -- wer nach
+        einem Deploy pruefen wollte, ob der neue Stand wirklich da ist, musste
+        die DevTools oeffnen. Hier ist sie da, wo man ohnehin nachsieht.
+
+        Kein Knopf, kein Amber, keine eigene Ueberschrift: eine Fussnote, die
+        die Ruhe des Screens nicht anfasst (1.1 Sect. 7). `user-select: all`
+        (styles.css) macht die Kennung mit einem Klick vollstaendig markierbar
+        -- gedacht ist sie zum Vergleichen, nicht zum Abtippen.
+      */}
+      <p className="settings-build">
+        Build <span className="settings-build-id">{buildVersion()}</span>
+      </p>
     </section>
   );
 }
