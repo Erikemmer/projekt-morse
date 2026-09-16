@@ -12,6 +12,7 @@ import {
   ECHO_ROUNDS,
   answerPool,
   currentCharacter,
+  echoKeyAction,
   type LearnState,
 } from '../engine/learn';
 import { Pattern } from './Pattern';
@@ -127,14 +128,52 @@ export function useLearnKeyboard({
   const handlers = useRef({ state, onPlay, onContinue, onAnswer, onAdvance });
   handlers.current = { state, onPlay, onContinue, onAnswer, onAdvance };
 
+  /*
+   * Ein Anschlag, der waehrend des Echo-Tons kam (`echoKeyAction` → 'buffer').
+   * Er gilt, sobald der Ton durch ist -- dieselbe Mechanik wie
+   * `bufferedKeyRef` im Trainings-Loop (Ruling #103a).
+   */
+  const bufferedEchoRef = useRef<string | null>(null);
+  const phase = state?.phase ?? null;
+
+  useEffect(() => {
+    const buffered = bufferedEchoRef.current;
+    if (buffered === null) return;
+    // Nur in 'echo-answering' einloesen. Jede andere Phase (abgebrochen,
+    // weitergeschaltet, Lernmodus verlassen) wirft ihn weg: eine Antwort auf
+    // einen Abruf, der nicht mehr laeuft, waere eine Zahl ueber nichts.
+    bufferedEchoRef.current = null;
+    if (phase !== 'echo-answering') return;
+    handlers.current.onAnswer(buffered);
+  }, [phase]);
+
   useEffect(() => {
     if (!active) return undefined;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return;
+      // Auto-Repeat einer gehaltenen Taste ist kein zweiter Anschlag -- wie
+      // im Trainings-, Wort- und Sende-Modus (Runde P5, Befund C). Ohne das
+      // rauschte eine gehaltene Leertaste/Enter durch mehrere Echo-Runden.
+      if (event.repeat) return;
       const current = handlers.current;
       if (current.state === null) return;
       const isSpace = event.key === ' ' || event.key === 'Spacebar';
+
+      /*
+       * Zeichen-Anschlaege zuerst: in 'echo-ready' und 'echo-listening' tat
+       * die Tastatur hier bisher nichts, obwohl der Bildschirm genau danach
+       * fragt. Was gilt, entscheidet die Engine (`echoKeyAction`), nicht
+       * diese Komponente (CLAUDE.md 4).
+       */
+      const action = echoKeyAction(current.state, event.key.toUpperCase());
+      if (action !== null) {
+        event.preventDefault();
+        if (action === 'play') current.onPlay();
+        else if (action === 'buffer') bufferedEchoRef.current = event.key.toUpperCase();
+        else current.onAnswer(event.key.toUpperCase());
+        return;
+      }
 
       if (current.state.phase === 'card') {
         // Noch nicht gehoert: Leertaste oder Enter spielen die Karte.
@@ -161,17 +200,6 @@ export function useLearnKeyboard({
         return;
       }
 
-      if (current.state.phase === 'echo-answering') {
-        // Nur ein Zeichen aus den angebotenen Optionen antwortet -- nicht der
-        // ganze Zeichensatz (die Optionen sind hier bewusst wenige).
-        const key = event.key.toUpperCase();
-        if (key.length !== 1) return;
-        if (!answerPool(current.state).includes(key)) return;
-        event.preventDefault();
-        current.onAnswer(key);
-        return;
-      }
-
       if (current.state.phase === 'echo-feedback') {
         if (event.key === 'Enter' || isSpace) {
           event.preventDefault();
@@ -180,12 +208,11 @@ export function useLearnKeyboard({
         return;
       }
 
-      // 'echo-ready'/'echo-listening': bewusst nichts Eigenes -- der Play-Kreis
-      // traegt in diesen beiden Phasen ohnehin schon den Fokus (Learn.tsx,
-      // `focusRef`), und die native Leertasten-/Enter-Aktivierung eines
-      // fokussierten Knopfs spielt genau das ab, was hier ohnehin passieren
-      // soll. Eine Ausweitung auf das *Starten* der Wiedergabe waere hier
-      // ohne Wirkung, weil es schon funktioniert.
+      // 'echo-ready'/'echo-listening' brauchen fuer Leertaste/Enter nichts
+      // Eigenes: der Play-Kreis traegt in beiden Phasen den Fokus (Learn.tsx,
+      // `focusRef`), und seine native Aktivierung spielt genau das ab, was
+      // hier passieren soll. Die *Zeichen*-Anschlaege dieser Phasen sind oben
+      // abgehandelt -- sie gingen bis hierher verloren.
     };
 
     window.addEventListener('keydown', onKeyDown);
