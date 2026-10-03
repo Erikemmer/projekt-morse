@@ -51,8 +51,8 @@ statt stillschweigend geschlossen.
 | Kürzel | Befund / Vorschlag | Stand | Hier |
 |---|---|---|---|
 | S1 | P8 (hängende Modifikator-Taste) ist **nicht auf dem Gerät des Owners bestätigt** | offen | **G1** |
-| S2 | Tastatur-Regressionen (P5, P5c, P6, P8) sind nur durch Wegwerf-Skripte belegt | offen | **A1** |
-| S3 | Wort- und Sende-Modus nie mit der Mess-Methode geprüft (Angebot aus P6) | offen | **A1** |
+| S2 | Tastatur-Regressionen (P5, P5c, P6, P8) sind nur durch Wegwerf-Skripte belegt | **erledigt (A1, 03.10.)** | **A1** |
+| S3 | Wort- und Sende-Modus nie mit der Mess-Methode geprüft (Angebot aus P6) | **erledigt (A1, 03.10.)** — kein neuer Befund | **A1** |
 | S4 | Messgerät `keyLog` ist ein Provisorium | offen | **A2**, D10 |
 | S5 | Settings-Höhe bei 390 × 844: 960 px — **seit P8 (Log-Knopf) ungemessen** | offen | **C1**, D4 |
 | S6 | Sechs Konzeptfragen aus P5–P8 (Echo-Start, Alt+Buchstabe, Hash, „answer noted", Speed round) | offen | **C2**, D5–D9 |
@@ -144,6 +144,40 @@ gehört, geht nach `FINDINGS.md`** (Nummer 11 ff.) — nicht mitreparieren.
 
 **Nicht-Ziel.** Echtes Alt-Tab. Es braucht einen Fenstermanager und ein zweites
 Fenster; geprüft wird der **Zustand**, den es hinterlässt.
+
+**Umgesetzt (03.10.2026).** `tools/keyboard/check.mjs`, `npm run verify:keyboard`,
+**26 Fälle in 43–48 s**, am Stand `995d7d7674e9` grün. Abweichungen vom Entwurf
+oben, mit Grund:
+
+- **K2 wurde geändert:** statt Enter auf der Lernkarte prüft er einen
+  Buchstaben in der Klang-Auswahl (`P` mit hängendem Alt öffnet dessen Karte).
+  Grund: Enter auf einem fokussierten Knopf aktiviert der Browser **von selbst**
+  — der ursprüngliche Fall wäre auch bei verschlucktem Anschlag grün geblieben
+  und hätte den Browser geprüft statt die App. Der Echo-Check ist als **K2b**
+  hinzugekommen (Zeichen mit hängendem Alt in `echo-answering`).
+- **K3b/K3c** (Sende-Modus, beide Eingabewege) sind aus K3 herausgelöst.
+- **K5** ist in drei Fälle geteilt (Training, Echo-Check, Wort-Modus).
+- **K12 entfällt** zugunsten der Inventur-Fälle **T1–T2** (Training), **W1–W4**
+  (Wort-Modus) und **S1–S4** (Sende-Modus) — je Phase der Tabelle in
+  `HANDOVER.md` ein Anschlag je Taste.
+- **K4** (Messgerät) ist enthalten und **entfällt mit A2**.
+
+**Rot-Test belegt (Akzeptanzkriterium 2):** je ein Fix gezielt ausgebaut, gebaut
+und nur die betroffenen Fälle ausgeführt — jedes Mal wurden genau die erwarteten
+Fälle rot, die Kontrollfälle blieben grün:
+
+| Ausgebaut | Rot |
+|---|---|
+| `altKey` zurück in `isBrowserChord` | K1, K2, K2b, K3, K3b, K3c |
+| `event.repeat`-Guard im Training | K7 |
+| `event.repeat`-Guard im Echo-Check | K11 |
+| 500-ms-Nachdruckschutz | K6 |
+| `echoKeyAction`: `echo-ready`/`echo-listening` wieder stumm | K9, K10, K11 |
+
+K8 (Speed round, P5c) und K5 (Schutz der Strg-/Cmd-Kürzel) haben **keinen
+eigenen Rot-Test**: K8 ist nur über die Bedingung `active.includes(key)` zu
+brechen, K5 nur durch Entfernen des Schutzes selbst — beides wäre ein
+größerer Eingriff in `App.tsx`, als eine Messung rechtfertigt.
 
 ### A2 — Messgerät ausbauen (erst nach G1 = „sitzt")
 
@@ -346,3 +380,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | Datum | Änderung |
 |---|---|
 | 03.10.2026 | Erste Fassung (nach P8). |
+| 03.10.2026 | A1 umgesetzt (`verify:keyboard`, 26 Fälle, Rot-Test belegt); S2 und S3 erledigt. |

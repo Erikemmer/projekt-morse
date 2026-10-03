@@ -1,3 +1,62 @@
+# Übergabe — Stand nach Runde P10 (A1: `npm run verify:keyboard`)
+
+**Stand:** `main` = `fa579d0`; der Plan (`docs/PLAN-FINDINGS.md`, P9) liegt auf
+dem Branch. **P10 setzt Arbeitspaket A1 um** — ein fester Browser-Check für die
+Tastatur. **Kein Code der App geändert**: Build `995d7d7674e9` unverändert,
+Bundle-Delta 0, Timing-Budget unberührt.
+
+**Was es ist:** `tools/keyboard/check.mjs`, aufgerufen mit
+`npm run verify:keyboard` (nach `npm run build`). **26 Fälle, 43–48 s.** Jeder
+Fall schickt echte `keydown`-Ereignisse über das DevTools-Protokoll — so lassen
+sich Modifikator-Flaggen und `repeat` setzen, was `page.keyboard` nicht kann —
+und liest danach, was der **Bildschirm** zeigt (Phase, Antwortzeile, Taste),
+nie, was der Code „sollte". Nicht Teil von `npm run build`: es braucht Chromium
+und `playwright-core` (`npm i --no-save`, wie bei `verify:amber`), keine neue
+Projektabhängigkeit. `KEYBOARD_ONLY=K1,K7` führt nur diese Fälle aus; ein
+Tippfehler im Filter scheitert laut statt still.
+
+**Abdeckung:** der Alt-Fall (P8) in Training, Klang-Auswahl, Echo-Check,
+Wort-Modus und beiden Sende-Wegen; der Schutz der Strg-/Cmd-Kürzel; P5
+(Nachdruck, Auto-Repeat), P5c (Speed round), P6 (alle drei Lücken des
+Echo-Checks); dazu je Phase der Inventur-Tabelle unten ein Anschlag je Taste
+für Training, Wort- und Sende-Modus (Auftrag S3).
+
+**Rot-Test belegt:** je ein Fix gezielt ausgebaut → genau die erwarteten Fälle
+werden rot (`altKey` zurück: K1–K3c; Repeat-Guard Training: K7; Repeat-Guard
+Echo-Check: K11; 500 ms: K6; `echoKeyAction` stumm: K9–K11), Kontrollfälle
+bleiben grün. K6 zusätzlich auf den **Grund** des Rots geprüft (nicht Timeout).
+Tabelle im Plan, A1.
+
+**Was Fable sehen muss:**
+
+1. **K2 ist anders als im Plan.** Enter auf einem fokussierten Knopf aktiviert
+   der Browser von selbst; ein Alt-Test mit Enter wäre auch bei verschlucktem
+   Anschlag grün geblieben. Er prüft jetzt einen Buchstaben in der Klang-Auswahl.
+2. **Der Inventur-Durchlauf (S3) hat keinen neuen Befund ergeben.** Der einzige
+   rote Fall der ersten Läufe (W4) war ein Fehler *im Fall*: eine leere Antwort
+   wird nicht abgeschickt — das ist dokumentierte Absicht
+   (`engine/wordSession.ts`, `submitWord`) und steht jetzt als Prüfung drin.
+3. **Zwei Fälle ohne eigenen Rot-Test:** K8 (Speed round) und K5 (Kürzel-Schutz)
+   — beide wären nur durch einen größeren Eingriff in `App.tsx` zu brechen.
+4. **Echtes Alt-Tab bleibt ungeprüft.** Der Check stellt den *Zustand* her, den
+   Alt-Tab hinterlässt (Alt-Flag ohne vorheriges Alt-`keydown`), nicht den
+   Fensterwechsel. G1 (Owner) steht unverändert aus.
+5. **Hilfscode dupliziert, nicht extrahiert** (Entscheidung D11): `startPreview`
+   und `openBrowser` stehen jetzt in zwei Skripten. Beim dritten Bedarf wird
+   verallgemeinert.
+6. **Ein Fehler im eigenen Skript gefunden und behoben:** der erste Entwurf
+   startete den Server über `npx`, `server.kill()` traf nur dieses; der Server
+   blieb nach jedem Lauf stehen und der nächste Lauf hängte sich unbemerkt an
+   ihn. Jetzt direkt über `node`, nach Volllauf hört kein Port mehr zu.
+
+**Tests:** 481, unverändert. `npm test`, `npm run build`, `verify:amber`
+(37 Ansichten) und `verify:keyboard` (26 Fälle) grün.
+
+Berührt: `tools/keyboard/check.mjs` (neu), `package.json` (ein Script),
+`docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
 # Übergabe — Stand nach Runde P9 (Plan zur Beseitigung aller Findings)
 
 **Stand:** P6, P7, P8 sind gemergt (`main` = `fa579d0`). **P9 ist reine Planung —
