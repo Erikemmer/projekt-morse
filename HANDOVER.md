@@ -1,3 +1,30 @@
+# Übergabe — Stand nach Runde P9 (Plan zur Beseitigung aller Findings)
+
+**Stand:** P6, P7, P8 sind gemergt (`main` = `fa579d0`). **P9 ist reine Planung —
+kein Code, kein Verhalten geändert.** Neu: [`docs/PLAN-FINDINGS.md`](./docs/PLAN-FINDINGS.md).
+
+Der Plan ordnet jedes offene Finding aus `FINDINGS.md` (**#4, #5, #6 Punkt 1,
+#8**) und jeden Vorschlag aus P5–P8 einem Arbeitspaket, einer Entscheidung (D1–D11)
+oder einer menschlichen Prüfung (H1–H9) zu, mit Reihenfolge, PR-Schnitt und
+einem Abschlusskriterium je Finding.
+
+**Was Fable sehen muss:**
+
+1. **Vier der Findings sind Entscheidungen, keine Fehler** (Schriftdateien,
+   Learn-Texte, Echo-Check-Liste) — der Plan baut dort nichts vor der Antwort,
+   bereitet aber alles bis zur Entscheidungsreife vor. D1–D3 sind die drei
+   Fragen, an denen vier Findings hängen.
+2. **G1 (Owner bestätigt P8 am eigenen Gerät) steht vor dem Ausbau des
+   Messgeräts.** P8 ist bewiesen für den *Zustand* „Alt-Flag gesetzt", nicht für
+   echtes Alt-Tab.
+3. **Zwei Messlücken sind offen benannt:** die Settings-Höhe seit P8 und bei
+   1280 × 720 ist nie gemessen.
+
+**Berührt:** `docs/PLAN-FINDINGS.md` (neu), diese Übergabe. Tests und Build
+unverändert (Stand P8: 481 Tests, Build `995d7d7674e9`).
+
+---
+
 # Übergabe — Stand nach Runde P8 (die Ursache: eine haengende Modifikator-Taste)
 
 **Stand:** P6 ist gemergt (`main` = `9ab9986`), P7 (Build-Kennung in den
