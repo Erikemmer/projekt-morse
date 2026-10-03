@@ -357,3 +357,39 @@ still mitgeändert.
 **Was es kosten würde:** vier Zeilenenden mit zwei Leerzeichen (oder `<br>`)
 in `impressum.de.md` und `imprint.en.md` — kein Code, nur die zwei
 Markdown-Dateien. Eine Zeile Bestätigung genügt.
+
+
+## 11. `≈` (U+2248) fehlt in allen vier Schriftschnitten — gefunden vom cmap-Check
+
+**Gefunden:** 03.10.2026, beim ersten Lauf von `npm run verify:fonts` (Runde P11).
+**Nicht neu** — vermutlich seit der Sende-Modus die Tempo-Schätzung zeigt.
+
+`src/ui/Send.tsx:390` zeigt nach einem getasteten Versuch `≈ 14 wpm`. U+2248 steht
+in keinem der vier woff2-Subsets in `src/fonts/` (cmap geprüft) und kommt deshalb
+aus dem Fallback-Stack. Es **steht** in den vollen Upstream-Schriften (IBM Plex
+Sans complete, Newsreader variable TTF) — es ist also nur ein Subsetting-Verlust,
+keine Lücke der Familie.
+
+**Warum es zählt:** dieselbe Klasse wie #4 und #8, kein Bruch, nur wechselnde
+Zeichnung. Die Zeile ist eine Näherungsangabe (CLAUDE.md 2.6), das Zeichen trägt
+die Aussage „ungefähr" — der Satz daneben („wpm") nicht allein.
+
+**Was es kosten würde:** gehört in dieselbe Entscheidung wie #4/#8 (D1): beim
+Neu-Subsetten ein Codepoint mehr. Bis dahin steht U+2248 mit Verweis auf diesen
+Eintrag in `KNOWN_GAPS` von `tools/fonts/check.mjs`; der Check wird rot, sobald
+ein Schnitt das Zeichen trägt, und fordert dann das Streichen des Eintrags.
+
+## 12. `verify:amber` lässt nach dem Lauf einen Vorschau-Server stehen
+
+**Gefunden:** 03.10.2026, beim Prüfen der Definition of Done (Runde P11).
+
+Nach `npm run verify:amber` hört weiter ein `vite preview` zu (nach dem Lauf
+gezählt: 1 Prozess; nach `verify:keyboard` 0). Es ist derselbe Fehler, den P10 im
+Tastatur-Skript behoben hat: der Server wird über `npx`/`.bin` gestartet und
+`server.kill()` (`tools/amber/check.mjs:733`, `:833`) trifft nur den Vermittler.
+Folge: ein späterer Lauf kann sich unbemerkt an den alten Server hängen, der
+noch den alten `dist/` ausliefert.
+
+**Nicht mitrepariert:** eine fremde Datei (CLAUDE.md 5), nicht Teil dieser
+Aufgabe. **Was es kosten würde:** der Start direkt über `node` wie in
+`tools/keyboard/check.mjs`, wenige Zeilen.

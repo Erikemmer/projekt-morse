@@ -38,11 +38,13 @@ statt stillschweigend geschlossen.
 | 1 | `--muted` auf `--paper`, 3,5:1 | behoben (31.08.) | — |
 | 2 | Google-Fonts-Abruf | behoben (31.08.) | — |
 | 3 | Weitere Maße neben den Guidelines | entschieden und behoben (01.09., #46) | — |
-| **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **offen** | **B1**, D1 |
+| **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **offen** (Vorarbeit erledigt 03.10., D1 entscheidungsreif) | **B1**, D1 |
 | **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **offen** | **B2**, D2 |
 | **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) offen** | **B3**, D3 |
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
-| **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **offen** | **B1**, D1 |
+| **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **offen** (Vorarbeit erledigt 03.10., D1 entscheidungsreif) | **B1**, D1 |
+| 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **offen**, gehört zu D1 | **B1**, D1 |
+| 12 | `verify:amber` lässt einen Vorschau-Server stehen | **offen** (nicht mitrepariert) | — |
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
 | 10 | Anschrift im Impressum läuft zusammen | behoben (03.09.) | — |
 
@@ -208,6 +210,103 @@ Haken und Kreuz).
 | **Neu, als Absicherung** | `tools/theme/` bekommt (oder ein eigenes `tools/fonts/`) einen **cmap-Check**: jeder Codepoint, der in `src/` und `content/learn/` vorkommt, muss in mindestens einem Schnitt der Familie stehen — sonst rot. Ohne ihn taucht das nächste fehlende Zeichen erst nach dem Deploy auf. Läuft in `npm run build` neben `verify:colors`. Eigener PR-Commit, **nicht** Teil der Schrift-Entscheidung. |
 | **Akzeptanz** | Je Codepoint ein Beleg, dass er aus der Markenfamilie kommt (cmap) bzw. Screenshot der neuen Zeichnung; `verify:learn` und `verify:amber` grün; Bundle-Delta genannt (woff2-Größe); H8. |
 
+#### Vorarbeit — Ergebnis (03.10.2026, Runde P11)
+
+Nichts entschieden, keine Schriftdatei und kein Learn-Text verändert
+(`git diff` auf `src/fonts/` und `content/learn/` leer).
+
+**a) Fundstellen** (nur gezeichneter Text; `grep` über `src/`, `content/learn/`,
+`tools/learn/`, `public/` — in `public/` keine):
+
+| Codepoint | Gezeichnet in | Familie dort |
+|---|---|---|
+| `→` U+2192 | 14 Learn-Seiten (`content/learn/*.md`, CTA „Start hearing it → …“ / „Fang an zu hören → …“, je eine Zeile: 24–65); Fußzeile `src/ui/App.tsx:1705` („10 → 11 wpm“) | CTA: **Newsreader** (`.cta a`, `--font-serif`); Fußzeile: **IBM Plex Sans** |
+| `✓` U+2713 | `App.tsx:1745`, `:1834`; `Learn.tsx:360`, `:392`; `Send.tsx:360`; `Words.tsx:114`, `:322`; `Settings.tsx:360` | **IBM Plex Sans** (gemessen für `.verdict-mark`, `.answer-mark`, `.theme-option-mark`) |
+| `✗` U+2717 | wie ✓, dazu `Words.tsx:337` | **IBM Plex Sans** |
+
+Nur in Kommentaren oder Tests, nicht gezeichnet: `App.tsx:1677`, `Learn.tsx:133`,
+`Send.tsx:33`, `Words.tsx:39`/`:373`, `engine/tempo.ts:94`, `tools/learn/pages.mjs`
+(Kopfkommentar), `pages.test.mjs` (Erwartungswerte, Testnamen).
+
+**b) cmap** (`tools/fonts/cmap.mjs`, selbst gelesen, Format 4 und 12; an den
+bekannten Zeichen aus #4/#8 gegengeprüft):
+
+| Datei | → | ✓ | ✗ | ≈ |
+|---|---|---|---|---|
+| `ibm-plex-sans-latin-{400,500,600}-normal.woff2` | – | – | – | – |
+| `newsreader-latin-wght-normal.woff2` | – | – | – | – |
+
+Die Dateien in `src/fonts/` sind **byte-identisch** mit den Fontsource-Paketen
+(`@fontsource/ibm-plex-sans` 400, `@fontsource-variable/newsreader`
+latin-wght) geprüft für diese beiden; also Googles latin-Subset, kein eigener
+Schnitt. (500/600 nicht per `cmp` verglichen.)
+
+**Upstream** (erreichbar: npm-Registry, `raw.githubusercontent.com` für
+`google/fonts`; nicht erreichbar: `github.com`-Releases, `fonts.google.com`):
+
+| Quelle | → | ✓ | ✗ | ≈ |
+|---|---|---|---|---|
+| IBM Plex Sans, `@ibm/plex-sans` 1.1.0, `complete/woff2` Regular/Medium/SemiBold (895 Codepoints) | **ja** | **ja** | **nein** | ja |
+| dasselbe, `split/woff2/…-Regular-Pi` (101 Codepoints) | ja | ja | nein | — |
+| Newsreader variable TTF aus `google/fonts` (`ofl/newsreader`, 564 Codepoints) | **nein** | **nein** | **nein** | ja |
+| Fontsource Newsreader, alle Subsets (latin, latin-ext, vietnamese) | nein | nein | nein | nein |
+
+**Nicht belegt:** Die Newsreader-TTF aus `google/fonts` ist die von Google
+verteilte Fassung; das Repo von Production Type (`productiontype/Newsreader`)
+war nicht lesbar, ein Unterschied dort ist nicht ausgeschlossen. Pi-Subset und
+`complete` sind nur für Regular einzeln geprüft (`complete` zusätzlich für
+Medium und SemiBold).
+
+**c) Lizenz.** Beide Dateien sind SIL OFL 1.1 im Originaltext. Die
+Copyright-Zeilen nennen **keinen** Reserved Font Name (kein „with Reserved Font
+Name …“; „Reserved Font Name“ steht nur in der Definition und in Klausel 3).
+Klausel 3 greift damit nur, wenn ein RFN deklariert wäre — hier nicht
+deklariert. Bedingungen für ein Neu-Subsetten (Modified Version): Lizenztext
+und Copyright mitliefern (2), unter OFL bleiben (5), den Urhebernamen nicht zur
+Werbung nutzen (4). Das heutige Subset ist selbst schon eine Modified Version.
+**Nur berichtet — keine Rechtsberatung.**
+
+**d) Fallback, gemessen** (headless Chromium, gebauter Stand, CDP
+`CSS.getPlatformFontsForNode`):
+
+- Learn-CTA (`→`, Newsreader-Kontext): **Liberation Serif** (Chromium löst
+  `Georgia` darauf auf).
+- App (`✓`, `✗`, `→` in der Fußzeile, Sans-Kontext): **DejaVu Sans**.
+
+FINDINGS #4 nennt für den Pfeil „DejaVu Sans“ — für die Learn-CTA stimmt das
+auf dieser Maschine nicht, dort ist es Liberation Serif; die Aussage „je System
+anders“ bestätigt das. Belege: `docs/screenshots/b1-fallback-learn-cta-arrow.png`
+(echte Learn-Seite) und `docs/screenshots/b1-fallback-app-marks.png`
+(**Zusammenstellung**: die echten CSS-Klassen der App in die laufende Seite
+gesetzt, Zeichen eingesetzt — kein Durchlauf des echten Feedback-Screens; die
+Absolut-Positionierung von `.answer-mark` schiebt zwei Marken dort an den Rand).
+
+**e) Wirkung auf D1: die Empfehlung ändert sich.** „Weg A, falls Upstream die
+Zeichen hat“ trägt nicht für alle Zeichen:
+
+| Zeichen | Gezeichnet in | Weg A möglich? |
+|---|---|---|
+| `✓` | IBM Plex Sans | **ja** (Plex hat es, im Pi-Subset) |
+| `→` (Fußzeile) | IBM Plex Sans | **ja** |
+| `→` (CTA) | Newsreader | **nein** — Newsreader hat es nicht; hieße: Pfeil aus Plex in der CTA setzen (andere Familie im selben Satz) oder Text ändern (Fables Sache) |
+| `✗` | IBM Plex Sans | **nein** — in keiner der beiden Upstream-Schriften; Weg B (SVG) oder Fallback |
+| `≈` (#11) | IBM Plex Sans | ja (beide Upstreams haben es) |
+
+Die Rückfalllinie der Empfehlung („sonst B für `✓ ✗`, Fallback für `→`“) gilt
+damit **nur teilweise**: `✓` und der Fußzeilen-Pfeil sind per Subset lösbar,
+`✗` nicht. **Zu prüfen für Fable:** Plex um `→ ✓ ≈` erweitern (Quelle
+`complete` liegt vor); `✗` als SVG — und dann `✓` ebenfalls, damit Paar und
+Strichstärke zusammenpassen (Weg B für beide); CTA-Pfeil: Fallback akzeptieren
+oder Pfeil in Plex. **Die Frage bleibt offen bei Fable; nichts umgesetzt.**
+Der Preis (woff2-Delta je Gewicht) ist nicht gemessen, weil nichts neu erzeugt
+wurde.
+
+**cmap-Check (erledigt).** `tools/fonts/check.mjs`, `npm run verify:fonts`,
+Teil von `npm run build` neben `verify:colors`. Baseline `KNOWN_GAPS`: `→ ✓ ✗`
+(#4, #8) **und `≈` (#11)** — letzteres hat der Check beim ersten Lauf selbst
+gefunden. Rot bei neuem fehlendem Codepoint und bei veralteter Ausnahme; beides
+im Rot-Test belegt (HANDOVER P11).
+
 ### B2 — Screenreader: Morse-Muster der Alphabet-Tabelle (Finding #5)
 
 | | |
@@ -274,7 +373,7 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 
 | | Frage | Wer | Empfehlung | Ohne Entscheidung |
 |---|---|---|---|---|
-| D1 | Glyphen `→ ✓ ✗` (B1): neu subsetten, SVG, oder Fallback akzeptieren? | Fable | A, **falls** Upstream die Zeichen hat; sonst B für `✓ ✗`, Fallback für `→` | bleibt Fallback; #4, #8 offen |
+| D1 | Glyphen `→ ✓ ✗` (B1): neu subsetten, SVG, oder Fallback akzeptieren? | Fable | A, **falls** Upstream die Zeichen hat; sonst B für `✓ ✗`, Fallback für `→` | bleibt Fallback; #4, #8, #11 offen. **Nach der Vorarbeit (P11) geändert: siehe B1, „Vorarbeit — Ergebnis“.** |
 | D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable | Ja; DE ebenfalls „dit dah" | bleibt; #5 offen |
 | D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable | (a) Tastenfeld | bleibt; #6.1 offen |
 | D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | 960 px bzw. Messwert nach A2 |
@@ -309,7 +408,7 @@ D  Abschluss ── zuletzt
 |---|---|---|
 | 1 | A1 `verify:keyboard` (+ Befunde nach `FINDINGS.md`) | — |
 | 2 | A2 + C1 Messung | G1, D10 |
-| 3 | B1 cmap-Check (Absicherung, ohne Glyphen-Entscheidung) | — |
+| 3 | B1 Vorarbeit + cmap-Check (Absicherung, ohne Glyphen-Entscheidung) — **erledigt 03.10. (P11)**, Commit auf dem Branch, noch kein PR | — |
 | 4 | B1 Glyphen | D1 |
 | 5 | B2 Screenreader-Muster | D2 |
 | 6 | B3 Echo-Check | D3 |
@@ -381,3 +480,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 |---|---|
 | 03.10.2026 | Erste Fassung (nach P8). |
 | 03.10.2026 | A1 umgesetzt (`verify:keyboard`, 26 Fälle, Rot-Test belegt); S2 und S3 erledigt. |
+| 03.10.2026 | Runde P11: B1-Vorarbeit (Fundstellen, cmap, Upstream, Lizenz, Fallback) eingetragen — Empfehlung D1 geändert; cmap-Check `verify:fonts` umgesetzt; neue Findings #11 (`≈`) und #12 (`verify:amber` lässt Server stehen). |

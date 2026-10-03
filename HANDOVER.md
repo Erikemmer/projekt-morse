@@ -1,3 +1,62 @@
+# Übergabe — Stand nach Runde P11 (B1-Vorarbeit + cmap-Check: `npm run verify:fonts`)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P10 = `22dfc04`), `main` = `fa579d0`.
+**P11 ist Plan-Schritt 2 (PR 3):** Vorarbeit zu den Findings #4/#8 und ein
+Absicherungs-Check. **Kein Code der App geändert** (`git diff` auf `src/` leer),
+`src/fonts/` und `content/learn/` byte-identisch. Bundle-Delta **0** (nur Tooling:
+`dist/assets/index-*.js` 235,96 kB, Schriften 22,59/24,18/24,25/58,08 kB wie zuvor).
+
+**Was es ist:**
+
+1. **Vorarbeit D1, nichts entschieden.** Ergebnis steht in
+   `docs/PLAN-FINDINGS.md`, B1, „Vorarbeit — Ergebnis“: Fundstellen, cmap der vier
+   Dateien, Upstream-Prüfung, Lizenz, gemessener Fallback (Screenshots unter
+   `docs/screenshots/b1-fallback-*.png`).
+2. **`tools/fonts/check.mjs`** (+ `tools/fonts/cmap.mjs`, ein woff2-cmap-Leser
+   mit `zlib.brotliDecompressSync`, keine neue Abhängigkeit), Script
+   `verify:fonts`, **Teil von `npm run build`** neben `verify:colors`. Rot bei
+   einem neuen fehlenden Codepoint und bei einer veralteten Ausnahme.
+   Scan-Umfang und was er **nicht** erfasst steht im Skriptkopf.
+
+**Was Fable sehen muss:**
+
+1. **D1 hat sich geändert.** Newsreader hat `→ ✓ ✗` auch upstream nicht; IBM Plex
+   Sans hat `→ ✓`, aber **nicht `✗`**. Weg A trägt also für `✓` und den
+   Fußzeilen-Pfeil, nicht für `✗` und nicht für den Newsreader-CTA-Pfeil. Details
+   und Optionen in B1. Entschieden ist nichts.
+2. **Der Check hat beim ersten Lauf ein viertes fehlendes Zeichen gefunden:**
+   `≈` U+2248 (`Send.tsx:390`, Tempo-Schätzung). Es steht upstream in beiden
+   Schriften. Ich habe es **zusätzlich zu `→ ✓ ✗` in die Baseline** genommen
+   (FINDINGS #11) — sonst wäre `npm run build` rot, und die Schrift darf ich nicht
+   anfassen. Das erweitert die im Auftrag genannte Baseline um einen Eintrag.
+3. **Die Lizenzlage** ist nur berichtet: OFL 1.1, **kein** deklarierter Reserved
+   Font Name in den Copyright-Zeilen. Keine Rechtsberatung.
+4. **Nicht belegt:** das Repo von Production Type (Newsreader) war nicht lesbar —
+   geprüft wurde die von Google verteilte TTF. Der App-Screenshot ist eine
+   Zusammenstellung mit den echten Klassen, kein echter Feedback-Screen.
+   Die CTA-Zeichnung kommt hier aus Liberation Serif, nicht aus DejaVu (so stand
+   es in #4) — je System anders, wie vermutet.
+5. **Neuer Nebenbefund #12:** `verify:amber` lässt nach dem Lauf einen
+   `vite preview` stehen (derselbe Fehler wie in P10 im Tastatur-Skript behoben).
+   Nicht mitrepariert, nach `FINDINGS.md`.
+
+**Tests:** 481, unverändert. `npm test` (19 Dateien, 481), `npm run build`
+(inkl. `verify:fonts` und `verify:learn`, 18 Seiten), `verify:amber` (37 Ansichten)
+und `verify:keyboard` (26 Fälle) grün.
+
+**Rot-Test belegt (`verify:fonts`):** (a) `☃` in eine Zeichenkette in
+`Send.tsx` → `ROT NEU fehlend: U+2603 … Send.tsx:388`, Exit 1; dasselbe Zeichen
+nur in einem Kommentar → bleibt grün. (b) `U+00E4` (vorhanden) in `KNOWN_GAPS` →
+`ROT Veraltete Ausnahme`, Exit 1. Beide danach zurückgesetzt.
+**Ohne Rot-Test:** ein Learn-Markdown mit neuem Zeichen (derselbe Codepfad wie
+Quelltext, aber nicht eigens ausgelöst).
+
+Berührt: `tools/fonts/check.mjs`, `tools/fonts/cmap.mjs` (neu), `package.json`
+(ein Script, `build` ruft es auf), `FINDINGS.md` (#11, #12),
+`docs/PLAN-FINDINGS.md`, `docs/screenshots/b1-fallback-*.png` (2, neu), diese Übergabe.
+
+---
+
 # Übergabe — Stand nach Runde P10 (A1: `npm run verify:keyboard`)
 
 **Stand:** `main` = `fa579d0`; der Plan (`docs/PLAN-FINDINGS.md`, P9) liegt auf
