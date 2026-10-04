@@ -144,7 +144,15 @@ bleiben. Deshalb Bericht statt Eingriff (CLAUDE.md §5, §2.9).
 in der vorgelesenen Form ausgeben. Braucht eine Freigabe von Fable, weil es
 den vorgelesenen Inhalt der Seite ändert.
 
-## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter — Punkt 2 BEHOBEN (Ruling #110)
+## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter — Punkt 2 BEHOBEN (Ruling #110), Punkt 1 BEHOBEN (P15)
+
+**Status Punkt 1: entschieden und behoben** (04.10.2026, Runde P15;
+Owner-Delegation von D3, kein Fable-Ruling). Der Echo-Check zeigt ab 13
+Optionen das ortsfeste 36-Plätze-Tastenfeld (`.keypad`, Nicht-Pool-Tasten
+gedimmt, „ — not in this round“); „aktiv“ = die Optionen des Checks. Nachgemessen:
+Seite = Fenster bei 390 × 844, 1280 × 720 und 1440 × 900, mit 15 **und** 36
+Zeichen (vorher bis +587 px). Tasten 50 × 46 / 44 × 44 — ob das am Telefon
+trägt, ist H9 und nicht geprüft. Der Ursprungstext unten bleibt stehen.
 
 **Gefunden:** 02.09.2026, beim Umsetzen von Ruling #75 (das feste Tastenfeld im
 Training).
@@ -429,3 +437,24 @@ sondern ab etwa 13–15 Zeichen am Laptop-Fenster.
 der Wege (a) und (b) löst ihn mit (in der Simulation, siehe
 `docs/PLAN-FINDINGS.md`, B3).
 
+**Status: behoben** (04.10.2026, Runde P15, mit B3). Nachgemessen: 15 Zeichen
+bei 1280 × 720 jetzt 720 px Seite bei 720 px Fenster (vorher 775, +55).
+
+## 14. Der Echo-Check hat keine „or just type“-Zeile, obwohl die Tastatur dort antwortet
+
+**Gefunden:** 04.10.2026, beim Umsetzen von B3 (Runde P15).
+
+Das Training zeigt ab 900 px unter dem Tastenfeld „or just type — the keyboard
+answers too“ (`App.tsx`, `.keypad-hint`, Ruling #96 B.6). Der Echo-Check
+beantwortet Tasten aus `answerPool` ebenso (`echoKeyAction`, Ruling #108), hat
+aber die Zeile nicht — auch nicht, seit er dasselbe Tastenfeld trägt.
+
+**Nicht mitrepariert:** ein neuer UI-Wert, der in B3 nicht verlangt war
+(CLAUDE.md §5); die Zeile kostet am Laptop zusätzliche Höhe, die nachzumessen
+wäre. **Was es kosten würde:** eine Zeile in `Echo`, eine Messung.
+
+## 15. `verify:amber` lässt weiterhin einen Vorschau-Server stehen (zu #12)
+
+**Gefunden:** 04.10.2026, Runde P15: nach `npm run verify:amber` lief ein
+`vite preview --port 4183` weiter (nur über `ps` + `kill <pid>` zu beenden).
+Bestätigt #12, unverändert, nicht mitrepariert.

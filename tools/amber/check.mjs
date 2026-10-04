@@ -103,8 +103,11 @@ const ALL_CHARACTERS = 'KMRSUAPTLOWINJEF0YVG5Q9ZH38B427C1D6X'; // alle 36
  * vorfindet. Ein gemeinsamer Baustein würde denselben Fehler auf beiden Seiten
  * machen.
  */
-function progress({ characters = LETTERS, slow = [], sessions = 3, effectiveWpm } = {}) {
+function progress({ characters = LETTERS, introduced, slow = [], sessions = 3, effectiveWpm } = {}) {
   const active = [...characters];
+  // `introduced` (B3): weniger eingeführt als aktiv -- das letzte ist fällig,
+  // die App startet den Lernlauf mit Echo-Check.
+  const known = introduced === undefined ? active : [...introduced];
   const record = (median) => ({
     attempts: 10,
     hits: 10,
@@ -114,7 +117,7 @@ function progress({ characters = LETTERS, slow = [], sessions = 3, effectiveWpm 
   return {
     version: 1,
     characters: Object.fromEntries(
-      active.map((char) => [char, record(slow.includes(char) ? 2.6 : 0.8)]),
+      known.map((char) => [char, record(slow.includes(char) ? 2.6 : 0.8)]),
     ),
     activeCharacters: active,
     recentAnswers: [],
@@ -122,7 +125,7 @@ function progress({ characters = LETTERS, slow = [], sessions = 3, effectiveWpm 
     sessionsStarted: sessions,
     day: { date: '', attempts: 0, hits: 0, characters: [] },
     introSeen: true,
-    introducedCharacters: active,
+    introducedCharacters: known,
     variabilityNoticeSeen: true,
     // Nur wo es gebraucht wird: die Tempo-Progression (Ruling #83, Teil B)
     // faengt bei STARTING_EFFECTIVE_WPM an, und `parseProgress` setzt genau
@@ -186,6 +189,33 @@ const VIEWS = [
       await page.getByRole('button', { name: /^Play the character/ }).click();
       await answering(page);
       await page.locator('.answer').first().click();
+      await page.waitForSelector('.reveal');
+    },
+  },
+  {
+    // B3: 36 aktive Zeichen, 35 eingeführt, das letzte (X) fällig -- 36 Optionen
+    // im ortsfesten Tastenfeld, die Taste für X ist die einzige noch nicht
+    // bekannte, aber hier schon Teil des Pools.
+    name: 'Echo-Check, 36 Zeichen, Antwort offen (B3)',
+    seed: progress({ characters: ALL_CHARACTERS, introduced: ALL_CHARACTERS.slice(0, -1) }),
+    async reach(page) {
+      await page.waitForSelector('.pattern-row', { timeout: 20000 });
+      await page.getByRole('button', { name: 'Try it' }).click();
+      await page.getByRole('button', { name: /^Play the character/ }).click();
+      await answering(page);
+      await page.waitForSelector('.keypad');
+    },
+  },
+  {
+    name: 'Echo-Check, 36 Zeichen, Auflösung falsch (B3)',
+    seed: progress({ characters: ALL_CHARACTERS, introduced: ALL_CHARACTERS.slice(0, -1) }),
+    async reach(page) {
+      await page.waitForSelector('.pattern-row', { timeout: 20000 });
+      await page.getByRole('button', { name: 'Try it' }).click();
+      await page.getByRole('button', { name: /^Play the character/ }).click();
+      await answering(page);
+      // Das Ziel ist X; die erste bedienbare Taste (A) ist falsch.
+      await page.locator('.keypad .answer:not(:disabled)').first().click();
       await page.waitForSelector('.reveal');
     },
   },

@@ -18,6 +18,7 @@ import {
 import { Pattern } from './Pattern';
 import { isBrowserChord } from './keyChord';
 import { Mark } from './Mark';
+import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 
 export function Learn({
   state,
@@ -327,6 +328,12 @@ function Echo({
 }) {
   const pool = answerPool(state);
   const attempt = state.phase === 'echo-feedback' ? state.lastEcho : null;
+  // Ab 13 Optionen das ortsfeste Tastenfeld wie im Training (B3, D3 a):
+  // "aktiv" ist hier, was der Check anbietet (`answerPool`), der Rest ist
+  // gedimmt. Der Pool waechst nur, einmal Tastenfeld bleibt Tastenfeld.
+  const keypad = usesKeypad(pool.length);
+  const offered = new Set(pool);
+  const positions = keypad ? KEYPAD_LAYOUT : pool;
 
   return (
     <>
@@ -366,10 +373,11 @@ function Echo({
         </p>
       </div>
 
-      <div className="answers">
-        {pool.map((option) => {
+      <div className={keypad ? 'keypad' : 'answers'}>
+        {positions.map((option) => {
+          const active = !keypad || offered.has(option);
           const mark =
-            attempt === null
+            attempt === null || !active
               ? undefined
               : option === attempt.char
                 ? 'correct'
@@ -384,7 +392,9 @@ function Echo({
               className="answer"
               data-mark={mark}
               data-tone={mark === 'correct' && attempt !== null && !attempt.correct ? 'amber' : undefined}
-              disabled={state.phase !== 'echo-answering'}
+              data-active={keypad ? String(active) : undefined}
+              data-row-start={keypad && option === KEYPAD_ROW_BREAK ? 'true' : undefined}
+              disabled={state.phase !== 'echo-answering' || !active}
               onClick={() => onAnswer(option)}
             >
               <span aria-hidden="true">{option}</span>
@@ -397,6 +407,7 @@ function Echo({
                 {option}
                 {mark === 'correct' && ' — this was the character'}
                 {mark === 'wrong' && ' — your answer, not the character'}
+                {!active && ' — not in this round'}
               </span>
             </button>
           );

@@ -40,12 +40,12 @@ statt stillschweigend geschlossen.
 | 3 | Weitere Maße neben den Guidelines | entschieden und behoben (01.09., #46) | — |
 | **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **Fußzeile behoben** (P14, im Plex-Subset); **CTA-Pfeil „entschieden: bleibt“** (Weg C). H8 offen | **B1**, D1 |
 | **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **offen** (Vorarbeit erledigt 04.10., D2 entscheidungsreif; Umfang größer als gedacht) | **B2**, D2 |
-| **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) offen** (Vorarbeit erledigt 04.10., D3 entscheidungsreif) | **B3**, D3 |
+| **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) behoben** (P15, Weg a, Owner-Delegation D3). H9 offen | **B3**, D3 |
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
 | **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **behoben** (P14, SVG-Paar `Mark.tsx`). H8 offen | **B1**, D1 |
 | 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **behoben** (P14, im Plex-Subset). H8 offen | **B1**, D1 |
 | 12 | `verify:amber` lässt einen Vorschau-Server stehen | **offen** (nicht mitrepariert) | — |
-| 13 | Echo-Check scrollt schon bei 15 Zeichen bei 1280 × 720 (+55 px) | **offen**, gehört zu D3 | **B3**, D3 |
+| 13 | Echo-Check scrollt schon bei 15 Zeichen bei 1280 × 720 (+55 px) | **behoben** (P15, mit B3) | **B3**, D3 |
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
 | 10 | Anschrift im Impressum läuft zusammen | behoben (03.09.) | — |
 
@@ -535,6 +535,46 @@ löst und die Engine nicht berührt. **Offen bleiben:** (1) die Größe der Tast
 (2) was „aktiv“ im Echo-Check heißt. (c) ist ausdrücklich nicht „kostenlos“:
 der 15-Zeichen-Fall bei 1280 × 720 ist schon heute betroffen.
 
+#### Umsetzung (04.10.2026, Runde P15)
+
+Gebaut ist Weg (a) ortsfest, wie in „D3 — Entscheidung“ unten festgelegt.
+`Echo` in `src/ui/Learn.tsx` rendert ab 13 Optionen (`usesKeypad(pool.length)`,
+dieselbe Schwelle wie das Training) `.keypad` über `KEYPAD_LAYOUT` mit
+`data-active`, `data-row-start` und „ — not in this round“; darunter bleibt das
+Dreier-Gitter. Engine, `answerPool`, `echoKeyAction`, `keypad.ts` und
+`styles.css` sind **unverändert**.
+
+Gemessen mit `tools/prep/echo-height.mjs` (gebauter Stand, headless Chromium,
+Seite / Fenster; vorher = `0b216d7`, `index-DI9tmRbS.js`):
+
+| Viewport | Zeichen | vorher | nachher | Taste nachher | Bühne vorher → nachher | Abstand |
+|---|---|---|---|---|---|---|
+| 390 × 844 | 15 | 844 / 844 | 844 / 844, 7 Zeilen | 50 × 46 | 304 → 310 | 24 |
+| 390 × 844 | 36 | **1311** / 844 (+467) | 844 / 844 | 50 × 46 | 239 → 310 | 24 |
+| 1280 × 720 | 15 | **775** / 720 (+55, #13) | 720 / 720, 4 Zeilen | 44 × 44 | 235 → 362 | 24 |
+| 1280 × 720 | 36 | **1307** / 720 (+587) | 720 / 720 | 44 × 44 | 235 → 362 | 24 |
+| 1440 × 900 | 15 | 900 / 900 | 900 / 900 | 44 × 44 | 360 → 542 | 24 |
+| 1440 × 900 | 36 | **1307** / 900 (+407) | 900 / 900 | 44 × 44 | 235 → 542 | 24 |
+
+Kein Scrollen in allen sechs Fällen, 15 und 36 Zeichen **gleich hoch** (das ist
+der Zweck der Ortsfestigkeit). Kein Überlauf nach rechts. Die Simulation aus P12
+war bei 390 × 844 etwas optimistischer (Antworten 316 px, Bühne 364); der echte
+Aufbau hat die Ziffernreihe separat (7 statt 6 Zeilen): Antworten 370 px, Bühne
+310 px — immer noch über dem Minimum von 235 px.
+
+`verify:amber`: **39 Ansichten** (neu: „Echo-Check, 36 Zeichen, Antwort offen
+(B3)“ und „… Auflösung falsch (B3)“, 0 bzw. 1 Amber — die richtige Antwort).
+Bisher gab es nur „Antwort offen“/„Auflösung“ mit einer Option. Dafür bekam
+`progress()` den Parameter `introduced`. `verify:keyboard` **25 Fälle** grün,
+`npm test` **481**. Das Messskript misst jetzt `.answers, .keypad`; die
+P12-Simulationen laufen nur noch mit `ECHO_VARIANTS=heute,a,a36,b` gegen einen
+Stand vor B3.
+
+**Nicht belegt:** Bedienbarkeit der 44–50-px-Tasten am Telefon, Antwortzeit und
+Treffsicherheit (**H9**, menschlich); Screenreader über die gedimmten Tasten im
+Echo-Check (H3); Verhalten beim Wechsel Gitter → Tastenfeld mitten im Lauf nur
+aus dem Code gelesen (der Pool wächst nur), nicht im Browser gesehen.
+
 ### C1 — Settings-Höhe (S5)
 
 | | |
@@ -576,7 +616,7 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 |---|---|---|---|---|
 | D1 | Glyphen `→ ✓ ✗ ≈` (B1) | Fable → **vom Owner am 04.10. an Claude delegiert** („Entscheide du“) | — | **Entschieden, siehe „D1 — Entscheidung“ unten.** Umsetzung PR 4. |
 | D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable | Ja, Option 3 (versteckter Text wie `Pattern.tsx`); Umfang 36 + 5 + 3 Stellen je Sprache. **Nach P12:** „Ja" bestätigt, DE-Wortlaut **offen** | bleibt; #5 offen |
-| D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable | (a) Tastenfeld. **Nach P12:** bestätigt (simuliert, kein Scrollen); Tastengröße und „aktiv“ offen | bleibt; #6.1 offen |
+| D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable → **vom Owner am 04.10. an Claude delegiert** („entscheide du“) | (a) Tastenfeld | **Entschieden (a), siehe „D3 — Entscheidung“.** Umsetzung PR 6 (P15). |
 | D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | **Nachgemessen (P13): 960 px bei 390 × 844, 822 px bei 1280 × 720, 900 px bei 1440 × 900**; scrollt an den ersten beiden |
 | D5 | Zeichen in `echo-ready` startet Wiedergabe | Fable | bestätigen | bleibt |
 | D6 | Alt+Buchstabe erreicht die App | Fable | bestätigen | bleibt |
@@ -588,6 +628,37 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 
 Entscheidungen werden im **Notion-Log** als Ruling festgehalten und mit
 Nummer in den jeweiligen Commit geschrieben (wie bisher: „Ruling Notion-Log #…").
+
+### D3 — Entscheidung (Owner-Delegation, 04.10.2026)
+
+Der Owner hat D3 mit „entscheide du“ an Claude delegiert. Das ersetzt kein
+Fable-Ruling (CLAUDE.md §2.9, §3): **protokolliert als „Owner-Delegation
+04.10.2026“, der Eintrag ins Notion-Log ist Sache des Owners.** Umkehrbar:
+PR 6 ist ein eigener PR.
+
+**Entscheidung: Weg (a), ortsfest.** Tastenfeld mit 36 Plätzen wie im
+Training und im `ReviewPicker` (`.keypad`, `data-active`), keine wandernde
+Taste.
+
+- **„Aktiv“ im Echo-Check = die Optionen des Checks (`answerPool`).** Nicht-Pool-
+  Tasten sind gedimmt, nicht bedienbar und tragen für Screenreader „ — not in
+  this round“, wie im Training.
+- **Schwelle:** dieselbe wie im Training (`usesKeypad`, ab 13), gemessen an
+  den Optionen des Checks. Darunter bleibt das Dreier-Gitter — Ruling #75
+  Punkt 3 („dort sind es bewusst wenige Optionen“) gilt am Anfang weiter.
+- **Engine unberührt:** `answerPool`, `echoKeyAction`; K9–K11 laufen
+  unverändert. Weg (b) ist nicht gewählt.
+- **Tastengröße:** die bestehende `.keypad`-Regel (50 × 46 / 44 × 44). Ob das
+  am Telefon trägt, ist **H9** und bleibt eine menschliche Prüfung.
+
+**Warum (a):** (1) Es ist der Weg, den das Produkt für dasselbe Problem schon
+gegangen ist (#75 Training, #110 `ReviewPicker`) — ein Tastenfeld, ein
+Muster. (2) Er ändert nicht, **welche Tasten antworten**; (b) hätte die
+Engine, K9–K11 und eine neue Ablenker-Regel berührt und angebotene Zeichen
+weggelassen, die man kennt — das widerspricht dem Zweck des Checks („alles
+bisher Eingeführte“). (3) Die Ortsfestigkeit gilt für die Übung: wer im
+Training an feste Plätze gewöhnt ist, greift im Echo-Check nicht mehr ins
+Leere. (4) (c) ließe #13 stehen. Preis: kleinere Tasten (H9).
 
 ### D1 — Entscheidung (Owner-Delegation, 04.10.2026)
 
@@ -660,7 +731,7 @@ D  Abschluss ── zuletzt
 | 3 | B1 Vorarbeit + cmap-Check (Absicherung, ohne Glyphen-Entscheidung) — **erledigt 03.10. (P11)**, Commit auf dem Branch, noch kein PR | — |
 | 4 | B1 Glyphen (Umsetzung) — **erledigt 04.10. (P14)**, Commit auf dem Branch, noch kein PR | H8 (Owner am Gerät) vor dem Merge |
 | 5 | B2 Screenreader-Muster (Vorarbeit **erledigt 04.10., P12**) | D2 |
-| 6 | B3 Echo-Check (Vorarbeit **erledigt 04.10., P12**) | D3 |
+| 6 | B3 Echo-Check — **erledigt 04.10. (P15)**, Commit auf dem Branch, noch kein PR | H9 (Owner am Telefon) vor dem Merge |
 | 7 | C2, je nach Antwort | D4–D9 |
 | 8 | D Abschluss | alles |
 
@@ -674,7 +745,7 @@ eigenen Absatz „Was Fable sehen muss".
 |---|---|
 | **#4** `→` | Ruling zu D1; bei Weg A: Zeichen im Subset (cmap) und Screenshot; bei Weg C: Status „entschieden: bleibt" mit Begründung in `FINDINGS.md` |
 | **#5** Muster | Ruling zu D2; 36 Zeichen tragen die vorgelesene Form; Markdown-Quelltext byte-identisch; H3 bestanden |
-| **#6.1** Echo-Check | Ruling zu D3; gemessen bei 15 und 36 Zeichen in drei Viewports ohne Scrollen (Weg a/b), oder Status „entschieden: bleibt" |
+| **#6.1** Echo-Check | Ruling zu D3 (P15: Owner-Delegation); gemessen bei 15 und 36 Zeichen in drei Viewports ohne Scrollen — **erfüllt (P15)**; H9 offen |
 | **#8** `✓ ✗` | wie #4 (zusammen mit ihm in B1 entschieden) |
 | S1 P8 bestätigt | G1: Owner meldet „sitzt" |
 | S2 / S3 | `verify:keyboard` grün, Rot-Test belegt, Wort-/Sende-Inventur durchlaufen |
@@ -734,3 +805,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 04.10.2026 | G1 = „sitzt“ (S1 erledigt), A2 freigegeben (D10 Standard: ausbauen). **D1 vom Owner an Claude delegiert und entschieden:** `→` (Fußzeile) und `≈` per Plex-Subset (Weg A), `✓ ✗` als SVG-Paar nach 1.1 §8 (Weg B), CTA-Pfeil bleibt Fallback (Weg C). D2 und D3 bleiben offen (Default: bleibt; Empfehlungen aus P12 unverändert). |
 | 04.10.2026 | Runde P13: A2 umgesetzt (Messgerät ausgebaut, K4 entfernt, `verify:keyboard` 25 Fälle, Bundle −1,33 kB, Rot-Test altKey belegt); C1 gemessen (960 / 822 / 900 px, vorher 1031 / 893 / 900); S4 erledigt, S5 gemessen, D4 bleibt offen; Messskript `tools/prep/settings-height.mjs`. |
 | 04.10.2026 | Runde P14: **B1 umgesetzt** (PR 4, noch kein PR angelegt): `→`/`≈` ins Plex-Subset ergänzt (nicht neu subsettet — Abweichung A), `✓ ✗` als SVG-Paar `Mark.tsx`, `verify:fonts` mit `ACCEPTED_FALLBACK` (Abweichung B); #4 (Fußzeile), #8, #11 behoben, #4 (CTA) „bleibt“. H8 offen. |
+| 04.10.2026 | Runde P15: **D3 vom Owner an Claude delegiert und entschieden** (Weg a, ortsfest; „aktiv“ = Optionen des Checks; Schwelle wie Training). **B3 umgesetzt** (PR 6, noch kein PR angelegt): `Echo` rendert ab 13 Optionen das 36-Plätze-Tastenfeld; Engine, `styles.css` unverändert; sechs Fälle (15/36 Zeichen × 3 Viewports) ohne Scrollen, #13 mit behoben; `verify:amber` 39 Ansichten (+2), `verify:keyboard` 25, `npm test` 481; Bundle JS +174 Byte. H9 offen. D4–D9 vom Owner wie empfohlen bestätigt (D4 a, D7 Hash, D8 nicht bauen); D2 für B2 vorentschieden (Option 3, „dit dah“ EN und DE). |

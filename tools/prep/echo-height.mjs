@@ -96,7 +96,7 @@ async function openBrowser() {
 
 /** Misst die gerade gezeigte Ansicht. */
 const MEASURE = (cap) => () => {
-  const answers = document.querySelector('.answers');
+  const answers = document.querySelector('.answers, .keypad');
   const buttons = [...answers.querySelectorAll('.answer')].filter(
     (el) => getComputedStyle(el).display !== 'none',
   );
@@ -176,7 +176,10 @@ try {
   console.log(header.join(' | '));
   for (const viewport of VIEWPORTS) {
     for (const count of [15, 36]) {
-      for (const variant of ['heute', 'a', 'a36', 'b']) {
+      // Seit B3 (Runde P15) ist Weg (a) gebaut: 'heute' misst den echten Stand.
+      // Die Simulationen 'a'/'a36'/'b' (P12) brauchen `.answers` und laufen nur
+      // noch gegen einen Stand vor B3: `ECHO_VARIANTS=heute,a,a36,b`.
+      for (const variant of (process.env.ECHO_VARIANTS ?? 'heute').split(',')) {
         const m = await measureOne(browser, viewport, count, variant);
         console.log(
           [

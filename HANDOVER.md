@@ -1,3 +1,60 @@
+# Übergabe — Stand nach Runde P15 (B3: Echo-Check als ortsfestes Tastenfeld)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P14 = `0b216d7`), `main` = `fa579d0`.
+**P15 ist Plan-Schritt 6 (PR 6):** B3 mit D3 (Owner-Delegation 04.10.2026, kein
+Fable-Ruling; den Notion-Log-Eintrag macht der Owner). Kein PR angelegt.
+**Bundle:** JS 235.144 → **235.318 Byte (+174 B**, gzip 71,69 → 71,76 kB); CSS
+unverändert (keine Regel angefasst).
+
+**Was es ist:**
+
+1. **`Echo` (`src/ui/Learn.tsx`)** zeigt ab 13 Optionen (`usesKeypad(pool.length)`,
+   Schwelle wie im Training) das Tastenfeld: `.keypad` über `KEYPAD_LAYOUT`,
+   `data-active` für „im Pool oder nicht“, „ — not in this round“ für Screenreader,
+   `data-row-start` für die Ziffernreihe. Darunter bleibt das Dreier-Gitter.
+   **Unverändert:** Engine (`answerPool`, `echoKeyAction`), `keypad.ts`, `styles.css`.
+2. **„Aktiv“ = die Optionen des Checks**, nicht der ganze aktive Satz.
+3. **`verify:amber`:** zwei neue Ansichten „Echo-Check, 36 Zeichen, Antwort offen
+   (B3)“ und „… Auflösung falsch (B3)“ → **39 Ansichten**. Es gab vorher keine
+   Echo-Ansicht mit mehr als einer Option. `progress()` bekam `introduced`.
+4. **`tools/prep/echo-height.mjs`** misst `.answers, .keypad`; die Simulationen
+   laufen nur noch mit `ECHO_VARIANTS=heute,a,a36,b` gegen einen Stand vor B3.
+
+**Gemessen (Seite / Fenster, vorher → nachher):**
+
+| Viewport | 15 Zeichen | 36 Zeichen | Taste |
+|---|---|---|---|
+| 390 × 844 | 844/844 → 844/844 | **1311** → 844/844 | 106 × 64 → 50 × 46 |
+| 1280 × 720 | **775** (+55, #13) → 720/720 | **1307** → 720/720 | 189 × 64 → 44 × 44 |
+| 1440 × 900 | 900/900 → 900/900 | **1307** → 900/900 | 189 × 64 → 44 × 44 |
+
+15 und 36 sind jetzt gleich hoch; Abstand Bühne–Tasten 24 px; Bühne ≥ 310 px.
+
+**Was Fable sehen muss:**
+
+1. **D3 ist eine Owner-Delegation, kein Ruling.** Wortlaut und Begründung:
+   `docs/PLAN-FINDINGS.md`, „D3 — Entscheidung“. Umkehrbar (eigener PR).
+2. **Die Schwelle (ab 13 Optionen)** ist meine Setzung, abgeleitet von
+   „wie im Training“. Darunter bleibt das Gitter (Ruling #75 Punkt 3). Der Pool
+   wächst innerhalb eines Laufs; die Form kann also **mitten im Lauf** vom Gitter
+   zum Tastenfeld kippen (nur aus dem Code gelesen, nicht im Browser gesehen).
+3. **Die Tasten sind kleiner** (50 × 46 / 44 × 44 statt 106/189 × 64). Das ist
+   **H9** und bleibt eine menschliche Prüfung am Telefon.
+4. **Der Echo-Check hat keine „or just type“-Zeile** (FINDINGS #14).
+
+**Tests:** `npm test` **481** (19 Dateien, unverändert). `npm run build` grün.
+`verify:amber` **39 Ansichten** grün (neu: Antwort offen 0 Amber, Auflösung falsch
+1 Amber = die richtige Antwort). `verify:keyboard` **25 Fälle** grün (42 s;
+K9–K11 laufen unverändert). **Nicht belegt:** H9 (Telefon), Screenreader über die
+gedimmten Tasten im Echo-Check (H3), Pixeldiff der übrigen Ansichten, der
+Formwechsel mitten im Lauf. Neu in `FINDINGS.md`: #14 (Hinweiszeile), #15 (stehender
+Vorschau-Server nach `verify:amber`, zu #12).
+
+Berührt: `src/ui/Learn.tsx`, `tools/amber/check.mjs`, `tools/prep/echo-height.mjs`,
+`FINDINGS.md`, `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
 # Übergabe — Stand nach Runde P14 (B1: `→ ≈` im Plex-Subset, `✓ ✗` als SVG-Paar)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P13 = `8f0c56a`), `main` = `fa579d0`.
