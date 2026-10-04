@@ -1,3 +1,76 @@
+# Übergabe — Stand nach Runde P13 (A2 + C1: Messgerät ausgebaut, Settings-Höhe gemessen)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P12-Docs = `da5ca68`), `main` = `fa579d0`.
+**P13 ist Plan-Schritt 4 (PR 2):** das Tastatur-Messgerät aus P7/P8 ausbauen und
+die Settings-Höhe messen. Kein PR angelegt.
+
+**Was es ist:**
+
+1. **A2:** entfernt sind `src/ui/keyLog.ts`, der Capture-Listener und
+   `copyInputLog` in `App.tsx`, Prop/State/Knopf „Copy input log“ in `Settings.tsx`
+   (samt ungenutztem `useState`-Import), `.settings-log-action` in `styles.css`
+   und Fall K4 in `tools/keyboard/check.mjs` (samt dem dann toten
+   `clipboard`-Flag und der Berechtigungsvergabe in `runCase`). **Bleibt:**
+   Build-Kennung (`build.ts`, Zeile in den Settings), `isBrowserChord`,
+   `keyChord.test.ts`. Die Kopfzeile von `check.mjs` nannte weder K4 noch eine
+   Fallzahl — dort war nichts anzupassen.
+2. **C1:** Dokumenthöhe der Settings, 20 aktive Zeichen, mit
+   `tools/prep/settings-height.mjs` (neu, Messung, kein Check, nicht im Build).
+
+| Viewport | vor dem Ausbau | nach dem Ausbau | scrollt? |
+|---|---|---|---|
+| 390 × 844 | 1031 px | **960 px** | ja (+116; vorher +187) |
+| 1280 × 720 | 893 px | **822 px** (Referenzwert) | ja (+102; vorher +173) |
+| 1440 × 900 | 900 px | **900 px** | nein (Seite = Fenster) |
+
+   Der Log-Knopf kostete 71 px. 960 / 900 entsprechen den P7-Werten.
+
+**Was Fable sehen muss:**
+
+1. **D10 war ein Standard, keine Antwort.** Der Owner hat „ausbauen“ nicht
+   ausdrücklich bestätigt (G1 = „sitzt“ ist die Beobachtung, dass das Symptom
+   weg ist, nicht der Nachweis der Ursache). Er kann es **vor dem Merge** noch
+   umkehren — dann diesen Commit zurücknehmen; das Messgerät steht in der
+   Historie.
+2. **D4 (Settings-Höhe) bleibt offen und ist nicht entschieden.** Nur Zahlen: Der
+   Screen scrollt bei 390 × 844 (+116 px) und 1280 × 720 (+102 px), bei 1440 × 900
+   nicht. Gemessen ist nur der Stand mit 20 aktiven Zeichen; andere
+   Zeichenzahlen sind nicht gemessen.
+3. **Vorsicht beim Messen:** Eine „Vorher“-Messung unmittelbar nach der
+   „Nachher“-Messung lieferte zunächst fälschlich dieselben Zahlen. Ursache war
+   ein offenbar noch laufender Vorschau-Server (vgl. FINDINGS #12); das Messskript
+   bricht jetzt ab, wenn der Port belegt ist.
+
+**Belege:**
+
+- `npm test` 481 (19 Dateien), unverändert — kein Test galt dem Messgerät,
+  `keyChord.test.ts` blieb. `npm run build` grün (inkl. `verify:fonts`,
+  `verify:learn`, 18 Seiten). `verify:amber` 37 Ansichten. `verify:keyboard`
+  **25 Fälle** (vorher 26; K4 weg).
+- **Bundle:** `dist/assets/index-*.js` 235.957 → 234.624 Byte, **−1.333 Byte
+  (−1,33 kB)**; CSS minimal kleiner.
+- **Rot-Test:** `KEYBOARD_ONLY=K4` → „unbekannte Fälle“ (K4 existiert nicht mehr).
+  `altKey` wieder in `isBrowserChord` → **K1, K2, K2b, K3, K3b, K3c rot (6 von 6)**;
+  zurückgesetzt → 6 von 6 grün. Der Ausbau hat nichts von P8 mitgenommen.
+- `grep` auf `keyLog|recordKey|formatKeyLog|onCopyInputLog|copyInputLog|logCopied`
+  im Quelltext leer (Chronik in `HANDOVER.md`/`FINDINGS.md`/`docs/PLAN-FINDINGS.md`
+  bleibt). `.settings-log-action` steht nur noch in `settings-height.mjs`
+  (dort, um den „Vorher“-Stand zu erkennen).
+
+**Nicht belegt:** dass ein hängendes Alt die Ursache des Ausfalls war (nur der
+Zustand ist nachgestellt, nicht Alt-Tab selbst); Verhalten am Gerät des Owners
+nach dem Ausbau.
+
+**Hilfscode dupliziert:** `settings-height.mjs` kopiert Vorschau-Server und
+Browser-Start (jetzt der fünfte Ort: `amber`, `keyboard`, `ax-pattern`,
+`echo-height`, `settings-height`) — D11 unverändert „duplizieren“.
+
+Berührt: `src/ui/App.tsx`, `src/ui/Settings.tsx`, `src/styles.css`,
+`src/ui/keyLog.ts` (gelöscht), `tools/keyboard/check.mjs`,
+`tools/prep/settings-height.mjs` (neu), `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
 # Übergabe — Stand nach Runde P12 (B2- und B3-Vorarbeit: Screenreader-Muster, Echo-Check-Höhe)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P11 = `272031f`), `main` = `fa579d0`.

@@ -56,8 +56,8 @@ statt stillschweigend geschlossen.
 | S1 | P8 (hängende Modifikator-Taste) ist **nicht auf dem Gerät des Owners bestätigt** | **erledigt (G1, 04.10.)** — Owner: „funktioniert wieder“ | **G1** |
 | S2 | Tastatur-Regressionen (P5, P5c, P6, P8) sind nur durch Wegwerf-Skripte belegt | **erledigt (A1, 03.10.)** | **A1** |
 | S3 | Wort- und Sende-Modus nie mit der Mess-Methode geprüft (Angebot aus P6) | **erledigt (A1, 03.10.)** — kein neuer Befund | **A1** |
-| S4 | Messgerät `keyLog` ist ein Provisorium | offen | **A2**, D10 |
-| S5 | Settings-Höhe bei 390 × 844: 960 px — **seit P8 (Log-Knopf) ungemessen** | offen | **C1**, D4 |
+| S4 | Messgerät `keyLog` ist ein Provisorium | **erledigt (A2, 04.10., P13)** — ausgebaut (D10-Standard, vom Owner nicht ausdrücklich bestätigt) | **A2**, D10 |
+| S5 | Settings-Höhe bei 390 × 844: 960 px — **seit P8 (Log-Knopf) ungemessen** | **gemessen (C1, 04.10., P13)**: 960 / 822 / 900 px (390×844 / 1280×720 / 1440×900); Entscheidung D4 **offen** | **C1**, D4 |
 | S6 | Sechs Konzeptfragen aus P5–P8 (Echo-Start, Alt+Buchstabe, Hash, „answer noted", Speed round) | offen | **C2**, D5–D9 |
 | S7 | Die 500 ms Nachdruck-Schutz (P5) sind eine Setzung, nicht an Menschen gemessen | offen | **H2** |
 
@@ -121,7 +121,7 @@ Nutzermeldungen. Schließt S2 und S3.
 | K1 | Training, `answering`, „K" mit **gesetztem Alt-Flag** | verbucht |
 | K2 | Lernkarte, Enter mit gesetztem Alt-Flag | schaltet weiter |
 | K3 | Wort-Modus, Eingabe, „K" mit gesetztem Alt-Flag | angenommen |
-| K4 | Settings, „Copy input log" | Zwischenablage trägt die Zeile mit `[ALT]` (entfällt mit A2) |
+| K4 | Settings, „Copy input log" | Zwischenablage trägt die Zeile mit `[ALT]` (**entfallen mit A2, P13**; seither 25 Fälle) |
 | K5 | Ctrl+R / Cmd+S in jedem Modus | App reagiert **nicht** (Schutz bleibt) |
 | K6 | Training, Antwort während des Tons, derselbe Buchstabe 10 ms nach der Auflösung (P5 A) | Auflösung bleibt stehen |
 | K7 | Training, Taste 1,3 s gehalten (P5 C) | Runde 1, 0 verbucht |
@@ -164,7 +164,7 @@ oben, mit Grund:
 - **K12 entfällt** zugunsten der Inventur-Fälle **T1–T2** (Training), **W1–W4**
   (Wort-Modus) und **S1–S4** (Sende-Modus) — je Phase der Tabelle in
   `HANDOVER.md` ein Anschlag je Taste.
-- **K4** (Messgerät) ist enthalten und **entfällt mit A2**.
+- **K4** (Messgerät) war enthalten und ist **mit A2 entfallen** (P13).
 
 **Rot-Test belegt (Akzeptanzkriterium 2):** je ein Fix gezielt ausgebaut, gebaut
 und nur die betroffenen Fälle ausgeführt — jedes Mal wurden genau die erwarteten
@@ -187,6 +187,7 @@ größerer Eingriff in `App.tsx`, als eine Messung rechtfertigt.
 
 | | |
 |---|---|
+| **Stand** | **Erledigt (04.10.2026, Runde P13).** `keyLog.ts`, Capture-Listener, `copyInputLog`, Prop, State, Knopf, `.settings-log-action` und K4 entfernt; Build-Kennung, `isBrowserChord` und `keyChord.test.ts` unberührt. `grep` auf `keyLog`/`recordKey`/`formatKeyLog`/`onCopyInputLog` im Quelltext leer. **Bundle −1.333 Byte** (235.957 → 234.624; −1,33 kB). `npm test` 481 (unverändert), `verify:amber` 37 Ansichten, `verify:keyboard` **25 Fälle** (vorher 26). **Rot-Test:** `altKey` wieder in `isBrowserChord` → K1, K2, K2b, K3, K3b, K3c alle rot (6 von 6), zurückgesetzt → grün. **Grenze:** D10 hat der Owner nicht ausdrücklich bestätigt; er kann es vor dem Merge umkehren. |
 | **Aufwand** | S |
 | **Entfernt** | `src/ui/keyLog.ts`; Capture-Listener und `copyInputLog` in `App.tsx`; Prop `onCopyInputLog`, State und Knopf in `Settings.tsx`; `.settings-log-action` in `styles.css`; Fall K4 in A1. |
 | **Bleibt** | Build-Kennung (P7), `isBrowserChord` samt Test (P8), `build.ts`. |
@@ -485,6 +486,8 @@ der 15-Zeichen-Fall bei 1280 × 720 ist schon heute betroffen.
 | **Aufwand** | S |
 | **Messung zuerst** | Höhe der Settings bei 390 × 844 / 1280 × 720 / 1440 × 900 **nach A2** (der Log-Knopf aus P8 ist dann weg). Bekannt ist nur der Stand von P7: 960 px bei 390 × 844 und 900 px bei 1440 × 900; seit dem Log-Knopf (P8) und bei 1280 × 720 gibt es **keine Messung**. |
 | **Entscheidung** | D4. (a) 960 akzeptieren — der Screen scrollte am Telefon schon vorher (seit P5b), die Kennung steht als Letztes. (b) Notiz unter „Characters" streichen (ca. −40 px). (c) Kennung und „Characters" in einen Block. **Empfehlung (a).** |
+| **Messung (04.10.2026, P13)** | Dokumenthöhe, 20 aktive Zeichen, `tools/prep/settings-height.mjs`. **Vor dem Ausbau** (P12-Stand): 1031 px bei 390 × 844 (scrollt, +187), 893 px bei 1280 × 720 (scrollt, +173), 900 px bei 1440 × 900 (scrollt nicht). **Nach dem Ausbau:** **960 px** bei 390 × 844 (scrollt, +116), **822 px** bei 1280 × 720 (scrollt, +102; neuer Referenzwert), **900 px** bei 1440 × 900 (scrollt nicht, Seite = Fenster). Der Log-Knopf kostete 71 px bei 390 und 1280; bei 1440 × 900 füllt die Seite das Fenster ohnehin. 960 / 900 entsprechen den Werten aus P7. **Keine Entscheidung getroffen.** |
+| **Stand** | Messung **erledigt**; D4 **offen** (Fable). |
 | **Akzeptanz** | Die gemessene Höhe steht in `HANDOVER.md`; die Entscheidung steht als Ruling dort. |
 
 ### C2 — Konzeptfragen aus P5–P8 (S6)
@@ -518,7 +521,7 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 | D1 | Glyphen `→ ✓ ✗ ≈` (B1) | Fable → **vom Owner am 04.10. an Claude delegiert** („Entscheide du“) | — | **Entschieden, siehe „D1 — Entscheidung“ unten.** Umsetzung PR 4. |
 | D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable | Ja, Option 3 (versteckter Text wie `Pattern.tsx`); Umfang 36 + 5 + 3 Stellen je Sprache. **Nach P12:** „Ja" bestätigt, DE-Wortlaut **offen** | bleibt; #5 offen |
 | D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable | (a) Tastenfeld. **Nach P12:** bestätigt (simuliert, kein Scrollen); Tastengröße und „aktiv“ offen | bleibt; #6.1 offen |
-| D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | 960 px bzw. Messwert nach A2 |
+| D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | **Nachgemessen (P13): 960 px bei 390 × 844, 822 px bei 1280 × 720, 900 px bei 1440 × 900**; scrollt an den ersten beiden |
 | D5 | Zeichen in `echo-ready` startet Wiedergabe | Fable | bestätigen | bleibt |
 | D6 | Alt+Buchstabe erreicht die App | Fable | bestätigen | bleibt |
 | D7 | Hash statt Versionsname | Fable | Hash | bleibt |
@@ -597,7 +600,7 @@ D  Abschluss ── zuletzt
 | PR | Inhalt | Wartet auf |
 |---|---|---|
 | 1 | A1 `verify:keyboard` (+ Befunde nach `FINDINGS.md`) | — |
-| 2 | A2 + C1 Messung | **bereit** (G1 = „sitzt“, D10 Standard: ausbauen) |
+| 2 | A2 + C1 Messung | **erledigt 04.10. (P13)**, Commit auf dem Branch, noch kein PR; D4 offen |
 | 3 | B1 Vorarbeit + cmap-Check (Absicherung, ohne Glyphen-Entscheidung) — **erledigt 03.10. (P11)**, Commit auf dem Branch, noch kein PR | — |
 | 4 | B1 Glyphen (Umsetzung) | **bereit** (D1 entschieden, Owner-Delegation 04.10.) |
 | 5 | B2 Screenreader-Muster (Vorarbeit **erledigt 04.10., P12**) | D2 |
@@ -619,8 +622,8 @@ eigenen Absatz „Was Fable sehen muss".
 | **#8** `✓ ✗` | wie #4 (zusammen mit ihm in B1 entschieden) |
 | S1 P8 bestätigt | G1: Owner meldet „sitzt" |
 | S2 / S3 | `verify:keyboard` grün, Rot-Test belegt, Wort-/Sende-Inventur durchlaufen |
-| S4 Messgerät | ausgebaut (A2) **oder** bewusst behalten (D10) |
-| S5 Settings | gemessene Höhe nach A2 steht in `HANDOVER.md` |
+| S4 Messgerät | ausgebaut (A2, P13) |
+| S5 Settings | gemessene Höhe nach A2 steht in `HANDOVER.md` (P13: 960 / 822 / 900 px) |
 | S6 Konzeptfragen | D5–D9 als Rulings protokolliert |
 | S7 500 ms | H2 durchgeführt, Wert bestätigt oder angepasst |
 
@@ -673,3 +676,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 03.10.2026 | Runde P11: B1-Vorarbeit (Fundstellen, cmap, Upstream, Lizenz, Fallback) eingetragen — Empfehlung D1 geändert; cmap-Check `verify:fonts` umgesetzt; neue Findings #11 (`≈`) und #12 (`verify:amber` lässt Server stehen). |
 | 04.10.2026 | Runde P12: B2- und B3-Vorarbeit eingetragen (Accessibility-Tree, Umfang der Muster-Stellen korrigiert; Echo-Check-Höhen in drei Viewports, Wege (a)/(b) simuliert) — D2 und D3 entscheidungsreif; neues Finding #13; Messskripte `tools/prep/`. |
 | 04.10.2026 | G1 = „sitzt“ (S1 erledigt), A2 freigegeben (D10 Standard: ausbauen). **D1 vom Owner an Claude delegiert und entschieden:** `→` (Fußzeile) und `≈` per Plex-Subset (Weg A), `✓ ✗` als SVG-Paar nach 1.1 §8 (Weg B), CTA-Pfeil bleibt Fallback (Weg C). D2 und D3 bleiben offen (Default: bleibt; Empfehlungen aus P12 unverändert). |
+| 04.10.2026 | Runde P13: A2 umgesetzt (Messgerät ausgebaut, K4 entfernt, `verify:keyboard` 25 Fälle, Bundle −1,33 kB, Rot-Test altKey belegt); C1 gemessen (960 / 822 / 900 px, vorher 1031 / 893 / 900); S4 erledigt, S5 gemessen, D4 bleibt offen; Messskript `tools/prep/settings-height.mjs`. |

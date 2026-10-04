@@ -397,25 +397,6 @@ const CASES = [
       await up(page, ' ', { mods: MOD.alt });
     },
   },
-  {
-    // Das Messgeraet (ui/keyLog.ts). Entfaellt mit Arbeitspaket A2.
-    id: 'K4',
-    name: 'Settings: „Copy input log" gibt den Mitschnitt mit [ALT] heraus (P8)',
-    seed: progress(),
-    clipboard: true,
-    async run(page) {
-      await openMenu(page, 'Settings');
-      await page.waitForSelector('.settings-log-action');
-      await tap(page, 'K', { mods: MOD.alt });
-      await page.locator('.settings-log-action').click();
-      await waitFor(
-        async () => /copied/i.test(await page.locator('.settings-log-action').innerText()),
-        { timeout: 3000, label: 'Knopf meldet "copied"' },
-      );
-      const text = await page.evaluate(() => navigator.clipboard.readText());
-      expect(/\[ALT\]/.test(text) && /KeyK/.test(text), `Mitschnitt ohne [ALT]/KeyK: ${text}`);
-    },
-  },
 
   // ---- Der Schutz bleibt: Strg- und Cmd-Kuerzel gehoeren dem Browser ------
   {
@@ -796,9 +777,6 @@ async function openBrowser() {
 
 async function runCase(browser, testCase) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
-  if (testCase.clipboard) {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE_URL });
-  }
   const page = await context.newPage();
   const pageErrors = [];
   page.on('pageerror', (error) => pageErrors.push(String(error)));

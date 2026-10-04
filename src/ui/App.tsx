@@ -123,7 +123,6 @@ import { dayQuotaLine, streakLine } from './statusLines';
 import { applyTheme, syncThemeColorMeta } from './theme';
 import { todayISO } from './today';
 import { isBrowserChord } from './keyChord';
-import { formatKeyLog, recordKey } from './keyLog';
 
 export function App() {
   /**
@@ -940,26 +939,6 @@ export function App() {
    * laufende Beutel behaelt seine restlichen Lose; das neue Zeichen kommt mit
    * dem naechsten Neufuellen (dieselbe Regel wie Ruling #103b).
    */
-  /*
-   * Den Mitschnitt weitergeben (ui/keyLog.ts). Der Nutzer reproduziert den
-   * Ausfall einmal und schickt die Zeilen -- damit ist die Frage, ob ein
-   * Anschlag ankam und mit welchen Flaggen, beantwortet statt geraten.
-   *
-   * `navigator.clipboard` braucht einen sicheren Kontext und kann abgelehnt
-   * werden. Scheitert es, landet der Text in der Konsole und der Knopf sagt
-   * das -- ein Messgeraet, das stumm scheitert, ist schlimmer als keines.
-   */
-  const copyInputLog = useCallback(async () => {
-    const text = formatKeyLog();
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      console.log(text);
-      return false;
-    }
-  }, []);
-
   const unlockNextCharacter = useCallback(() => {
     setSession((current) => {
       const { progress: unlocked, introduced } = unlockNext(current.progress);
@@ -1148,23 +1127,6 @@ export function App() {
   // zweimal ins Leere, was sich anfuehlt wie ein verschluckter Tastendruck,
   // obwohl der eigentliche Antwort-Anschlag laengst angekommen war. Ein
   // Anschlag aus dem Zeichensatz treibt den Ablauf jetzt in jeder Phase.
-  /*
-   * Das Messgeraet (siehe ui/keyLog.ts). Ein eigener Listener in der
-   * Capture-Phase, unabhaengig von jedem Modus: er entscheidet nichts, haelt
-   * nichts auf und ruft kein preventDefault -- er schreibt nur mit, was der
-   * Browser liefert.
-   *
-   * Absichtlich getrennt von den Handlern, statt in ihnen: die offene Frage
-   * ist, ob ein Anschlag ueberhaupt bei ihnen ankommt und mit welchen
-   * Flaggen. Ein Protokoll, das in denselben Handlern haengt, koennte diese
-   * Frage nicht beantworten -- es wuerde dieselbe Annahme teilen.
-   */
-  useEffect(() => {
-    const onAnyKey = (event: KeyboardEvent) => recordKey(event, menuOpen ? 'menu' : view);
-    window.addEventListener('keydown', onAnyKey, { capture: true });
-    return () => window.removeEventListener('keydown', onAnyKey, { capture: true });
-  }, [view, menuOpen]);
-
   useEffect(() => {
     if (view !== 'practice' || menuOpen) return undefined;
 
@@ -1404,7 +1366,6 @@ export function App() {
           totalCharacterCount={CHARACTER_ORDER.length}
           nextCharacter={nextCandidate(session.progress)}
           onUnlockNext={unlockNextCharacter}
-          onCopyInputLog={copyInputLog}
           headingRef={focusTarget}
         />
       ) : view === 'about' ? (

@@ -1520,19 +1520,6 @@ a.menu-item {
   font-size: 0.8125rem;
 }
 
-/*
- * Der Knopf des Messgeraets steht in derselben Fussnoten-Zeile wie die
- * Build-Kennung und erbt deren Groesse -- er ist eine Auskunft ueber das
- * Geraet, kein Angebot (1.1 Sect. 4). `.quiet-action` zentriert sonst; hier
- * beginnt er links, buendig mit "Build" darueber.
- */
-.settings-log-action {
-  margin: 0;
-  padding: 0;
-  font-size: inherit;
-  text-align: left;
-}
-
 .settings-build-id {
   color: var(--ink);
   font-variant-numeric: tabular-nums;
