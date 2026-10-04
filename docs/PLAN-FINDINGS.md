@@ -44,9 +44,12 @@ statt stillschweigend geschlossen.
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
 | **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **behoben** (P14, SVG-Paar `Mark.tsx`). H8 offen | **B1**, D1 |
 | 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **behoben** (P14, im Plex-Subset). H8 offen | **B1**, D1 |
-| 12 | `verify:amber` lässt einen Vorschau-Server stehen | **offen** (nicht mitrepariert) | — |
+| 12 | `verify:amber` lässt einen Vorschau-Server stehen | **offen** (nicht mitrepariert; in P18 erneut bestätigt, zusammen mit #15) | — |
 | 13 | Echo-Check scrollt schon bei 15 Zeichen bei 1280 × 720 (+55 px) | **behoben** (P15, mit B3) | **B3**, D3 |
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
+| 14 | Echo-Check hat keine „or just type“-Zeile | **offen** (neuer UI-String, Fables Wortlaut; nicht gebaut) | — |
+| 15 | `verify:amber` lässt weiterhin einen Vorschau-Server stehen | **offen** (Duplikat von #12) | — |
+| 16 | `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch | **offen** (einmalige Vorarbeit, nicht im Build) | — |
 | 10 | Anschrift im Impressum läuft zusammen | behoben (03.09.) | — |
 
 ### 1.2 Befunde und Vorschläge aus den Runden P5–P8
@@ -57,7 +60,7 @@ statt stillschweigend geschlossen.
 | S2 | Tastatur-Regressionen (P5, P5c, P6, P8) sind nur durch Wegwerf-Skripte belegt | **erledigt (A1, 03.10.)** | **A1** |
 | S3 | Wort- und Sende-Modus nie mit der Mess-Methode geprüft (Angebot aus P6) | **erledigt (A1, 03.10.)** — kein neuer Befund | **A1** |
 | S4 | Messgerät `keyLog` ist ein Provisorium | **erledigt (A2, 04.10., P13)** — ausgebaut (D10-Standard, vom Owner nicht ausdrücklich bestätigt) | **A2**, D10 |
-| S5 | Settings-Höhe bei 390 × 844: 960 px — **seit P8 (Log-Knopf) ungemessen** | **gemessen (C1, 04.10., P13)**: 960 / 822 / 900 px (390×844 / 1280×720 / 1440×900); Entscheidung D4 **offen** | **C1**, D4 |
+| S5 | Settings-Höhe bei 390 × 844: 960 px — **seit P8 (Log-Knopf) ungemessen** | **gemessen (C1, 04.10., P13)**: 960 / 822 / 900 px (390×844 / 1280×720 / 1440×900); Entscheidung D4 (a) vom Owner bestätigt (P17) | **C1**, D4 |
 | S6 | Sechs Konzeptfragen aus P5–P8 (Echo-Start, Alt+Buchstabe, Hash, „answer noted", Speed round) | **protokolliert (C2, P17)**: D4–D9 wie empfohlen bestätigt, kein Code | **C2**, D5–D9 |
 | S7 | Die 500 ms Nachdruck-Schutz (P5) sind eine Setzung, nicht an Menschen gemessen | offen | **H2** |
 
@@ -658,7 +661,7 @@ aus dem Code gelesen (der Pool wächst nur), nicht im Browser gesehen.
 | **Messung zuerst** | Höhe der Settings bei 390 × 844 / 1280 × 720 / 1440 × 900 **nach A2** (der Log-Knopf aus P8 ist dann weg). Bekannt ist nur der Stand von P7: 960 px bei 390 × 844 und 900 px bei 1440 × 900; seit dem Log-Knopf (P8) und bei 1280 × 720 gibt es **keine Messung**. |
 | **Entscheidung** | D4. (a) 960 akzeptieren — der Screen scrollte am Telefon schon vorher (seit P5b), die Kennung steht als Letztes. (b) Notiz unter „Characters" streichen (ca. −40 px). (c) Kennung und „Characters" in einen Block. **Empfehlung (a).** |
 | **Messung (04.10.2026, P13)** | Dokumenthöhe, 20 aktive Zeichen, `tools/prep/settings-height.mjs`. **Vor dem Ausbau** (P12-Stand): 1031 px bei 390 × 844 (scrollt, +187), 893 px bei 1280 × 720 (scrollt, +173), 900 px bei 1440 × 900 (scrollt nicht). **Nach dem Ausbau:** **960 px** bei 390 × 844 (scrollt, +116), **822 px** bei 1280 × 720 (scrollt, +102; neuer Referenzwert), **900 px** bei 1440 × 900 (scrollt nicht, Seite = Fenster). Der Log-Knopf kostete 71 px bei 390 und 1280; bei 1440 × 900 füllt die Seite das Fenster ohnehin. 960 / 900 entsprechen den Werten aus P7. **Keine Entscheidung getroffen.** |
-| **Stand** | Messung **erledigt**; D4 **offen** (Fable). |
+| **Stand** | Messung **erledigt**; D4 (a) „akzeptieren“ vom Owner bestätigt (P17, kein Fable-Ruling; Notion-Log steht aus). |
 | **Akzeptanz** | Die gemessene Höhe steht in `HANDOVER.md`; die Entscheidung steht als Ruling dort. |
 
 ### C2 — Konzeptfragen aus P5–P8 (S6)
@@ -683,7 +686,8 @@ Fable anders, ist die Umsetzung je ein kleiner Eingriff; entscheidet Fable
 |---|---|
 | **Aufwand** | S |
 | **Schritte** | 1. `FINDINGS.md`: je Finding eine Status-Zeile in der Form der bestehenden Einträge („**Status: entschieden und behoben** (Datum, Ruling #…)"); der Ursprungstext bleibt stehen. 2. `HANDOVER.md`: Kopf-Abschnitt je Runde, Inventur-Tabellen nachgezogen. 3. Gesamtlauf: `npm test`, `npm run build`, `verify:amber`, `verify:contrast`, `verify:keyboard`. 4. Dieser Plan: Status-Spalte in §1 aktualisieren, Datei **nicht** löschen (sie ist der Beleg). |
-| **Akzeptanz** | §6 vollständig abgehakt. |
+| **Stand** | **Erledigt (04.10.2026, Runde P18).** Schritte 1–4 ausgeführt (Status-Zeilen in `FINDINGS.md` für #7, #9, #12, #14, #15, #16 ergänzt; Rest stand schon; Inventur-Zeile Echo-Check nachgezogen; §1 aktualisiert; Gesamtlauf grün, Bundle-Delta unten). |
+| **Akzeptanz** | §6 vollständig abgehakt — **nicht möglich**: vier Findings und S7 hängen an menschlichen Prüfungen bzw. Rulings (siehe „Stand P18“ in §6). Abgehakt ist, was von hier aus abhakbar ist; der Rest ist benannt. |
 
 ## 4. Entscheidungsregister
 
@@ -694,12 +698,12 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 | D1 | Glyphen `→ ✓ ✗ ≈` (B1) | Fable → **vom Owner am 04.10. an Claude delegiert** („Entscheide du“) | — | **Entschieden, siehe „D1 — Entscheidung“ unten.** Umsetzung PR 4. |
 | D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable → **vom Owner am 04.10. an Claude delegiert** („entscheide du") | Ja, Option 3 (versteckter Text wie `Pattern.tsx`); Umfang 36 + 5 + 3 Stellen je Sprache. **Nach P12:** „Ja" bestätigt, DE-Wortlaut **offen** | **Entschieden (Option 3, „dit dah" EN und DE), siehe „D2 — Entscheidung".** Umsetzung PR 5 (P16). |
 | D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable → **vom Owner am 04.10. an Claude delegiert** („entscheide du“) | (a) Tastenfeld | **Entschieden (a), siehe „D3 — Entscheidung“.** Umsetzung PR 6 (P15). |
-| D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | **Nachgemessen (P13): 960 px bei 390 × 844, 822 px bei 1280 × 720, 900 px bei 1440 × 900**; scrollt an den ersten beiden |
-| D5 | Zeichen in `echo-ready` startet Wiedergabe | Fable | bestätigen | bleibt |
-| D6 | Alt+Buchstabe erreicht die App | Fable | bestätigen | bleibt |
-| D7 | Hash statt Versionsname | Fable | Hash | bleibt |
-| D8 | „answer noted"-Zeile (P5) | Fable | **nicht bauen**, erst H2 | nicht gebaut |
-| D9 | Speed round / Auflösung ohne Taste | Fable | bestätigen; Zusatzsatz optional | bleibt |
+| D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | **Owner hat (a) bestätigt (P17); Notion-Log steht aus.** Nachgemessen (P13): 960 px bei 390 × 844, 822 px bei 1280 × 720, 900 px bei 1440 × 900**; scrollt an den ersten beiden |
+| D5 | Zeichen in `echo-ready` startet Wiedergabe | Fable | bestätigen | bleibt — Owner bestätigt (P17), Notion-Log steht aus |
+| D6 | Alt+Buchstabe erreicht die App | Fable | bestätigen | bleibt — Owner bestätigt (P17), Notion-Log steht aus |
+| D7 | Hash statt Versionsname | Fable | Hash | bleibt — Owner bestätigt (P17), Notion-Log steht aus |
+| D8 | „answer noted"-Zeile (P5) | Fable | **nicht bauen**, erst H2 | nicht gebaut — Owner bestätigt (P17), Notion-Log steht aus; wartet auf H2 |
+| D9 | Speed round / Auflösung ohne Taste | Fable | bestätigen; Zusatzsatz optional | bleibt — Owner bestätigt (P17), Notion-Log steht aus |
 | D10 | Messgerät ausbauen oder behalten | Owner | ausbauen (nach G1) | **G1 = „sitzt“ (04.10.) → ausbauen gilt als Standard; A2 ist die nächste Umsetzung.** Der Owner hat D10 nicht ausdrücklich beantwortet und kann es vor dem Merge von A2 umkehren. |
 | D11 | `verify:keyboard`: Hilfscode duplizieren oder aus `verify:amber` extrahieren | Owner | duplizieren | dupliziert |
 
@@ -837,7 +841,7 @@ D  Abschluss ── zuletzt
 | 5 | B2 Screenreader-Muster — **erledigt 04.10. (P16)**, Commit auf dem Branch, noch kein PR (Vorarbeit P12) | H3 (Screenreader) vor dem Merge; Entscheidung zu den Fließtext-Stellen (Pixeldiff, B2) |
 | 6 | B3 Echo-Check — **erledigt 04.10. (P15)**, Commit auf dem Branch, noch kein PR | H9 (Owner am Telefon) vor dem Merge |
 | 7 | C2 — **erledigt 04.10. (P17)**, nur Protokoll, kein Code; Commit auf dem Branch, noch kein PR | — (Fable-Rulings zu D4–D9 stehen für den Notion-Log noch aus) |
-| 8 | D Abschluss | alles |
+| 8 | D Abschluss — **erledigt 04.10. (P18)**, Commit auf dem Branch, noch kein PR | Offenes siehe §6 („Stand P18“) und §7 |
 
 Die PRs 1, 3 und die Vorarbeit von 4–6 laufen **sofort**; sie brauchen keine
 Entscheidung. Jeder PR hat eigenen Build-Hash, eigene Messwerte und einen
@@ -857,6 +861,40 @@ eigenen Absatz „Was Fable sehen muss".
 | S5 Settings | gemessene Höhe nach A2 steht in `HANDOVER.md` (P13: 960 / 822 / 900 px) |
 | S6 Konzeptfragen | D5–D9 als Rulings protokolliert — **erfüllt (P17, Owner-Bestätigung; Notion-Log steht aus)** |
 | S7 500 ms | H2 durchgeführt, Wert bestätigt oder angepasst |
+
+### Stand P18 (04.10.2026) — Punkt für Punkt
+
+Gesamtlauf am Stand dieser Runde: `npm test` 488 · `npm run build` grün (18
+Seiten, 88 Muster-Stellen, `verify:fonts`, `verify:colors`) · `verify:amber` 39
+Ansichten · `verify:contrast` 24 Werte · `verify:keyboard` 25 Fälle (46 s).
+**Bundle gegen `main` (`fa579d0`):** JS 235.957 → 235.318 B (**−639 B**; gzip
+71,69 kB), CSS 20.690 → 20.636 B (−54 B), Plex 400/500/600 je +88/+96/+160 B,
+Newsreader unverändert.
+
+| Finding | Stand | Abgehakt? |
+|---|---|---|
+| **#4** `→` | Fußzeile im Plex-Subset (cmap, `verify:fonts`); CTA „bleibt“ mit Begründung in `FINDINGS.md` (Weg C). Ruling = Owner-Delegation D1, **Notion-Log steht aus**. H8 offen | **ja, mit Vorbehalt** (Kriterium „Weg A/C“ erfüllt; Rulings-Eintrag und H8 offen) |
+| **#5** Muster | 88 Stellen, Quelltext byte-identisch, Tabellen-Pixeldiff 0. Fließtext-Zeilen: Subpixel-Abweichung, **Entscheidung B2 offen**. H3 offen | **teilweise** |
+| **#6.1** Echo-Check | gemessen ohne Scrollen (6 Fälle). Owner-Delegation D3, Notion-Log steht aus. **H9 offen** | **teilweise** |
+| **#8** `✓ ✗` | SVG-Paar. H8 offen, Notion-Log steht aus | **ja, mit Vorbehalt** |
+| S1, S2/S3, S4 | G1 (04.10.), A1, A2 | **ja** |
+| S5 Settings | 960 / 822 / 900 px nachgemessen; D4 (a) vom Owner bestätigt | **ja** (Notion-Log steht aus) |
+| S6 D5–D9 | vom Owner bestätigt, kein Code | **ja, mit Vorbehalt** (Owner-Aussage, kein Fable-Ruling; Notion-Log steht aus) |
+| S7 500 ms | H2 nicht durchgeführt | **nein** |
+
+**Offen und benannt:**
+
+- **H2** (S7, D8): Nachdruck-Schutz an Menschen messen.
+- **H3** (#5, B3): Screenreader über Alphabet-Tabelle, „dit dah“ (EN/DE), gedimmte Tasten.
+- **H8** (#4, #8): `→`, `✓`/`✗` auf Windows, macOS, iOS, Android; Form von Haken und Kreuz gegenüber Fables Erwartung.
+- **H9** (#6.1): Echo-Check am Telefon, 44–50-px-Tasten.
+- **B2-Pixeldiff:** so lassen oder die drei Fließtext-Stellen je Sprache nicht markieren — Owner/Fable.
+- **Notion-Log:** Owner-Delegationen D1–D3 und die Bestätigungen D4–D9 sind Owner-Aussagen und müssen vom Owner als Rulings eingetragen werden (CLAUDE.md §2).
+- **Offene Findings ohne Zuständigkeit im Plan:** #12/#15 (stehender Vorschau-Server), #14 (Hinweiszeile im Echo-Check), #16 (`ax-pattern.mjs`).
+
+Ein Finding gilt nach §0 erst als beseitigt, wenn sein Abschlusskriterium erfüllt
+ist; für #5 und #6.1 hängt das an H3/H9 und einer Entscheidung, für #4/#8 an H8.
+Nichts davon ist hier umgesetzt oder still entschieden worden.
 
 ## 7. Menschliche Prüfungen
 
@@ -912,3 +950,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 04.10.2026 | Runde P15: **D3 vom Owner an Claude delegiert und entschieden** (Weg a, ortsfest; „aktiv“ = Optionen des Checks; Schwelle wie Training). **B3 umgesetzt** (PR 6, noch kein PR angelegt): `Echo` rendert ab 13 Optionen das 36-Plätze-Tastenfeld; Engine, `styles.css` unverändert; sechs Fälle (15/36 Zeichen × 3 Viewports) ohne Scrollen, #13 mit behoben; `verify:amber` 39 Ansichten (+2), `verify:keyboard` 25, `npm test` 481; Bundle JS +174 Byte. H9 offen. D4–D9 vom Owner wie empfohlen bestätigt (D4 a, D7 Hash, D8 nicht bauen); D2 für B2 vorentschieden (Option 3, „dit dah“ EN und DE). |
 | 04.10.2026 | Runde P16: **D2 vom Owner an Claude delegiert und entschieden** (Option 3, „dit dah“ EN und DE, 36 + 5 + 3 Stellen je Sprache; DE-Wortlaut eine Setzung). **B2 umgesetzt** (PR 5, noch kein PR angelegt): Generator markiert 88 Muster-Stellen (`aria-hidden` + `.visually-hidden`), `verify:learn` zählt sie aus dem Quelltext, `npm test` 488, Rot-Test belegt; Quelltext byte-identisch, App-Bundle unverändert. Pixeldiff: Tabellen 0, Fließtext-Zeilen mit Subpixel-Abweichung (Entscheidung offen). #5 behoben; H3 offen; neues Finding #16. |
 | 04.10.2026 | Runde P17: **C2 abgeschlossen (PR 7), ohne Code.** D4–D9 wie empfohlen bestätigt; Code gegen jede Zeile geprüft, entspricht der Empfehlung. `npm test` 488, `npm run build` grün, `verify:amber` 39, `verify:keyboard` 25; Bundle unverändert (JS 235.318 B, CSS 20.636 B). Offen: Notion-Log der D4–D9-Rulings (Owner), H2 für D8. |
+| 04.10.2026 | Runde P18: **D Abschluss (PR 8).** `FINDINGS.md`: Status-Zeilen für #7, #9, #12, #14, #15, #16; §1 und §4 nachgezogen (D4–D9 Owner-bestätigt, #14–#16 aufgenommen); Inventur-Zeile Echo-Check in `HANDOVER.md`. Gesamtlauf grün; Bundle gegen `main` JS −639 B. §6 abgehakt, soweit von hier möglich; offen: H2, H3, H8, H9, B2-Pixeldiff, Notion-Log. |

@@ -1,3 +1,33 @@
+# Übergabe — Stand nach Runde P18 (D: Abschluss, PR 8)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P17 = `34298e5`), `main` = `fa579d0`.
+**P18 ist Plan-Schritt D (PR 8).** Kein PR angelegt. **Kein Code geändert**; berührt
+sind nur `FINDINGS.md`, `docs/PLAN-FINDINGS.md` und diese Übergabe.
+
+**Was geprüft war:** Status-Zeilen standen schon für #1–#6, #8, #10, #11, #13; es
+fehlten #7 und #9 (nur im Fließtext), #12, #14, #15, #16. Ergänzt, Ursprungstext
+unverändert. Plan §1 (Status-Spalte, Zeilen #14–#16), §4 (D4–D9 Owner-bestätigt),
+§5 (PR 8) und §6 (neuer Absatz „Stand P18“, Punkt für Punkt) nachgezogen; Datei
+bleibt. Inventur: Zeile Echo-Check (Tastenfeld seit P15) ergänzt; die übrigen
+Zeilen stimmen mit dem Code überein (Settings ohne eigenen Listener, K4 nur im
+historischen P8-Abschnitt).
+
+**Gesamtlauf:** `npm test` **488**; `npm run build` grün; `verify:amber` **39
+Ansichten**; `verify:contrast` **24 Werte**; `verify:keyboard` **25 Fälle** (46 s).
+**Bundle gegen `main`:** JS 235.957 → **235.318 B (−639 B)**, CSS 20.690 → 20.636 B,
+Plex +88/+96/+160 B, Newsreader unverändert. Timing-Budget nicht berührt.
+
+**Offen (benannt, nicht entschieden):** H2 (500 ms, S7/D8), H3 (Screenreader), H8
+(Glyphen auf Geräten, Form von Haken/Kreuz), H9 (Echo-Check am Telefon), B2-Pixeldiff
+(Fließtext-Stellen so lassen oder nicht markieren), Notion-Log der Owner-Delegationen
+D1–D3 und der Bestätigungen D4–D9 (Owner-Aussagen, keine Fable-Rulings). Findings
+#12/#15, #14, #16 bleiben offen. **Nichts davon ist umgesetzt.**
+
+**Nicht belegt:** alles, was ein Gerät oder einen Menschen braucht (H2–H9);
+Firefox/Safari. `FINDINGS.md` #15 erneut bestätigt (Server PID 4194, per `kill` beendet).
+
+---
+
 # Übergabe — Stand nach Runde P17 (C2: Konzeptfragen D4–D9 protokolliert)
 
 **Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. **P17 ist PR 7
@@ -1198,6 +1228,7 @@ einzeln in der Tabelle.
 | **Echo-Check, `echo-ready`/`echo-listening`** | Leertaste/Enter | *bewusst kein eigener Listener — der Play-Kreis trägt in diesen Phasen ohnehin den Fokus (`Learn.tsx`), native Aktivierung spielt bereits ab* |
 | | ein Zeichen aus `answerPool` | **seit P6:** in `echo-ready` startet es die Wiedergabe (wie Ruling #105 im Training), in `echo-listening` wird es gepuffert und gilt, sobald der Ton durch ist (wie Ruling #103a) — vorher in beiden Phasen stumm verschluckt |
 | **Echo-Check, Antwort offen** (`echo-answering`) | ein Zeichen aus `answerPool` | beantwortet mit diesem Zeichen — **neu** |
+| | Darstellung ab 13 Optionen (**seit P15**) | ortsfestes Tastenfeld (`.keypad`, Nicht-Pool-Tasten gedimmt, „ — not in this round“) statt Dreier-Gitter; die Tastenbelegung (`echoKeyAction`, `answerPool`) ist unverändert, K9–K11 laufen unverändert |
 | | *jede Phase* | Auto-Repeat einer gehaltenen Taste zählt seit P6 nicht mehr als zweiter Anschlag |
 | | ein Zeichen außerhalb der Optionen | *bewusst nichts — nur was auf dem Schirm als Option steht* |
 | **Echo-Check, Auflösung** (`echo-feedback`) | Enter oder Leertaste | weiter (nächster Abruf oder nächste Karte) — **neu** |

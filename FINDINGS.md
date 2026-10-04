@@ -209,6 +209,10 @@ nächsten Commit.**
 
 ## 7. Der Start-Screen scrollt, sobald das Tastenfeld gilt — BEHOBEN (Ruling #98)
 
+**Status: entschieden und behoben** (Runde D1, Ruling Notion-Log #98): eine
+Tastenhöhe für alle Modi (46 px), Abstand über dem Tastenfeld 32 → 24 px; kein
+Zustand überschreitet 844 px bei 390 × 844. Der Ursprungstext bleibt stehen.
+
 **Gefunden:** 02.09.2026, beim Vermessen des Wort-Screens (Runde F2). **Nicht
 neu und nicht von dieser Runde** — auf `main` (66d0af4) genauso gemessen.
 **Übersprungen, ohne es zu sagen:** Der Auftrag zu Runde D1 verlangte für
@@ -293,6 +297,10 @@ neuen Dateien, ändert aber die Form von Haken und Kreuz — und das ist eine
 Gestaltungsfrage. **Gehört Fable.**
 
 ## 9. Die Auflösung einer falschen Antwort scrollt weiter — 849 px
+
+**Status: entschieden und behoben** (Runde D1, Ruling Notion-Log #96, Teil C.10;
+Nachtrag #98): 843 px, natürliche Inhaltskante 820 px bei fünf Fehlpositionen.
+Der Ursprungstext bleibt stehen.
 
 **Gefunden:** 02.09.2026, beim Nachmessen des Wort-Screens für Ruling #94.
 **Nicht neu und nicht von diesem Commit** — vorher waren es 891 px, die 46-px-
@@ -418,6 +426,9 @@ ein Schnitt das Zeichen trägt, und fordert dann das Streichen des Eintrags.
 
 ## 12. `verify:amber` lässt nach dem Lauf einen Vorschau-Server stehen
 
+**Status: offen** (Stand 04.10.2026, Runde P18; bewusst nicht mitrepariert — eine
+fremde Datei, CLAUDE.md §5). Zuletzt bestätigt in P18, siehe #15.
+
 **Gefunden:** 03.10.2026, beim Prüfen der Definition of Done (Runde P11).
 
 Nach `npm run verify:amber` hört weiter ein `vite preview` zu (nach dem Lauf
@@ -451,6 +462,9 @@ bei 1280 × 720 jetzt 720 px Seite bei 720 px Fenster (vorher 775, +55).
 
 ## 14. Der Echo-Check hat keine „or just type“-Zeile, obwohl die Tastatur dort antwortet
 
+**Status: offen** (Stand 04.10.2026, Runde P18; neuer UI-String und eine Höhenmessung
+nötig, Fables Wortlaut — nicht gebaut).
+
 **Gefunden:** 04.10.2026, beim Umsetzen von B3 (Runde P15).
 
 Das Training zeigt ab 900 px unter dem Tastenfeld „or just type — the keyboard
@@ -464,12 +478,17 @@ wäre. **Was es kosten würde:** eine Zeile in `Echo`, eine Messung.
 
 ## 15. `verify:amber` lässt weiterhin einen Vorschau-Server stehen (zu #12)
 
+**Status: offen** (Stand 04.10.2026, Runde P18; Duplikat von #12, nicht mitrepariert).
+
 **Gefunden:** 04.10.2026, Runde P15: nach `npm run verify:amber` lief ein
 `vite preview --port 4183` weiter (nur über `ps` + `kill <pid>` zu beenden).
 Bestätigt #12, unverändert, nicht mitrepariert. Runde P16: wieder derselbe
-Befund (PID per `ps` gefunden, per `kill <pid>` beendet). Runde P17: ein drittes Mal (PID 1706).
+Befund (PID per `ps` gefunden, per `kill <pid>` beendet). Runde P17: ein drittes Mal (PID 1706). Runde P18: ein viertes Mal (PID 4194, per `kill` beendet).
 
 ## 16. `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch
+
+**Status: offen** (Stand 04.10.2026, Runde P18; einmalige Vorarbeit, nicht im Build,
+nicht mitrepariert).
 
 **Gefunden:** 04.10.2026, Runde P16.
 
