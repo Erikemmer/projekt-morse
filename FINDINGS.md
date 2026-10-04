@@ -467,7 +467,7 @@ wäre. **Was es kosten würde:** eine Zeile in `Echo`, eine Messung.
 **Gefunden:** 04.10.2026, Runde P15: nach `npm run verify:amber` lief ein
 `vite preview --port 4183` weiter (nur über `ps` + `kill <pid>` zu beenden).
 Bestätigt #12, unverändert, nicht mitrepariert. Runde P16: wieder derselbe
-Befund (PID per `ps` gefunden, per `kill <pid>` beendet).
+Befund (PID per `ps` gefunden, per `kill <pid>` beendet). Runde P17: ein drittes Mal (PID 1706).
 
 ## 16. `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch
 

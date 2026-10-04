@@ -58,7 +58,7 @@ statt stillschweigend geschlossen.
 | S3 | Wort- und Sende-Modus nie mit der Mess-Methode geprüft (Angebot aus P6) | **erledigt (A1, 03.10.)** — kein neuer Befund | **A1** |
 | S4 | Messgerät `keyLog` ist ein Provisorium | **erledigt (A2, 04.10., P13)** — ausgebaut (D10-Standard, vom Owner nicht ausdrücklich bestätigt) | **A2**, D10 |
 | S5 | Settings-Höhe bei 390 × 844: 960 px — **seit P8 (Log-Knopf) ungemessen** | **gemessen (C1, 04.10., P13)**: 960 / 822 / 900 px (390×844 / 1280×720 / 1440×900); Entscheidung D4 **offen** | **C1**, D4 |
-| S6 | Sechs Konzeptfragen aus P5–P8 (Echo-Start, Alt+Buchstabe, Hash, „answer noted", Speed round) | offen | **C2**, D5–D9 |
+| S6 | Sechs Konzeptfragen aus P5–P8 (Echo-Start, Alt+Buchstabe, Hash, „answer noted", Speed round) | **protokolliert (C2, P17)**: D4–D9 wie empfohlen bestätigt, kein Code | **C2**, D5–D9 |
 | S7 | Die 500 ms Nachdruck-Schutz (P5) sind eine Setzung, nicht an Menschen gemessen | offen | **H2** |
 
 Aus `HANDOVER.md` kommen weitere offene Punkte (Learn-Meta-Texte, Passkey-Label,
@@ -675,6 +675,8 @@ Fable anders, ist die Umsetzung je ein kleiner Eingriff; entscheidet Fable
 | D8 — „answer noted" am Ende von `listening` (P5, berührt CLAUDE.md §2.2) | nicht gebaut | Gestaltungsentscheidung; **zuerst H2** (Menschen-Messung der 500 ms) |
 | D9 — Speed round: jedes aktive Zeichen ist eine Antwort (P5c); die Auflösung zeigt „you typed E" nicht als Taste, wenn E nicht im Dreier-Gitter steht | ja / nein | Optional: den Satz „Not quite — that was M." um das Getippte ergänzen — neuer UI-String, Fables Wortlaut |
 
+**Stand (04.10.2026, P17):** Der Owner hat D4–D9 wie empfohlen bestätigt (D4 a, D5/D6/D9 bestätigt, D7 Hash, D8 nicht bauen). Code geprüft: er entspricht in allen Punkten der Spalte „Heute“ (`echoKeyAction` → `'play'` in `echo-ready`; `keyChord.ts` ohne `altKey`; Kennung = Hash; keine „answer noted“-Zeile; Speed-round-Auflösung unverändert). **Es gibt nichts umzusetzen; PR 7 ist ein reiner Protokoll-Eintrag.** Die Bestätigung ist eine Owner-Aussage, kein Fable-Ruling; den Notion-Log-Eintrag macht der Owner. D9-Zusatzsatz („you typed …“) nicht gebaut: neuer UI-String, Fables Wortlaut. D8 wartet weiter auf H2.
+
 ### D — Abschluss
 
 | | |
@@ -834,7 +836,7 @@ D  Abschluss ── zuletzt
 | 4 | B1 Glyphen (Umsetzung) — **erledigt 04.10. (P14)**, Commit auf dem Branch, noch kein PR | H8 (Owner am Gerät) vor dem Merge |
 | 5 | B2 Screenreader-Muster — **erledigt 04.10. (P16)**, Commit auf dem Branch, noch kein PR (Vorarbeit P12) | H3 (Screenreader) vor dem Merge; Entscheidung zu den Fließtext-Stellen (Pixeldiff, B2) |
 | 6 | B3 Echo-Check — **erledigt 04.10. (P15)**, Commit auf dem Branch, noch kein PR | H9 (Owner am Telefon) vor dem Merge |
-| 7 | C2, je nach Antwort | D4–D9 |
+| 7 | C2 — **erledigt 04.10. (P17)**, nur Protokoll, kein Code; Commit auf dem Branch, noch kein PR | — (Fable-Rulings zu D4–D9 stehen für den Notion-Log noch aus) |
 | 8 | D Abschluss | alles |
 
 Die PRs 1, 3 und die Vorarbeit von 4–6 laufen **sofort**; sie brauchen keine
@@ -853,7 +855,7 @@ eigenen Absatz „Was Fable sehen muss".
 | S2 / S3 | `verify:keyboard` grün, Rot-Test belegt, Wort-/Sende-Inventur durchlaufen |
 | S4 Messgerät | ausgebaut (A2, P13) |
 | S5 Settings | gemessene Höhe nach A2 steht in `HANDOVER.md` (P13: 960 / 822 / 900 px) |
-| S6 Konzeptfragen | D5–D9 als Rulings protokolliert |
+| S6 Konzeptfragen | D5–D9 als Rulings protokolliert — **erfüllt (P17, Owner-Bestätigung; Notion-Log steht aus)** |
 | S7 500 ms | H2 durchgeführt, Wert bestätigt oder angepasst |
 
 ## 7. Menschliche Prüfungen
@@ -909,3 +911,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 04.10.2026 | Runde P14: **B1 umgesetzt** (PR 4, noch kein PR angelegt): `→`/`≈` ins Plex-Subset ergänzt (nicht neu subsettet — Abweichung A), `✓ ✗` als SVG-Paar `Mark.tsx`, `verify:fonts` mit `ACCEPTED_FALLBACK` (Abweichung B); #4 (Fußzeile), #8, #11 behoben, #4 (CTA) „bleibt“. H8 offen. |
 | 04.10.2026 | Runde P15: **D3 vom Owner an Claude delegiert und entschieden** (Weg a, ortsfest; „aktiv“ = Optionen des Checks; Schwelle wie Training). **B3 umgesetzt** (PR 6, noch kein PR angelegt): `Echo` rendert ab 13 Optionen das 36-Plätze-Tastenfeld; Engine, `styles.css` unverändert; sechs Fälle (15/36 Zeichen × 3 Viewports) ohne Scrollen, #13 mit behoben; `verify:amber` 39 Ansichten (+2), `verify:keyboard` 25, `npm test` 481; Bundle JS +174 Byte. H9 offen. D4–D9 vom Owner wie empfohlen bestätigt (D4 a, D7 Hash, D8 nicht bauen); D2 für B2 vorentschieden (Option 3, „dit dah“ EN und DE). |
 | 04.10.2026 | Runde P16: **D2 vom Owner an Claude delegiert und entschieden** (Option 3, „dit dah“ EN und DE, 36 + 5 + 3 Stellen je Sprache; DE-Wortlaut eine Setzung). **B2 umgesetzt** (PR 5, noch kein PR angelegt): Generator markiert 88 Muster-Stellen (`aria-hidden` + `.visually-hidden`), `verify:learn` zählt sie aus dem Quelltext, `npm test` 488, Rot-Test belegt; Quelltext byte-identisch, App-Bundle unverändert. Pixeldiff: Tabellen 0, Fließtext-Zeilen mit Subpixel-Abweichung (Entscheidung offen). #5 behoben; H3 offen; neues Finding #16. |
+| 04.10.2026 | Runde P17: **C2 abgeschlossen (PR 7), ohne Code.** D4–D9 wie empfohlen bestätigt; Code gegen jede Zeile geprüft, entspricht der Empfehlung. `npm test` 488, `npm run build` grün, `verify:amber` 39, `verify:keyboard` 25; Bundle unverändert (JS 235.318 B, CSS 20.636 B). Offen: Notion-Log der D4–D9-Rulings (Owner), H2 für D8. |

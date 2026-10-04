@@ -1,3 +1,29 @@
+# Übergabe — Stand nach Runde P17 (C2: Konzeptfragen D4–D9 protokolliert)
+
+**Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. **P17 ist PR 7
+im Plan (Schritt C2).** Kein PR angelegt. **Kein Code geändert**; berührt sind nur
+`docs/PLAN-FINDINGS.md`, `FINDINGS.md` und diese Übergabe.
+
+**Warum kein Code:** Der Owner hat D4–D9 wie empfohlen bestätigt (D4 a, D5/D6/D9
+bestätigt, D7 Hash, D8 nicht bauen). Der Plan sieht Umsetzung nur bei „anders“ vor.
+Gegen den Code geprüft: D5 `echoKeyAction` gibt in `echo-ready` `'play'` zurück
+(`src/engine/learn.ts`); D6 `keyChord.ts` zählt `altKey` nicht mehr; D7 Kennung ist
+ein Hash; D8 keine „answer noted“-Zeile (`grep` leer); D9 unverändert, Zusatzsatz
+nicht gebaut (neuer UI-String, Fables Wortlaut). D4: 960 / 822 / 900 px akzeptiert.
+
+**Bundle:** unverändert (JS `index-BM2jghgC.js` 235.318 B, CSS `index-DUx-k1as.css`
+20.636 B) — Delta 0.
+
+**Tests:** `npm test` **488** (19 Dateien); `npm run build` grün (18 Seiten, 88
+Muster-Stellen); `verify:amber` **39 Ansichten** grün; `verify:keyboard` **25 Fälle**
+grün (44 s). Timing-Budget nicht berührt (kein Audio-/Engine-Code).
+
+**Nicht belegt:** dass die Bestätigung als Fable-Ruling vorliegt (Owner-Aussage;
+Notion-Log-Eintrag steht aus); H2 (D8); H3, H8, H9 weiter offen; Firefox/Safari.
+`FINDINGS.md` #15 erneut bestätigt (Vorschau-Server blieb stehen, per PID beendet).
+
+---
+
 # Übergabe — Stand nach Runde P16 (B2: Screenreader-Muster der Alphabet-Tabelle)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P15 = `c7b2482`), `main` = `fa579d0`.
