@@ -154,7 +154,7 @@ describe('renderArticle', () => {
     expect(html).toContain('<div class="table-wrap">');
     expect(html).not.toContain('<thead>');
     // Seit B2 steht das Muster als aria-hidden-Zeichen plus vorgelesene Form da.
-    expect(html).toContain('<strong>A</strong> <span class="morse-pattern" aria-hidden="true">·−</span>');
+    expect(html).toContain('<strong>A</strong><span class="morse-pattern" aria-hidden="true"> ·−</span>');
   });
 
   it('behält eine echte Kopfzeile', () => {
@@ -171,8 +171,9 @@ describe('Morse-Muster für Screenreader (B2, Finding #5)', () => {
 
   it('gibt einer Zelle „**X** ·−" die vorgelesene Form und versteckt die Zeichen', () => {
     const html = render('| | |\n|---|---|\n| **A** ·− | **E** · |');
-    expect(html).toContain(`<strong>A</strong> ${hidden('·−', 'dit dah')}`);
-    expect(html).toContain(`<strong>E</strong> ${hidden('·', 'dit')}`);
+    // Das Leerzeichen vor dem Muster bleibt im Span (keine Subpixel-Verschiebung).
+    expect(html).toContain(`<strong>A</strong>${hidden(' ·−', 'dit dah')}`);
+    expect(html).toContain(`<strong>E</strong>${hidden(' ·', 'dit')}`);
   });
 
   it('erkennt die reine Code-Zelle der Satzzeichen-Tabelle', () => {
@@ -182,7 +183,11 @@ describe('Morse-Muster für Screenreader (B2, Finding #5)', () => {
   });
 
   it('erkennt Muster im Fließtext ab zwei Zeichen, auch in Klammern und fett', () => {
-    expect(render('Das R (·−·) dauert.')).toContain(`R (${hidden('·−·', 'dit dah dit')}) dauert`);
+    // Der Span umfasst das ganze Wort; die Satzzeichen stehen auch im versteckten Span.
+    expect(render('Das R (·−·) dauert.')).toContain(`R ${hidden('(·−·)', '(dit dah dit)')} dauert`);
+    expect(render('Rhythmus, ··· −−− ···, nicht.')).toContain(
+      `Rhythmus, ${hidden('··· −−− ···,', 'dit dit dit dah dah dah dit dit dit,')} nicht`,
+    );
     expect(render('**··· −−− ···** ist SOS.')).toContain(
       `<strong>${hidden('··· −−− ···', 'dit dit dit dah dah dah dit dit dit')}</strong>`,
     );
