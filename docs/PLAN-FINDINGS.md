@@ -1,6 +1,6 @@
 # PLAN — Beseitigung aller Findings
 
-**Stand:** 03.10.2026 · `main` = `fa579d0` (P6, P7, P8 gemergt) · Branch
+**Stand:** 04.10.2026 · `main` = `fa579d0` (P6, P7, P8 gemergt) · Branch
 `claude/clever-turing-77fkyo` steht auf `main`.
 
 **Zweck.** Ein Plan, der jedes offene Finding aus [`FINDINGS.md`](../FINDINGS.md)
@@ -39,12 +39,13 @@ statt stillschweigend geschlossen.
 | 2 | Google-Fonts-Abruf | behoben (31.08.) | — |
 | 3 | Weitere Maße neben den Guidelines | entschieden und behoben (01.09., #46) | — |
 | **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **offen** (Vorarbeit erledigt 03.10., D1 entscheidungsreif) | **B1**, D1 |
-| **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **offen** | **B2**, D2 |
-| **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) offen** | **B3**, D3 |
+| **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **offen** (Vorarbeit erledigt 04.10., D2 entscheidungsreif; Umfang größer als gedacht) | **B2**, D2 |
+| **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) offen** (Vorarbeit erledigt 04.10., D3 entscheidungsreif) | **B3**, D3 |
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
 | **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **offen** (Vorarbeit erledigt 03.10., D1 entscheidungsreif) | **B1**, D1 |
 | 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **offen**, gehört zu D1 | **B1**, D1 |
 | 12 | `verify:amber` lässt einen Vorschau-Server stehen | **offen** (nicht mitrepariert) | — |
+| 13 | Echo-Check scrollt schon bei 15 Zeichen bei 1280 × 720 (+55 px) | **offen**, gehört zu D3 | **B3**, D3 |
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
 | 10 | Anschrift im Impressum läuft zusammen | behoben (03.09.) | — |
 
@@ -318,6 +319,85 @@ im Rot-Test belegt (HANDOVER P11).
 | **Tests** | `tools/learn/`: Fixture mit einer Tabellenzeile → erwartetes HTML. `verify:learn` bekommt eine Pflicht: **jede Muster-Zelle trägt die vorgelesene Form** (Zählung gegen die 36 Zeichen). |
 | **Akzeptanz** | Der Markdown-Quelltext in `content/learn/` ist **byte-identisch** (Diff leer); die 36 Zeichen tragen je eine vorgelesene Form; sichtbare Darstellung unverändert (Pixeldiff der Seite = 0); H3. |
 
+#### Vorarbeit — Ergebnis (04.10.2026, Runde P12)
+
+Nichts entschieden, kein App-Code, kein Learn-Text, kein Generator verändert
+(`git diff` auf `src/`, `content/learn/`, `tools/learn/` leer). Messung:
+`tools/prep/ax-pattern.mjs` (eine Messung, kein Check, nicht im Build).
+
+**a) Wie die Muster heute ankommen** (headless Chromium, CDP
+`Accessibility.getFullAXTree`/`getPartialAXTree`):
+
+| Stelle | Accessibility-Tree |
+|---|---|
+| Learn-Tabelle, Zelle `**A** ·−` (EN und DE) | Zelle, Name `A ·−`; das Muster steht als **gewöhnlicher Text** (`StaticText " ·−"`) im Baum. Kein versteckter Text, kein `aria-*` in irgendeiner Zelle (0 Treffer). |
+| App, Lernkarte/Auflösung (`Pattern.tsx`) | **Gelöst:** `.pattern-row` ist `aria-hidden`, im Baum steht `StaticText "dah dit dah"` (für K). |
+
+Das Finding stimmt also für die **Learn-Seiten**, nicht für die App.
+
+**Der Umfang ist größer als im Plan-Entwurf (Korrektur).** Die Umsetzung oben
+spricht von Zellen der Form `**X** ·−`. Pro Alphabet-Seite (`morse-code-alphabet`
+und `morsealphabet`, je 41 Zellen mit Muster) und in den Geschichts-Seiten stehen
+Muster aber an **vier Arten von Stellen**:
+
+| Art | Beispiel | Anzahl je Sprache |
+|---|---|---|
+| Zelle `**X** ·−` (Buchstaben, Ziffern) | `**A** ·−`, `**E** ·` | 36 |
+| **Reine Code-Zelle** der Satzzeichen-Tabelle (zweite Spalte, ohne Buchstaben davor) | `Period . | ·−·−·−` | 5 |
+| Muster im Fließtext in Klammern | „the letter R (·−·)“ | 1 (Alphabet-Seite) |
+| SOS als fett gesetzte Folge | `**··· −−− ···**` | 1 auf der Alphabet-Seite, 1 auf der Geschichts-Seite |
+
+Der Entwurf („Zellen der Form `**X** ·−`“) deckt nur die ersten 36 ab; die
+**5 reinen Code-Zellen und die 3 Fließtext-Stellen blieben stumm**. Zusätzlich
+gibt es Zeichen, die **kein** Muster sind und nicht erfasst werden dürfen:
+`·` als Trennzeichen („**Dot:** 1 unit · **Dash:** 3 units“, Alphabet-Seite
+Z. 48) und inline-code-Einzelzeichen („A dot is written here as `·`“). Eine
+einfache Ersetzung `[·−]+` träfe sie falsch.
+
+**Nicht belegt, nur ein echter Screenreader klärt es (H3, Mensch):**
+
+- ob `·` (U+00B7) und `−` (U+2212) vorgelesen werden („Mittelpunkt“, „Minus“),
+  gar nicht oder je nach Satzzeichen-Einstellung — der Baum zeigt, dass die
+  Zeichen **dort stehen**, nicht, was gesprochen wird. Die Annahme in Finding #5
+  („bei *Satzzeichen: keine* heißt die Zelle nur noch ‚A‘“) ist plausibel,
+  aber **hier nicht gemessen**;
+- ob `role="img"` + `aria-label` als „Grafik“ angesagt wird (Option 1);
+- wie VoiceOver/NVDA/TalkBack in der Tabellen-Navigation (Zelle für Zelle)
+  die Zelle ausgeben;
+- wie ein deutscher Sprachausgabe-Motor „dit dah“ ausspricht.
+
+**b) Optionen für D2** (am DOM simuliert, im Generator **nicht** gebaut; Baum-
+Ergebnis je Option, Zelle `A`):
+
+| Option | Baum (Zellenname) | Sichtbar | Preis |
+|---|---|---|---|
+| **1 — `aria-label`** am Muster, `role="img"` | `A dit dah`; der Text selbst entfällt aus dem Baum | unverändert | Eine „Grafik“ mitten in einer Tabellenzelle; ob und wie sie angesagt wird, ist SR-abhängig (H3). Ohne `role` wird `aria-label` auf einem `<span>` von vielen SR ignoriert. |
+| **2 — sichtbarer Text „dit dah“** statt `·−` | `A dit dah` | **ändert sich** | Widerspricht „sichtbare Darstellung unverändert“ (Akzeptanz) und CONCEPT-LEARN §5 („Text mit · und −“). Nicht empfohlen. |
+| **3 — Zeichen `aria-hidden`, daneben verstecktes `<span>`** | `A dit dah` (Zeichen aus dem Baum, `StaticText "dit dah"` drin) | unverändert | **Dieselbe Technik wie `Pattern.tsx`** (dort gemessen: `StaticText "dah dit dah"`). **`.visually-hidden` fehlt im Learn-Stylesheet** (`tools/learn/learn.css`: 0 Treffer, im Seiten-CSS nicht vorhanden): eine Regel (~10 Zeilen, aus `src/styles.css:1738` kopiert, nicht extrahiert) muss mit. Das Verstecken per `clip-path` lässt den Text **markier- und kopierbar** und für Suchmaschinen sichtbar — nicht gemessen, nur genannt. |
+
+**Wirkung auf die Markdown-Quelle:** keine. Alle drei Optionen entstehen im
+Generator (`tools/learn/pages.mjs`, `renderer`), `content/learn/*.md` bleibt
+byte-identisch — nachzuweisen mit leerem `git diff` (bei dieser Vorarbeit
+erfüllt, weil nichts angefasst wurde). **Erkennungsregel**, damit der Generator
+nichts Falsches trifft: in Tabellenzellen die **ganze Zelle oder ihr
+nachgestellter Rest** aus `[·−]` (deckt `**E** ·` und die 5 reinen Code-Zellen);
+im Fließtext nur Folgen **ab zwei Zeichen** bzw. in Klammern — einzelne `·`
+sind dort Trennzeichen. Das ist eine Kontext-Regel, kein einheitliches Muster:
+Aufwand daher **S–M**, eher M als die ursprünglichen „zehn Zeilen“.
+
+**EN-first (§2.10):** „dit dah“ ist Englisch und für die EN-Seiten und die App
+konsistent (`spellPattern`). Für die DE-Seiten gilt §2.10 laut Plan nicht (Learn-
+Seiten sind keine UI-Strings). Ob eine deutsche Sprachausgabe „dit dah“ sinnvoll
+spricht und ob ein deutscher Leser „di dah“ erwartet, ist **nicht belegt** und
+Fables Entscheidung.
+
+**c) Wirkung auf D2: Empfehlung bestätigt für das „Ob“ und für Option 3;
+Umfang korrigiert; der DE-Wortlaut bleibt offen.** Ja zu einer vorgelesenen
+Form (Option 3, identisch zur App); der Umfang sind **36 + 5 + 3 Stellen je
+Sprache** statt 36; `verify:learn` müsste entsprechend nicht „36“, sondern alle
+Muster-Stellen zählen. Nicht belegt, bis H3 gelaufen ist, ob die heutige Lage
+überhaupt hörbar fehlerhaft ist.
+
 ### B3 — Echo-Check: die Liste wächst bis 36 Optionen (Finding #6, Punkt 1)
 
 Gemessen (headless Chromium, 390 × 844): 15 eingeführte Zeichen = 15 Optionen,
@@ -335,6 +415,67 @@ Das gilt am Anfang, nicht bei 36.
 | **Zusätzlich zu klären** | Was „aktiv" im Echo-Check heißt: die Optionen des Checks oder der ganze aktive Satz. |
 | **Wechselwirkung mit P6** | Der Echo-Check beantwortet nur Tasten aus `answerPool` (Ruling #108). Bei Weg (a) bleibt das so — der Pool ändert sich nicht, nur die Darstellung. Test K9–K11 laufen unverändert. |
 | **Akzeptanz** | Nachgemessen bei 390 × 844, 1280 × 720, 1440 × 900 mit 15 **und** 36 eingeführten Zeichen: kein Scrollen mehr; `verify:amber` grün; eine Ansicht „Echo-Check, 36 Zeichen" wird in `verify:amber` ergänzt, damit der Fall dauerhaft gemessen wird (ob der Echo-Check heute schon eine Ansicht ist, ist vor Beginn zu prüfen); H9. |
+
+#### Vorarbeit — Ergebnis (04.10.2026, Runde P12)
+
+Nichts entschieden, kein App-Code verändert. Messung:
+`tools/prep/echo-height.mjs` (eine Messung, kein Check, nicht im Build; 30 s).
+Seed wie `verify:keyboard`: N aktive Zeichen aus `CHARACTER_ORDER`, N−1
+eingeführt, das letzte fällig → Echo-Check mit `answerPool` = N Optionen.
+Gemessen in Phase `echo-answering`, headless Chromium, gebauter Stand
+(`index-B0VVu-Kv.js`).
+
+**a) Heute** (Seitenhöhe gegen Fenster; „Bühne“ = `.stage`, die schrumpft):
+
+| Viewport | Zeichen | Zeilen | Taste | Seite | scrollt | Bühne |
+|---|---|---|---|---|---|---|
+| 390 × 844 | 15 | 5 | 106 × 64 | 844 | nein | 304 |
+| 390 × 844 | **36** | **12** | 106 × 64 | **1311** | **ja, +467** | 239 |
+| 1280 × 720 | 15 | 5 | 189 × 64 | 775 | **ja, +55** | 235 |
+| 1280 × 720 | **36** | 12 | 189 × 64 | **1307** | **ja, +587** | 235 |
+| 1440 × 900 | 15 | 5 | 189 × 64 | 900 | nein | 360 |
+| 1440 × 900 | **36** | 12 | 189 × 64 | **1307** | **ja, +407** | 235 |
+
+Die 1311 px bei 390 × 844 bestätigen die Zahl aus Finding #6. **Neu:** der
+Echo-Check scrollt **schon bei 15 Zeichen** bei 1280 × 720 (+55 px); die Bühne
+gibt bis 235 px nach und kann nicht weiter (FINDINGS #13). Horizontal läuft
+nichts über. Zeilenumbrüche: die Optionen brechen im Dreier-Gitter nach 3 je
+Zeile — 15 → 5, 36 → 12 Zeilen; kein Zeichen umgebrochen (Einzelzeichen).
+
+**b) Die Wege, am DOM simuliert** (kein gebauter Code; Tabelle = Seite/Fenster
+und Tasten):
+
+| Weg | 390 × 844 | 1280 × 720 | 1440 × 900 |
+|---|---|---|---|
+| **(a) Tastenfeld, nur Pool-Optionen** (Klasse `keypad`, 15 bzw. 36 Tasten) | 36 Z.: 844/844, 6 Zeilen, 50 × 46; 15 Z.: 844/844, 3 Zeilen | 720/720, 36 Z.: 3 Zeilen, 44 × 44 | 900/900, 3 Zeilen, 44 × 44 |
+| **(a) ortsfest mit 36 Plätzen** (`data-active`, wie `ReviewPicker`/Training; 15 und 36 gleich hoch) | 844/844; Antwortblock 316 px, Bühne 364 | 720/720; Antworten 144, Bühne 412 | 900/900; Antworten 144, Bühne 592 |
+| **(b) deckeln auf 6 Optionen** (gefragte + Ablenker) | 844/844; 2 Zeilen, 106 × 64 | 720/720 | 900/900 |
+
+In allen simulierten Fällen **kein Scrollen**, Abstand Bühne↔Antworten ≥ 24 px,
+Bühne ≥ 364 px (heute bis hinunter auf 235 px). Weg (a) löst auch den
+Fall „15 Zeichen bei 1280 × 720“; (b) ebenfalls.
+
+**Grenzen der Simulation:** (a) ist nur die Höhe; das echte Raster bräuchte die
+Taste-zu-Platz-Zuordnung (`KEYPAD_LAYOUT`) und `data-active`, die Größen
+(50 × 46 bzw. 44 × 44) stammen aus der bestehenden `.keypad`-Regel, nicht aus
+einer Auslegung für den Echo-Check. (b) ist nur ein Ausblenden — die eigentliche
+Auswahl der Ablenker gibt es nicht. Antwort-Zeit/Treffsicherheit ist **nicht
+gemessen** (H9 am Telefon).
+
+**c) Entscheidungsvorlage D3:**
+
+| Weg | Wirkung | Preis |
+|---|---|---|
+| **(a) Tastenfeld** | Kein Scrollen in drei Viewports bei 15 und 36 (simuliert). Die wandernde Taste verschwindet; feste Plätze wie im Training. | Taste schmaler: **50 × 46 px bei 390**, **44 × 44 px** am Desktop (statt 106/189 × 64) — kleinere Trefferfläche, H4/H9. Es ist eine Setzung, was „aktiv“ im Echo-Check ist (Pool oder ganzer Satz, **offen**) — bei ortsfestem Raster wären die Nicht-Pool-Tasten gedimmt und müssten für Screenreader „not in this round“ tragen (wie im Training). Engine unberührt: `answerPool`/`echoKeyAction` bleiben, K9–K11 laufen unverändert. Dazu eine neue Ansicht in `verify:amber` („Echo-Check, 36 Zeichen“; heute gibt es nur „Antwort offen“/„Auflösung“ mit **einer** Option). |
+| **(b) Deckeln** | Kein Scrollen, große Tasten (106 × 64), Gitter bleibt. | **Ändert die Engine:** `answerPool` und damit, welche Tasten antworten (`echoKeyAction`, Ruling #108); Auswahl der Ablenker ist eine neue Regel mit Tests, sie berührt P6 und K9–K11. Ablenker-Wahl kann die Schwierigkeit verschieben (Fables Frage). Und: Tasten, die man kennt, würden nicht angeboten — widerspricht dem Zweck des Checks („alles bisher Eingeführte“). |
+| **(c) Lassen** | Nichts. | **Scrollen bei 36 (+407 bis +587 px) in allen drei Viewports, und bereits ab 15 Zeichen bei 1280 × 720 (+55 px).** Das Finding bleibt offen. |
+
+**d) Wirkung auf D3: Empfehlung (a) bleibt, mit zwei Einschränkungen.**
+Bestätigt ist, dass (a) in der Simulation alle sechs Fälle ohne Scrollen
+löst und die Engine nicht berührt. **Offen bleiben:** (1) die Größe der Tasten
+(50 × 46 / 44 × 44 gegen die heutigen 64 px, nur am Telefon zu beurteilen, H4/H9);
+(2) was „aktiv“ im Echo-Check heißt. (c) ist ausdrücklich nicht „kostenlos“:
+der 15-Zeichen-Fall bei 1280 × 720 ist schon heute betroffen.
 
 ### C1 — Settings-Höhe (S5)
 
@@ -374,8 +515,8 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 | | Frage | Wer | Empfehlung | Ohne Entscheidung |
 |---|---|---|---|---|
 | D1 | Glyphen `→ ✓ ✗` (B1): neu subsetten, SVG, oder Fallback akzeptieren? | Fable | A, **falls** Upstream die Zeichen hat; sonst B für `✓ ✗`, Fallback für `→` | bleibt Fallback; #4, #8, #11 offen. **Nach der Vorarbeit (P11) geändert: siehe B1, „Vorarbeit — Ergebnis“.** |
-| D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable | Ja; DE ebenfalls „dit dah" | bleibt; #5 offen |
-| D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable | (a) Tastenfeld | bleibt; #6.1 offen |
+| D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable | Ja, Option 3 (versteckter Text wie `Pattern.tsx`); Umfang 36 + 5 + 3 Stellen je Sprache. **Nach P12:** „Ja" bestätigt, DE-Wortlaut **offen** | bleibt; #5 offen |
+| D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable | (a) Tastenfeld. **Nach P12:** bestätigt (simuliert, kein Scrollen); Tastengröße und „aktiv“ offen | bleibt; #6.1 offen |
 | D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | 960 px bzw. Messwert nach A2 |
 | D5 | Zeichen in `echo-ready` startet Wiedergabe | Fable | bestätigen | bleibt |
 | D6 | Alt+Buchstabe erreicht die App | Fable | bestätigen | bleibt |
@@ -410,8 +551,8 @@ D  Abschluss ── zuletzt
 | 2 | A2 + C1 Messung | G1, D10 |
 | 3 | B1 Vorarbeit + cmap-Check (Absicherung, ohne Glyphen-Entscheidung) — **erledigt 03.10. (P11)**, Commit auf dem Branch, noch kein PR | — |
 | 4 | B1 Glyphen | D1 |
-| 5 | B2 Screenreader-Muster | D2 |
-| 6 | B3 Echo-Check | D3 |
+| 5 | B2 Screenreader-Muster (Vorarbeit **erledigt 04.10., P12**) | D2 |
+| 6 | B3 Echo-Check (Vorarbeit **erledigt 04.10., P12**) | D3 |
 | 7 | C2, je nach Antwort | D4–D9 |
 | 8 | D Abschluss | alles |
 
@@ -481,3 +622,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 03.10.2026 | Erste Fassung (nach P8). |
 | 03.10.2026 | A1 umgesetzt (`verify:keyboard`, 26 Fälle, Rot-Test belegt); S2 und S3 erledigt. |
 | 03.10.2026 | Runde P11: B1-Vorarbeit (Fundstellen, cmap, Upstream, Lizenz, Fallback) eingetragen — Empfehlung D1 geändert; cmap-Check `verify:fonts` umgesetzt; neue Findings #11 (`≈`) und #12 (`verify:amber` lässt Server stehen). |
+| 04.10.2026 | Runde P12: B2- und B3-Vorarbeit eingetragen (Accessibility-Tree, Umfang der Muster-Stellen korrigiert; Echo-Check-Höhen in drei Viewports, Wege (a)/(b) simuliert) — D2 und D3 entscheidungsreif; neues Finding #13; Messskripte `tools/prep/`. |

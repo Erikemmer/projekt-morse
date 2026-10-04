@@ -1,3 +1,58 @@
+# Übergabe — Stand nach Runde P12 (B2- und B3-Vorarbeit: Screenreader-Muster, Echo-Check-Höhe)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P11 = `272031f`), `main` = `fa579d0`.
+**P12 ist Plan-Schritt 3:** Messungen und Entscheidungsvorlagen für D2 und D3.
+**Nichts entschieden, kein App-Code, kein Learn-Text, kein Generator geändert**
+(`git diff` auf `src/`, `content/learn/`, `tools/learn/` leer). Bundle-Delta
+**0** (`dist/assets/index-*.js` 235.957 Byte = 235,96 kB wie P11; Schriften
+unverändert).
+
+**Was es ist:**
+
+1. **B2 (Finding #5, D2):** Accessibility-Tree der Alphabet-Tabelle (EN und DE)
+   und der App gelesen, drei Optionen am DOM simuliert. Ergebnis in
+   `docs/PLAN-FINDINGS.md`, B2, „Vorarbeit — Ergebnis“.
+2. **B3 (Finding #6 Punkt 1, D3):** Höhe des Echo-Checks bei 15 und 36 Zeichen in
+   390 × 844, 1280 × 720, 1440 × 900; Wege (a)/(b) simuliert. Ergebnis in B3.
+3. **Zwei Messskripte**, `tools/prep/ax-pattern.mjs` und
+   `tools/prep/echo-height.mjs` — **Messungen, keine Checks**, nicht im Build,
+   kein `package.json`-Script. Hilfscode (Vorschau-Server, Browser-Start)
+   **dupliziert**, nicht extrahiert (D11; das ist jetzt der vierte Ort, siehe
+   „Was Fable sehen muss“ 5).
+
+**Was Fable sehen muss:**
+
+1. **D2: der Umfang ist größer als im Plan.** Nicht nur 36 Zellen `**X** ·−`,
+   sondern je Sprache **36 + 5 reine Code-Zellen (Satzzeichen-Tabelle) + 3
+   Fließtext-Stellen** (R in Klammern, SOS auf Alphabet- und Geschichts-Seite).
+   Dazu Fälle, die kein Muster sind (`·` als Trennzeichen, Inline-Code). Die
+   Erkennung ist eine Kontext-Regel; Aufwand eher M als S.
+2. **D2: Empfehlung bestätigt (Option 3, versteckter Text wie `Pattern.tsx`)** —
+   aber `.visually-hidden` **fehlt im Learn-Stylesheet**; eine Regel muss dort mit.
+   Die App ist bereits gelöst (`StaticText "dah dit dah"` im Baum).
+3. **D2: nicht belegt.** Ob `·`/`−` heute überhaupt hörbar fehlen, und wie
+   `role="img"` angesagt wird, kann nur ein echter Screenreader klären (H3). Der
+   Baum zeigt, was *dort steht*, nicht, was gesprochen wird. DE-Wortlaut
+   („dit dah“ oder „di dah“) ist Fables Frage.
+4. **D3: Empfehlung (a) bestätigt, simuliert.** Heute 1307–1311 px bei 36 Zeichen
+   (+407 bis +587 px Scrollen in allen drei Viewports); (a) und (b) lösen es.
+   **Neu (FINDINGS #13): schon bei 15 Zeichen scrollt der Echo-Check bei
+   1280 × 720 (+55 px).** Offen: Tastengröße (50 × 46 / 44 × 44 statt 64 px, nur am
+   Gerät zu beurteilen) und was „aktiv“ im Echo-Check heißt.
+5. **Grenzen der Simulation:** (a) und (b) sind DOM-Eingriffe, nur die Höhe ist
+   gemessen, nicht Verhalten und Treffsicherheit. Die Höhe „Seite = Fenster“
+   allein beweist kein Passen (die Bühne schrumpft) — deshalb sind Bühnenhöhe
+   und Abstand mitgemessen (≥ 24 px, Bühne ≥ 364 px).
+
+**Tests:** 481, unverändert. `npm test` (19 Dateien, 481), `npm run build`
+(inkl. `verify:fonts`, `verify:learn`, 18 Seiten), `verify:amber` (37 Ansichten)
+und `verify:keyboard` (26 Fälle) grün.
+
+Berührt: `tools/prep/ax-pattern.mjs`, `tools/prep/echo-height.mjs` (neu),
+`docs/PLAN-FINDINGS.md`, `FINDINGS.md` (#13), diese Übergabe.
+
+---
+
 # Übergabe — Stand nach Runde P11 (B1-Vorarbeit + cmap-Check: `npm run verify:fonts`)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P10 = `22dfc04`), `main` = `fa579d0`.

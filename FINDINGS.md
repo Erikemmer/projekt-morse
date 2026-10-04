@@ -393,3 +393,19 @@ noch den alten `dist/` ausliefert.
 **Nicht mitrepariert:** eine fremde Datei (CLAUDE.md 5), nicht Teil dieser
 Aufgabe. **Was es kosten würde:** der Start direkt über `node` wie in
 `tools/keyboard/check.mjs`, wenige Zeilen.
+
+## 13. Der Echo-Check scrollt schon bei 15 Zeichen, wenn das Fenster 1280 × 720 hat
+
+**Gefunden:** 04.10.2026, bei der Messung für B3 (Runde P12).
+
+Finding #6 Punkt 1 nennt den Echo-Check erst bei 36 Optionen als zu hoch. Die
+Messung (`tools/prep/echo-height.mjs`) zeigt: bei **15** eingeführten Zeichen
+ist die Seite bei 1280 × 720 **775 px hoch (+55 px Scrollen)**, bei 390 × 844
+und 1440 × 900 passt sie (844 bzw. 900). Die Bühne (`.stage`) gibt dort schon
+bis auf ihr Minimum (235 px) nach. Der Fall ist also nicht erst „bei 36“,
+sondern ab etwa 13–15 Zeichen am Laptop-Fenster.
+
+**Nicht mitrepariert:** Teil von D3 (Echo-Check-Liste), gehört Fable. Jeder
+der Wege (a) und (b) löst ihn mit (in der Simulation, siehe
+`docs/PLAN-FINDINGS.md`, B3).
+
