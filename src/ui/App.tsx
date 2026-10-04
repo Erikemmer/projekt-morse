@@ -123,6 +123,7 @@ import { dayQuotaLine, streakLine } from './statusLines';
 import { applyTheme, syncThemeColorMeta } from './theme';
 import { todayISO } from './today';
 import { isBrowserChord } from './keyChord';
+import { Mark } from './Mark';
 
 export function App() {
   /**
@@ -1703,7 +1704,7 @@ function Verdict({ correct, char }: { correct: boolean; char: string }) {
   return (
     <span className="verdict" data-kind={correct ? 'hit' : 'miss'}>
       <span className="verdict-mark" aria-hidden="true">
-        {correct ? '✓' : '✗'}
+        <Mark kind={correct ? 'hit' : 'miss'} />
       </span>
       <span>{correct ? 'Correct.' : `Not quite — that was ${char}.`}</span>
     </span>
@@ -1792,7 +1793,7 @@ function Answers({
             <span aria-hidden="true">{char}</span>
             {mark !== undefined && (
               <span className="answer-mark" aria-hidden="true">
-                {mark === 'correct' ? '✓' : '✗'}
+                <Mark kind={mark === 'correct' ? 'hit' : 'miss'} />
               </span>
             )}
             <span className="visually-hidden">

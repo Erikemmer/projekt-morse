@@ -1,3 +1,80 @@
+# Übergabe — Stand nach Runde P14 (B1: `→ ≈` im Plex-Subset, `✓ ✗` als SVG-Paar)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P13 = `8f0c56a`), `main` = `fa579d0`.
+**P14 ist Plan-Schritt 5 (PR 4):** die Umsetzung von D1 (Owner-Delegation
+04.10.2026). Kein PR angelegt. **Bundle:** JS 234.624 → **235.144 Byte** (+520 B,
+gzip 71,69 kB — die Komponente `Mark` an zehn Stellen); Schriften zusammen
+**+344 B** (400: 22.588 → 22.676, 500: 24.184 → 24.280, 600: 24.252 → 24.412),
+Newsreader unverändert.
+
+**Was es ist:**
+
+1. **`→` und `≈` im IBM-Plex-Subset** (Weg A). **Nicht neu subsettet**, sondern in
+   die bestehenden drei Dateien ergänzt (`tools/fonts/add-glyphs.py`): das
+   heutige Subset ist Plex 3.201, `complete` 3.005, und 223–225 von 232 Zeichen
+   unterscheiden sich — ein Neu-Subsetten hätte den ganzen Text verändert. Das
+   Skript prüft selbst, dass jeder alte Umriss, jede Metrik und jeder
+   cmap-Eintrag bitgleich bleiben.
+2. **`✓` und `✗` als SVG-Paar** (Weg B), `src/ui/Mark.tsx`: Polyline-Haken und
+   Diagonalkreuz, 1,5 px `non-scaling-stroke`, runde Enden, 24er Raster, `1em`
+   groß (die bestehenden Regeln 18/12/11 px bestimmen das Maß), `currentColor`,
+   `aria-hidden`. Zehn Fundstellen in `App.tsx`, `Learn.tsx`, `Send.tsx`,
+   `Words.tsx`, `Settings.tsx`; eine CSS-Regel `.mark { display: block }`.
+3. **`verify:fonts`:** `KNOWN_GAPS` ist leer (Mechanismus bleibt); neu
+   `ACCEPTED_FALLBACK` für den **CTA-Pfeil** in `content/learn/` (Weg C, Newsreader
+   hat ihn nicht, Fables Text bleibt byte-identisch). Rot, wenn Newsreader den
+   Codepoint doch trägt; meldet die Stelle in jedem Lauf (14 Dateien).
+4. **Findings:** #4 Fußzeile behoben / CTA „bleibt“, #8 und #11 behoben
+   (`FINDINGS.md`, `docs/PLAN-FINDINGS.md` B1 „Umsetzung“).
+
+**Die sechs Bedingungen aus „D1 — Entscheidung“:** 1 erfüllt mit Vorbehalt
+(Form), 2 erfüllt, 3 erfüllt aber anders (Abweichung A), 4 in der Sache erfüllt,
+nicht im Wortlaut (Abweichung B), 5 teilweise (kein Pixeldiff, nicht jeder Modus
+einzeln gesehen), 6 offen (H8). Einzelheiten: `docs/PLAN-FINDINGS.md`, B1,
+„Umsetzung“.
+
+**Was Fable sehen muss:**
+
+1. **Die Form von Haken und Kreuz.** Guidelines 1.1 §8 regelt Strich, Enden und
+   Raster, **nicht die Gestalt** der beiden Zeichen. Gebaut ist die Standardform
+   dieser Strichsprache; ob das Fables Hand ist, ist seine Entscheidung
+   (Bedingung 1 sagte „bei Unklarheit anhalten“ — ich habe weitergemacht, weil
+   die Umsetzung umkehrbar ist und ein Stopp hier nur die Messwerte verzögert
+   hätte; das ist eine Abwägung, kein Beleg).
+2. **Der Strich wirkt leichter als das alte Schriftzeichen.** Bei 12 px und 11 px
+   (Tastenfeld, Theme-Haken) ist das Zeichen ca. 6 px breit mit 1,5 px Strich;
+   lesbar im Screenshot, am Gerät nicht beurteilt (H8).
+3. **`→`/`≈` stammen aus Plex 3.005, der Rest aus 3.201.** Gleiche Einheit (1000
+   upem), aber das Hinting dieser zwei Glyphen ist das der älteren Version.
+   Unter Windows nicht gesehen.
+4. **Der CTA-Pfeil bleibt Fallback** (Liberation Serif/Georgia je System): eine
+   bewusste Entscheidung, kein offenes Finding mehr.
+5. **Das Amber der richtigen Antwort** (`#92400e`, interner Shade nach Addendum
+   (b)) färbt jetzt auch deren SVG-Haken über `currentColor` — wie vorher das
+   Schriftzeichen; kein zweites Amber, `verify:amber` 37 Ansichten grün.
+
+**Tests:** `npm test` 481 (19 Dateien, unverändert — keine Test erwartete die
+Zeichen als Text). `npm run build` grün (`verify:fonts`: 62 Dateien, 110
+Codepoints, 234 in der Markenfamilie; `verify:learn`: 18 Seiten).
+`verify:amber` **37 Ansichten** grün. `verify:keyboard` **25 Fälle** grün (43 s).
+**Rot-Test `verify:fonts`:** Glyphen aus dem Subset → rot für `→` und `≈`;
+`ACCEPTED_FALLBACK`-Familie auf Plex → rot „Veraltete Ausnahme“; beide
+zurückgenommen. **Sichtprüfung** (Playwright, Wegwerf-Skript, Screenshots nur im
+Scratchpad): Training richtig/falsch bei 390 × 844 und 1440 × 900 — Strich
+1,5 px, `aria-hidden`, kein `✓`/`✗` mehr im Text, kein Überlauf; Theme-Haken in
+System + sechs Themes (`currentColor` folgt dem Theme); Schrift am Knoten per
+CDP: Fußzeile mit `→` (390 px) und `.note` mit `≈` aus „IBM Plex Sans (custom)“.
+**Nicht belegt:** Fußzeile bei 1440 px (Knoten ohne Ergebnis), Echo-Check,
+Wort- und Sende-Modus einzeln als Bild, Pixeldiff, Screenreader-Ansage, Geräte
+(H8).
+
+Berührt: `src/ui/Mark.tsx` (neu), `src/ui/{App,Learn,Send,Words,Settings}.tsx`,
+`src/styles.css` (eine Regel), `src/fonts/ibm-plex-sans-latin-{400,500,600}-normal.woff2`,
+`tools/fonts/add-glyphs.py` (neu), `tools/fonts/check.mjs`, `FINDINGS.md`,
+`docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
 # Übergabe — Stand nach Runde P13 (A2 + C1: Messgerät ausgebaut, Settings-Höhe gemessen)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P12-Docs = `da5ca68`), `main` = `fa579d0`.

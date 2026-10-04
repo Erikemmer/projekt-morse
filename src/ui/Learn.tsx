@@ -17,6 +17,7 @@ import {
 } from '../engine/learn';
 import { Pattern } from './Pattern';
 import { isBrowserChord } from './keyChord';
+import { Mark } from './Mark';
 
 export function Learn({
   state,
@@ -357,7 +358,7 @@ function Echo({
           {attempt !== null && (
             <span className="verdict" data-kind={attempt.correct ? 'hit' : 'miss'}>
               <span className="verdict-mark" aria-hidden="true">
-                {attempt.correct ? '✓' : '✗'}
+                <Mark kind={attempt.correct ? 'hit' : 'miss'} />
               </span>
               <span>{attempt.correct ? 'Correct.' : `Not quite — that was ${attempt.char}.`}</span>
             </span>
@@ -389,7 +390,7 @@ function Echo({
               <span aria-hidden="true">{option}</span>
               {mark !== undefined && (
                 <span className="answer-mark" aria-hidden="true">
-                  {mark === 'correct' ? '✓' : '✗'}
+                  <Mark kind={mark === 'correct' ? 'hit' : 'miss'} />
                 </span>
               )}
               <span className="visually-hidden">

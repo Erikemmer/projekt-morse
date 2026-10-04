@@ -8,15 +8,25 @@
  * wechselt je System (FINDINGS #4, #8). Ohne diesen Check taucht das naechste
  * fehlende Zeichen erst nach dem Deploy auf.
  *
- * **Bekannte Luecken** (`KNOWN_GAPS`): heute fehlen U+2192, U+2713, U+2717
- * (FINDINGS #4, #8) und U+2248 (#11, beim ersten Lauf dieses Checks gefunden).
- * Sie sind dokumentiert und offen, die Entscheidung dazu (PLAN-FINDINGS D1)
- * gehoert Fable. Rot wird der Check bei
- *   1. jedem NEUEN fehlenden Codepoint, und
+ * **Stand nach D1** (PLAN-FINDINGS, "D1 -- Entscheidung", Owner-Delegation
+ * 04.10.2026): U+2192 und U+2248 stehen jetzt im IBM-Plex-Subset
+ * (`tools/fonts/add-glyphs.py`); U+2713/U+2717 werden nicht mehr als Text
+ * gezeichnet (SVG, `src/ui/Mark.tsx`). `KNOWN_GAPS` ist damit leer, der
+ * Mechanismus bleibt: eine dokumentierte, offene Luecke traegt man dort ein.
+ * Rot wird der Check bei
+ *   1. jedem fehlenden Codepoint, der nicht in `KNOWN_GAPS` steht, und
  *   2. einem Eintrag in `KNOWN_GAPS`, der inzwischen in einem Schnitt steht
- *      (veraltete Ausnahme) -- so leert D1 die Liste sauber: Schrift neu
- *      subsetten, Check wird rot, Eintrag streichen.
+ *      (veraltete Ausnahme).
  * Ein Eintrag, der nirgends mehr im Text vorkommt, wird nur gemeldet.
+ *
+ * **Akzeptierter Fallback** (`ACCEPTED_FALLBACK`): U+2192 in `content/learn/`
+ * (der Pfeil der CTA-Zeile, gesetzt in Newsreader). Newsreader hat ihn nicht,
+ * Fables Text bleibt byte-identisch (CLAUDE.md §3), also kommt er bewusst aus
+ * dem Fallback-Stack (Weg C, FINDINGS #4). Das ist KEINE Luecke im Sinn von
+ * oben -- der Pfeil steht ja in Plex --, sondern die eine Stelle, die der
+ * Vereinigungs-Check nicht sehen kann. Deshalb eigener Eintrag: der Check
+ * meldet die Stelle in jedem Lauf und wird rot, sobald Newsreader den
+ * Codepoint doch traegt (dann ist die Ausnahme veraltet).
  *
  * **Umfang des Scans** (Text OHNE Kommentare):
  *   - `content/learn/*.md`: die ganze Datei, Frontmatter eingeschlossen.
@@ -52,12 +62,20 @@ import { readCmap } from './cmap.mjs';
 
 const ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 
-/** Dokumentierte, offene Luecken. Quelle: FINDINGS.md, Entscheidung D1. */
-const KNOWN_GAPS = new Map([
-  [0x2192, 'FINDINGS #4: Pfeil (CTA der Learn-Seiten, Tempo-Stufe in der Fusszeile)'],
-  [0x2713, 'FINDINGS #8: Haken (Feedback, Echo-Check, Tastenfeld, Settings)'],
-  [0x2717, 'FINDINGS #8: Kreuz (Feedback, Echo-Check, Tastenfeld, Wort-Aufloesung)'],
-  [0x2248, 'FINDINGS #11: Ungefaehr-Zeichen (Tempo-Schaetzung im Sende-Modus)'],
+/** Dokumentierte, offene Luecken (in KEINEM Schnitt). Leer seit D1. */
+const KNOWN_GAPS = new Map();
+
+/**
+ * Bewusst akzeptierter Fallback: Codepoint -> { family, scope, why }. `family`
+ * ist die Schrift, in der die Stelle gesetzt wird und die den Codepoint NICHT
+ * hat; `scope` das Verzeichnis, in dem die Ausnahme gilt.
+ */
+const ACCEPTED_FALLBACK = new Map([
+  [0x2192, {
+    family: 'newsreader',
+    scope: join('content', 'learn') + '/',
+    why: 'FINDINGS #4: Pfeil der CTA-Zeile (Newsreader hat ihn nicht; Text ist Fables, Weg C)',
+  }],
 ]);
 
 const hex = (cp) => `U+${cp.toString(16).toUpperCase().padStart(4, '0')}`;
@@ -147,14 +165,21 @@ function usedCodepoints(targets) {
 function brandCodepoints() {
   const dir = join(ROOT, 'src', 'fonts');
   const have = new Set();
+  const byFamily = { newsreader: new Set(), plex: new Set() };
   const files = readdirSync(dir).filter((n) => n.endsWith('.woff2'));
-  for (const name of files) for (const cp of readCmap(readFileSync(join(dir, name)))) have.add(cp);
-  return { have, files };
+  for (const name of files) {
+    const family = name.startsWith('newsreader') ? 'newsreader' : 'plex';
+    for (const cp of readCmap(readFileSync(join(dir, name)))) {
+      have.add(cp);
+      byFamily[family].add(cp);
+    }
+  }
+  return { have, files, byFamily };
 }
 
 const targets = scanTargets();
 const used = usedCodepoints(targets);
-const { have, files } = brandCodepoints();
+const { have, files, byFamily } = brandCodepoints();
 const where = (cp) => used.get(cp).map((s) => `${s.file}:${s.line}`).join(', ');
 
 const problems = [];
@@ -170,10 +195,22 @@ for (const [cp, why] of KNOWN_GAPS) {
   }
 }
 
+for (const [cp, rule] of ACCEPTED_FALLBACK) {
+  if (byFamily[rule.family].has(cp)) {
+    problems.push(`Veraltete Ausnahme: ${hex(cp)} steht inzwischen in ${rule.family} -- Eintrag aus ACCEPTED_FALLBACK streichen (${rule.why})`);
+  }
+}
+
 console.log(`verify:fonts -- ${targets.length} Dateien, ${used.size} verschiedene Codepoints, ` +
   `${have.size} in der Marken-Familie (${files.length} Schnitte)`);
 for (const cp of missing) {
   if (KNOWN_GAPS.has(cp)) console.log(`  bekannte Luecke ${hex(cp)}: ${KNOWN_GAPS.get(cp)} -- ${where(cp)}`);
+}
+for (const [cp, rule] of ACCEPTED_FALLBACK) {
+  const spots = targets.filter((t) => relative(ROOT, t.file).startsWith(rule.scope)
+    && readFileSync(t.file, 'utf8').includes(String.fromCodePoint(cp)));
+  console.log(`  akzeptierter Fallback ${hex(cp)}: ${rule.why} -- ${spots.length} Dateien in ${rule.scope}`);
+  if (spots.length === 0) console.log(`  Hinweis: ${hex(cp)} steht in ACCEPTED_FALLBACK, kommt in ${rule.scope} aber nicht mehr vor`);
 }
 for (const cp of KNOWN_GAPS.keys()) {
   if (!used.has(cp)) console.log(`  Hinweis: ${hex(cp)} steht in KNOWN_GAPS, kommt aber nirgends mehr im Text vor`);
@@ -182,4 +219,4 @@ if (problems.length > 0) {
   for (const p of problems) console.error(`  ROT ${p}`);
   process.exit(1);
 }
-console.log('verify:fonts gruen: nur bekannte Luecken.');
+console.log('verify:fonts gruen.');

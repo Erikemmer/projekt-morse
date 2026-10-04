@@ -42,6 +42,7 @@ import {
 } from '../engine/settings';
 import type { DeviceSettings, Theme } from '../engine/deviceSettings';
 import { buildVersion } from './build';
+import { Mark } from './Mark';
 
 /** Anzeigenamen -- reine Beschriftung, keine Engine-Entscheidung. */
 const THEME_LABELS: Record<Theme, string> = {
@@ -320,7 +321,7 @@ function ThemeOption({
       {THEME_LABELS[id]}
       {current && (
         <span className="theme-option-mark" aria-hidden="true">
-          ✓
+          <Mark kind="hit" />
         </span>
       )}
     </button>

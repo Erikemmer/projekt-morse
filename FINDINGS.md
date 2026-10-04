@@ -88,6 +88,14 @@ statt still mitrepariert (CLAUDE.md §5):
 
 ## 4. `→` (U+2192) fehlt in allen vier selbstgehosteten Schriftschnitten
 
+**Status: teils behoben, teils entschieden: bleibt** (04.10.2026, Runde P14;
+Owner-Delegation von D1). Der Pfeil der **Fußzeile** („10 → 11 wpm“, Plex) steht
+jetzt im IBM-Plex-Subset und kommt aus der Markenschrift. Der Pfeil der
+**Learn-CTA** (Newsreader, 14 Seiten) **bleibt Fallback** (Weg C): Newsreader hat
+ihn auch upstream nicht, und der Text ist Fables (CLAUDE.md §3), also
+byte-identisch. `verify:fonts` führt diese Stelle als `ACCEPTED_FALLBACK` und
+meldet sie in jedem Lauf. Der Ursprungstext bleibt als Begründung stehen.
+
 **Gefunden:** 02.09.2026, beim Bauen des Learn-Bereichs.
 
 Die CTA-Zeile aller 14 Learn-Seiten heißt „Start hearing it → Open Morse Lab"
@@ -236,6 +244,13 @@ Spielraum statt einer Zahl, die knapp unter dem Limit lag.
 
 ## 8. ✓ und ✗ fehlen ebenfalls in allen vier Schriftschnitten
 
+**Status: entschieden und behoben** (04.10.2026, Runde P14; Owner-Delegation von
+D1, Weg B). Haken und Kreuz sind kein Schriftzeichen mehr, sondern ein
+SVG-Paar (`src/ui/Mark.tsx`) nach Guidelines 1.1 §8: 1,5 px Strich, runde Enden,
+24er Raster, nur Linie, Farbe über `currentColor`. Beide aus **einer** Hand, weil
+`✗` in keiner Upstream-Schrift steht. Der Ursprungstext bleibt als Begründung
+stehen.
+
 **Gefunden:** 02.09.2026, beim Prüfen der cmap-Tabellen für Eintrag 4
 (Runde F2). **Nicht neu** — die App benutzt beide Zeichen seit dem ersten
 Feedback-Screen.
@@ -360,6 +375,11 @@ Markdown-Dateien. Eine Zeile Bestätigung genügt.
 
 
 ## 11. `≈` (U+2248) fehlt in allen vier Schriftschnitten — gefunden vom cmap-Check
+
+**Status: entschieden und behoben** (04.10.2026, Runde P14; Owner-Delegation von
+D1, Weg A). U+2248 steht im IBM-Plex-Subset (`tools/fonts/add-glyphs.py`);
+`KNOWN_GAPS` in `tools/fonts/check.mjs` ist damit leer. Der Ursprungstext bleibt
+als Begründung stehen.
 
 **Gefunden:** 03.10.2026, beim ersten Lauf von `npm run verify:fonts` (Runde P11).
 **Nicht neu** — vermutlich seit der Sende-Modus die Tempo-Schätzung zeigt.

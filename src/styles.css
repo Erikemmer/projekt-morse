@@ -291,6 +291,12 @@ body {
   font-size: 18px;
 }
 
+/* Haken und Kreuz (ui/Mark.tsx): 1em gross, die Groesse setzt die Regel der
+ * jeweiligen Marke; block, damit sie nicht auf der Textgrundlinie sitzt. */
+.mark {
+  display: block;
+}
+
 /*
  * Richtig ist ein ruhiges ink-Haekchen -- kein Gruen, kein Amber, kein Jubel
  * (1.1 §4: "Correct = a calm ink checkmark"). Falsch ist ebenfalls ink; das

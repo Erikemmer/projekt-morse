@@ -53,6 +53,7 @@ import {
 } from '../engine/wordSession';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 import { isBrowserChord } from './keyChord';
+import { Mark } from './Mark';
 
 export function Words({
   state,
@@ -111,7 +112,7 @@ export function Words({
           {attempt !== null && (
             <span className="verdict" data-kind={attempt.correct ? 'hit' : 'miss'}>
               <span className="verdict-mark" aria-hidden="true">
-                {attempt.correct ? '✓' : '✗'}
+                <Mark kind={attempt.correct ? 'hit' : 'miss'} />
               </span>
               <span>
                 {attempt.correct ? 'Correct.' : `Not quite — that was ${attempt.prompt}.`}
@@ -319,7 +320,7 @@ function Solution({ attempt }: { attempt: WordAttempt }) {
               {char}
             </span>
             <span className="solution-mark" aria-hidden="true">
-              {attempt.marks[index] ? '✓' : '✗'}
+              <Mark kind={attempt.marks[index] ? 'hit' : 'miss'} />
             </span>
             {!attempt.marks[index] && (
               <span className="solution-typed" aria-hidden="true">
@@ -334,7 +335,7 @@ function Solution({ attempt }: { attempt: WordAttempt }) {
               {[...attempt.extra].join(' ')}
             </span>
             <span className="solution-mark" aria-hidden="true">
-              ✗
+              <Mark kind="miss" />
             </span>
           </span>
         )}

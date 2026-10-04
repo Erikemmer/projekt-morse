@@ -39,6 +39,7 @@ import type { SendAttempt, SendDeviationKind, SendSessionState } from '../engine
 import { sentToday } from '../engine/sendSession';
 import { Pattern, spellPattern } from './Pattern';
 import { isBrowserChord } from './keyChord';
+import { Mark } from './Mark';
 
 export function Send({
   state,
@@ -357,7 +358,7 @@ function SendSolution({ attempt }: { attempt: SendAttempt }) {
     <div className="solution send-solution">
       <p className="verdict" data-kind={attempt.correct ? 'hit' : 'miss'}>
         <span className="verdict-mark" aria-hidden="true">
-          {attempt.correct ? '✓' : '✗'}
+          <Mark kind={attempt.correct ? 'hit' : 'miss'} />
         </span>
         <span>
           {attempt.correct

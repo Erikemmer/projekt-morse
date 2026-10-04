@@ -38,12 +38,12 @@ statt stillschweigend geschlossen.
 | 1 | `--muted` auf `--paper`, 3,5:1 | behoben (31.08.) | — |
 | 2 | Google-Fonts-Abruf | behoben (31.08.) | — |
 | 3 | Weitere Maße neben den Guidelines | entschieden und behoben (01.09., #46) | — |
-| **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **offen** — D1 entschieden (04.10., Owner-Delegation); Umsetzung = PR 4. CTA-Pfeil: „entschieden: bleibt“ | **B1**, D1 |
+| **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **Fußzeile behoben** (P14, im Plex-Subset); **CTA-Pfeil „entschieden: bleibt“** (Weg C). H8 offen | **B1**, D1 |
 | **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **offen** (Vorarbeit erledigt 04.10., D2 entscheidungsreif; Umfang größer als gedacht) | **B2**, D2 |
 | **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) offen** (Vorarbeit erledigt 04.10., D3 entscheidungsreif) | **B3**, D3 |
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
-| **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **offen** — D1 entschieden (04.10., Owner-Delegation): Paar als SVG; Umsetzung = PR 4 | **B1**, D1 |
-| 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **offen** — D1 entschieden: Plex-Subset erweitern; Umsetzung = PR 4 | **B1**, D1 |
+| **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **behoben** (P14, SVG-Paar `Mark.tsx`). H8 offen | **B1**, D1 |
+| 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **behoben** (P14, im Plex-Subset). H8 offen | **B1**, D1 |
 | 12 | `verify:amber` lässt einen Vorschau-Server stehen | **offen** (nicht mitrepariert) | — |
 | 13 | Echo-Check scrollt schon bei 15 Zeichen bei 1280 × 720 (+55 px) | **offen**, gehört zu D3 | **B3**, D3 |
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
@@ -309,6 +309,62 @@ Teil von `npm run build` neben `verify:colors`. Baseline `KNOWN_GAPS`: `→ ✓ 
 (#4, #8) **und `≈` (#11)** — letzteres hat der Check beim ersten Lauf selbst
 gefunden. Rot bei neuem fehlendem Codepoint und bei veralteter Ausnahme; beides
 im Rot-Test belegt (HANDOVER P11).
+
+#### Umsetzung (04.10.2026, Runde P14)
+
+D1 ist entschieden (siehe „D1 — Entscheidung“); hier steht, wie die sechs
+Bedingungen erfüllt sind und wo die Umsetzung vom Plan abweicht.
+
+| # | Bedingung | Stand |
+|---|---|---|
+| 1 | SVG wendet §8 an, erfindet keine Gestalt | **erfüllt, mit Vorbehalt.** §8 legt Strich (1,5 px), runde Enden, 24er/20er Raster und „nur Linie, nichts gefüllt“ fest, aber **nicht die Form von Haken und Kreuz**. Gebaut ist die Standardform dieser Strichsprache (ein Polyline-Haken, ein Diagonalkreuz). Ob das die Form ist, die Fable meint, ist **seine** Frage — der Vorbehalt steht in der Übergabe. §8 sagt außerdem „Farbe: ink“; `currentColor` ist ink im Normalfall und erbt Amber/Gray nur dort, wo die Marke heute schon so gefärbt war. |
+| 2 | Nie Farbe allein; `currentColor`; keine neue Farbe, kein Schatten; 37 Ansichten | **erfüllt.** `Mark` ist `aria-hidden`, der Satz daneben trägt die Auskunft (unverändert). Haken und Kreuz unterscheiden sich in der Form. Kein Farbliteral, kein Token, kein Schatten. `verify:amber`: 37 Ansichten, höchstens eine Fläche je View. |
+| 3 | Schrift-Neuerzeugung: Werkzeug, Quelle, Lizenz, Größe | **erfüllt, aber anders als im Plan.** Siehe Abweichung A. Werkzeug: `fonttools` 4.66.1 (nicht Projektabhängigkeit, `pip install fonttools brotli`). Quelle: `@ibm/plex-sans` 1.1.0, `complete/woff2`. Lizenz (OFL 1.1, kein RFN) liegt unverändert in `src/fonts/LICENSE-ibm-plex-sans.txt`. Größe je Gewicht: 400: 22.588 → 22.676 B (+88), 500: 24.184 → 24.280 B (+96), 600: 24.252 → 24.412 B (+160). |
+| 4 | `verify:fonts`: `KNOWN_GAPS` verliert `→`, `≈`; `→` bleibt in der Liste | **erfüllt in der Sache, nicht im Wortlaut.** Siehe Abweichung B. |
+| 5 | Screenshots, sechs Themes, Pixeldiff | **teilweise.** Gemessen und angesehen: Training richtig und falsch (390 × 844, 1440 × 900), Theme-Haken in allen sieben Auswahlen (System + sechs Themes). **Nicht** einzeln gesehen: Echo-Check, Wort-Modus, Sende-Modus (dieselbe Komponente an denselben Klassen, aber nicht je ein Bild). **Kein Pixeldiff** gegen vorher gemacht. |
+| 6 | H8 bleibt menschlich | **offen**, bewusst. |
+
+**Abweichung A — nicht neu subsetten, sondern ergänzen.** Der Plan sagt „Plex
+um `→ ✓ ≈` erweitern, Quelle `complete`“ und nimmt an, `complete` sei dieselbe
+Zeichnung wie das heutige Subset. Gemessen ist sie es nicht: das Subset ist
+Googles latin-Fassung (Plex **3.201**), `complete` ist **3.005**; von 232
+Codepoints unterscheiden sich 223–225 in Umriss oder Breite. Ein Neu-Subsetten
+aus `complete` hätte den gesamten Text in drei Gewichten verändert — das ist
+keine „kleine Ergänzung“. Stattdessen kopiert `tools/fonts/add-glyphs.py` genau
+zwei Glyphen (`→` einfach, `≈` ein Composite, dort zerlegt) in die bestehenden
+Dateien; das Skript prüft selbst, dass jeder bestehende Umriss, jede Metrik und
+jeder cmap-Eintrag **bitgleich** bleiben. Preis: `→`/`≈` stammen aus Plex 3.005,
+der Rest aus 3.201; Hinting-Programme der beiden Glyphen sind die der älteren
+Version (bei 1000 upem gleiche Rasterung, **nicht** an Windows-Rendering
+geprüft, H8). `✓` kommt nicht ins Subset (Entscheidung D1).
+
+**Abweichung B — `ACCEPTED_FALLBACK` statt `→` in `KNOWN_GAPS`.** Der Check
+prüft die **Vereinigung** der vier Schnitte. Mit `→` in Plex wäre ein Eintrag
+in `KNOWN_GAPS` eine „veraltete Ausnahme“ und der Check rot, obwohl die CTA
+weiter aus dem Fallback kommt. Deshalb ein zweiter, benannter Mechanismus:
+`ACCEPTED_FALLBACK` (Codepoint, Familie, Verzeichnis). Er ist rot, wenn die
+benannte Familie (Newsreader) den Codepoint trägt, und meldet die Stelle in
+jedem Lauf (heute: 14 Dateien in `content/learn/`). `KNOWN_GAPS` ist leer, der
+Mechanismus bleibt.
+
+**Belege.** `npm test` 481 · `npm run build` grün (`verify:fonts`: 62 Dateien,
+110 Codepoints, 234 in der Markenfamilie; `verify:learn`: 18 Seiten) ·
+`verify:amber` 37 Ansichten · `verify:keyboard` 25 Fälle (43 s). **Rot-Test
+`verify:fonts`:** (1) Glyphen aus dem Subset (Dateien zurückgesetzt) → rot für
+`→` und `≈`, Exit 1; (2) `ACCEPTED_FALLBACK`-Familie auf Plex gestellt (Plex hat
+den Pfeil) → rot „Veraltete Ausnahme“, Exit 1. Beides zurückgenommen, wieder
+grün. **Schrift am gerenderten Knoten** (CDP `getPlatformFontsForNode`, 390 ×
+844): Fußzeile mit `→` und `.note` mit `≈` → „IBM Plex Sans (custom)“, kein
+Systemfallback. **Bundle:** JS 234.624 → 235.144 B (+520 B, gzip 71,69 kB; die
+Komponente `Mark` an zehn Stellen), Schriften +344 B zusammen, Newsreader
+unverändert.
+
+**Nicht belegt:** das Aussehen auf Windows/macOS/iOS/Android (H8); die Ansage
+durch einen Screenreader (die Marken sind `aria-hidden`, der Satz trägt die
+Auskunft — so war es vorher auch; nicht gehört); die Form von Haken und Kreuz
+gegenüber Fables Erwartung; der Fußzeilen-Pfeil bei 1440 × 900 (dort lieferte
+die Messung kein Ergebnis, der Knoten war nicht gerendert — der Pfeil kommt aus
+derselben Regel wie bei 390 px, gemessen nur dort).
 
 ### B2 — Screenreader: Morse-Muster der Alphabet-Tabelle (Finding #5)
 
@@ -602,7 +658,7 @@ D  Abschluss ── zuletzt
 | 1 | A1 `verify:keyboard` (+ Befunde nach `FINDINGS.md`) | — |
 | 2 | A2 + C1 Messung | **erledigt 04.10. (P13)**, Commit auf dem Branch, noch kein PR; D4 offen |
 | 3 | B1 Vorarbeit + cmap-Check (Absicherung, ohne Glyphen-Entscheidung) — **erledigt 03.10. (P11)**, Commit auf dem Branch, noch kein PR | — |
-| 4 | B1 Glyphen (Umsetzung) | **bereit** (D1 entschieden, Owner-Delegation 04.10.) |
+| 4 | B1 Glyphen (Umsetzung) — **erledigt 04.10. (P14)**, Commit auf dem Branch, noch kein PR | H8 (Owner am Gerät) vor dem Merge |
 | 5 | B2 Screenreader-Muster (Vorarbeit **erledigt 04.10., P12**) | D2 |
 | 6 | B3 Echo-Check (Vorarbeit **erledigt 04.10., P12**) | D3 |
 | 7 | C2, je nach Antwort | D4–D9 |
@@ -677,3 +733,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 04.10.2026 | Runde P12: B2- und B3-Vorarbeit eingetragen (Accessibility-Tree, Umfang der Muster-Stellen korrigiert; Echo-Check-Höhen in drei Viewports, Wege (a)/(b) simuliert) — D2 und D3 entscheidungsreif; neues Finding #13; Messskripte `tools/prep/`. |
 | 04.10.2026 | G1 = „sitzt“ (S1 erledigt), A2 freigegeben (D10 Standard: ausbauen). **D1 vom Owner an Claude delegiert und entschieden:** `→` (Fußzeile) und `≈` per Plex-Subset (Weg A), `✓ ✗` als SVG-Paar nach 1.1 §8 (Weg B), CTA-Pfeil bleibt Fallback (Weg C). D2 und D3 bleiben offen (Default: bleibt; Empfehlungen aus P12 unverändert). |
 | 04.10.2026 | Runde P13: A2 umgesetzt (Messgerät ausgebaut, K4 entfernt, `verify:keyboard` 25 Fälle, Bundle −1,33 kB, Rot-Test altKey belegt); C1 gemessen (960 / 822 / 900 px, vorher 1031 / 893 / 900); S4 erledigt, S5 gemessen, D4 bleibt offen; Messskript `tools/prep/settings-height.mjs`. |
+| 04.10.2026 | Runde P14: **B1 umgesetzt** (PR 4, noch kein PR angelegt): `→`/`≈` ins Plex-Subset ergänzt (nicht neu subsettet — Abweichung A), `✓ ✗` als SVG-Paar `Mark.tsx`, `verify:fonts` mit `ACCEPTED_FALLBACK` (Abweichung B); #4 (Fußzeile), #8, #11 behoben, #4 (CTA) „bleibt“. H8 offen. |
