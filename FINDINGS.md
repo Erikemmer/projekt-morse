@@ -122,7 +122,7 @@ Learn-Seiten; ein anderer Wortlaut wäre eine Abweichung von der Vorgabe und
 gehört Fable, nicht diesem Commit. Die Zeile steht in `--gray` bei 13 px, der
 Unterschied ist entsprechend klein.
 
-## 5. Die Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen
+## 5. Die Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen — BEHOBEN (P16, Owner-Delegation D2)
 
 **Gefunden:** 02.09.2026, gleiche Aufgabe.
 
@@ -143,6 +143,15 @@ bleiben. Deshalb Bericht statt Eingriff (CLAUDE.md §5, §2.9).
 `**X** ·−` erkennen und das Muster zusätzlich als `<span class="visually-hidden">`
 in der vorgelesenen Form ausgeben. Braucht eine Freigabe von Fable, weil es
 den vorgelesenen Inhalt der Seite ändert.
+
+**Status: behoben** (04.10.2026, Runde P16, Owner-Delegation D2 — kein
+Fable-Ruling). Der Umfang war größer als hier geschätzt: **44 Stellen je
+Sprache** (36 Zellen, 5 reine Code-Zellen, 3 im Fließtext), nicht 36. Der
+Generator markiert sie (`aria-hidden` + `.visually-hidden` „dit dah“, EN und
+DE), `content/learn/` ist byte-identisch; `verify:learn` zählt 88 Stellen aus
+dem Quelltext. Accessibility-Tree: Zelle `A ·−` → `A dit dah`. **Offen:** H3 (was
+ein Screenreader daraus macht) und die Fließtext-Zeilen mit Subpixel-
+Abweichung im Pixelvergleich (Tabellen: 0) — Einzelheiten `docs/PLAN-FINDINGS.md`, B2.
 
 ## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter — Punkt 2 BEHOBEN (Ruling #110), Punkt 1 BEHOBEN (P15)
 
@@ -457,4 +466,20 @@ wäre. **Was es kosten würde:** eine Zeile in `Echo`, eine Messung.
 
 **Gefunden:** 04.10.2026, Runde P15: nach `npm run verify:amber` lief ein
 `vite preview --port 4183` weiter (nur über `ps` + `kill <pid>` zu beenden).
-Bestätigt #12, unverändert, nicht mitrepariert.
+Bestätigt #12, unverändert, nicht mitrepariert. Runde P16: wieder derselbe
+Befund (PID per `ps` gefunden, per `kill <pid>` beendet).
+
+## 16. `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch
+
+**Gefunden:** 04.10.2026, Runde P16.
+
+Das Messskript aus P12 erwartet in der Alphabet-Tabelle die Muster als bloßen
+Text (`StaticText " ·−"`) und simuliert darauf die drei D2-Optionen. Seit B2
+liefert der Generator das Muster schon mit Versteck; das Skript bricht an der
+Stelle ab (`Accessibility.getPartialAXTree: Either nodeId … must be specified`).
+Der Abschnitt „heute“ ist damit historisch (er beschreibt den Stand vor B2).
+
+**Nicht mitrepariert:** es ist eine einmalige Vorarbeit, kein Check, nicht im
+Build. Die Messung „nachher“ lief in P16 über ein Wegwerfskript im Scratchpad.
+**Was es kosten würde:** entweder das Skript auf den neuen DOM umstellen oder
+es als Beleg des Vorher-Zustands markieren/löschen.

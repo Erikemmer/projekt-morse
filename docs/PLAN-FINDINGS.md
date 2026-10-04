@@ -39,7 +39,7 @@ statt stillschweigend geschlossen.
 | 2 | Google-Fonts-Abruf | behoben (31.08.) | — |
 | 3 | Weitere Maße neben den Guidelines | entschieden und behoben (01.09., #46) | — |
 | **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **Fußzeile behoben** (P14, im Plex-Subset); **CTA-Pfeil „entschieden: bleibt“** (Weg C). H8 offen | **B1**, D1 |
-| **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **offen** (Vorarbeit erledigt 04.10., D2 entscheidungsreif; Umfang größer als gedacht) | **B2**, D2 |
+| **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **behoben** (P16, Option 3, Owner-Delegation D2; Quelltext byte-identisch). H3 offen; Pixeldiff nur in Tabellen 0, Fließtext-Zeilen mit Subpixel-Abweichung | **B2**, D2 |
 | **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) behoben** (P15, Weg a, Owner-Delegation D3). H9 offen | **B3**, D3 |
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
 | **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **behoben** (P14, SVG-Paar `Mark.tsx`). H8 offen | **B1**, D1 |
@@ -456,6 +456,81 @@ Sprache** statt 36; `verify:learn` müsste entsprechend nicht „36“, sondern 
 Muster-Stellen zählen. Nicht belegt, bis H3 gelaufen ist, ob die heutige Lage
 überhaupt hörbar fehlerhaft ist.
 
+#### Umsetzung (04.10.2026, Runde P16)
+
+Gebaut nach „D2 — Entscheidung“ (Option 3, „dit dah“ in EN und DE, 36 + 5 + 3
+Stellen je Sprache). Berührt: `tools/learn/pages.mjs`, `tools/learn/learn.css`,
+`tools/learn/verify.mjs`, `tools/learn/pages.test.mjs`. **`content/learn/`,
+`src/` und alle App-Dateien unverändert** (`git diff` leer).
+
+- **Generator** (`pages.mjs`): `markPatterns` baut den `marked`-Token-Baum um,
+  **bevor** er gerendert wird — Stellen werden `html`-Token
+  `<span class="morse-pattern" aria-hidden="true">…</span><span
+  class="visually-hidden">dit dah</span>`. Kontextregel wie in P12: in einer
+  Tabellenzelle gilt die ganze Zelle (nach dem fetten Buchstaben) aus `·`/`−`,
+  im Fließtext nur Folgen **ab zwei Zeichen** (auch `··· −−− ···`); Inline-Code
+  und einzelne `·` als Trennzeichen bleiben unberührt. Das Mapping
+  (`spellMarks`) ist ein 1-Zeilen-Duplikat von `spellPattern` (§4).
+- **Der Span umfasst das ganze Wort**, nicht nur die Zeichen: bei `(·−·)` stehen
+  die Klammern im sichtbaren Span, das versteckte Span wiederholt sie
+  („(dit dah dit)“); bei Zellen steht das Leerzeichen vor dem Muster im Span.
+  Grund ist die Pixelmessung unten, nicht Geschmack.
+- **`learn.css`:** `.visually-hidden` aus `src/styles.css:1731` kopiert
+  (nicht extrahiert), +345 Byte.
+- **`verify:learn`:** zählt die Stellen **aus dem Markdown-Quelltext** (eigene
+  Zählung, nicht die des Generators) und gleicht je Seite mit `dist/` ab; jede
+  Stelle muss ihr verstecktes Span mit der erwarteten Form tragen (eigene
+  Zuordnung); nach Abzug der Stellen und des Inline-Codes darf in keiner Zelle
+  ein `·`/`−` und im Fließtext keine Folge ≥ 2 mehr stehen; `.visually-hidden`
+  muss im ausgelieferten CSS stehen. **88 Stellen** (2 × 44: Alphabet-Seite
+  36 + 5 + R + SOS = 43, Geschichts-Seite 1).
+- **Tests:** +7 (`npm test` 488): Zelle, reine Code-Zelle, Klammer und Fett im
+  Fließtext, Trennzeichen/Inline-Code bleiben, Seiten ohne Muster, Zuordnung,
+  und die echten Seiten mit 43 + 1 Stellen je Sprache. Ein bestehender Test
+  erwartete `<strong>A</strong> ·−` und prüft jetzt die neue Form.
+
+**Belegt:**
+
+| Kriterium | Ergebnis |
+|---|---|
+| Markdown-Quelltext byte-identisch | `git diff` auf `content/` leer |
+| Alle Stellen tragen die vorgelesene Form | `verify:learn`: 88 Stellen, 18 Seiten |
+| Rot-Test | Generator ohne verstecktes Span → 174 Fehler, Exit 1; `·`→„dit“, `−`→„dit“ (falsches Wort) → rot; beide zurückgenommen → grün |
+| Accessibility-Tree (Chromium, CDP) | **vorher:** Zellname `A ·−`, 47 StaticText mit `·`/`−`, 0 mit dit/dah. **nachher:** Zellname `A dit dah` (36 Zellen), 4 StaticText mit `·`/`−` — das sind Trennzeichen und Inline-Code (soll so sein), 43 (EN) / 44 (DE) mit dit/dah¹ |
+| App-Bundle unverändert | JS `index-BM2jghgC.js` 235.318 B, CSS `index-DUx-k1as.css` 20.636 B — Hashes wie vor B2 |
+| Learn-Seiten (Delta) | Alphabet-Seite +4.560 B (EN) / +4.560 B (DE), Geschichts-Seite +127 B; `learn.css` +345 B |
+
+¹ DE zählt eine Stelle mehr: „dahinterliegender“ im Fließtext enthält „dah“ als
+Zeichenfolge (auch vor B2: 1 Treffer); kein Muster.
+
+**Nicht erfüllt: „Pixeldiff der Seite = 0“ — nur teilweise.** Vorher/nachher
+mit 16 Vollseiten-Screenshots (4 Seiten × 390/1280 px × hell/dunkel,
+Chromium headless; das Rendering ist deterministisch: zweimal „vorher“ ist
+bitgleich). Ergebnis nach dem Umbau:
+
+- **Alle Tabellen: 0 Pixel Differenz**, in allen 16 Bildern.
+- **8 von 16 Bildern vollständig identisch** (EN-Geschichte alle vier, EN-
+  Alphabet bei 1280 px, DE-Geschichte bei 390 px).
+- **8 Bilder weichen ab**, ausschließlich in den **Zeilen der Fließtext-Muster**
+  (`(·−·)`, SOS): 0 abweichende Pixelzeilen außerhalb dieser Absätze, gleiche
+  Seitenhöhe (kein Layoutversatz), größter Kanalunterschied 60 von 255, 9–16
+  Pixelzeilen je Bild. Ursache: **jedes** Element mitten in einem Textlauf
+  verschiebt in Chromium die Subpixel-Positionierung des Rests der Zeile — mit
+  einem nackten `<span>` ohne jedes Attribut um ein Wort reproduziert (sieben
+  Markup-Varianten gegen den unveränderten Absatz; die Kontrolle ohne Span ist
+  identisch). Mit einem Versteck im Fließtext ist das nicht vermeidbar.
+  **Entscheidung für den Owner:** so lassen (Subpixel-Antialiasing in drei
+  Zeilen je Sprache, sichtbar nicht wahrnehmbar, nicht am Gerät gesehen) oder
+  die drei Fließtext-Stellen je Sprache **nicht** markieren (bleiben stumm).
+  Gebaut ist das Erste.
+
+**Nicht belegt:** H3 — was ein Screenreader aus `dit dah` macht (Aussprache
+im Deutschen, Tabellen-Navigation, ob `aria-hidden` auf einem Span in einer
+Zelle überall respektiert wird); Firefox und Safari (Pixelmessung nur
+Chromium); ob `.visually-hidden` in `.table-wrap` (scrollbarer Kasten) bei
+sehr schmalem Fenster eine Scrollbar auslöst (bei 390 px kein Überlauf
+gemessen, andere Breiten nicht).
+
 ### B3 — Echo-Check: die Liste wächst bis 36 Optionen (Finding #6, Punkt 1)
 
 Gemessen (headless Chromium, 390 × 844): 15 eingeführte Zeichen = 15 Optionen,
@@ -615,7 +690,7 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 | | Frage | Wer | Empfehlung | Ohne Entscheidung |
 |---|---|---|---|---|
 | D1 | Glyphen `→ ✓ ✗ ≈` (B1) | Fable → **vom Owner am 04.10. an Claude delegiert** („Entscheide du“) | — | **Entschieden, siehe „D1 — Entscheidung“ unten.** Umsetzung PR 4. |
-| D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable | Ja, Option 3 (versteckter Text wie `Pattern.tsx`); Umfang 36 + 5 + 3 Stellen je Sprache. **Nach P12:** „Ja" bestätigt, DE-Wortlaut **offen** | bleibt; #5 offen |
+| D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable → **vom Owner am 04.10. an Claude delegiert** („entscheide du") | Ja, Option 3 (versteckter Text wie `Pattern.tsx`); Umfang 36 + 5 + 3 Stellen je Sprache. **Nach P12:** „Ja" bestätigt, DE-Wortlaut **offen** | **Entschieden (Option 3, „dit dah" EN und DE), siehe „D2 — Entscheidung".** Umsetzung PR 5 (P16). |
 | D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable → **vom Owner am 04.10. an Claude delegiert** („entscheide du“) | (a) Tastenfeld | **Entschieden (a), siehe „D3 — Entscheidung“.** Umsetzung PR 6 (P15). |
 | D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | **Nachgemessen (P13): 960 px bei 390 × 844, 822 px bei 1280 × 720, 900 px bei 1440 × 900**; scrollt an den ersten beiden |
 | D5 | Zeichen in `echo-ready` startet Wiedergabe | Fable | bestätigen | bleibt |
@@ -659,6 +734,33 @@ weggelassen, die man kennt — das widerspricht dem Zweck des Checks („alles
 bisher Eingeführte“). (3) Die Ortsfestigkeit gilt für die Übung: wer im
 Training an feste Plätze gewöhnt ist, greift im Echo-Check nicht mehr ins
 Leere. (4) (c) ließe #13 stehen. Preis: kleinere Tasten (H9).
+
+### D2 — Entscheidung (Owner-Delegation, 04.10.2026)
+
+Der Owner hat D2 mit „entscheide du“ an Claude delegiert. Das ersetzt kein
+Fable-Ruling (CLAUDE.md §2.9, §3 — der Learn-Bereich gehört Fable):
+**protokolliert als „Owner-Delegation 04.10.2026“, der Eintrag ins Notion-Log
+ist Sache des Owners.** Umkehrbar: PR 5 ist ein eigener PR, und der Text
+entsteht im Generator, nicht in Fables Quelle.
+
+**Entscheidung: Option 3** (Zeichen `aria-hidden`, daneben ein verstecktes Span,
+dieselbe Technik wie `Pattern.tsx`), **„dit dah“ in EN und DE**, Umfang
+**36 + 5 + 3 Stellen je Sprache**.
+
+- Der **DE-Wortlaut ist eine Setzung, kein Beleg**: „dit dah“ ist konsistent mit
+  `spellPattern` und der App; ob eine deutsche Sprachausgabe es sinnvoll spricht
+  oder ein deutscher Leser „di dah“ erwartet, ist **nicht belegt** (H3).
+- Es entsteht vorgelesener Text, den Fable nicht geschrieben hat — deshalb
+  Generator statt Quelle, `content/learn/` byte-identisch.
+
+**Warum Option 3:** (1) Dieselbe Technik, die in der App gemessen funktioniert
+(`StaticText "dah dit dah"`). (2) Option 2 (sichtbarer Text) ändert die
+Darstellung und widerspricht CONCEPT-LEARN §5; Option 1 (`role="img"` in einer
+Tabellenzelle) hängt davon ab, wie der Screenreader eine „Grafik“ in einer Zelle
+ansagt. (3) Das „Lassen“ (Default) ließe ein Hörtraining für Menschen ohne Sicht
+auf einer Seite stumm, die genau dieses Muster erklärt (CLAUDE.md §6).
+**Preis:** Die versteckte Form ist markier- und kopierbar; die Fließtext-Stellen
+verschieben das Subpixel-Rendering ihrer Zeile (siehe B2, „Umsetzung“).
 
 ### D1 — Entscheidung (Owner-Delegation, 04.10.2026)
 
@@ -730,7 +832,7 @@ D  Abschluss ── zuletzt
 | 2 | A2 + C1 Messung | **erledigt 04.10. (P13)**, Commit auf dem Branch, noch kein PR; D4 offen |
 | 3 | B1 Vorarbeit + cmap-Check (Absicherung, ohne Glyphen-Entscheidung) — **erledigt 03.10. (P11)**, Commit auf dem Branch, noch kein PR | — |
 | 4 | B1 Glyphen (Umsetzung) — **erledigt 04.10. (P14)**, Commit auf dem Branch, noch kein PR | H8 (Owner am Gerät) vor dem Merge |
-| 5 | B2 Screenreader-Muster (Vorarbeit **erledigt 04.10., P12**) | D2 |
+| 5 | B2 Screenreader-Muster — **erledigt 04.10. (P16)**, Commit auf dem Branch, noch kein PR (Vorarbeit P12) | H3 (Screenreader) vor dem Merge; Entscheidung zu den Fließtext-Stellen (Pixeldiff, B2) |
 | 6 | B3 Echo-Check — **erledigt 04.10. (P15)**, Commit auf dem Branch, noch kein PR | H9 (Owner am Telefon) vor dem Merge |
 | 7 | C2, je nach Antwort | D4–D9 |
 | 8 | D Abschluss | alles |
@@ -744,7 +846,7 @@ eigenen Absatz „Was Fable sehen muss".
 | Finding | gilt als beseitigt, wenn |
 |---|---|
 | **#4** `→` | Ruling zu D1; bei Weg A: Zeichen im Subset (cmap) und Screenshot; bei Weg C: Status „entschieden: bleibt" mit Begründung in `FINDINGS.md` |
-| **#5** Muster | Ruling zu D2; 36 Zeichen tragen die vorgelesene Form; Markdown-Quelltext byte-identisch; H3 bestanden |
+| **#5** Muster | Ruling zu D2 (P16: Owner-Delegation); alle Muster-Stellen (88) tragen die vorgelesene Form; Markdown-Quelltext byte-identisch — **erfüllt (P16)**; Pixeldiff 0 nur für Tabellen; H3 offen |
 | **#6.1** Echo-Check | Ruling zu D3 (P15: Owner-Delegation); gemessen bei 15 und 36 Zeichen in drei Viewports ohne Scrollen — **erfüllt (P15)**; H9 offen |
 | **#8** `✓ ✗` | wie #4 (zusammen mit ihm in B1 entschieden) |
 | S1 P8 bestätigt | G1: Owner meldet „sitzt" |
@@ -806,3 +908,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 04.10.2026 | Runde P13: A2 umgesetzt (Messgerät ausgebaut, K4 entfernt, `verify:keyboard` 25 Fälle, Bundle −1,33 kB, Rot-Test altKey belegt); C1 gemessen (960 / 822 / 900 px, vorher 1031 / 893 / 900); S4 erledigt, S5 gemessen, D4 bleibt offen; Messskript `tools/prep/settings-height.mjs`. |
 | 04.10.2026 | Runde P14: **B1 umgesetzt** (PR 4, noch kein PR angelegt): `→`/`≈` ins Plex-Subset ergänzt (nicht neu subsettet — Abweichung A), `✓ ✗` als SVG-Paar `Mark.tsx`, `verify:fonts` mit `ACCEPTED_FALLBACK` (Abweichung B); #4 (Fußzeile), #8, #11 behoben, #4 (CTA) „bleibt“. H8 offen. |
 | 04.10.2026 | Runde P15: **D3 vom Owner an Claude delegiert und entschieden** (Weg a, ortsfest; „aktiv“ = Optionen des Checks; Schwelle wie Training). **B3 umgesetzt** (PR 6, noch kein PR angelegt): `Echo` rendert ab 13 Optionen das 36-Plätze-Tastenfeld; Engine, `styles.css` unverändert; sechs Fälle (15/36 Zeichen × 3 Viewports) ohne Scrollen, #13 mit behoben; `verify:amber` 39 Ansichten (+2), `verify:keyboard` 25, `npm test` 481; Bundle JS +174 Byte. H9 offen. D4–D9 vom Owner wie empfohlen bestätigt (D4 a, D7 Hash, D8 nicht bauen); D2 für B2 vorentschieden (Option 3, „dit dah“ EN und DE). |
+| 04.10.2026 | Runde P16: **D2 vom Owner an Claude delegiert und entschieden** (Option 3, „dit dah“ EN und DE, 36 + 5 + 3 Stellen je Sprache; DE-Wortlaut eine Setzung). **B2 umgesetzt** (PR 5, noch kein PR angelegt): Generator markiert 88 Muster-Stellen (`aria-hidden` + `.visually-hidden`), `verify:learn` zählt sie aus dem Quelltext, `npm test` 488, Rot-Test belegt; Quelltext byte-identisch, App-Bundle unverändert. Pixeldiff: Tabellen 0, Fließtext-Zeilen mit Subpixel-Abweichung (Entscheidung offen). #5 behoben; H3 offen; neues Finding #16. |

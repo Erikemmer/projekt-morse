@@ -1,3 +1,59 @@
+# Übergabe — Stand nach Runde P16 (B2: Screenreader-Muster der Alphabet-Tabelle)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P15 = `c7b2482`), `main` = `fa579d0`.
+**P16 ist PR 5 im Plan (Schritt B2):** B2 mit D2
+(Owner-Delegation 04.10.2026, kein Fable-Ruling; den Notion-Log-Eintrag macht der
+Owner). Kein PR angelegt. **Bundle:** App unverändert (JS `index-BM2jghgC.js`
+235.318 B, CSS `index-DUx-k1as.css` 20.636 B — Hashes wie in P15). Learn:
+`learn.css` +345 B, Alphabet-Seiten je +4.560 B, Geschichts-Seiten je +127 B.
+
+**Was es ist:**
+
+1. **Generator (`tools/learn/pages.mjs`)** baut vor dem Rendern den `marked`-
+   Token-Baum um: jede Muster-Stelle wird `<span class="morse-pattern"
+   aria-hidden="true">·−</span><span class="visually-hidden">dit dah</span>`.
+   Kontextregel: Tabellenzelle = ganze Zelle aus `·`/`−` (auch ein einzelnes
+   Zeichen), Fließtext = Folge ab zwei Zeichen. Inline-Code und das Trennzeichen
+   `·` bleiben. **88 Stellen** (44 je Sprache: 36 + 5 + R + SOS auf der
+   Alphabet-Seite, SOS auf der Geschichts-Seite). `content/learn/` unverändert.
+2. **`learn.css`:** `.visually-hidden` aus `src/styles.css` kopiert (nicht extrahiert).
+3. **`verify:learn`** zählt die Stellen aus dem Markdown-Quelltext (eigene Zählung)
+   und gleicht je Seite ab; Form „dit/dah“ mit eigener Zuordnung; nichts Bloßes
+   übrig; `.visually-hidden` im ausgelieferten CSS.
+4. **Tests:** +7 → `npm test` **488**.
+
+**Was Fable/der Owner sehen muss:**
+
+1. **D2 ist eine Owner-Delegation** („D2 — Entscheidung“ im Plan). **Der DE-Wortlaut
+   „dit dah“ ist eine Setzung**, kein Beleg.
+2. **Pixeldiff ist nicht überall 0.** Tabellen: 0 Pixel Differenz in allen 16
+   Bildern. Die **Fließtext-Stellen** (`(·−·)`, SOS) verschieben die Subpixel-
+   Positionierung ihrer Zeile (8 von 16 Bildern, nur in diesen Zeilen, gleiche
+   Höhe, max. Kanalunterschied 60/255). Jedes Element im Textlauf tut das in
+   Chromium, auch ein nacktes `<span>`. Entscheidung offen: so lassen oder die
+   drei Fließtext-Stellen je Sprache nicht markieren.
+3. **Der Span umfasst das ganze Wort** (Klammer, Komma, Leerzeichen vor dem
+   Zellmuster) — das hat die Tabellen auf 0 gebracht; vorgelesen wird
+   „(dit dah dit)“.
+4. **H3 offen:** kein Screenreader gehört; die Aussprache im Deutschen ist nicht belegt.
+
+**Belegt:** Accessibility-Tree vorher/nachher (Zelle `A ·−` → `A dit dah`, 36
+Zellen; 47 → 4 StaticText mit `·`/`−`, die 4 sind Trennzeichen und Code); Rot-Test
+`verify:learn` (Versteck entfernt → 174 Fehler, falsches Wort → rot, zurückgenommen);
+`content/learn/` `git diff` leer.
+
+**Tests:** `npm test` **488** (19 Dateien). `npm run build` grün (`verify:learn`:
+18 Seiten, **88 Muster-Stellen**). `verify:amber` **39 Ansichten** grün.
+`verify:keyboard` **25 Fälle** grün (40 s). `verify:colors`, `verify:fonts` grün.
+**Nicht belegt:** H3; Firefox/Safari; schmale Fenster ≠ 390 px für die Tabellen-Scrollbox.
+Neu in `FINDINGS.md`: #16 (`tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch);
+#15 bestätigt (stehender Vorschau-Server, per PID beendet).
+
+Berührt: `tools/learn/pages.mjs`, `tools/learn/learn.css`, `tools/learn/verify.mjs`,
+`tools/learn/pages.test.mjs`, `FINDINGS.md`, `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
 # Übergabe — Stand nach Runde P15 (B3: Echo-Check als ortsfestes Tastenfeld)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P14 = `0b216d7`), `main` = `fa579d0`.

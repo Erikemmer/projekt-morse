@@ -82,6 +82,32 @@ function headTags(html) {
   };
 }
 
+/**
+ * Muster-Stellen im Markdown-Quelltext, **unabhängig vom Generator** gezählt
+ * (B2, Finding #5): Tabellenzelle = ganze Zelle (nach dem fetten Buchstaben)
+ * aus `·`/`−`; Fließtext = Folge ab zwei Zeichen. Inline-Code zählt nie. Wer
+ * hier und im Generator denselben Denkfehler hätte, fiele trotzdem auf, weil
+ * hier der Quelltext zählt und dort der gebaute Baum geprüft wird.
+ */
+function countSourcePatterns(source) {
+  const body = source.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '').replace(/`[^`]*`/g, '');
+  let count = 0;
+  for (const line of body.split(/\r?\n/)) {
+    if (line.trimStart().startsWith('|')) {
+      for (const cell of line.split('|')) {
+        if (/^[·−]+$/.test(cell.replace(/\*\*[^*]+\*\*/g, '').trim())) count += 1;
+      }
+    } else {
+      count += (line.match(/[·−]{2,}(?: [·−]{2,})*/g) ?? []).length;
+    }
+  }
+  return count;
+}
+
+/** Eigene Zuordnung, nicht die des Generators importiert: `·`→dit, `−`→dah. */
+const spelled = (marks) =>
+  [...marks.replace(/\s+/g, '')].map((mark) => (mark === '−' ? 'dah' : 'dit')).join(' ');
+
 async function main() {
   // 1. Was der Inhalt verspricht — daraus ergibt sich, was in dist liegen muss.
   const pages = [];
@@ -95,7 +121,7 @@ async function main() {
         continue;
       }
       const html = await readFile(join(DIST, path), 'utf8');
-      pages.push({ meta, name, path, html, head: headTags(html) });
+      pages.push({ meta, name, path, html, contentDir: dir, head: headTags(html) });
     }
   }
 
@@ -233,6 +259,50 @@ async function main() {
     );
   }
 
+  // 1b. Morse-Muster (B2, Finding #5): jede Stelle trägt die vorgelesene Form,
+  //     und nirgends steht ein Muster als bloßer Text. Gezählt wird gegen den
+  //     Quelltext, nicht gegen eine feste Zahl.
+  let patternTotal = 0;
+  for (const page of pages) {
+    const source = await readFile(join(page.contentDir, page.name), 'utf8');
+    const expected = countSourcePatterns(source);
+    const found = [
+      ...page.html.matchAll(
+        /<span class="morse-pattern" aria-hidden="true">([^<]*)<\/span>(<span class="visually-hidden">([^<]*)<\/span>)?/g,
+      ),
+    ];
+    patternTotal += found.length;
+    check(
+      found.length === expected,
+      `${page.path}: ${found.length} Muster-Stellen, der Quelltext hat ${expected}`,
+    );
+    for (const match of found) {
+      // Sichtbar: Satzzeichen davor/danach plus Muster; vorgelesen: dieselben
+      // Satzzeichen um die ausgesprochene Form.
+      const parts = /^([^·−\s]*)(\s?[·−]+(?: [·−]+)*)([^·−\s]*)$/.exec(match[1]);
+      const want = parts ? `${parts[1]}${spelled(parts[2])}${parts[3]}` : undefined;
+      check(
+        parts !== null && match[2] !== undefined && match[3] === want,
+        `${page.path}: Muster "${match[1]}" ohne vorgelesene Form "${want}" (gefunden: ${match[3] ?? 'keine'})`,
+      );
+    }
+    // Was nach Abzug der Stellen und des Inline-Codes übrig bleibt, darf kein
+    // Muster mehr sein: in Zellen gar kein `·`/`−`, im Fließtext keine Folge.
+    const article = /<article class="article">([\s\S]*?)<\/article>/.exec(page.html)?.[1] ?? '';
+    const bare = article
+      .replace(/<span class="morse-pattern"[^>]*>[^<]*<\/span><span class="visually-hidden">[^<]*<\/span>/g, '')
+      .replace(/<code>[^<]*<\/code>/g, '');
+    for (const cell of bare.matchAll(/<td>([\s\S]*?)<\/td>/g)) {
+      check(!/[·−]/.test(cell[1].replace(/<[^>]*>/g, '')), `${page.path}: Zelle mit Muster als bloßem Text: ${cell[1]}`);
+    }
+    check(
+      !/[·−]{2,}/.test(bare.replace(/<[^>]*>/g, '')),
+      `${page.path}: Muster im Fließtext ohne vorgelesene Form`,
+    );
+  }
+  console.log();
+  console.log(`Muster-Stellen mit vorgelesener Form: ${patternTotal}`);
+
   // 2. Sitemap: jede genannte Adresse muss als Datei existieren, und jede
   //    Learn-Seite muss genannt sein -- die vier Rechtsseiten ausdrücklich
   //    nicht (Ruling L2, Punkt 2).
@@ -280,6 +350,7 @@ async function main() {
   if (check(await exists(cssPath), 'dist/learn/assets/learn.css fehlt')) {
     const css = await readFile(join(DIST, cssPath), 'utf8');
     check(!css.includes('/* @tokens */'), 'learn.css: der Token-Marker steht noch drin');
+    check(css.includes('.visually-hidden'), 'learn.css: .visually-hidden fehlt (Muster, B2)');
     check(css.includes('--paper: #F6F1E8'), 'learn.css: der Token-Block fehlt');
     /*
      * Kein Farbliteral außerhalb der Token-Blöcke (CLAUDE.md 2.9). Der eine

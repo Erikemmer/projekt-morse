@@ -23,7 +23,13 @@
  * 3. **Ganz kursive Absätze** sonst (der Sprachhinweis auf dem Hub) werden zur
  *    Randnotiz `.aside`.
  *
- * Kein Text wird umgeschrieben: der Generator ordnet an, er formuliert nicht.
+ * 4. **Morse-Muster** (`·`/`−`) bekommen eine vorgelesene Form (B2, Finding #5,
+ *    Owner-Delegation D2): die Zeichen werden `aria-hidden`, daneben steht ein
+ *    `.visually-hidden`-Span „dit dah" -- dieselbe Technik wie `Pattern.tsx`.
+ *    Sichtbar ändert sich nichts, der Markdown-Quelltext bleibt byte-identisch.
+ *
+ * Kein sichtbarer Text wird umgeschrieben: der Generator ordnet an, er
+ * formuliert nicht.
  */
 
 import { Marked, Renderer } from 'marked';
@@ -233,6 +239,95 @@ function asideLang(em, lang) {
   return links.every((link) => link.href.startsWith(otherRoot)) ? otherLang(lang) : undefined;
 }
 
+/**
+ * Vorlesbare Form eines Musters: `·` → „dit", `−` → „dah". Bewusst ein Duplikat
+ * von `spellPattern` in `src/ui/Pattern.tsx` -- der Generator läuft im Build und
+ * darf nichts aus der App importieren (CLAUDE.md 4: erst beim zweiten Bedarf
+ * verallgemeinern, und die Quellen liegen in verschiedenen Welten).
+ */
+export function spellMarks(marks) {
+  return [...marks.replace(/\s+/g, '')].map((mark) => (mark === '−' ? 'dah' : 'dit')).join(' ');
+}
+
+/**
+ * Das Markup einer Muster-Stelle. `shown` ist, was sichtbar bleibt (und für
+ * Screenreader entfällt): das Muster samt anhängenden Satzzeichen, z. B.
+ * `(·−·)` oder `··· −−− ···,`. Das versteckte Span wiederholt diese Satzzeichen
+ * um die vorgelesene Form -- vorgelesen wird also „(dit dah dit)".
+ *
+ * **Warum der Span das ganze Wort umfasst, nicht nur `·−·`:** schneidet er ein
+ * Wort durch („(" | „·−·" | „)"), schaltet Chromium die Textform neu und rückt
+ * den Rest der Zeile um Subpixel -- gemessen als Pixeldifferenz. Ebenso das
+ * Leerzeichen vor einem Zellmuster (`**A** ·−`): es bleibt im Span.
+ */
+function patternHtml(shown) {
+  const [, lead, marks, trail] = /^([^·−\s]*)(\s?[·−]+(?: [·−]+)*)([^·−\s]*)$/.exec(shown);
+  return (
+    `<span class="morse-pattern" aria-hidden="true">${shown}</span>` +
+    `<span class="visually-hidden">${lead}${spellMarks(marks)}${trail}</span>`
+  );
+}
+
+/**
+ * Wo steht ein Muster? Kontextregel, kein einheitliches Muster (P12):
+ * - in einer Tabellenzelle ist **ein** Zeichen schon ein Muster (`**E** ·`),
+ *   und eine reine Code-Zelle (ohne Buchstaben davor) ist es als Ganzes;
+ * - im Fließtext zählen nur Folgen **ab zwei Zeichen** (auch mit Leerzeichen
+ *   dazwischen, `··· −−− ···`) -- ein einzelnes `·` ist dort Trennzeichen.
+ * Inline-Code (`·`) ist ein eigenes Token und wird nie berührt.
+ */
+const CELL_PATTERN = /^(\s*[·−]+)(\s*)$/;
+const TEXT_PATTERN = /(?<!\S)[^·−\s]*[·−]{2,}(?: [·−]{2,})*[^·−\s]*(?!\S)/g;
+
+function patternTokens(text, inCell) {
+  const whole = inCell ? CELL_PATTERN.exec(text) : null;
+  if (whole) {
+    return [
+      { type: 'html', raw: whole[1], text: patternHtml(whole[1]) },
+      { type: 'text', raw: whole[2], text: whole[2] },
+    ].filter((token) => token.type === 'html' || token.text !== '');
+  }
+  const out = [];
+  let from = 0;
+  for (const match of text.matchAll(TEXT_PATTERN)) {
+    if (match.index > from) {
+      out.push({ type: 'text', raw: text.slice(from, match.index), text: text.slice(from, match.index) });
+    }
+    out.push({ type: 'html', raw: match[0], text: patternHtml(match[0]) });
+    from = match.index + match[0].length;
+  }
+  if (from === 0) return undefined;
+  if (from < text.length) out.push({ type: 'text', raw: text.slice(from), text: text.slice(from) });
+  return out;
+}
+
+/** Den Token-Baum im Ort umbauen: Muster-Stellen werden `html`-Token. */
+function markPatterns(tokens, inCell = false) {
+  for (let index = 0; index < tokens.length; index += 1) {
+    const token = tokens[index];
+    if (token.type === 'table') {
+      for (const cell of token.header) markPatterns(cell.tokens, true);
+      for (const row of token.rows) for (const cell of row) markPatterns(cell.tokens, true);
+      continue;
+    }
+    if (token.type === 'list') {
+      for (const item of token.items) markPatterns(item.tokens, inCell);
+      continue;
+    }
+    if (token.tokens) {
+      markPatterns(token.tokens, inCell);
+      continue;
+    }
+    if (token.type === 'text') {
+      const replacement = patternTokens(token.text, inCell);
+      if (replacement) {
+        tokens.splice(index, 1, ...replacement);
+        index += replacement.length - 1;
+      }
+    }
+  }
+}
+
 function createMarked() {
   const renderer = new Renderer();
 
@@ -268,6 +363,7 @@ function createMarked() {
 export function renderArticle(body, name = 'unbenannt', lang = 'en') {
   const marked = createMarked();
   const tokens = marked.lexer(body);
+  markPatterns(tokens);
   const blocks = tokens.filter((token) => token.type !== 'space');
 
   const headings = blocks.filter((token) => token.type === 'heading' && token.depth === 1);
