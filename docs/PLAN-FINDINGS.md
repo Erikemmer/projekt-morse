@@ -38,12 +38,12 @@ statt stillschweigend geschlossen.
 | 1 | `--muted` auf `--paper`, 3,5:1 | behoben (31.08.) | — |
 | 2 | Google-Fonts-Abruf | behoben (31.08.) | — |
 | 3 | Weitere Maße neben den Guidelines | entschieden und behoben (01.09., #46) | — |
-| **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **offen** (Vorarbeit erledigt 03.10., D1 entscheidungsreif) | **B1**, D1 |
+| **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **offen** — D1 entschieden (04.10., Owner-Delegation); Umsetzung = PR 4. CTA-Pfeil: „entschieden: bleibt“ | **B1**, D1 |
 | **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **offen** (Vorarbeit erledigt 04.10., D2 entscheidungsreif; Umfang größer als gedacht) | **B2**, D2 |
 | **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) offen** (Vorarbeit erledigt 04.10., D3 entscheidungsreif) | **B3**, D3 |
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
-| **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **offen** (Vorarbeit erledigt 03.10., D1 entscheidungsreif) | **B1**, D1 |
-| 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **offen**, gehört zu D1 | **B1**, D1 |
+| **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **offen** — D1 entschieden (04.10., Owner-Delegation): Paar als SVG; Umsetzung = PR 4 | **B1**, D1 |
+| 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **offen** — D1 entschieden: Plex-Subset erweitern; Umsetzung = PR 4 | **B1**, D1 |
 | 12 | `verify:amber` lässt einen Vorschau-Server stehen | **offen** (nicht mitrepariert) | — |
 | 13 | Echo-Check scrollt schon bei 15 Zeichen bei 1280 × 720 (+55 px) | **offen**, gehört zu D3 | **B3**, D3 |
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
@@ -53,7 +53,7 @@ statt stillschweigend geschlossen.
 
 | Kürzel | Befund / Vorschlag | Stand | Hier |
 |---|---|---|---|
-| S1 | P8 (hängende Modifikator-Taste) ist **nicht auf dem Gerät des Owners bestätigt** | offen | **G1** |
+| S1 | P8 (hängende Modifikator-Taste) ist **nicht auf dem Gerät des Owners bestätigt** | **erledigt (G1, 04.10.)** — Owner: „funktioniert wieder“ | **G1** |
 | S2 | Tastatur-Regressionen (P5, P5c, P6, P8) sind nur durch Wegwerf-Skripte belegt | **erledigt (A1, 03.10.)** | **A1** |
 | S3 | Wort- und Sende-Modus nie mit der Mess-Methode geprüft (Angebot aus P6) | **erledigt (A1, 03.10.)** — kein neuer Befund | **A1** |
 | S4 | Messgerät `keyLog` ist ein Provisorium | offen | **A2**, D10 |
@@ -96,6 +96,7 @@ Reihenfolge und Abhängigkeiten stehen in §5.
 | **Warum Gate** | A2 darf erst nach der Bestätigung laufen: das Messgerät ist das Werkzeug, falls P8 *nicht* trägt. |
 | **Schritte** | 1. Settings, ganz unten: Build-Kennung muss `995d7d7674e9` zeigen (sonst neu laden). 2. Einmal bewusst Alt-Tab aus dem Browser und zurück, sofort tippen — in Training, Lernkarte, Wort-Modus. |
 | **Fertig, wenn** | Owner meldet „sitzt" oder „sitzt nicht". |
+| **Ergebnis (04.10.2026)** | Owner: „mittlerweile funktioniert es wieder mit der richtigen Tastenerkennung“ → **sitzt**. **Grenze:** das ist die Beobachtung, dass das Symptom weg ist — nicht der Nachweis, dass ein hängendes Alt die Ursache war (dafür liefert `verify:keyboard` den Zustand, nicht Alt-Tab selbst). **A2 ist freigegeben.** |
 | **Wenn nicht** | Settings → „Copy input log" **direkt** nach dem verschluckten Anschlag, vor einem Reload. Die Zeile nennt `key`, `code` und alle Modifikator-Flaggen. Erst daraus entsteht die nächste Hypothese. Alle weiteren Pakete laufen unabhängig weiter, A2 pausiert. |
 | **Grenze** | Bewiesen ist die Kette „Alt-Flag gesetzt → Anschlag verschluckt → jetzt angenommen". **Nicht** bewiesen ist, dass das hängende Alt beim Owner von Alt-Tab kam. |
 
@@ -514,7 +515,7 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 
 | | Frage | Wer | Empfehlung | Ohne Entscheidung |
 |---|---|---|---|---|
-| D1 | Glyphen `→ ✓ ✗` (B1): neu subsetten, SVG, oder Fallback akzeptieren? | Fable | A, **falls** Upstream die Zeichen hat; sonst B für `✓ ✗`, Fallback für `→` | bleibt Fallback; #4, #8, #11 offen. **Nach der Vorarbeit (P11) geändert: siehe B1, „Vorarbeit — Ergebnis“.** |
+| D1 | Glyphen `→ ✓ ✗ ≈` (B1) | Fable → **vom Owner am 04.10. an Claude delegiert** („Entscheide du“) | — | **Entschieden, siehe „D1 — Entscheidung“ unten.** Umsetzung PR 4. |
 | D2 | Muster für Screenreader erzeugen (B2)? EN „dit dah" — und DE? | Fable | Ja, Option 3 (versteckter Text wie `Pattern.tsx`); Umfang 36 + 5 + 3 Stellen je Sprache. **Nach P12:** „Ja" bestätigt, DE-Wortlaut **offen** | bleibt; #5 offen |
 | D3 | Echo-Check-Liste bei 36 Zeichen (B3): Tastenfeld, deckeln, lassen? | Fable | (a) Tastenfeld. **Nach P12:** bestätigt (simuliert, kein Scrollen); Tastengröße und „aktiv“ offen | bleibt; #6.1 offen |
 | D4 | Settings-Höhe am Telefon (C1) | Fable | (a) akzeptieren, nach A2 nachmessen | 960 px bzw. Messwert nach A2 |
@@ -523,11 +524,59 @@ Jede Zeile: **wer** entscheidet, **Empfehlung**, was **ohne Entscheidung** gilt.
 | D7 | Hash statt Versionsname | Fable | Hash | bleibt |
 | D8 | „answer noted"-Zeile (P5) | Fable | **nicht bauen**, erst H2 | nicht gebaut |
 | D9 | Speed round / Auflösung ohne Taste | Fable | bestätigen; Zusatzsatz optional | bleibt |
-| D10 | Messgerät ausbauen oder behalten | Owner | ausbauen (nach G1) | bleibt, bis G1 beantwortet |
+| D10 | Messgerät ausbauen oder behalten | Owner | ausbauen (nach G1) | **G1 = „sitzt“ (04.10.) → ausbauen gilt als Standard; A2 ist die nächste Umsetzung.** Der Owner hat D10 nicht ausdrücklich beantwortet und kann es vor dem Merge von A2 umkehren. |
 | D11 | `verify:keyboard`: Hilfscode duplizieren oder aus `verify:amber` extrahieren | Owner | duplizieren | dupliziert |
 
 Entscheidungen werden im **Notion-Log** als Ruling festgehalten und mit
 Nummer in den jeweiligen Commit geschrieben (wie bisher: „Ruling Notion-Log #…").
+
+### D1 — Entscheidung (Owner-Delegation, 04.10.2026)
+
+Der Owner hat D1 mit „Entscheide du“ an Claude übergeben. CLAUDE.md §2.9 und §3
+ordnen Schriftdateien und die Form von Haken und Kreuz dem Design-Owner (Fable)
+zu; die Delegation ändert das nicht still. Deshalb gilt:
+
+- Die Entscheidung steht hier als **„Owner-Delegation 04.10.2026“**, nicht als
+  Fable-Ruling. **Den Eintrag ins Notion-Log macht der Owner.**
+- Sie ist **umkehrbar**: PR 4 ist ein eigener PR, und die Zeichnung beurteilt
+  der Owner am Gerät (H8), bevor er mergt.
+
+**Grundlage:** die Messungen aus P11 (B1, „Vorarbeit — Ergebnis“). Entscheidend
+sind drei Befunde: Plex hat `→ ✓ ≈`, aber **kein `✗`**; Newsreader hat keins der
+vier; die Lizenz (OFL 1.1, **kein** Reserved Font Name deklariert) erlaubt ein
+Neu-Subsetten mit mitgelieferter Lizenz und Copyright.
+
+| Zeichen | Entscheidung | Warum |
+|---|---|---|
+| `→` in der **Fußzeile** (`App.tsx`, Plex), `≈` (`Send.tsx`, Plex) | **Weg A:** Plex-Subset um `→` und `≈` erweitern (Quelle `@ibm/plex-sans` `complete/woff2`, beide Zeichen dort vorhanden) | Plex hat sie, die Lizenz trägt es, der Eingriff ist klein und ändert keine Form, die jemand entworfen hätte |
+| `✓` und `✗` (Fundstellen: B1, „Vorarbeit — Ergebnis“, a) | **Weg B als Paar:** beide als Inline-SVG im Raster und Strich von Guidelines 1.1 §8 (24er Raster, 1,5 px Strich) — wie Menü-Icon und Play-Pfeil | `✗` gibt es in **keiner** Upstream-Schrift. `✓` allein aus Plex machte ein Paar aus zwei Quellen mit zwei Strichstärken. Ein Paar muss aus **einer** Hand kommen, und die einzige, die auf allen Systemen gleich zeichnet, ist das SVG. `✓` wird deshalb **nicht** ins Subset aufgenommen |
+| `→` in der **Learn-CTA** (Newsreader, 14 Seiten) | **Weg C:** Fallback bewusst akzeptiert; Finding „entschieden: bleibt“ für diese Stelle | Newsreader hat den Pfeil nicht. Ein Plex-Pfeil in einem Newsreader-Satz mischte zwei Familien in einer Zeile, und der Text ist Fables (CLAUDE.md §3) — er bleibt **byte-identisch** |
+
+**Bedingungen für PR 4** (jede ist Akzeptanzkriterium):
+
+1. **Die SVG-Zeichen erfinden keine neue Gestalt**, sondern wenden §8 an. Vor dem
+   Zeichnen §8 aus `docs/brand/Morse_Lab_Brand_Guidelines_1.1.html` lesen; ist dort
+   nicht eindeutig geregelt, wie Haken und Kreuz aussehen, **anhalten und fragen**.
+2. **Nie Farbe allein** (CLAUDE.md §6): die Marken bleiben `aria-hidden`, der Satz
+   daneben trägt die Auskunft — wie heute. Farbe nur über `currentColor`,
+   **keine neue Farbe, kein Token, kein Schatten**, `verify:amber` bleibt bei
+   37 Ansichten grün (in der Auflösung einer falschen Antwort trägt das **richtige** Zeichen ein Amber, `data-tone="amber"`; die Marke darin erbt es über `currentColor`).
+3. **Schrift-Neuerzeugung:** Werkzeug und Quelle nennen, Lizenztext und Copyright
+   neben die Dateien legen, **woff2-Größe je Gewicht vorher/nachher**
+   (Bundle-Delta nennen, CLAUDE.md §7). Ist das Werkzeug (z. B. `fonttools`)
+   nicht verfügbar oder nur als Projektabhängigkeit zu haben: **anhalten und
+   beschreiben** (CLAUDE.md §3), nicht installieren und committen.
+4. **`verify:fonts`:** `KNOWN_GAPS` verliert `→` (Fußzeile) und `≈` nur, wenn der
+   Check das Zeichen im Subset findet; **`→` bleibt in der Liste** (CTA, mit dem
+   Verweis auf diese Entscheidung), `✓ ✗` entfallen, weil sie nicht mehr als
+   Text gezeichnet werden. Der Check zeigt damit selbst, ob die Umsetzung stimmt.
+5. **Vorher/Nachher** als Screenshots der Feedback-Zustände in Training,
+   Echo-Check, Wort-Modus, Sende-Modus und Settings (Theme-Haken) — in allen
+   sechs Themes mindestens je ein Beispiel, weil die Marken `currentColor` erben.
+   Kein Pixelrutsch außerhalb der Marken (Pixeldiff).
+6. **H8** (Windows, macOS, iOS, Android) bleibt eine **menschliche** Prüfung und
+   ist der Grund, warum der Owner vor dem Merge schaut.
+
 
 ## 5. Reihenfolge und PR-Schnitt
 
@@ -548,9 +597,9 @@ D  Abschluss ── zuletzt
 | PR | Inhalt | Wartet auf |
 |---|---|---|
 | 1 | A1 `verify:keyboard` (+ Befunde nach `FINDINGS.md`) | — |
-| 2 | A2 + C1 Messung | G1, D10 |
+| 2 | A2 + C1 Messung | **bereit** (G1 = „sitzt“, D10 Standard: ausbauen) |
 | 3 | B1 Vorarbeit + cmap-Check (Absicherung, ohne Glyphen-Entscheidung) — **erledigt 03.10. (P11)**, Commit auf dem Branch, noch kein PR | — |
-| 4 | B1 Glyphen | D1 |
+| 4 | B1 Glyphen (Umsetzung) | **bereit** (D1 entschieden, Owner-Delegation 04.10.) |
 | 5 | B2 Screenreader-Muster (Vorarbeit **erledigt 04.10., P12**) | D2 |
 | 6 | B3 Echo-Check (Vorarbeit **erledigt 04.10., P12**) | D3 |
 | 7 | C2, je nach Antwort | D4–D9 |
@@ -623,3 +672,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 03.10.2026 | A1 umgesetzt (`verify:keyboard`, 26 Fälle, Rot-Test belegt); S2 und S3 erledigt. |
 | 03.10.2026 | Runde P11: B1-Vorarbeit (Fundstellen, cmap, Upstream, Lizenz, Fallback) eingetragen — Empfehlung D1 geändert; cmap-Check `verify:fonts` umgesetzt; neue Findings #11 (`≈`) und #12 (`verify:amber` lässt Server stehen). |
 | 04.10.2026 | Runde P12: B2- und B3-Vorarbeit eingetragen (Accessibility-Tree, Umfang der Muster-Stellen korrigiert; Echo-Check-Höhen in drei Viewports, Wege (a)/(b) simuliert) — D2 und D3 entscheidungsreif; neues Finding #13; Messskripte `tools/prep/`. |
+| 04.10.2026 | G1 = „sitzt“ (S1 erledigt), A2 freigegeben (D10 Standard: ausbauen). **D1 vom Owner an Claude delegiert und entschieden:** `→` (Fußzeile) und `≈` per Plex-Subset (Weg A), `✓ ✗` als SVG-Paar nach 1.1 §8 (Weg B), CTA-Pfeil bleibt Fallback (Weg C). D2 und D3 bleiben offen (Default: bleibt; Empfehlungen aus P12 unverändert). |
