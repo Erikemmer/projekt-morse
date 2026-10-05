@@ -1,3 +1,17 @@
+# Übergabe — Stand nach Runde P20 (#16: ax-pattern.mjs an B2 angepasst)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P19 = `d31d5a9`), `main` = `fa579d0`.
+Kein PR. Geändert: `tools/prep/ax-pattern.mjs`, `FINDINGS.md` (#16 „behoben“),
+`docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+**Nachweis:** Skript läuft durch (Exit 0); Zelle „A dit dah“; im Baum nur
+`StaticText "dit dah"`, `·−` nicht. EN und DE gleich.
+
+**Offen:** #14, B2-Pixeldiff, H2, H3, H8, H9, Notion-Log D1–D9. Firefox/Safari
+ungeprüft.
+
+---
+
 # Übergabe — Stand nach Runde P19 (#12/#15: verify:amber beendet den Server)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P18 = `85c7d66`), `main` = `fa579d0`.

@@ -103,7 +103,7 @@ try {
       tds.map((td) => td.textContent.trim()).filter((t) => /[·−]/.test(t)),
     );
     const total = cells.length;
-    const patternCells = cells.filter((t) => /^\S+\s+[·−]+$/.test(t)).length;
+    const patternCells = await page.$$eval('td .morse-pattern', (n) => n.length);
     const bareCells = await page.$$eval(
       'td',
       (tds) => tds.filter((td) => /^[·−]+$/.test(td.textContent.trim())).length,
@@ -123,19 +123,23 @@ try {
       }),
     );
     console.log(`\n== ${path}`);
-    console.log(`Zellen mit Muster: ${total} (Form "X ·−": ${patternCells}; reine Code-Zellen der Satzzeichen-Tabelle: ${bareCells}); Absätze/Listenpunkte mit Muster im Fließtext: ${inProse}; schon versteckter Text in Zellen: ${hidden}; .visually-hidden im Seiten-CSS: ${hasClass}`);
+    console.log(`Zellen mit Muster: ${total} (mit .morse-pattern (B2): ${patternCells}; reine Code-Zellen der Satzzeichen-Tabelle: ${bareCells}); Absätze/Listenpunkte mit Muster im Fließtext: ${inProse}; schon versteckter Text in Zellen: ${hidden}; .visually-hidden im Seiten-CSS: ${hasClass}`);
 
     // Welche Zelle ist die erste mit Muster?
     const idx = await page.$$eval('td', (tds) =>
-      tds.findIndex((td) => /^\S+\s+[·−]+$/.test(td.textContent.trim())),
+      tds.findIndex((td) => td.querySelector('.morse-pattern')),
     );
     const before = await axTextOf(page, session, 'td', idx);
-    console.log(`heute      : Zelle "${cells[0]}" -> ${before.role} name="${before.name}" teile=${before.parts.join(' ')}`);
+    console.log(`heute (B2): Zelle "${cells[0]}" -> ${before.role} name="${before.name}" teile=${before.parts.join(' ')}`);
 
     // Option 1: aria-label am Muster (role=img)
     await page.evaluate((i) => {
       const td = document.querySelectorAll('td')[i];
-      const m = td.textContent.trim().match(/^(\S+)\s+([·−]+)$/);
+      const m = [
+        null,
+        td.querySelector('strong').textContent,
+        td.querySelector('.morse-pattern').textContent.trim(),
+      ];
       const map = { '·': 'dit', '−': 'dah' };
       const spelled = [...m[2]].map((c) => map[c]).join(' ');
       td.innerHTML = `<strong>${m[1]}</strong> <span role="img" aria-label="${spelled}">${m[2]}</span>`;

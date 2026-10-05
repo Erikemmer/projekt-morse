@@ -49,7 +49,7 @@ statt stillschweigend geschlossen.
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
 | 14 | Echo-Check hat keine „or just type“-Zeile | **offen** (neuer UI-String, Fables Wortlaut; nicht gebaut) | — |
 | 15 | `verify:amber` lässt weiterhin einen Vorschau-Server stehen | **offen** (Duplikat von #12) | — |
-| 16 | `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch | **offen** (einmalige Vorarbeit, nicht im Build) | — |
+| 16 | `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch | **behoben** (05.10.2026, Runde P20; davor offen) | — |
 | 10 | Anschrift im Impressum läuft zusammen | behoben (03.09.) | — |
 
 ### 1.2 Befunde und Vorschläge aus den Runden P5–P8
@@ -952,3 +952,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 04.10.2026 | Runde P17: **C2 abgeschlossen (PR 7), ohne Code.** D4–D9 wie empfohlen bestätigt; Code gegen jede Zeile geprüft, entspricht der Empfehlung. `npm test` 488, `npm run build` grün, `verify:amber` 39, `verify:keyboard` 25; Bundle unverändert (JS 235.318 B, CSS 20.636 B). Offen: Notion-Log der D4–D9-Rulings (Owner), H2 für D8. |
 | 04.10.2026 | Runde P18: **D Abschluss (PR 8).** `FINDINGS.md`: Status-Zeilen für #7, #9, #12, #14, #15, #16; §1 und §4 nachgezogen (D4–D9 Owner-bestätigt, #14–#16 aufgenommen); Inventur-Zeile Echo-Check in `HANDOVER.md`. Gesamtlauf grün; Bundle gegen `main` JS −639 B. §6 abgehakt, soweit von hier möglich; offen: H2, H3, H8, H9, B2-Pixeldiff, Notion-Log. |
 | 05.10.2026 | Runde P19: **#12/#15 behoben.** `tools/amber/check.mjs` startet `vite preview` direkt per `node` statt über `npx`; Server endet in jedem Ausgang (grün und künstlich rot geprüft). Keine Ansicht geändert (39), Exit-Codes gleich. Befund: `tools/keyboard/check.mjs` hat den Fehler nicht (startet schon direkt per `node`). Kein Bundle-Delta (Skript in tools/). |
+| 05.10.2026 | Runde P20: **#16 behoben.** `tools/prep/ax-pattern.mjs` an den B2-DOM angepasst (Letter und Muster aus `<strong>`/`.morse-pattern`, Zählung über `.morse-pattern`); sonst unverändert. Läuft durch, Zelle „A dit dah“, Zeichen nicht im Baum. Kein Bundle-Delta (Skript in tools/). |

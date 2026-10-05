@@ -493,8 +493,10 @@ Befund (PID per `ps` gefunden, per `kill <pid>` beendet). Runde P17: ein drittes
 
 ## 16. `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch
 
-**Status: offen** (Stand 04.10.2026, Runde P18; einmalige Vorarbeit, nicht im Build,
-nicht mitrepariert).
+**Status: behoben** (05.10.2026, Runde P20; davor offen, Stand P18). Das Skript
+liest Letter und Muster jetzt aus `<strong>` und `.morse-pattern` der B2-Zelle statt
+aus dem Zellentext; sonst unverändert. Nachweis: läuft durch (Exit 0), Zelle „A dit
+dah“, im Baum steht nur `StaticText "dit dah"`, die Zeichen `·−` nicht.
 
 **Gefunden:** 04.10.2026, Runde P16.
 
