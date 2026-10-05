@@ -153,6 +153,35 @@ dem Quelltext. Accessibility-Tree: Zelle `A ·−` → `A dit dah`. **Offen:** H
 ein Screenreader daraus macht) und die Fließtext-Zeilen mit Subpixel-
 Abweichung im Pixelvergleich (Tabellen: 0) — Einzelheiten `docs/PLAN-FINDINGS.md`, B2.
 
+**Entscheidungsvorlage B2-Pixeldiff (Runde P22, gemessen, nichts entschieden).**
+Frage: die Fließtext-Stellen (3 je Sprache: R `(·−·)` und SOS auf der Alphabet-Seite,
+SOS auf der Geschichts-Seite) **so lassen** oder **nicht markieren**? Messung
+`tools/prep/pattern-pixeldiff.mjs`: je vier Seiten (EN/DE, Alphabet/Geschichte) bei
+390×844 und 1440×900 (8 Bilder, volle Seite, dpr 1) in drei Varianten — A wie
+ausgeliefert, B Fließtext bloß/Tabellen markiert, C alles bloß (Stand vor B2).
+
+| Vergleich | Ergebnis |
+|---|---|
+| **B–C** (Tabellen markiert) | **0 Pixel in allen 8 Bildern** — die 82 Tabellen-Stellen (41 je Sprache) kosten nichts |
+| **A–C** (Fließtext markiert) | 4 von 8 Bildern weichen ab: EN Alphabet 390 = 63 px; DE Alphabet 390 = 147 px, 1440 = 253 px; DE Geschichte 1440 = 215 px. Je 9–16 Pixelzeilen (eine Textzeile), max. Kanalunterschied 59–60 von 255 (Kantenglättung), **Seitenhöhe in allen 8 Bildern identisch**, Anteil 0,005–0,011 % der Fläche |
+| A–B | identisch zu A–C (die Abweichung stammt allein aus den Fließtext-Stellen) |
+
+Vier der acht Bilder (EN Geschichte 390 und 1440, DE Geschichte 390, EN Alphabet 1440) sind
+auch markiert pixelgleich; die Abweichung hängt von Zeilenumbruch und Schriftlauf ab, nicht
+vom Inhalt. Sie ist **Subpixel-Positionierung des Rests der Zeile**, kein Umbruch, keine
+Höhenänderung, keine Farbe. Die Zählung weicht von P16 („8 von 16 Bildern“) ab: P16 zählte
+andere Bilder; hier gilt nur diese Messung.
+
+| Option | Wirkung | Preis |
+|---|---|---|
+| **1 — So lassen** (Empfehlung des Messenden) | Wie ausgeliefert. Sichtbar: eine Kantenglättung an einer Zeile, kein Leser sieht 60/255 an Glyphenkanten. | Nichts; die Seite bleibt für Screenreader stimmig. |
+| **2 — Fließtext nicht markieren** | Pixel wie vor B2 (B–C = 0). 6 Stellen (3 je Sprache) wieder bloß: im Baum `·−·`/`···` als Satzzeichen. | Genau die Stellen, an denen die Seite das Muster **erklärt** (R, SOS), sind für Screenreader wieder stumm oder „Mittelpunkt/Minus“ (§6; H3 offen). Dazu eine Sonderregel im Generator und im `verify:learn` (88 → 82 Stellen). |
+
+Zu wiegen: ein nicht wahrnehmbarer Pixelunterschied (Option 1) gegen eine
+Barrierefreiheits-Lücke (Option 2). Die Messung spricht nicht für 2. **Das ist eine
+Produktentscheidung (Owner/Fable);** weder Generator noch `verify:learn` noch
+`content/learn/` wurden berührt.
+
 ## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter — Punkt 2 BEHOBEN (Ruling #110), Punkt 1 BEHOBEN (P15)
 
 **Status Punkt 1: entschieden und behoben** (04.10.2026, Runde P15;

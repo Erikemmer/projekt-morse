@@ -1,3 +1,24 @@
+# Übergabe — Stand nach Runde P22 (B2-Pixeldiff: Entscheidungsvorlage)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P21 = `cb27206`), `main` = `fa579d0`.
+Kein PR. Geändert: `tools/prep/pattern-pixeldiff.mjs` (neu, Messung), `FINDINGS.md`
+(#5), `docs/PLAN-FINDINGS.md`, diese Übergabe. `src/`, `content/learn/`, Generator
+unberührt.
+
+**Messung:** 4 Seiten (EN/DE, Alphabet/Geschichte) × 390×844 und 1440×900, drei
+Varianten. Tabellen markiert: **0 Pixel** in allen 8 Bildern. Fließtext markiert:
+4 von 8 Bildern weichen ab (63 / 147 / 253 / 215 px, eine Textzeile, max 60/255),
+**Seitenhöhe identisch**. Zwei Optionen in FINDINGS #5, **keine gewählt**
+(Messung spricht für „so lassen“; „nicht markieren“ macht R und SOS für Screenreader
+wieder stumm).
+
+**Gesamtlauf:** siehe Commit/Zusammenfassung P22.
+
+**Offen:** #14 (Fables Entscheidung), B2-Pixeldiff (Entscheidung), H2, H3, H8, H9,
+Notion-Log D1–D9. Firefox/Safari ungeprüft.
+
+---
+
 # Übergabe — Stand nach Runde P21 (#14: Entscheidungsvorlage Echo-Check-Zeile)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P20 = `7823349`), `main` = `fa579d0`.

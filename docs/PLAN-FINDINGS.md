@@ -39,7 +39,7 @@ statt stillschweigend geschlossen.
 | 2 | Google-Fonts-Abruf | behoben (31.08.) | — |
 | 3 | Weitere Maße neben den Guidelines | entschieden und behoben (01.09., #46) | — |
 | **4** | `→` (U+2192) fehlt in allen vier Schriftschnitten | **Fußzeile behoben** (P14, im Plex-Subset); **CTA-Pfeil „entschieden: bleibt“** (Weg C). H8 offen | **B1**, D1 |
-| **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **behoben** (P16, Option 3, Owner-Delegation D2; Quelltext byte-identisch). H3 offen; Pixeldiff nur in Tabellen 0, Fließtext-Zeilen mit Subpixel-Abweichung | **B2**, D2 |
+| **5** | Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen | **behoben** (P16, Option 3, Owner-Delegation D2; Quelltext byte-identisch). H3 offen; Pixeldiff nur in Tabellen 0, Fließtext-Zeilen mit Subpixel-Abweichung (P22: gemessen, Entscheidungsvorlage in FINDINGS #5) | **B2**, D2 |
 | **6** | Wachsende Liste im Dreier-Gitter | Punkt 2 behoben (#110), **Punkt 1 (Echo-Check) behoben** (P15, Weg a, Owner-Delegation D3). H9 offen | **B3**, D3 |
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
 | **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **behoben** (P14, SVG-Paar `Mark.tsx`). H8 offen | **B1**, D1 |
@@ -888,7 +888,7 @@ Newsreader unverändert.
 - **H3** (#5, B3): Screenreader über Alphabet-Tabelle, „dit dah“ (EN/DE), gedimmte Tasten.
 - **H8** (#4, #8): `→`, `✓`/`✗` auf Windows, macOS, iOS, Android; Form von Haken und Kreuz gegenüber Fables Erwartung.
 - **H9** (#6.1): Echo-Check am Telefon, 44–50-px-Tasten.
-- **B2-Pixeldiff:** so lassen oder die drei Fließtext-Stellen je Sprache nicht markieren — Owner/Fable.
+- **B2-Pixeldiff:** so lassen oder die drei Fließtext-Stellen je Sprache nicht markieren — Owner/Fable. **P22 gemessen** (FINDINGS #5): Tabellen 0 Pixel, Fließtext 4 von 8 Bilder ≤ 253 px / max 60 von 255, Höhe identisch; Messung spricht für „so lassen“, Entscheidung offen.
 - **Notion-Log:** Owner-Delegationen D1–D3 und die Bestätigungen D4–D9 sind Owner-Aussagen und müssen vom Owner als Rulings eingetragen werden (CLAUDE.md §2).
 - **Offene Findings ohne Zuständigkeit im Plan:** #12/#15 (stehender Vorschau-Server), #14 (Hinweiszeile im Echo-Check), #16 (`ax-pattern.mjs`).
 
@@ -954,3 +954,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 05.10.2026 | Runde P19: **#12/#15 behoben.** `tools/amber/check.mjs` startet `vite preview` direkt per `node` statt über `npx`; Server endet in jedem Ausgang (grün und künstlich rot geprüft). Keine Ansicht geändert (39), Exit-Codes gleich. Befund: `tools/keyboard/check.mjs` hat den Fehler nicht (startet schon direkt per `node`). Kein Bundle-Delta (Skript in tools/). |
 | 05.10.2026 | Runde P20: **#16 behoben.** `tools/prep/ax-pattern.mjs` an den B2-DOM angepasst (Letter und Muster aus `<strong>`/`.morse-pattern`, Zählung über `.morse-pattern`); sonst unverändert. Läuft durch, Zelle „A dit dah“, Zeichen nicht im Baum. Kein Bundle-Delta (Skript in tools/). |
 | 05.10.2026 | Runde P21: **#14 Entscheidungsvorlage.** Zeile „or just type“ im Echo-Check als DOM-Simulation gemessen (390×844, 1280×720, 1440×900; 15 und 36 Zeichen): unter 900 px unsichtbar, darüber 1 Zeile = 21 px + 12 px Rand, Bühne −33 px, kein Scroll, unabhängig vom Wortlaut. Vier Optionen für Fable (Training-String, zwei kürzere, keine Zeile). Nichts gebaut. `tools/prep/echo-height.mjs` um Variante `hint0–2` erweitert. Kein Bundle-Delta. |
+| 05.10.2026 | Runde P22: **B2-Pixeldiff vermessen, Entscheidungsvorlage** (FINDINGS #5): 4 Seiten × EN/DE × 390/1440, drei Varianten (markiert / Fließtext bloß / alles bloß). Tabellen 0 Pixel; Fließtext 4 von 8 Bildern 63–253 px, max 60/255, Seitenhöhe identisch. Nichts umgesetzt, nichts entschieden. Messskript `tools/prep/pattern-pixeldiff.mjs`. Kein Bundle-Delta. |
