@@ -490,9 +490,15 @@ der Wege (a) und (b) löst ihn mit (in der Simulation, siehe
 **Status: behoben** (04.10.2026, Runde P15, mit B3). Nachgemessen: 15 Zeichen
 bei 1280 × 720 jetzt 720 px Seite bei 720 px Fenster (vorher 775, +55).
 
-## 14. Der Echo-Check hat keine „or just type“-Zeile, obwohl die Tastatur dort antwortet
+## 14. Der Echo-Check hat keine „or just type“-Zeile, obwohl die Tastatur dort antwortet — BEHOBEN (P23, Owner-Delegation)
 
-**Status: offen — Entscheidungsvorlage für Fable liegt vor** (05.10.2026, Runde P21;
+**Status: behoben (05.10.2026, Runde P23).** Der Owner hat die Entscheidung an Claude
+delegiert; entschieden: **Option 1**, derselbe String wie im Training und in Words
+(„or just type — the keyboard answers too“), kein neuer EN-String, drei Stellen
+teilen denselben Wortlaut. Umgesetzt: eine Zeile in `Learn.tsx` unter dem Tastenfeld
+(`.keypad-hint`, unter 900 px unsichtbar). Bundle JS +94 B, CSS ±0. Die Höhe (−33 px
+Bühne, kein Scroll) stammt aus der P21-DOM-Simulation, in P23 nicht neu gemessen.
+Davor: Entscheidungsvorlage (05.10.2026, Runde P21;
 Höhe gemessen, nichts gebaut). Davor: offen (Stand P18).
 
 **Entscheidungsvorlage (P21).** Der Wortlaut ist ein neuer EN-String (CLAUDE.md §2.10,

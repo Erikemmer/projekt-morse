@@ -413,6 +413,10 @@ function Echo({
           );
         })}
       </div>
+      {/* Ab 900 px (styles.css, `.keypad-hint`), wie im Training und in Words:
+          die physische Tastatur beantwortet den Echo-Check ebenfalls
+          (echoKeyAction). FINDINGS #14, Owner-Delegation P23. */}
+      {keypad && <p className="keypad-hint">or just type — the keyboard answers too</p>}
 
       {attempt !== null && (
         <div className="actions">

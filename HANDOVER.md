@@ -1,3 +1,21 @@
+# Übergabe — Stand nach Runde P23 (#14: Echo-Check-Zeile umgesetzt)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P22 = `7894187`), `main` = `fa579d0`.
+Kein PR. Geändert: `src/ui/Learn.tsx` (eine Zeile `.keypad-hint` im Echo-Check),
+`FINDINGS.md` (#14), `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+**Entscheidung (Owner-Delegation):** Option 1, derselbe String wie im Training und in
+Words. Sichtbar ab 900 px; Höhe laut P21-Simulation −33 px Bühne, kein Scroll (nicht
+neu gemessen).
+
+**Gesamtlauf:** 488 Tests, Build grün, `verify:amber` 39, `verify:keyboard` 25,
+Bundle JS +94 B, CSS ±0.
+
+**Offen:** B2-Pixeldiff (Entscheidung), H2, H3, H8, H9, Notion-Log D1–D9.
+Firefox/Safari ungeprüft.
+
+---
+
 # Übergabe — Stand nach Runde P22 (B2-Pixeldiff: Entscheidungsvorlage)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P21 = `cb27206`), `main` = `fa579d0`.
