@@ -744,9 +744,11 @@ async function startPreview() {
     throw new Error('dist/ fehlt — bitte zuerst `npm run build`.');
   });
 
+  // Direkt mit node statt ueber `npx`: `server.kill()` traefe sonst nur den
+  // npx-Prozess, der Server dahinter bliebe stehen (FINDINGS #12, #15).
   const server = spawn(
-    'npx',
-    ['vite', 'preview', '--port', String(PORT), '--strictPort'],
+    process.execPath,
+    ['node_modules/vite/bin/vite.js', 'preview', '--port', String(PORT), '--strictPort'],
     { stdio: 'ignore' },
   );
 

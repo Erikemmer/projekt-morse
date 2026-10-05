@@ -1,3 +1,20 @@
+# Übergabe — Stand nach Runde P19 (#12/#15: verify:amber beendet den Server)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P18 = `85c7d66`), `main` = `fa579d0`.
+Kein PR. Geändert: `tools/amber/check.mjs` (Start per `node` statt `npx`),
+`FINDINGS.md` (#12, #15 „behoben“), `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+**Gesamtlauf:** `npm test` **488**; `npm run build` grün; `verify:amber` **39**
+Ansichten, Exit 0; `verify:keyboard` **25** Fälle. Bundle-Delta **0 B** (Skript in
+`tools/`, `src/` unberührt). **Nachweis:** nach grünem Lauf und nach künstlichem
+Rot-Lauf (Exit 1, danach zurückgenommen) kein vite-Prozess, Port 4183 frei.
+`tools/keyboard/check.mjs` hat den Fehler nicht (D11 bleibt nur Duplikat-Muster).
+
+**Offen:** #14, #16, B2-Pixeldiff, H2, H3, H8, H9, Notion-Log D1–D9. Firefox/Safari
+ungeprüft.
+
+---
+
 # Übergabe — Stand nach Runde P18 (D: Abschluss, PR 8)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P17 = `34298e5`), `main` = `fa579d0`.

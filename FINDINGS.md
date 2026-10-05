@@ -426,7 +426,8 @@ ein Schnitt das Zeichen trägt, und fordert dann das Streichen des Eintrags.
 
 ## 12. `verify:amber` lässt nach dem Lauf einen Vorschau-Server stehen
 
-**Status: offen** (Stand 04.10.2026, Runde P18; bewusst nicht mitrepariert — eine
+**Status: behoben** (05.10.2026, Runde P19; Ursache und Nachweis siehe #15).
+Davor: offen (Stand 04.10.2026, Runde P18; bewusst nicht mitrepariert — eine
 fremde Datei, CLAUDE.md §5). Zuletzt bestätigt in P18, siehe #15.
 
 **Gefunden:** 03.10.2026, beim Prüfen der Definition of Done (Runde P11).
@@ -478,7 +479,12 @@ wäre. **Was es kosten würde:** eine Zeile in `Echo`, eine Messung.
 
 ## 15. `verify:amber` lässt weiterhin einen Vorschau-Server stehen (zu #12)
 
-**Status: offen** (Stand 04.10.2026, Runde P18; Duplikat von #12, nicht mitrepariert).
+**Status: behoben** (05.10.2026, Runde P19; Duplikat von #12). Ursache: `startPreview`
+in `tools/amber/check.mjs` startete über `npx`, `server.kill()` (im `finally`, das
+es schon gab) traf nur den npx-Vermittler. Behoben wie P10 im Tastatur-Skript:
+Start direkt per `node node_modules/vite/bin/vite.js`. Nachweis: grüner Lauf (Exit 0)
+und künstlicher Rot-Lauf (Exit 1) hinterlassen beide keinen Prozess, Port 4183 frei.
+Davor: offen (Stand 04.10.2026, Runde P18; nicht mitrepariert).
 
 **Gefunden:** 04.10.2026, Runde P15: nach `npm run verify:amber` lief ein
 `vite preview --port 4183` weiter (nur über `ps` + `kill <pid>` zu beenden).

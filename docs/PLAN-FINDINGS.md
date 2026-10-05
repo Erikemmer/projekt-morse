@@ -44,7 +44,7 @@ statt stillschweigend geschlossen.
 | 7 | Start-Screen scrollt mit Tastenfeld | behoben (#98) | — |
 | **8** | `✓` und `✗` fehlen in allen vier Schriftschnitten | **behoben** (P14, SVG-Paar `Mark.tsx`). H8 offen | **B1**, D1 |
 | 11 | `≈` (U+2248) fehlt in allen vier Schriftschnitten — vom cmap-Check gefunden | **behoben** (P14, im Plex-Subset). H8 offen | **B1**, D1 |
-| 12 | `verify:amber` lässt einen Vorschau-Server stehen | **offen** (nicht mitrepariert; in P18 erneut bestätigt, zusammen mit #15) | — |
+| 12 | `verify:amber` lässt einen Vorschau-Server stehen | **behoben** (05.10.2026, Runde P19; davor offen, in P18 erneut bestätigt, zusammen mit #15) | — |
 | 13 | Echo-Check scrollt schon bei 15 Zeichen bei 1280 × 720 (+55 px) | **behoben** (P15, mit B3) | **B3**, D3 |
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
 | 14 | Echo-Check hat keine „or just type“-Zeile | **offen** (neuer UI-String, Fables Wortlaut; nicht gebaut) | — |
@@ -951,3 +951,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 04.10.2026 | Runde P16: **D2 vom Owner an Claude delegiert und entschieden** (Option 3, „dit dah“ EN und DE, 36 + 5 + 3 Stellen je Sprache; DE-Wortlaut eine Setzung). **B2 umgesetzt** (PR 5, noch kein PR angelegt): Generator markiert 88 Muster-Stellen (`aria-hidden` + `.visually-hidden`), `verify:learn` zählt sie aus dem Quelltext, `npm test` 488, Rot-Test belegt; Quelltext byte-identisch, App-Bundle unverändert. Pixeldiff: Tabellen 0, Fließtext-Zeilen mit Subpixel-Abweichung (Entscheidung offen). #5 behoben; H3 offen; neues Finding #16. |
 | 04.10.2026 | Runde P17: **C2 abgeschlossen (PR 7), ohne Code.** D4–D9 wie empfohlen bestätigt; Code gegen jede Zeile geprüft, entspricht der Empfehlung. `npm test` 488, `npm run build` grün, `verify:amber` 39, `verify:keyboard` 25; Bundle unverändert (JS 235.318 B, CSS 20.636 B). Offen: Notion-Log der D4–D9-Rulings (Owner), H2 für D8. |
 | 04.10.2026 | Runde P18: **D Abschluss (PR 8).** `FINDINGS.md`: Status-Zeilen für #7, #9, #12, #14, #15, #16; §1 und §4 nachgezogen (D4–D9 Owner-bestätigt, #14–#16 aufgenommen); Inventur-Zeile Echo-Check in `HANDOVER.md`. Gesamtlauf grün; Bundle gegen `main` JS −639 B. §6 abgehakt, soweit von hier möglich; offen: H2, H3, H8, H9, B2-Pixeldiff, Notion-Log. |
+| 05.10.2026 | Runde P19: **#12/#15 behoben.** `tools/amber/check.mjs` startet `vite preview` direkt per `node` statt über `npx`; Server endet in jedem Ausgang (grün und künstlich rot geprüft). Keine Ansicht geändert (39), Exit-Codes gleich. Befund: `tools/keyboard/check.mjs` hat den Fehler nicht (startet schon direkt per `node`). Kein Bundle-Delta (Skript in tools/). |
