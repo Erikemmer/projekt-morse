@@ -463,8 +463,37 @@ bei 1280 × 720 jetzt 720 px Seite bei 720 px Fenster (vorher 775, +55).
 
 ## 14. Der Echo-Check hat keine „or just type“-Zeile, obwohl die Tastatur dort antwortet
 
-**Status: offen** (Stand 04.10.2026, Runde P18; neuer UI-String und eine Höhenmessung
-nötig, Fables Wortlaut — nicht gebaut).
+**Status: offen — Entscheidungsvorlage für Fable liegt vor** (05.10.2026, Runde P21;
+Höhe gemessen, nichts gebaut). Davor: offen (Stand P18).
+
+**Entscheidungsvorlage (P21).** Der Wortlaut ist ein neuer EN-String (CLAUDE.md §2.10,
+§5) und gehört Fable. Gemessen mit `ECHO_VARIANTS=heute,hint0,hint1,hint2 node
+tools/prep/echo-height.mjs` (Zeile als DOM-Simulation hinter `.keypad`, Klasse
+`.keypad-hint`, 15 und 36 Zeichen; der Echo-Check zeigt in beiden Fällen das
+ortsfeste Tastenfeld mit 36 Plätzen):
+
+| Viewport | Zeile sichtbar | Seite / Fenster | Bühne heute → mit Zeile | Abstand Bühne–Tasten |
+|---|---|---|---|---|
+| 390 × 844 | nein (`display: none` unter 900 px) | 844 / 844 | 310 → 310 | 24 → 24 |
+| 1280 × 720 | ja, 1 Zeile, 21 px (+12 px Rand) | 720 / 720, kein Scrollen | 362 → 329 (−33) | 24 → 24 |
+| 1440 × 900 | ja, 1 Zeile, 21 px (+12 px Rand) | 900 / 900, kein Scrollen | 542 → 509 (−33) | 24 → 24 |
+
+Bei 15 und 36 Zeichen identisch. Die Höhe hängt nicht vom Wortlaut ab: alle drei
+Kandidaten brechen nirgends um. Die Zeile kostet also **33 px Bühnenhöhe**, keinen
+Scroll.
+
+Optionen (keine empfohlen, keine gebaut):
+
+1. **Wie im Training:** „or just type — the keyboard answers too“ (derselbe String,
+   keine zweite Variante).
+2. **Kürzer, Imperativ:** „Or type the character.“
+3. **Kürzer, Aussage:** „Keyboard works too.“
+4. **Keine Zeile:** Status quo; die Tastatur bleibt unbeworben. Kostet nichts.
+
+Zu entscheiden bleibt außerdem, ob die Zeile in Words (`Words.tsx`, trägt sie schon)
+und Echo denselben String teilen sollen. Umsetzung nach Entscheidung: eine Zeile in
+`Learn.tsx` unter dem Tastenfeld, `.keypad-hint` existiert (nur ab 900 px sichtbar),
+Bundle-Delta einige Dutzend Byte.
 
 **Gefunden:** 04.10.2026, beim Umsetzen von B3 (Runde P15).
 

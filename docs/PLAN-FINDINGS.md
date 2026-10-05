@@ -47,7 +47,7 @@ statt stillschweigend geschlossen.
 | 12 | `verify:amber` lässt einen Vorschau-Server stehen | **behoben** (05.10.2026, Runde P19; davor offen, in P18 erneut bestätigt, zusammen mit #15) | — |
 | 13 | Echo-Check scrollt schon bei 15 Zeichen bei 1280 × 720 (+55 px) | **behoben** (P15, mit B3) | **B3**, D3 |
 | 9 | Auflösung einer falschen Antwort scrollt (849 px) | behoben (D1, 843 px) | — |
-| 14 | Echo-Check hat keine „or just type“-Zeile | **offen** (neuer UI-String, Fables Wortlaut; nicht gebaut) | — |
+| 14 | Echo-Check hat keine „or just type“-Zeile | **offen — Entscheidungsvorlage liegt vor** (P21: Höhe gemessen, +33 px Bühne, kein Scroll; Wortlaut bei Fable; nicht gebaut) | — |
 | 15 | `verify:amber` lässt weiterhin einen Vorschau-Server stehen | **offen** (Duplikat von #12) | — |
 | 16 | `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch | **behoben** (05.10.2026, Runde P20; davor offen) | — |
 | 10 | Anschrift im Impressum läuft zusammen | behoben (03.09.) | — |
@@ -953,3 +953,4 @@ Paket jeweils gegen Code und Notion-Log prüfen.
 | 04.10.2026 | Runde P18: **D Abschluss (PR 8).** `FINDINGS.md`: Status-Zeilen für #7, #9, #12, #14, #15, #16; §1 und §4 nachgezogen (D4–D9 Owner-bestätigt, #14–#16 aufgenommen); Inventur-Zeile Echo-Check in `HANDOVER.md`. Gesamtlauf grün; Bundle gegen `main` JS −639 B. §6 abgehakt, soweit von hier möglich; offen: H2, H3, H8, H9, B2-Pixeldiff, Notion-Log. |
 | 05.10.2026 | Runde P19: **#12/#15 behoben.** `tools/amber/check.mjs` startet `vite preview` direkt per `node` statt über `npx`; Server endet in jedem Ausgang (grün und künstlich rot geprüft). Keine Ansicht geändert (39), Exit-Codes gleich. Befund: `tools/keyboard/check.mjs` hat den Fehler nicht (startet schon direkt per `node`). Kein Bundle-Delta (Skript in tools/). |
 | 05.10.2026 | Runde P20: **#16 behoben.** `tools/prep/ax-pattern.mjs` an den B2-DOM angepasst (Letter und Muster aus `<strong>`/`.morse-pattern`, Zählung über `.morse-pattern`); sonst unverändert. Läuft durch, Zelle „A dit dah“, Zeichen nicht im Baum. Kein Bundle-Delta (Skript in tools/). |
+| 05.10.2026 | Runde P21: **#14 Entscheidungsvorlage.** Zeile „or just type“ im Echo-Check als DOM-Simulation gemessen (390×844, 1280×720, 1440×900; 15 und 36 Zeichen): unter 900 px unsichtbar, darüber 1 Zeile = 21 px + 12 px Rand, Bühne −33 px, kein Scroll, unabhängig vom Wortlaut. Vier Optionen für Fable (Training-String, zwei kürzere, keine Zeile). Nichts gebaut. `tools/prep/echo-height.mjs` um Variante `hint0–2` erweitert. Kein Bundle-Delta. |

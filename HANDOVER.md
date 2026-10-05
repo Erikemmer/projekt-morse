@@ -1,3 +1,22 @@
+# Übergabe — Stand nach Runde P21 (#14: Entscheidungsvorlage Echo-Check-Zeile)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P20 = `7823349`), `main` = `fa579d0`.
+Kein PR. Geändert: `tools/prep/echo-height.mjs` (Variante `hint0–2`, Messung),
+`FINDINGS.md` (#14), `docs/PLAN-FINDINGS.md`, diese Übergabe. `src/` unberührt.
+
+**Messung:** Zeile unter 900 px unsichtbar (390×844: Delta 0). Bei 1280×720 und
+1440×900: 1 Zeile, 21 px + 12 px Rand, Bühne −33 px (362→329, 542→509), kein
+Scrollen, Abstand Bühne–Tasten 24 px; 15 = 36 Zeichen (ortsfestes Tastenfeld).
+Wortlaut ändert die Höhe nicht. Vier Optionen in FINDINGS #14, **keine gewählt**.
+
+**Gesamtlauf:** siehe Commit/Zusammenfassung P21 (488 Tests, Build, amber 39,
+keyboard 25, Bundle-Delta 0 B).
+
+**Offen:** #14 (Fables Entscheidung), B2-Pixeldiff, H2, H3, H8, H9, Notion-Log
+D1–D9. Firefox/Safari ungeprüft.
+
+---
+
 # Übergabe — Stand nach Runde P20 (#16: ax-pattern.mjs an B2 angepasst)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P19 = `d31d5a9`), `main` = `fa579d0`.

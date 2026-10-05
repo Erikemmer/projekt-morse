@@ -119,6 +119,8 @@ const MEASURE = (cap) => () => {
     ),
     answersH: Math.round(answers.getBoundingClientRect().height),
     answersBottom: Math.round(answers.getBoundingClientRect().bottom + scrollY),
+    hintH: Math.round(document.querySelector('.keypad-hint')?.getBoundingClientRect().height ?? 0),
+    hintShown: document.querySelector('.keypad-hint') ? getComputedStyle(document.querySelector('.keypad-hint')).display !== 'none' : false,
     horizontalOverflow: doc.scrollWidth > innerWidth,
   };
 };
@@ -155,6 +157,22 @@ async function measureOne(browser, viewport, count, variant) {
         answers.appendChild(clone);
       }
     });
+  } else if (variant.startsWith('hint')) {
+    // FINDINGS #14 (Runde P21): Simulation der „or just type“-Zeile, kein
+    // gebauter Code. `hint0` = Zeile aus dem Training (Wortlaut-Option 1),
+    // `hint1`/`hint2` = kuerzere Kandidaten. Dieselbe Klasse wie im Training
+    // (`.keypad-hint`, nur ab 900 px sichtbar).
+    const texts = [
+      'or just type — the keyboard answers too',
+      'Or type the character.',
+      'Keyboard works too.',
+    ];
+    await page.evaluate((text) => {
+      const p = document.createElement('p');
+      p.className = 'keypad-hint';
+      p.textContent = text;
+      document.querySelector('.keypad').after(p);
+    }, texts[Number(variant.slice(4))]);
   } else if (variant === 'b') {
     await page.evaluate((cap) => {
       [...document.querySelectorAll('.answers .answer')].forEach((el, i) => {
@@ -172,7 +190,7 @@ const server = await startPreview();
 let browser;
 try {
   browser = await openBrowser();
-  const header = ['Viewport', 'Zeichen', 'Variante', 'Optionen', 'Zeilen', 'Taste', 'Seite', 'Fenster', 'scrollt', 'Rand unten', 'Bühne', 'Abstand', 'Antworten'];
+  const header = ['Viewport', 'Zeichen', 'Variante', 'Optionen', 'Zeilen', 'Taste', 'Seite', 'Fenster', 'scrollt', 'Rand unten', 'Bühne', 'Abstand', 'Antworten', 'Zeile'];
   console.log(header.join(' | '));
   for (const viewport of VIEWPORTS) {
     for (const count of [15, 36]) {
@@ -196,6 +214,7 @@ try {
             m.stageH,
             m.gap,
             m.answersH,
+            `hint ${m.hintShown ? m.hintH : 0}`,
           ].join(' | ') + (m.horizontalOverflow ? '  [HORIZONTAL]' : ''),
         );
       }
