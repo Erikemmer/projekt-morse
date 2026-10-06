@@ -668,6 +668,12 @@ export function App() {
    * unterbricht: seine Karte kommt vor der *naechsten*, so wie vorgesehen.
    */
   const pending = pendingIntroductions(session.progress);
+  /**
+   * In welcher Sitzung (`sessionsStarted`) der Lernlauf uebersprungen wurde,
+   * oder null. Nur Sitzungszustand: die naechste Sitzung hat eine andere
+   * Nummer und legt die Karten wieder vor.
+   */
+  const [learnSkippedIn, setLearnSkippedIn] = useState<number | null>(null);
   // `view` und `menuOpen` gehoeren in die Bedingung, seit es das Gehaeuse
   // gibt: ein Lauf, der startet, waehrend jemand auf Progress oder im Menue
   // steht, spielte seinen Karten-Ton in einen fremden Screen hinein.
@@ -681,6 +687,7 @@ export function App() {
     !reviewing &&
     learn === null &&
     pending.length > 0 &&
+    learnSkippedIn !== session.progress.sessionsStarted &&
     session.phase === 'ready' &&
     session.round === 1;
 
@@ -748,12 +755,14 @@ export function App() {
   }, [learn?.echoPrompt, playCharacter]);
 
   const skipLearn = useCallback(() => {
-    // "Skip for now" laesst den Durchgang aus, ohne ihn bei jedem Start erneut
-    // vorzulegen -- die Zeichen bleiben ueber "Review the sounds" erreichbar.
-    const queue = learn?.queue ?? pending;
-    setSession((current) => ({ ...current, progress: markIntroduced(current.progress, queue) }));
+    // "Skip" laesst den Durchgang *fuer diese Sitzung* aus. Die Zeichen bleiben
+    // unvorgestellt (`introducedCharacters` unveraendert) und kommen vor der
+    // naechsten Sitzung wieder -- vorher wurden sie als eingefuehrt gebucht,
+    // ohne je gehoert worden zu sein (Review Design/UX, A5). Bis dahin sind sie
+    // ueber "Learn the sounds" erreichbar.
+    setLearnSkippedIn(session.progress.sessionsStarted);
     setLearn(null);
-  }, [learn?.queue, pending]);
+  }, [session.progress.sessionsStarted]);
 
   const openReview = useCallback((char: string) => {
     setLearn(
@@ -1392,7 +1401,9 @@ export function App() {
         <>
           <SessionHeader
             label={
-              session.kind === 'drill' ? 'Speed round' : `Session ${session.progress.sessionsStarted}`
+              // "Session N" zaehlte jedes Oeffnen der App mit (Review D2) --
+              // der Kopf nennt jetzt den Modus, nicht eine Zahl ohne Bedeutung.
+              session.kind === 'drill' ? 'Speed round' : 'Practice'
             }
             round={session.round}
             totalRounds={session.totalRounds}

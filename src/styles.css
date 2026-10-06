@@ -963,6 +963,41 @@ button:disabled {
   outline: none;
 }
 
+/*
+ * Seitenmuster der Verwaltungsseiten (Review B1): Eyebrow als Ueberschrift,
+ * darunter eine Aussage in Newsreader, eine leise Notiz, dann Haarlinien.
+ * Dieselben Masse wie die Eyebrow der Uebung (1.1 §5: Label 11-12 px, caps,
+ * +0.18 em) und die Frage (26 px Newsreader 500).
+ */
+.screen-eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--gray);
+}
+
+.screen-eyebrow:focus {
+  outline: none;
+}
+
+.screen-statement {
+  margin: 8px 0 0;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.screen-note {
+  margin: 12px 0 24px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
 /* --- Einfuehrung: zwei Bildschirme, dann los --- */
 
 .intro {
