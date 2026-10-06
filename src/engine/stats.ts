@@ -133,7 +133,7 @@ export interface Progress {
   /**
    * Antworten seit der letzten Einfuehrung eines Zeichens. Traegt die Sperre
    * der Wachstumsregel; startet bei 0, was nichts blockiert, weil das
-   * rollierende Fenster ohnehin erst gefuellt sein muss (30 > Sperre 20).
+   * rollierende Fenster ohnehin erst gefuellt sein muss (30 > Sperre 10).
    */
   answersSinceGrowth: number;
   /**

@@ -1381,7 +1381,7 @@ export function App() {
           headingRef={focusTarget}
         />
       ) : view === 'about' ? (
-        <About headingRef={focusTarget} />
+        <About headingRef={focusTarget} progress={session.progress} />
       ) : reviewing ? (
         <ReviewPicker
           characters={CHARACTER_ORDER}
@@ -1411,6 +1411,7 @@ export function App() {
             round={session.round}
             totalRounds={session.totalRounds}
             done={session.attempts.length}
+            onEnd={onStartScreen ? undefined : restart}
           />
 
           <section className="stage">

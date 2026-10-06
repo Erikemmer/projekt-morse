@@ -574,3 +574,21 @@ Der Abschnitt „heute“ ist damit historisch (er beschreibt den Stand vor B2).
 Build. Die Messung „nachher“ lief in P16 über ein Wegwerfskript im Scratchpad.
 **Was es kosten würde:** entweder das Skript auf den neuen DOM umstellen oder
 es als Beleg des Vorher-Zustands markieren/löschen.
+
+## 17. `npm run build` bricht auf macOS/Windows an `Account.tsx` / `account.ts` ab — BEHOBEN
+
+**Status: behoben** (06.10.2026, Branch `claude/review-design-ux`): `account.ts` heißt `accountApi.ts`.
+
+**Gefunden:** 06.10.2026, Design-/UX-Review. `src/ui/` enthält `Account.tsx` und `account.ts`; `App.tsx` importiert `./Account` und `./account`. Auf case-insensitiven Dateisystemen kollidieren beide (`tsc`: TS1261/TS1149, `vite build` scheitert). Linux/CI sind nicht betroffen. **Nicht mitrepariert.** Kosten: eine Datei umbenennen (z. B. `accountApi.ts`) plus Importe, S.
+
+## 18. `public/logo-lockup.svg` ist ungültiges XML — BEHOBEN
+
+**Status: behoben** (06.10.2026): Doppelbindestrich im Kommentar ersetzt; `xmllint` über alle SVGs in `public/` grün.
+
+**Gefunden:** 06.10.2026, Review. Der Kommentar enthält `--` (Zeile 6); `xmllint` meldet „Comment must not contain '--'", als Bild lädt die Datei nicht. Sie ist im Repo nirgends eingebunden. **Nicht mitrepariert.** Kosten: S.
+
+## 19. Zwei veraltete Kommentare nennen überholte Schwellen — BEHOBEN
+
+**Status: behoben** (06.10.2026): beide Kommentare nennen jetzt 10 bzw. 85 %.
+
+**Gefunden:** 06.10.2026, Review. `src/engine/stats.ts:136` „Sperre 20" (Konstante ist 10, `growth.ts:53`); `src/engine/tempo.ts:20-22` „90-%-Fenster" (Konstante ist 0,85, `growth.ts:35`). **Nicht mitrepariert.** Kosten: S.

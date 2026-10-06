@@ -106,7 +106,9 @@ export function Words({
         )}
 
         <p className="question" role="status">
-          {state.phase === 'ready' && 'Ready when you are.'}
+          {/* Review E2: im Ruhezustand sagt die Zeile, was dieser Modus ist.
+              Wortlaut-Entwurf, Fable-Abnahme offen. */}
+          {state.phase === 'ready' && 'Hear a word or group, then type it.'}
           {state.phase === 'listening' && 'Listening…'}
           {answering && 'Type what you heard.'}
           {attempt !== null && (

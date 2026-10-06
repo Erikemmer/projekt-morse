@@ -3,7 +3,7 @@
   <!--
     Primaeres Lockup (1.1 §3): Marke links, Wortmarke rechts, Abstand ein
     Knopfdurchmesser (30). Die Marke ist unveraendert die aus
-    docs/brand/assets/morse-lab-mark.svg -- hier wird nichts nachgezeichnet
+    docs/brand/assets/morse-lab-mark.svg; hier wird nichts nachgezeichnet
     (Ruling #88). Die Wortmarke steht in Newsreader Regular, ohne Sperrung und
     ohne Versalien; sie ist als Text ausgezeichnet, nicht in Pfade gewandelt.
     Die Breite der viewBox folgt der gemessenen Textbreite von

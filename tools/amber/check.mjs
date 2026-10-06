@@ -173,7 +173,7 @@ const VIEWS = [
     seed: FIRST_RUN,
     async reach(page) {
       await page.getByRole('button', { name: 'Skip intro' }).click();
-      await page.waitForSelector('.pattern-row', { timeout: 20000 });
+      await toSecondCard(page);
       await page.getByRole('button', { name: 'Try it' }).click();
       await page.getByRole('button', { name: /^Play the character/ }).click();
       await answering(page);
@@ -184,7 +184,7 @@ const VIEWS = [
     seed: FIRST_RUN,
     async reach(page) {
       await page.getByRole('button', { name: 'Skip intro' }).click();
-      await page.waitForSelector('.pattern-row', { timeout: 20000 });
+      await toSecondCard(page);
       await page.getByRole('button', { name: 'Try it' }).click();
       await page.getByRole('button', { name: /^Play the character/ }).click();
       await answering(page);
@@ -618,6 +618,17 @@ async function sendElement(page, holdMs) {
 }
 
 /** Wartet, bis der Ton durch ist und die Frage steht. */
+/**
+ * Erstlauf bis zur zweiten Karte, Ton gelaufen. Seit dem Review Design/UX
+ * (A4) hat die allererste Karte keinen Check -- er steht hinter der zweiten.
+ */
+async function toSecondCard(page) {
+  await page.waitForSelector('.pattern-row', { timeout: 20000 });
+  await page.getByRole('button', { name: 'Next sound' }).click();
+  await page.waitForSelector('.learn-char:not(:text-is("K"))');
+  await page.waitForSelector('.pattern-row', { timeout: 20000 });
+}
+
 async function answering(page) {
   await page.waitForFunction(
     () => document.querySelector('.question')?.textContent?.includes('Which character'),

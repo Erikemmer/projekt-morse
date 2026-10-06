@@ -516,9 +516,9 @@ export function renderPage({ meta, body, name = 'unbenannt' }) {
 ${renderHead({ meta, title, canonical, pairUrl, enUrl })}
   </head>
   <body>
-    <div class="page">
+    <div class="page"${meta.slug === 'index' && meta.section !== 'legal' ? ' data-page="hub"' : ''}>
       <header class="masthead">
-        <a class="wordmark" href="/">Morse Lab</a>
+        <a class="wordmark" href="/"><img class="wordmark-mark" src="/logo-key.svg" alt="" width="30" height="20" />Morse Lab</a>
         <a class="masthead-app" href="/">${chrome.app}</a>
       </header>
       <main>

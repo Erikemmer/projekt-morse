@@ -19,7 +19,7 @@
  * Kandidaten gibt, und diese Datei erst, wenn es keinen mehr gibt.
  *
  * **Dieselbe Bedingung, dieselbe Sperre.** Die Stufe faellt, sobald das
- * rollierende 90-%-Fenster der Wachstumsregel erfuellt ist (Bedingung (a) in
+ * rollierende 85-%-Fenster der Wachstumsregel erfuellt ist (Bedingung (a) in
  * growth.ts) und seit der letzten Stufe mindestens `SPEED_LOCKOUT_ANSWERS`
  * Antworten liegen. Die Zahlen sind bewusst *dieselben* Konstanten und keine
  * neuen: es ist derselbe Nachweis "das sitzt gerade", nur mit einer anderen

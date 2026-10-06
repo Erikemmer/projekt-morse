@@ -18,6 +18,8 @@
 
 import { useEffect, useRef } from 'react';
 
+import { KeyMark } from './KeyMark';
+
 /** Wo man gerade ist — 'learn' ist die Klang-Auswahl (ReviewPicker). */
 export type MenuLocation =
   | 'practice'
@@ -37,9 +39,17 @@ export type MenuLocation =
  * verlässt die SPA und kann nie „hier" sein. Ein `<button>`, der navigiert,
  * wäre für Tastatur und Screenreader die falsche Rolle.
  */
-type MenuEntry =
+type MenuEntry = (
   | { readonly kind: 'place'; readonly location: MenuLocation; readonly label: string }
-  | { readonly kind: 'link'; readonly href: string; readonly label: string };
+  | { readonly kind: 'link'; readonly href: string; readonly label: string }
+) & {
+  /**
+   * Beginnt eine neue Gruppe (Review A2): Ueben · Stand · Geraet und Konto ·
+   * Lesen. Getrennt durch eine Haarlinie, nicht durch Ueberschriften --
+   * die Gruppen sprechen fuer sich.
+   */
+  readonly groupStart?: boolean;
+};
 
 /*
  * „Account" stand in Runde A bewusst nicht hier (1.1 §7: nichts zeigen, was
@@ -84,15 +94,36 @@ function LegalLinks() {
   );
 }
 
+/**
+ * Pfeil nach draussen fuer den einen Eintrag, der die App verlaesst (Review
+ * A1): "Learn" laedt eine statische Seite ohne Menue. Linien-Icon, 1.5 px,
+ * runde Kappen (1.1 §8); kein Schriftzeichen, weil `↗` in keiner der vier
+ * Schriftschnitte steht (vgl. FINDINGS #4 fuer `→`).
+ */
+function OutwardMark() {
+  return (
+    <svg className="outward-mark" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="M8 16L16 8M9 8h7v7"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
+    </svg>
+  );
+}
+
 export const ENTRIES: readonly MenuEntry[] = Object.freeze([
   { kind: 'place', location: 'practice', label: 'Practice' },
   { kind: 'place', location: 'learn', label: 'Learn the sounds' },
   { kind: 'place', location: 'words', label: 'Words & groups' },
   { kind: 'place', location: 'send', label: 'Send' },
-  { kind: 'place', location: 'progress', label: 'Progress' },
-  { kind: 'place', location: 'account', label: 'Account' },
+  { kind: 'place', location: 'progress', label: 'Progress', groupStart: true },
+  { kind: 'place', location: 'account', label: 'Account', groupStart: true },
   { kind: 'place', location: 'settings', label: 'Settings' },
-  { kind: 'link', href: '/learn/', label: 'Learn' },
+  { kind: 'link', href: '/learn/', label: 'Learn', groupStart: true },
   { kind: 'place', location: 'about', label: 'About' },
 ]);
 
@@ -116,8 +147,11 @@ export function AppHeader({
         (unsichtbare) h1 direkt darüber in App.tsx; zweimal "Morse Lab"
         hintereinander wäre nur Rauschen.
       */}
-      <span className="wordmark" aria-hidden="true">
-        Morse Lab
+      {/* Primaeres Lockup (1.1 §3): Marke links der Wortmarke -- auch mobil,
+          nicht nur in der Schiene (Review B2). Dekorativ, wie die Wortmarke. */}
+      <span className="app-lockup" aria-hidden="true">
+        <KeyMark className="app-mark" width={30} />
+        <span className="wordmark">Morse Lab</span>
       </span>
       <button
         ref={triggerRef}
@@ -171,7 +205,7 @@ export function NavRail({
   return (
     <nav className="nav-rail" aria-label="Morse Lab">
       <p className="nav-rail-lockup">
-        <img className="nav-rail-mark" src="/logo-key.svg" alt="" width="24" height="16" />
+        <KeyMark className="nav-rail-mark" width={24} />
         <span className="wordmark nav-rail-wordmark">Morse Lab</span>
       </p>
 
@@ -179,8 +213,15 @@ export function NavRail({
         {ENTRIES.map((entry) => {
           if (entry.kind === 'link') {
             return (
-              <a key={entry.href} className="nav-rail-item" href={entry.href}>
+              <a
+                key={entry.href}
+                className="nav-rail-item"
+                data-group-start={entry.groupStart ? 'true' : undefined}
+                href={entry.href}
+              >
                 {entry.label}
+                <OutwardMark />
+                <span className="visually-hidden"> — reading pages, leaves the app</span>
               </a>
             );
           }
@@ -193,6 +234,7 @@ export function NavRail({
               key={entry.location}
               type="button"
               className="nav-rail-item"
+              data-group-start={entry.groupStart ? 'true' : undefined}
               aria-current={current ? 'page' : undefined}
               disabled={hint !== undefined}
               onClick={() => onNavigate(entry.location)}
@@ -278,9 +320,16 @@ export function MenuPanel({
           */
           if (entry.kind === 'link') {
             return (
-              <a key={entry.href} className="menu-item" href={entry.href}>
+              <a
+                key={entry.href}
+                className="menu-item"
+                data-group-start={entry.groupStart ? 'true' : undefined}
+                href={entry.href}
+              >
                 <span className="menu-dot" data-current={false} aria-hidden="true" />
                 {entry.label}
+                <OutwardMark />
+                <span className="visually-hidden"> — reading pages, leaves the app</span>
               </a>
             );
           }
@@ -294,6 +343,7 @@ export function MenuPanel({
               ref={index === 0 ? firstEntryRef : undefined}
               type="button"
               className="menu-item"
+              data-group-start={entry.groupStart ? 'true' : undefined}
               aria-current={current ? 'page' : undefined}
               /*
                 Gesperrt heißt wirklich gesperrt -- das Attribut steht, nicht

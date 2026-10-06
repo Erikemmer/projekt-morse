@@ -191,7 +191,14 @@ function questionFor(state: SendSessionState, keyPressed: boolean): string {
       ? 'Press and hold to send — release between dits and dahs.'
       : 'Tap the pattern, then Done.';
   }
-  if (state.phase === 'ready') return 'Ready when you are.';
+  // Im Ruhezustand sagt die Zeile, was dieser Modus ist (Review E2) --
+  // vorher "Ready when you are." wie ueberall, und wer den Menueeintrag nicht
+  // kannte, musste raten. Wortlaut-Entwurf, Fable-Abnahme offen.
+  if (state.phase === 'ready') {
+    return state.mode === 'keyed'
+      ? 'Send this character on the key.'
+      : 'Send this character — tap its dits and dahs.';
+  }
   return ''; // 'feedback': der Verdict in SendSolution traegt die Ansage.
 }
 

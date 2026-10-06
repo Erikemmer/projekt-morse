@@ -1,3 +1,51 @@
+# Übergabe — Stand nach Runde R1 (Review Design/UX umgesetzt)
+
+**Stand:** Branch `claude/review-design-ux` (von `claude/clever-turing-77fkyo`, P23 = `6d925a1`).
+Grundlage: [`docs/REVIEW-DESIGN-UX.md`](./docs/REVIEW-DESIGN-UX.md). **Owner-Entscheidung 06.10.2026:**
+Top 10 + „Danach“-Liste umsetzen, neue Texte als Entwurf markieren, Logo nur reparieren +
+Fallback, live deployen.
+
+**Umgesetzt:**
+- A1/A2 Menü in vier Gruppen (Haarlinien), „Learn“ mit Pfeil nach draußen (Linien-SVG).
+- A3 „End session“ in der Sitzungs-Kopfzeile (ersetzt die Beschriftung, solange eine Sitzung läuft).
+- A4 Kein Echo-Check mit nur einer Option (`cardHasEcho`, engine/learn.ts) — die erste Karte geht direkt weiter.
+- A5 „Skip“ im Lernlauf bucht nichts mehr; die Karten kommen vor der nächsten Sitzung wieder.
+- B1 Progress im Seitenmuster (Eyebrow · Aussage · Notiz · Haarlinien).
+- B2 Taster neben der Wortmarke: mobiler Kopf, Learn-Seiten. Marke inline (`ui/KeyMark.tsx`), Farben aus Tokens — trägt jetzt auch in dunklen Themes.
+- B3 Unvollständige letzte Reihe des Antwortfelds mittig.
+- B6 Hub: nur „Start here“ in Amber, übrige Links Ink.
+- B7 Settings: Test-Ton umrandet statt gefüllt, Haarlinien zwischen Klang · Ansicht · Lernstand.
+- C Favicon = Fallback-Marke (Punkt + Pille, Amber) — **nimmt Ruling #88 fürs Favicon zurück**; `logo-lockup.svg` repariert (FINDINGS #18).
+- D1a/c/d, D2, D3 neue Sätze (unten), „Sessions“ und „Session N“ entfernt (zählten App-Starts), Rückblick in Zeichen am Sitzungsende (`reviewCharacters`, engine/session.ts).
+- E2 Words/Send sagen im Ruhezustand, was sie sind. E6 „Download your practice data“ in About.
+- F1 44-px-Ziele (Imprint/Privacy, Learn-Kopf). F2 Fokusring Ink. F3 sichtbarer Audio-Hinweis in About. F4 Links im Learn-Fließtext immer unterstrichen.
+- FINDINGS #17–#19 behoben (u. a. Build auf macOS).
+
+**Fable-Abnahme offen (Wortlaut-Entwürfe, nichts davon ist beschlossen):**
+| Ort | Text |
+|---|---|
+| Lernkarte mit Check | „The next three are practice — nothing here counts.“ |
+| Erste Lernkarte | „This is K. Listen a few times, then go on.“ · Knopf „Next sound“ |
+| Wachstum | „… joins from the next round. Your recent answers were steady.“ |
+| Progress | Aussage „10 of 36 characters.“ · „Next up: W. It joins once your recent answers are steady — roughly 85 % right, with no character far behind.“ · „All characters are in your practice.“ · Fußnote „Accuracy counts every answer so far; the set grows on your recent answers.“ |
+| Sitzungsende | „Steady today: …“ · „Still settling: …“ · Offline-Hinweis als eigene Zeile |
+| Kopfzeile | „Practice“ statt „Session N“ · „End session“ |
+| Words / Send | „Hear a word or group, then type it.“ · „Send this character — tap its dits and dahs.“ · „Send this character on the key.“ |
+| About | „Morse Lab trains listening: every exercise starts with a tone. If you can't hear it, Send lets you practise the patterns by sight.“ · „Download your practice data“ |
+
+**Fable-Abnahme offen (Gestaltung/Regeln):** Favicon gegen Ruling #88 · Fokusring Ink statt amber-deep ·
+Link-Unterstreichung gegen CONCEPT-LEARN §5 · Hub-Linkfarben · Menügruppen · zentrierte Rest-Reihe ·
+„Skip“ verschiebt statt bucht · erste Karte ohne Check.
+
+**Nicht umgesetzt:** Logo-Richtungen R1–R3 (Owner: nur reparieren + Fallback), D1e (Freeze-Erklärung
+beim ersten „freeze ready“ — braucht ein neues persistentes Feld), B5 (Themes in der
+Außendarstellung — keine Code-Frage).
+
+**Prüfskripte angepasst:** `verify:keyboard` und `verify:amber` kennen den neuen Erstlauf (Check
+hinter Karte 2) und die neuen Ruhe-Zeilen in Words/Send; `verify:contrast` prüft den Fokusring als Ink/Paper.
+
+---
+
 # Übergabe — Stand nach Runde P23 (#14: Echo-Check-Zeile umgesetzt)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P22 = `7894187`), `main` = `fa579d0`.

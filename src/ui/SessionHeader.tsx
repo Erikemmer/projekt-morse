@@ -21,18 +21,33 @@ export function SessionHeader({
   round,
   totalRounds,
   done,
+  onEnd,
 }: {
-  /** Was links steht: "Session 12" oder "Speed round". */
+  /** Was links steht: "Practice" oder "Speed round". */
   label: string;
   round: number;
   totalRounds: number;
   /** Wie viele Runden beantwortet sind -- der Stand der Linie. */
   done: number;
+  /**
+   * Die Sitzung beenden, oder undefined, solange es nichts zu beenden gibt.
+   * Mobil verschwindet das Menue waehrend einer Runde; ohne diesen Weg kam
+   * man nur nach 20 Runden wieder heraus (Review A3). Kein Druck, kein
+   * Verlust: jede Antwort ist schon verbucht, nur der Streak-Tag faellt erst
+   * mit einer beendeten Sitzung.
+   */
+  onEnd?: () => void;
 }) {
   return (
     <header className="masthead">
       <div className="masthead-row">
-        <span>{label}</span>
+        {onEnd === undefined ? (
+          <span>{label}</span>
+        ) : (
+          <button type="button" className="masthead-end" onClick={onEnd}>
+            End session
+          </button>
+        )}
         <span>
           Round {Math.min(round, totalRounds)} / {totalRounds}
         </span>

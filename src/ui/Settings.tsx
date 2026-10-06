@@ -146,8 +146,13 @@ export function Settings({
         />
       </div>
 
-      <div className="account-actions">
-        <button type="button" className="button-primary" disabled={playing} onClick={onPreview}>
+      {/*
+        Umrandet statt gefuellt (Review B7): ein Test ist nicht die eine
+        Haupthandlung, fuer die 1.1 §7 den gefuellten Amber-Primary vorsieht --
+        diese View hat keine, also auch kein Amber.
+      */}
+      <div className="settings-preview">
+        <button type="button" disabled={playing} onClick={onPreview}>
           Play test tone
         </button>
       </div>
@@ -168,7 +173,9 @@ export function Settings({
         muss weiterhin genau zwei meinen. System steht zuerst, weil es die
         Voreinstellung ist, dann Light und Dark als eigene, benannte Gruppen.
       */}
-      <div className="setting">
+      {/* Haarlinien zwischen den Gruppen (Review B7): Klang · Ansicht ·
+          Lernstand. */}
+      <div className="setting setting-group">
         <div className="setting-head">
           <span id="theme-heading">Theme</span>
         </div>
@@ -186,7 +193,7 @@ export function Settings({
         steht. Das Tempo gehört ohnehin dem Lernstand und nicht dem Gerät — es
         wandert mit dem Konto (engine/sync.ts).
       */}
-      <div className="setting">
+      <div className="setting setting-group">
         <div className="setting-head">
           <span>Effective speed</span>
           <span className="setting-value">{effectiveWpm} wpm</span>

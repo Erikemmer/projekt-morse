@@ -231,7 +231,8 @@ async function wordPhase(page) {
   const question = await questionText(page);
   if (/Type what you heard/.test(question)) return 'answering';
   if (/Listening/.test(question)) return 'listening';
-  if (/Ready when/.test(question)) return 'ready';
+  // Seit Review E2 sagt die Ruhe-Zeile, was der Modus ist.
+  if (/Ready when|Hear a word or group/.test(question)) return 'ready';
   return `?(${question})`;
 }
 
@@ -241,7 +242,7 @@ async function sendPhase(page) {
   const question = await questionText(page);
   if (/Listening/.test(question)) return 'listening';
   if (/Tap the pattern/.test(question)) return 'sending';
-  if (/Ready when/.test(question)) return 'ready';
+  if (/Ready when|Send this character/.test(question)) return 'ready';
   return `?(${question})`;
 }
 
@@ -279,13 +280,23 @@ async function toAnswering(page) {
 async function toEchoReady(page) {
   await page.getByRole('button', { name: 'Skip intro' }).click();
   await page.waitForSelector('.pattern-row', { timeout: 20000 });
+  // Seit dem Review Design/UX (A4) hat die allererste Karte keinen Check --
+  // ein Abruf mit einer einzigen Option misst nichts. Der erste Check steht
+  // hinter der zweiten Karte.
+  await page.getByRole('button', { name: 'Next sound' }).click();
+  await page.waitForSelector('.learn-char:not(:text-is("K"))');
+  await page.waitForSelector('.pattern-row', { timeout: 20000 });
   await page.getByRole('button', { name: 'Try it' }).click();
   await waitPhase(characterPhase, page, 'ready');
 }
 
-/** Das einzige Zeichen, das der Echo-Check beim ersten Zeichen anbietet. */
+/**
+ * Das Zeichen der gerade vorgestellten Karte -- der erste Abruf eines Checks
+ * fragt immer nach ihm (engine/learn.ts, beginEcho). Im Antwortfeld steht es
+ * zuletzt (answerPool: Bekanntes, dann die Karten des Laufs).
+ */
 async function echoOption(page) {
-  const label = await page.locator('.answers .answer').first().innerText();
+  const label = await page.locator('.answers .answer').last().innerText();
   return label.split('\n')[0].trim();
 }
 
