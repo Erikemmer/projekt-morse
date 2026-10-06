@@ -1,3 +1,31 @@
+# Übergabe — Stand nach Runde P24 (#17: Words, ein Amber beim Tippen während des Tons)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (davor `fe96813`), `main` = `fa579d0`.
+Kein PR. Geändert: `src/ui/Words.tsx` (Check erst in `answering`), `tools/amber/check.mjs`
+(neuer Fall „Wort-Training, Tippen während des Tons“), `FINDINGS.md` (#17),
+`docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+**Auftrag:** „alle vorgeschlagenen Änderungen“ aus `docs/REVIEW-DESIGN-UX.md` §G.
+Umgesetzt nur #1 (Owner-Delegation). #2–#10 und die Folgeliste brauchen laut §G ein
+Fable-Ruling oder einen Fable-Wortlaut (CLAUDE.md §2, §3) — angehalten und gemeldet,
+nicht still festgelegt.
+
+**Verhalten:** Tippen und Löschen bleiben während des Tons (Ruling #112), „Check“
+erscheint erst mit dem Tonende. Rot-Fall belegt: ohne Fix meldet `verify:amber`
+2 Amber-Flächen (play + button-check), Exit 1.
+
+**Gesamtlauf:** 488 Tests, Build grün, `verify:amber` 40 (39 + 1 neu),
+`verify:keyboard` 25, Bundle JS +31 B (235.411 → 235.442), CSS ±0. Kein
+Vorschau-Server bleibt stehen.
+
+**Nachtrag #14:** Höhe am echten Bau gemessen (`tools/prep/echo-height.mjs`): kein
+Scroll in 390×844, 1280×720, 1440×900 bei 15 und 36 Zeichen; Zeile 21 px ab 900 px.
+
+**Offen:** Review §G #2–#10 (Fable), B2-Pixeldiff (Entscheidung), H2, H3, H8, H9,
+Notion-Log D1–D9. Firefox/Safari ungeprüft.
+
+---
+
 # Übergabe — Stand nach Runde P23 (#14: Echo-Check-Zeile umgesetzt)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (P22 = `7894187`), `main` = `fa579d0`.

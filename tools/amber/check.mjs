@@ -310,6 +310,19 @@ const VIEWS = [
     },
   },
   {
+    // FINDINGS #17: Tippen waehrend des Tons (Ruling #112) -- der Play-Kreis
+    // ist das eine Amber, der Check darf noch nicht daneben stehen.
+    name: 'Wort-Training, Tippen während des Tons (F2)',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Words & groups');
+      await page.getByRole('button', { name: /^Play the word/ }).click();
+      await page.waitForSelector('.play[data-sounding="true"]', { timeout: 10000 });
+      await page.locator('.answer:not([disabled])').first().click();
+      await page.waitForSelector('.answer-delete');
+    },
+  },
+  {
     name: 'Wort-Training, Eingabe leer (F2)',
     seed: progress({ characters: WORD_LETTERS }),
     async reach(page) {

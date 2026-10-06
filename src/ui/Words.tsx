@@ -126,6 +126,7 @@ export function Words({
         <AnswerLine
           typed={state.typed}
           enabled={typingAllowed}
+          submittable={answering}
           onDelete={onDelete}
           onSubmit={onSubmit}
         />
@@ -237,11 +238,14 @@ function PlayCircle({
 function AnswerLine({
   typed,
   enabled,
+  submittable,
   onDelete,
   onSubmit,
 }: {
   typed: string;
   enabled: boolean;
+  /** Nur in 'answering': "Check" erscheint erst mit dem Tonende (FINDINGS #17). */
+  submittable: boolean;
   onDelete: () => void;
   onSubmit: () => void;
 }) {
@@ -268,7 +272,9 @@ function AnswerLine({
 
       {/*
         Erst wenn es etwas zu tun gibt (1.1 §7) -- und das haelt zugleich das
-        Amber-Budget: waehrend des Tons ist der Play-Kreis das eine Amber.
+        Amber-Budget: waehrend des Tons ist der Play-Kreis das eine Amber,
+        deshalb kommt der gefuellte Check erst in 'answering' (FINDINGS #17).
+        Loeschen bleibt waehrend des Tons, wie das Tippen (Ruling #112).
       */}
       {!empty && enabled && (
         <>
@@ -289,9 +295,11 @@ function AnswerLine({
               />
             </svg>
           </button>
-          <button type="button" className="button-check" onClick={onSubmit}>
-            Check
-          </button>
+          {submittable && (
+            <button type="button" className="button-check" onClick={onSubmit}>
+              Check
+            </button>
+          )}
         </>
       )}
     </div>

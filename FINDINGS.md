@@ -497,7 +497,8 @@ delegiert; entschieden: **Option 1**, derselbe String wie im Training und in Wor
 („or just type — the keyboard answers too“), kein neuer EN-String, drei Stellen
 teilen denselben Wortlaut. Umgesetzt: eine Zeile in `Learn.tsx` unter dem Tastenfeld
 (`.keypad-hint`, unter 900 px unsichtbar). Bundle JS +94 B, CSS ±0. Die Höhe (−33 px
-Bühne, kein Scroll) stammt aus der P21-DOM-Simulation, in P23 nicht neu gemessen.
+Bühne, kein Scroll) stammt aus der P21-DOM-Simulation; am echten Bau nachgemessen
+in P24: kein Scroll in allen drei Viewports bei 15 und 36 Zeichen, Zeile 21 px ab 900 px.
 Davor: Entscheidungsvorlage (05.10.2026, Runde P21;
 Höhe gemessen, nichts gebaut). Davor: offen (Stand P18).
 
@@ -577,7 +578,10 @@ es als Beleg des Vorher-Zustands markieren/löschen.
 
 ## 17. Words: zwei Amber-Flächen zugleich, wenn während des Tons getippt wird
 
-**Status: offen** (06.10.2026, Design-/UX-Review, `docs/REVIEW-DESIGN-UX.md` B4).
+**Status: behoben** (06.10.2026, Runde P24, Owner-Delegation laut Review §G #1).
+„Check“ erscheint erst in `answering`; Tippen und Löschen bleiben während des Tons
+(Ruling #112). `verify:amber` hat den Fall jetzt (40 Ansichten); rot ohne Fix belegt.
+Davor: offen (06.10.2026, Design-/UX-Review, `docs/REVIEW-DESIGN-UX.md` B4).
 
 **Gefunden:** 06.10.2026, beim Durchspielen des Wort-Trainings per Playwright
 (Screenshot `shots/19-words-feedback-390.png` im Scratchpad der Review-Sitzung).
