@@ -127,8 +127,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Fokus = 2 px Ink-Kontur, kein Glow (1.1 §7, §12). Vorher amber-deep:
+ * machte jede fokussierte Flaeche zu einer zweiten Amber-Stelle und legte
+ * um den Play-Kreis einen Doppelring, der wie ein Zustand aussah (Review F2,
+ * B4). Ink auf Paper ~15:1. */
 :focus-visible {
-  outline: 2px solid var(--amber-deep);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -1746,6 +1750,19 @@ a.menu-item {
  * wirklich gibt (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
  */
 .variability-note,
+/* Rueckblick am Sitzungsende (Review D1d): zwei ruhige Zeilen ueber den
+ * Zahlen-Hinweisen, in Ink -- das ist die Aussage dieses Screens. */
+.summary-review {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.summary-review p {
+  margin: 0;
+}
+
 .streak-note {
   margin: 16px 0 0;
   font-size: 13px;

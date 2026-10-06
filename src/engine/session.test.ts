@@ -14,6 +14,7 @@ import {
   createSession,
   promptFinished,
   submitAnswer,
+  reviewCharacters,
   summarize,
   type SessionState,
 } from './session';
@@ -654,5 +655,41 @@ describe('Tempo-Progression im Loop', () => {
     expect(parseProgress({ characters: {}, effectiveWpm: 'schnell' }).effectiveWpm).toBe(
       STARTING_EFFECTIVE_WPM,
     );
+  });
+});
+
+describe('reviewCharacters: der Rueckblick am Sitzungsende', () => {
+  const start = (): SessionState =>
+    createSession({ totalRounds: 3, progress: emptyProgress(), random: () => 0, today: '2026-09-01' });
+  const attempt = (char: string, correct: boolean) => ({
+    char,
+    answer: correct ? char : '?',
+    correct,
+    reactionSeconds: null,
+    replays: 0,
+  });
+
+  it('trennt sichere von noch unsicheren Zeichen, in der Reihenfolge der Fragen', () => {
+    const state = {
+      ...start(),
+      attempts: [
+        attempt('K', true),
+        attempt('S', false),
+        attempt('K', true),
+        attempt('M', true),
+        attempt('S', true),
+        attempt('U', false),
+      ],
+    };
+    expect(reviewCharacters(state)).toEqual({ steady: ['K'], settling: ['S', 'U'] });
+  });
+
+  it('ein einzelner Treffer ist keine Aussage', () => {
+    const state = { ...start(), attempts: [attempt('M', true)] };
+    expect(reviewCharacters(state)).toEqual({ steady: [], settling: [] });
+  });
+
+  it('ohne Antworten bleibt beides leer', () => {
+    expect(reviewCharacters(start())).toEqual({ steady: [], settling: [] });
   });
 });

@@ -59,8 +59,10 @@ import {
   createSession,
   promptFinished,
   retuneHomeTone,
+  reviewCharacters,
   submitAnswer,
   summarize,
+  type CharacterReview,
   type SessionKind,
   type SessionState,
 } from '../engine/session';
@@ -1394,6 +1396,7 @@ export function App() {
           summary={summary}
           streak={streak}
           drillResult={drillResult(session, drillTarget)}
+          review={reviewCharacters(session)}
           onRestart={restart}
           headingRef={focusTarget}
         />
@@ -1439,7 +1442,9 @@ export function App() {
                 {session.introduced !== null && (
                   <p className="unlock" role="status">
                     The set grows: <strong>{session.introduced}</strong> joins from the next
-                    round.
+                    round. Your recent answers were steady.
+                    {/* Zweiter Satz: der Grund (Review D1a), ohne Zahl.
+                        Wortlaut-Entwurf, Fable-Abnahme offen. */}
                   </p>
                 )}
               </>
@@ -1560,14 +1565,21 @@ interface DrillTarget {
  * der Satz auch im Singular stimmen ("R is still slow to land.").
  */
 function slowSentence(characters: readonly string[]): string {
+  const list = characterList(characters);
+  return characters.length === 1 ? `${list} is still slow to land.` : `${list} are still slow to land.`;
+}
+
+/**
+ * "R", "R and K", "R, K, S and 2 more" -- hoechstens drei Zeichen beim Namen.
+ * Seit dem Rueckblick am Sitzungsende (Review D1d) der zweite Bedarf, deshalb
+ * aus `slowSentence` herausgezogen (CLAUDE.md 4).
+ */
+function characterList(characters: readonly string[]): string {
   const named: string[] = [...characters.slice(0, 3)];
   const rest = characters.length - named.length;
   if (rest > 0) named.push(`${rest} more`);
-
-  if (named.length === 1) return `${named[0]} is still slow to land.`;
-
-  const list = `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
-  return `${list} are still slow to land.`;
+  if (named.length === 1) return named[0];
+  return `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
 }
 
 /**
@@ -1833,6 +1845,7 @@ function Summary({
   summary,
   streak,
   drillResult,
+  review,
   onRestart,
   headingRef,
 }: {
@@ -1841,6 +1854,8 @@ function Summary({
   streak: StreakStanding;
   /** Die Ergebniszeile eines Drills, oder null (auch bei normalen Sitzungen). */
   drillResult: string | null;
+  /** Welche Zeichen in dieser Sitzung sicher kamen und welche noch nicht. */
+  review: CharacterReview;
   onRestart: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
@@ -1888,6 +1903,18 @@ function Summary({
       {drillResult !== null && <p className="note">{drillResult}</p>}
 
       {/*
+        Der Rueckblick in Zeichen statt in Prozent (Review D1d): was sitzt,
+        was noch nicht. Kein Schuldton -- "still settling" stellt fest, und
+        die Zeichen kommen ohnehin wieder. Wortlaut-Entwurf, Fable-Abnahme offen.
+      */}
+      {!drill && (review.steady.length > 0 || review.settling.length > 0) && (
+        <div className="summary-review">
+          {review.steady.length > 0 && <p>Steady today: {characterList(review.steady)}.</p>}
+          {review.settling.length > 0 && <p>Still settling: {characterList(review.settling)}.</p>}
+        </div>
+      )}
+
+      {/*
         Die Streak-Zeile steht *unter* den Zahlen, nicht ueber ihnen: geuebt
         wird fuer das Koennen, nicht fuer die Reihe (CLAUDE.md 2.4). An dieser
         Stelle traegt sie den frisch verbuchten Tag -- der faellt in advance(),
@@ -1905,8 +1932,11 @@ function Summary({
       <p className="note">
         Response time is measured from the end of the tone, over correct answers only. Read it as a
         rough indicator of confidence, not a measurement of it — it also contains how fast you
-        found the button. Works offline once loaded.
+        found the button.
       </p>
+      {/* Eigene Zeile: im selben Absatz las sich der Offline-Hinweis wie ein
+          Teil der Reaktionszeit-Erklaerung (Review D). */}
+      <p className="note">Works offline once loaded.</p>
 
       <div className="actions">
         <button type="button" className="button-primary" onClick={onRestart}>

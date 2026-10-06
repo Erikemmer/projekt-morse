@@ -19,7 +19,7 @@
  * - Sekundaertext auf Grund (gray/paper): >= 4.5:1 (AA fuer normalen Text)
  * - Text auf der Akzentflaeche (paper/amber): >= 4.5:1 (derselbe Knopf wie
  *   ".button-primary": weisser/papierner Text auf gefuelltem Amber)
- * - Fokusring auf Grund (amber-deep/paper): >= 3:1 (WCAG 1.4.11, kein Text)
+ * - Fokusring auf Grund (ink/paper): >= 3:1 (WCAG 1.4.11, kein Text)
  *
  * Faellt ein Wert durch, ist die einzige erlaubte Reaktion, die Helligkeit
  * **dieses einen Tokens** im kleinsten noetigen Schritt nachzuziehen -- keine
@@ -51,10 +51,10 @@ const THRESHOLDS = {
   'ink/paper (Fließtext)': 7,
   'gray/paper (Sekundärtext)': 4.5,
   'paper/amber (Text auf Akzentfläche)': 4.5,
-  // WCAG 1.4.11 (Non-text Contrast): der Fokusring (outline: amber-deep) muss
-  // sich vom Grund abheben, den er umrandet -- kein Fliesstext, deshalb 3:1
-  // statt 4.5:1.
-  'amber-deep/paper (Fokusring)': 3,
+  // WCAG 1.4.11 (Non-text Contrast): der Fokusring (outline: ink, seit dem
+  // Review Design/UX F2; vorher amber-deep) muss sich vom Grund abheben, den
+  // er umrandet -- kein Fliesstext, deshalb 3:1 statt 4.5:1.
+  'ink/paper (Fokusring)': 3,
 };
 
 function hexToRgb(hex) {
@@ -121,12 +121,11 @@ function main() {
 
   for (const [name, tokens] of Object.entries(THEMES)) {
     const { paper, ink, amber, gray } = tokens;
-    const amberDeep = tokens['amber-deep'];
     const values = {
       'ink/paper (Fließtext)': contrastRatio(ink, paper),
       'gray/paper (Sekundärtext)': contrastRatio(gray, paper),
       'paper/amber (Text auf Akzentfläche)': contrastRatio(paper, amber),
-      'amber-deep/paper (Fokusring)': contrastRatio(amberDeep, paper),
+      'ink/paper (Fokusring)': contrastRatio(ink, paper),
     };
     for (const [label, ratio] of Object.entries(values)) {
       const min = THRESHOLDS[label];

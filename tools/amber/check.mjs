@@ -15,7 +15,7 @@
  * Als Treffer gilt ein Element, dessen **Füllung, Rahmen oder Text** `--amber`
  * oder `--amber-deep` trägt. Bewusst nicht gezählt:
  *
- * - **Der Fokusring** (`:focus-visible` ist amber-deep). Er gehört der
+ * - **Der Fokusring** (`:focus-visible`, seit Review F2 Ink). Er gehört der
  *   Tastatur, nicht der Gestaltung, und steht immer nur an einer Stelle.
  * - **Verschachtelte Treffer.** Ein amber Knopf mit amber Text ist eine
  *   Amber-Fläche, nicht zwei — gezählt wird der äußerste Treffer.

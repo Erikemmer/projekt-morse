@@ -417,3 +417,43 @@ export function summarize(state: SessionState): SessionSummary {
     medianReactionSeconds,
   };
 }
+
+/**
+ * Der Rueckblick am Sitzungsende in Zeichen statt in Prozent (Review D1d).
+ *
+ * - `steady`: in dieser Sitzung mindestens zweimal gefragt und jedes Mal
+ *   richtig erkannt.
+ * - `settling`: mindestens einmal verfehlt.
+ *
+ * Zeichen mit nur einem Treffer stehen in keiner der beiden Listen -- eine
+ * einzelne Antwort ist keine Aussage ueber Sicherheit (CLAUDE.md 2.6).
+ * Reihenfolge: wie zuerst gefragt. Reine Ableitung, kein Zustand.
+ */
+export interface CharacterReview {
+  steady: string[];
+  settling: string[];
+}
+
+export function reviewCharacters(state: SessionState): CharacterReview {
+  const order: string[] = [];
+  const asked = new Map<string, { attempts: number; misses: number }>();
+  for (const attempt of state.attempts) {
+    let entry = asked.get(attempt.char);
+    if (entry === undefined) {
+      entry = { attempts: 0, misses: 0 };
+      asked.set(attempt.char, entry);
+      order.push(attempt.char);
+    }
+    entry.attempts += 1;
+    if (!attempt.correct) entry.misses += 1;
+  }
+
+  const steady: string[] = [];
+  const settling: string[] = [];
+  for (const char of order) {
+    const entry = asked.get(char)!;
+    if (entry.misses > 0) settling.push(char);
+    else if (entry.attempts >= 2) steady.push(char);
+  }
+  return { steady, settling };
+}
