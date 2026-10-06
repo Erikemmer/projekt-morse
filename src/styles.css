@@ -924,6 +924,15 @@ button:disabled {
   color: var(--gray);
 }
 
+/* Der leise Zusatz unter der Kartenzeile (Review D1c): kleiner, gleiche
+ * Farbe -- eine Randbemerkung, keine zweite Anweisung. */
+.learn-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gray);
+}
+
 /* Haelt die Hoehe frei, solange das Muster noch nicht gezeigt werden darf --
  * sonst springt die Karte, sobald der Ton durch ist. */
 .pattern-blank {

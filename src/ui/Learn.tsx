@@ -11,6 +11,7 @@ import { encodeChar } from '../engine/alphabet';
 import {
   ECHO_ROUNDS,
   answerPool,
+  cardHasEcho,
   currentCharacter,
   echoKeyAction,
   type LearnState,
@@ -71,7 +72,7 @@ export function Learn({
           char={char}
           heard={state.phase === 'card-heard'}
           playing={playing}
-          requireEcho={state.requireEcho}
+          continueAs={cardHasEcho(state) ? 'echo' : state.requireEcho ? 'next' : 'done'}
           buttonRef={focusRef}
           onPlay={onPlay}
           onContinue={state.requireEcho ? onBeginEcho : onNextCard}
@@ -241,7 +242,7 @@ function Card({
   char,
   heard,
   playing,
-  requireEcho,
+  continueAs,
   buttonRef,
   onPlay,
   onContinue,
@@ -249,7 +250,12 @@ function Card({
   char: string;
   heard: boolean;
   playing: boolean;
-  requireEcho: boolean;
+  /**
+   * Was nach der Karte kommt: der Echo-Check, direkt die naechste Karte (erste
+   * Karte eines Erstlaufs, `cardHasEcho`) oder -- beim freien Wiederholen --
+   * nichts weiter.
+   */
+  continueAs: 'echo' | 'next' | 'done';
   buttonRef: { current: HTMLElement | null };
   onPlay: () => void;
   onContinue: () => void;
@@ -278,8 +284,16 @@ function Card({
         )}
 
         <p className="learn-copy">
-          This is {char}. Listen a few times, then try it.
+          {continueAs === 'next'
+            ? `This is ${char}. Listen a few times, then go on.`
+            : `This is ${char}. Listen a few times, then try it.`}
         </p>
+        {/* Wortlaut-Entwurf, Fable-Abnahme offen (Review Design/UX, D1c): der
+            Check schreibt keine Statistik (engine/learn.ts) -- das darf man
+            wissen, bevor er beginnt. */}
+        {continueAs === 'echo' && (
+          <p className="learn-note">The next three are practice — nothing here counts.</p>
+        )}
       </div>
 
       {/*
@@ -296,7 +310,7 @@ function Card({
             className="button-go"
             onClick={onContinue}
           >
-            {requireEcho ? 'Try it' : 'Done'}
+            {continueAs === 'echo' ? 'Try it' : continueAs === 'next' ? 'Next sound' : 'Done'}
           </button>
         </div>
       )}
