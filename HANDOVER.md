@@ -1,3 +1,29 @@
+# Übergabe — Stand nach Runde P27 (Review-Folgeliste, Block A; FINDINGS #18)
+
+**Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. Kein PR. Der Owner
+hat die ganze Folgeliste aus `docs/REVIEW-DESIGN-UX.md` §G an Claude delegiert und für
+#18 Weg (c) gewählt (06.10.2026). Setzungen von Claude, keine Fable-Rulings.
+
+**Block A, umgesetzt:**
+
+| Punkt | Entscheidung | Wo |
+|---|---|---|
+| #18 | Streak-Zeile auf dem Start-Screen steht links in der Fußzeile statt des Tagesstands; ab dem ersten Play wieder „Today …“. Play-Kreis ready = listening (283 px bei 390 × 844, 304 px bei 1440 × 900). Die Variabilitäts-Zeile (einmalig) und die Drill-Einladung bleiben in der Bühne. | `App.tsx` |
+| D2.5 Freeze | Einmal auf der Summary, beim ersten Abschluss mit Freeze im Vorrat: „A freeze covers one missed day. A new one is ready after 7 days in a row.“ Neues Feld `freezeNoticeSeen` (additiv, Default false, Sync: Oder). | `stats.ts`, `session.ts`, `sync.ts`, `App.tsx` |
+| F2.6 Fußnoten | Die beiden Vorbehalte stehen über der Progress-Tabelle, Wortlaut unverändert. | `Progress.tsx` |
+| E2 Sessions | Zeile „Sessions“ auf Progress gestrichen (zählte begonnene Sitzungen). | `Progress.tsx` |
+| F2.1 Fokus | Fokusring 2 px Ink in App und Learn-Seiten; Antworttaste im Fokus mit Ink-Rand. | `styles.css`, `tools/learn/learn.css` |
+| F2.4 Skip-Link | „Skip to content“ vor der Schiene, sichtbar nur im Fokus; Enter → `main#content`, nächster Tab → Play. | `App.tsx`, `styles.css` |
+
+**Gesamtlauf:** `npm test` 503, Build grün (Learn: 18 Seiten), `verify:amber` 40,
+`verify:keyboard` 25, Kontrast 24/24, Höhen ohne Scroll (390 × 844, 1280 × 720; 6/15/36).
+Bundle JS +435 B, CSS +341 B.
+
+**Block B folgt:** Verwechslungsbild, ML-Ornament, Themes auf Paper/Night, Settings als
+Text, Logo-Richtung.
+
+---
+
 # Übergabe — Stand nach Runde P25 (Review §G #2–#10, Owner-Delegation)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (davor P24), `main` = `fa579d0`. Kein PR.

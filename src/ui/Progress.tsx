@@ -75,10 +75,12 @@ export function ProgressScreen({
           <dt>Next up</dt>
           <dd>{next ?? '— all characters are in'}</dd>
         </div>
-        <div className="stat-line">
-          <dt>Sessions</dt>
-          <dd>{progress.sessionsStarted}</dd>
-        </div>
+        {/*
+          Die Zeile "Sessions" ist seit Runde P27 weg (Review §E2,
+          Owner-Delegation): sie zaehlte *begonnene* Sitzungen, auch einen
+          Reload -- eine Zahl, die steigt, ohne dass etwas gekonnt wurde
+          (CLAUDE.md 2.4). Die Sitzungszeile im Training traegt die Nummer weiter.
+        */}
       </dl>
 
       {/*
@@ -94,6 +96,26 @@ export function ProgressScreen({
 
       {practised ? (
         <>
+          {/*
+            Die beiden Vorbehalte stehen seit Runde P27 *ueber* der Tabelle
+            (Review §F2.6, Owner-Delegation): bei 36 Zeilen lasen sie sich
+            sonst erst nach der Zahl, die sie einschraenken (CLAUDE.md 2.6).
+            Wortlaut unveraendert.
+          */}
+          {/* Wortlaut aus der Aufgabenstellung dieser Runde — nicht umformulieren. */}
+          <p className="footnote">
+            Reaction time is an approximation of confidence — it includes finding the key.
+          </p>
+          {/*
+            Ruling #103c: das Tastenfeld (ab dreizehn aktiven Zeichen) verbucht
+            seit dieser Runde keine Reaktionszeit mehr -- die Zahl war dort
+            ueberwiegend Suchzeit, keine Kopfhoer-Sicherheit. Der Median-Strich
+            fuer ein Zeichen ohne Messung erklaert sich sonst nicht von selbst;
+            Wortlaut aus der Aufgabenstellung, nicht umformulieren.
+          */}
+          <p className="footnote">
+            Median from typed answers only — tapping a key includes the time to find it.
+          </p>
           <table className="char-table">
             <thead>
               <tr>
@@ -121,20 +143,6 @@ export function ProgressScreen({
               })}
             </tbody>
           </table>
-          {/* Wortlaut aus der Aufgabenstellung dieser Runde — nicht umformulieren. */}
-          <p className="footnote">
-            Reaction time is an approximation of confidence — it includes finding the key.
-          </p>
-          {/*
-            Ruling #103c: das Tastenfeld (ab dreizehn aktiven Zeichen) verbucht
-            seit dieser Runde keine Reaktionszeit mehr -- die Zahl war dort
-            ueberwiegend Suchzeit, keine Kopfhoer-Sicherheit. Der Median-Strich
-            fuer ein Zeichen ohne Messung erklaert sich sonst nicht von selbst;
-            Wortlaut aus der Aufgabenstellung, nicht umformulieren.
-          */}
-          <p className="footnote">
-            Median from typed answers only — tapping a key includes the time to find it.
-          </p>
         </>
       ) : (
         <p className="empty-note">

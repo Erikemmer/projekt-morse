@@ -127,8 +127,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Fokus = 2 px Ink (1.1 §7/§12; Review §F2.1, Owner-Delegation Runde P27):
+ * ein Fokusring in amber-deep war ein zweites Amber neben dem Primary. */
 :focus-visible {
-  outline: 2px solid var(--amber-deep);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -471,9 +473,13 @@ button:disabled {
   border-radius: var(--radius);
 }
 
-.answer:hover:not(:disabled),
-.answer:focus-visible {
+.answer:hover:not(:disabled) {
   border-color: var(--amber);
+}
+
+/* Fokus in Ink wie ueberall (Runde P27) -- der Ring traegt ihn, der Rand folgt. */
+.answer:focus-visible {
+  border-color: var(--ink);
 }
 
 /*
@@ -1770,6 +1776,33 @@ a.menu-item {
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+
+/*
+ * Der Skip-Link (Runde P27): unsichtbar wie .visually-hidden, bis er den
+ * Fokus hat -- dann oben links, Papier und Ink, kein Amber.
+ */
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  z-index: 10;
+  padding: var(--space-1) var(--space-2);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  font-size: 14px;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+.shell:focus {
+  outline: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

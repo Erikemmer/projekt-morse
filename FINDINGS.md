@@ -608,7 +608,11 @@ Owner-Delegation reicht: die Regel ist eindeutig, nur der Weg ist zu wählen.
 
 ## 18. Der Play-Kreis rückt beim ersten Play um 19 px nach unten
 
-**Status: offen** (06.10.2026, Runde P25; gefunden beim Nachmessen von Review §A3).
+**Status: behoben** (06.10.2026, Runde P27, Owner-Entscheidung Weg c): die Streak-Zeile
+steht auf dem Start-Screen in der Fußzeile; Play-Kreis ready = listening (283 px bei
+390 × 844, 304 px bei 1440 × 900). Variabilitäts-Zeile und Drill-Einladung verschieben
+die Bühne weiterhin, wenn sie erscheinen (selten, bewusst nicht mitgezogen).
+Davor: offen (06.10.2026, Runde P25; gefunden beim Nachmessen von Review §A3).
 
 Bei 390 × 844 mit 6 Zeichen steht die Sitzungszeile in Ruhe und beim Spielen fest bei
 y = 32 (der Sprung der Kopfzeile ist mit P25 weg), der Play-Kreis aber wandert von

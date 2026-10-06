@@ -165,6 +165,12 @@ export interface Progress {
    */
   variabilityNoticeSeen: boolean;
   /**
+   * Ob der eine Satz zum Freeze schon auf einer Summary stand (Review §D2.5,
+   * Owner-Delegation Runde P27). Additiv mit Default false, wie
+   * `variabilityNoticeSeen`.
+   */
+  freezeNoticeSeen: boolean;
+  /**
    * Der Streak mit Freeze-Gnade (engine/streak.ts). Additiv mit Default:
    * ein Stand von vor dieser Regel faengt bei "noch kein geuebter Tag" an --
    * eine Reihe rueckwirkend zu behaupten, waere eine erfundene Zahl
@@ -221,6 +227,7 @@ export function emptyProgress(): Progress {
     introSeen: false,
     introducedCharacters: [],
     variabilityNoticeSeen: false,
+    freezeNoticeSeen: false,
     streak: emptyStreak(),
     effectiveWpm: STARTING_EFFECTIVE_WPM,
     answersSinceSpeedUp: 0,
@@ -509,6 +516,7 @@ export function parseProgress(raw: unknown): Progress {
       (raw as { answersSinceSpeedUp?: unknown }).answersSinceSpeedUp,
     ),
     variabilityNoticeSeen: (raw as { variabilityNoticeSeen?: unknown }).variabilityNoticeSeen === true,
+    freezeNoticeSeen: (raw as { freezeNoticeSeen?: unknown }).freezeNoticeSeen === true,
     introducedCharacters: parseIntroduced(
       (raw as { introducedCharacters?: unknown }).introducedCharacters,
       characters,

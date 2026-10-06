@@ -103,7 +103,7 @@ import {
   type DayStats,
   type Progress,
 } from '../engine/stats';
-import { streakStanding, type StreakStanding } from '../engine/streak';
+import { FREEZE_EARNED_AFTER_DAYS, streakStanding, type StreakStanding } from '../engine/streak';
 import { computeTiming } from '../engine/timing';
 import { About } from './About';
 import { Account } from './Account';
@@ -1291,8 +1291,16 @@ export function App() {
 
   return (
     <div className="app-layout">
+      {/*
+        Skip-Link (Review §F2.4, Owner-Delegation Runde P27): ab 900 px stehen
+        die Eintraege der Schiene vor der Uebung im Tab-Weg. Unsichtbar, bis er
+        den Fokus hat.
+      */}
+      <a className="skip-link" href="#content">
+        Skip to content
+      </a>
       <NavRail location={menuLocation} locked={menuLocked} onNavigate={navigateTo} />
-      <main className="shell">
+      <main className="shell" id="content" tabIndex={-1}>
       {/*
         Der Name der App steht fuer Screenreader weiter oben in der Struktur,
         auch wenn der Trainings-Screen ihn nicht mehr zeigt (Ruhe-Mockup: die
@@ -1397,6 +1405,7 @@ export function App() {
           streak={streak}
           drillResult={drillResult(session, drillTarget)}
           direction={session.kind === 'drill' ? null : growthDirection(session.progress)}
+          freezeNotice={session.showFreezeNotice}
           onRestart={restart}
           headingRef={focusTarget}
         />
@@ -1485,14 +1494,17 @@ export function App() {
             steht in genau dieser einen Sitzung nur auf dem Abschluss-Screen
             -- verloren geht er dadurch nicht.
           */}
-          {onStartScreen &&
-            (session.showVariabilityNotice ? (
-              <p className="variability-note">
-                From here on, the pitch varies between sessions — real signals do.
-              </p>
-            ) : (
-              <p className="streak-note">{streakLine(streak)}</p>
-            ))}
+          {/*
+            Die Streak-Zeile steht seit Runde P27 nicht mehr hier, sondern links
+            in der Fusszeile (FINDINGS #18, Weg c): als eigene Zeile fiel sie mit
+            dem ersten Play weg, die zentrierte Buehne wuchs, und der Play-Kreis
+            rueckte um 19 px. In der Fusszeile tauscht sie nur den Text.
+          */}
+          {onStartScreen && session.showVariabilityNotice && (
+            <p className="variability-note">
+              From here on, the pitch varies between sessions — real signals do.
+            </p>
+          )}
 
           {/*
             Die Einladung zum Drill -- eine Feststellung und eine Frage, kein
@@ -1518,6 +1530,7 @@ export function App() {
             Zeile ohne Aussage (1.1 §7, CLAUDE.md 2.8).
           */}
           <Footer
+            lead={onStartScreen && !session.showVariabilityNotice ? streakLine(streak) : null}
             day={dayFor(session.progress, session.today)}
             done={session.attempts.length}
             wpm={speedProgressionActive(session.progress) ? session.progress.effectiveWpm : null}
@@ -1667,11 +1680,17 @@ function PlayCircle({
  * (CLAUDE.md 2.6).
  */
 function Footer({
+  lead,
   day,
   done,
   wpm,
   speedUp,
 }: {
+  /**
+   * Auf dem Start-Screen die Streak-Zeile statt des Tagesstands (FINDINGS #18):
+   * gleiche Zeile, gleiche Hoehe -- die Buehne darueber bleibt stehen.
+   */
+  lead: string | null;
   day: DayStats;
   done: number;
   /** Das Tempo-Niveau -- oder null, solange die Progression nicht laeuft. */
@@ -1682,12 +1701,13 @@ function Footer({
   return (
     <footer className="footer">
       <p className="footer-stats">
-        {dayQuotaLine(day)}
-        {speedUp !== null
-          ? ` · ${speedUp.from} → ${speedUp.to} wpm`
-          : wpm !== null
-            ? ` · ${wpm} wpm`
-            : ''}
+        {lead ??
+          dayQuotaLine(day) +
+            (speedUp !== null
+              ? ` · ${speedUp.from} → ${speedUp.to} wpm`
+              : wpm !== null
+                ? ` · ${wpm} wpm`
+                : '')}
       </p>
       <GroupDots done={done} />
     </footer>
@@ -1843,6 +1863,7 @@ function Summary({
   streak,
   drillResult,
   direction,
+  freezeNotice,
   onRestart,
   headingRef,
 }: {
@@ -1851,6 +1872,7 @@ function Summary({
   streak: StreakStanding;
   /** Der eine Satz Richtung (Review §D2.3, Owner-Delegation P24); null = keiner. */
   direction: GrowthDirection;
+  freezeNotice: boolean;
   /** Die Ergebniszeile eines Drills, oder null (auch bei normalen Sitzungen). */
   drillResult: string | null;
   onRestart: () => void;
@@ -1914,6 +1936,12 @@ function Summary({
         wenn die Sitzung beendet ist.
       */}
       <p className="streak-note">{streakLine(streak)}</p>
+      {/* Einmal im Leben eines Standes (Review §D2.5, Owner-Delegation P27). */}
+      {freezeNotice && (
+        <p className="streak-note">
+          {`A freeze covers one missed day. A new one is ready after ${FREEZE_EARNED_AFTER_DAYS} days in a row.`}
+        </p>
+      )}
 
       {/*
         Der Hinweis auf den Offline-Betrieb stand bisher in der Fusszeile des

@@ -123,6 +123,12 @@ export interface SessionState {
    * `progress.variabilityNoticeSeen`.
    */
   readonly showVariabilityNotice: boolean;
+  /**
+   * Ob die Summary dieser Sitzung den einen Satz zum Freeze zeigt: beim ersten
+   * Abschluss mit einem Freeze im Vorrat, danach nie wieder
+   * (`progress.freezeNoticeSeen`, Review §D2.5, Owner-Delegation Runde P27).
+   */
+  readonly showFreezeNotice: boolean;
 }
 
 export interface SessionOptions {
@@ -193,6 +199,7 @@ export function createSession(options: SessionOptions): SessionState {
     sound,
     promptToneHz: drawPromptTone(sound, options.random),
     showVariabilityNotice,
+    showFreezeNotice: false,
   };
 }
 
@@ -329,12 +336,16 @@ export function submitAnswer(
 export function advance(state: SessionState, random: () => number): SessionState {
   if (state.phase !== 'feedback') return state;
   if (state.round >= state.totalRounds) {
+    const streak = recordPracticeDay(state.progress.streak, state.today);
+    const showFreezeNotice = streak.freezeReady && !state.progress.freezeNoticeSeen;
     return {
       ...state,
       phase: 'finished',
+      showFreezeNotice,
       progress: {
         ...state.progress,
-        streak: recordPracticeDay(state.progress.streak, state.today),
+        streak,
+        freezeNoticeSeen: state.progress.freezeNoticeSeen || showFreezeNotice,
       },
     };
   }

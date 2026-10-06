@@ -656,3 +656,50 @@ describe('Tempo-Progression im Loop', () => {
     );
   });
 });
+
+describe('Der eine Satz zum Freeze (Review §D2.5, Runde P27)', () => {
+  const play = (progress: ReturnType<typeof emptyProgress>): SessionState => {
+    let state = createSession({
+      totalRounds: 1,
+      progress,
+      random: sequence([0, 0.9, 0]),
+      today: '2026-09-08',
+    });
+    state = promptFinished(beginPlayback(state, 0));
+    state = submitAnswer(state, state.prompt, 1);
+    return advance(state, () => 0);
+  };
+  // Sechs Tage in Folge bis gestern: der siebte (heute) fuellt den Vorrat.
+  const sixDays = {
+    lastPracticedDay: '2026-09-07',
+    days: 6,
+    freezeReady: false,
+    daysTowardFreeze: 6,
+    freezeUsedDay: '',
+  };
+
+  it('steht beim ersten Abschluss mit Freeze im Vorrat und wird gemerkt', () => {
+    const state = play({ ...progressWith(['K', 'M']), streak: sixDays });
+    expect(state.phase).toBe('finished');
+    expect(state.progress.streak.freezeReady).toBe(true);
+    expect(state.showFreezeNotice).toBe(true);
+    expect(state.progress.freezeNoticeSeen).toBe(true);
+  });
+
+  it('kommt danach nie wieder', () => {
+    const state = play({ ...progressWith(['K', 'M']), streak: sixDays, freezeNoticeSeen: true });
+    expect(state.showFreezeNotice).toBe(false);
+  });
+
+  it('steht nicht, solange kein Freeze bereit ist', () => {
+    const state = play(progressWith(['K', 'M']));
+    expect(state.showFreezeNotice).toBe(false);
+    expect(state.progress.freezeNoticeSeen).toBe(false);
+  });
+
+  it('ist additiv persistiert: fehlt das Feld, gilt false', () => {
+    expect(parseProgress({ version: 1, characters: {} }).freezeNoticeSeen).toBe(false);
+    const seen = { ...emptyProgress(), freezeNoticeSeen: true };
+    expect(parseProgress(JSON.parse(JSON.stringify(seen))).freezeNoticeSeen).toBe(true);
+  });
+});

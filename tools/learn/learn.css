@@ -103,8 +103,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Fokus = 2 px Ink (1.1 §7/§12; Review §F2.1, Owner-Delegation Runde P27):
+ * ein Fokusring in amber-deep war ein zweites Amber neben dem Primary. */
 :focus-visible {
-  outline: 2px solid var(--amber-deep);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 

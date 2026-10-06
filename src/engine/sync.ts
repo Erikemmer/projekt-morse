@@ -154,6 +154,7 @@ export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
     introSeen: local.progress.introSeen || remote.progress.introSeen,
     variabilityNoticeSeen:
       local.progress.variabilityNoticeSeen || remote.progress.variabilityNoticeSeen,
+    freezeNoticeSeen: local.progress.freezeNoticeSeen || remote.progress.freezeNoticeSeen,
     // Eigene Regel, eigene Uhr: der zuletzt geübte Kalendertag entscheidet,
     // nicht `updatedAt` (siehe Kopf und engine/streak.ts).
     streak: mergeStreak(local.progress.streak, remote.progress.streak),
