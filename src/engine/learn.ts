@@ -96,6 +96,19 @@ export function answerPool(state: LearnState): string[] {
   return pool;
 }
 
+/**
+ * Ob nach der aktuellen Karte ein Echo-Check kommt.
+ *
+ * Nicht beim freien Wiederholen (`requireEcho: false`) -- und nicht, solange
+ * es nur eine Antwortoption gibt: ein Abruf mit einer einzigen Option ist
+ * keine Unterscheidung, sondern eine Bestaetigung (Review §A1 Option 2,
+ * Owner-Delegation Runde P24). Die erste Karte eines neuen Nutzers geht
+ * deshalb direkt zur zweiten.
+ */
+export function echoDue(state: LearnState): boolean {
+  return state.requireEcho && answerPool(state).length >= 2;
+}
+
 export function createLearnRun(options: LearnOptions): LearnState {
   if (options.queue.length === 0) throw new RangeError('Ein Lernlauf braucht mindestens ein Zeichen');
 
@@ -130,6 +143,7 @@ export function cardHeard(state: LearnState): LearnState {
  */
 export function beginEcho(state: LearnState): LearnState {
   if (state.phase !== 'card-heard') return state;
+  if (!echoDue(state)) return nextCard(state);
 
   return {
     ...state,

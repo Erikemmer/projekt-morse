@@ -643,6 +643,9 @@ während des Tons (`App.tsx:11–24`).
 | 9 | Logo: Kleinformat-Regel klären (1.1 §3 Fallback vs. Ruling #88), eine Lockup-Regel für alle drei Orte | C2, C3 | M | Fable-Ruling |
 | 10 | Antwortgitter im Ready-Zustand nicht als Opazitäts-Ghost (Umriss edge-soft, Buchstabe gray) oder ausblenden | A2.1/2, F2.5 | S–M | Fable-Ruling (Mockup) |
 
+**Stand 06.10.2026:** #1 umgesetzt (P24), #2–#10 vom Owner an Claude delegiert und
+umgesetzt (P25, Entscheidungen in `HANDOVER.md`). Die Folgeliste unten ist offen.
+
 Danach, in dieser Reihenfolge: Freeze einmal erklären (D2.5), Fußnoten über die
 Progress-Tabelle (F2.6), Fokusring Ink (F2.1), Skip-Link (F2.4), „Sessions"-Zähler
 streichen oder umdeuten (E2), Verwechslungsbild (E3.2), ML-Ornament in die App (B5.1),

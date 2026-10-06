@@ -11,6 +11,7 @@ import { encodeChar } from '../engine/alphabet';
 import {
   ECHO_ROUNDS,
   answerPool,
+  echoDue,
   currentCharacter,
   echoKeyAction,
   type LearnState,
@@ -24,6 +25,7 @@ export function Learn({
   state,
   playing,
   toneHz,
+  showHz,
   onPlay,
   onBeginEcho,
   onNextCard,
@@ -35,6 +37,8 @@ export function Learn({
   playing: boolean;
   /** Der Sitzungs-Ton in Hz -- Lernkarten und Echo-Check spielen immer ihn. */
   toneHz: number;
+  /** Hz erst ab Variabilitaets-Stufe 1 (Review §A2.3, Owner-Delegation P24). */
+  showHz: boolean;
   onPlay: () => void;
   onBeginEcho: () => void;
   onNextCard: () => void;
@@ -72,12 +76,13 @@ export function Learn({
           heard={state.phase === 'card-heard'}
           playing={playing}
           requireEcho={state.requireEcho}
+          echo={echoDue(state)}
           buttonRef={focusRef}
           onPlay={onPlay}
-          onContinue={state.requireEcho ? onBeginEcho : onNextCard}
+          onContinue={echoDue(state) ? onBeginEcho : onNextCard}
         />
       ) : (
-        <Echo state={state} playing={playing} toneHz={toneHz} buttonRef={focusRef} onPlay={onPlay} onAnswer={onAnswer} onAdvance={onAdvance} />
+        <Echo state={state} playing={playing} toneHz={toneHz} showHz={showHz} buttonRef={focusRef} onPlay={onPlay} onAnswer={onAnswer} onAdvance={onAdvance} />
       )}
 
       {onSkip !== undefined && (
@@ -242,6 +247,7 @@ function Card({
   heard,
   playing,
   requireEcho,
+  echo,
   buttonRef,
   onPlay,
   onContinue,
@@ -250,6 +256,8 @@ function Card({
   heard: boolean;
   playing: boolean;
   requireEcho: boolean;
+  /** Ob ein Echo-Check folgt (`echoDue`) -- nicht bei nur einer Option. */
+  echo: boolean;
   buttonRef: { current: HTMLElement | null };
   onPlay: () => void;
   onContinue: () => void;
@@ -278,7 +286,7 @@ function Card({
         )}
 
         <p className="learn-copy">
-          This is {char}. Listen a few times, then try it.
+          {echo ? `This is ${char}. Listen a few times, then try it.` : `This is ${char}. Listen a few times.`}
         </p>
       </div>
 
@@ -296,7 +304,7 @@ function Card({
             className="button-go"
             onClick={onContinue}
           >
-            {requireEcho ? 'Try it' : 'Done'}
+            {echo ? 'Try it' : requireEcho ? 'Next' : 'Done'}
           </button>
         </div>
       )}
@@ -313,6 +321,7 @@ function Echo({
   state,
   playing,
   toneHz,
+  showHz,
   buttonRef,
   onPlay,
   onAnswer,
@@ -321,6 +330,8 @@ function Echo({
   state: LearnState;
   playing: boolean;
   toneHz: number;
+  /** Hz erst ab Variabilitaets-Stufe 1 (Review §A2.3, Owner-Delegation P24). */
+  showHz: boolean;
   buttonRef: { current: HTMLElement | null };
   onPlay: () => void;
   onAnswer: (choice: string) => void;
@@ -338,7 +349,7 @@ function Echo({
   return (
     <>
       <div className="stage">
-        <p className="eyebrow">{`${playing ? 'Now playing' : 'Your turn'} · ${toneHz} Hz`}</p>
+        <p className="eyebrow">{`${playing ? 'Now playing' : 'Your turn'}${showHz ? ` · ${toneHz} Hz` : ''}`}</p>
 
         {attempt !== null ? (
           <>

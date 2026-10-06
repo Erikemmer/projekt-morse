@@ -605,3 +605,16 @@ das Gegenteil („während des Tons ist der Play-Kreis das eine Amber").
 ihn während `listening` umrandet statt gefüllt setzen. Ersteres hält die Regel ohne
 neue Variante. Dazu ein Fall in `verify:amber`, der während des Tons tippt.
 Owner-Delegation reicht: die Regel ist eindeutig, nur der Weg ist zu wählen.
+
+## 18. Der Play-Kreis rückt beim ersten Play um 19 px nach unten
+
+**Status: offen** (06.10.2026, Runde P25; gefunden beim Nachmessen von Review §A3).
+
+Bei 390 × 844 mit 6 Zeichen steht die Sitzungszeile in Ruhe und beim Spielen fest bei
+y = 32 (der Sprung der Kopfzeile ist mit P25 weg), der Play-Kreis aber wandert von
+y = 264 (ready) auf y = 283 (listening). Ursache nicht untersucht — vermutlich
+Inhalt, der nur auf dem Start-Screen steht (Streak-/Einladungszeile) und die zentrierte
+Bühne verschiebt. Ob das schon vor P25 so war, ist nicht gemessen.
+
+**Nicht mitrepariert** (CLAUDE.md §5). **Was es kosten würde:** S, zuerst Ursache messen.
+

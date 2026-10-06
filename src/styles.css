@@ -161,7 +161,7 @@ body {
 .masthead-row {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
@@ -518,6 +518,20 @@ button:disabled {
  */
 .answer:disabled[data-mark] {
   opacity: 1;
+}
+
+/*
+ * Das Dreier-Gitter im Zustand "jetzt nicht" (ready, listening, und die nicht
+ * markierten Tasten der Aufloesung): umrandet statt Opazitaets-Geist (1.1 §7
+ * "outlined", kein "disabled-gray ghost"). Weiche Kante, Buchstabe gray --
+ * sichtbar als Kontext der Frage (Notion-Log #43 bleibt), aber ruhig.
+ * Review §A2 Option 2 / §F2.5, Owner-Delegation Runde P24. Das Tastenfeld
+ * hat seine eigene Regel weiter unten.
+ */
+.answers .answer:disabled:not([data-mark]) {
+  opacity: 1;
+  color: var(--gray);
+  border-color: var(--edge-soft);
 }
 
 /* --- Das feste Tastenfeld: sechs Spalten, alle 36 Positionen ---
@@ -1113,6 +1127,24 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
+}
+
+/*
+ * Der Menue-Knopf am Ende der Sitzungszeile (Runde P24, Review §A3). Die
+ * Tap-Flaeche bleibt 44 px (--tap), die negativen Raender halten die Zeile so
+ * hoch wie vorher -- die Aufloesung im Tastenfeld steht bei 390 x 844 genau
+ * auf 844 px, jeder Pixel hier wuerde sie ins Scrollen bringen.
+ */
+.masthead-end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.masthead-menu {
+  display: flex;
+  margin: -14px 0;
+  color: var(--ink);
 }
 
 /* Die Wortmarke: Newsreader Regular, sentence case, nie gesperrt, nie
@@ -1924,7 +1956,8 @@ a.menu-item {
    * hier der Navigations-Weg, und das Menue-Panel oeffnet hier nie (Teil
    * A.2) -- der Ausloeser dafuer ist ja verschwunden.
    */
-  .app-header {
+  .app-header,
+  .masthead-menu {
     display: none;
   }
 
@@ -1972,11 +2005,6 @@ a.menu-item {
     display: flex;
     align-items: center;
     gap: var(--space-1);
-  }
-
-  .nav-rail-mark {
-    width: 24px;
-    height: auto;
   }
 
   .nav-rail-wordmark {

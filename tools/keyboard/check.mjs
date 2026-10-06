@@ -275,17 +275,25 @@ async function toAnswering(page) {
   await waitPhase(characterPhase, page, 'answering', 20000);
 }
 
-/** Erstlauf bis zum Echo-Check, noch ohne Wiedergabe: Phase `echo-ready`. */
+/**
+ * Erstlauf bis zum Echo-Check, noch ohne Wiedergabe: Phase `echo-ready`.
+ * Karte 1 hat seit Runde P24 keinen Check (eine Option, `echoDue`); der erste
+ * Check kommt nach Karte 2.
+ */
 async function toEchoReady(page) {
   await page.getByRole('button', { name: 'Skip intro' }).click();
   await page.waitForSelector('.pattern-row', { timeout: 20000 });
-  await page.getByRole('button', { name: 'Try it' }).click();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Try it' }).click({ timeout: 20000 });
   await waitPhase(characterPhase, page, 'ready');
 }
 
-/** Das einzige Zeichen, das der Echo-Check beim ersten Zeichen anbietet. */
+/**
+ * Das Zeichen des ersten Abrufs: immer das gerade eingefuehrte, und das steht
+ * im Pool zuletzt (`answerPool`).
+ */
 async function echoOption(page) {
-  const label = await page.locator('.answers .answer').first().innerText();
+  const label = await page.locator('.answers .answer').last().innerText();
   return label.split('\n')[0].trim();
 }
 

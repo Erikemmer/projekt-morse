@@ -34,6 +34,7 @@ import {
   advanceEcho,
   answerEcho,
   beginEcho,
+  echoDue,
   beginEchoPlayback,
   cardHeard,
   createLearnRun,
@@ -43,6 +44,7 @@ import {
   nextCard,
   type LearnState,
 } from '../engine/learn';
+import type { VariabilityStage } from '../engine/variability';
 import { withTheme, withToneHz, withVolume, type DeviceSettings } from '../engine/deviceSettings';
 import {
   DRILL_INVITATION_MIN_SLOW,
@@ -64,7 +66,7 @@ import {
   type SessionKind,
   type SessionState,
 } from '../engine/session';
-import { nextCandidate, unlockNext } from '../engine/growth';
+import { growthDirection, nextCandidate, unlockNext, type GrowthDirection } from '../engine/growth';
 import { CHARACTER_ORDER, CHARACTER_WPM, ROUNDS_PER_GROUP, ROUNDS_PER_SESSION } from '../engine/settings';
 import { resetEffectiveWpm, speedProgressionActive } from '../engine/tempo';
 import {
@@ -109,7 +111,7 @@ import { pushProgress } from './account';
 import { Intro } from './Intro';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 import { Learn, ReviewPicker, useLearnKeyboard } from './Learn';
-import { AppHeader, MenuPanel, NavRail, type MenuLocation } from './Menu';
+import { AppHeader, MenuButton, MenuPanel, NavRail, type MenuLocation } from './Menu';
 import { MarginColumn } from './MarginColumn';
 import { Pattern } from './Pattern';
 import { ProgressScreen } from './Progress';
@@ -775,7 +777,7 @@ export function App() {
   const continueLearnCard = useCallback(() => {
     setLearn((current) => {
       if (current === null) return null;
-      return current.requireEcho ? beginEcho(current) : nextCard(current);
+      return echoDue(current) ? beginEcho(current) : nextCard(current);
     });
   }, []);
 
@@ -1259,12 +1261,20 @@ export function App() {
    * selbst, also gaebe es ohne Kopfzeile keinen Weg hinaus -- verlassen wird
    * ueber das Menue, und dafuer muss der Knopf dafuer da sein. Der Platz, den
    * das kostet, ist gemessen und in der Uebergabe (§4) genannt.
+   *
+   * **Seit Runde P24 steht im Training der Menue-Knopf in der Sitzungszeile**
+   * (Review §A3, Owner-Delegation), in jeder Phase einschliesslich des
+   * Start-Screens: unter 900 px gab es sonst 20 Runden lang keinen Weg zu
+   * Lautstaerke und Menue, und die Buehne sprang beim ersten Play um die Hoehe
+   * der Kopfzeile nach oben. Eine eigene Kopfzeile darueber haette die
+   * Aufloesung im Tastenfeld um 59 px ins Scrollen gebracht (gemessen, 390 x
+   * 844) -- die Sitzungszeile kostet keine Hoehe (Ruhe-Mockup: "die Kopfzeile
+   * traegt Sitzung und Runde").
    */
+  const practiceMasthead =
+    view === 'practice' && !reviewing && learn === null && session.phase !== 'finished';
   const headerShown =
-    !menuOpen &&
-    session.progress.introSeen &&
-    learn === null &&
-    (view !== 'practice' || reviewing || onStartScreen);
+    !menuOpen && session.progress.introSeen && learn === null && !practiceMasthead;
 
   /*
    * Die Randspalte ab 1280 px (Teil A.3) -- dieselben drei Zahlen wie die
@@ -1313,6 +1323,7 @@ export function App() {
           state={learn}
           playing={tonePlaying}
           toneHz={learnToneHz}
+          showHz={session.sound.stage !== 0}
           onPlay={learnOnPlay}
           onBeginEcho={() => setLearn((c) => (c === null ? null : beginEcho(c)))}
           onNextCard={() => setLearn((c) => (c === null ? null : nextCard(c)))}
@@ -1385,6 +1396,7 @@ export function App() {
           summary={summary}
           streak={streak}
           drillResult={drillResult(session, drillTarget)}
+          direction={session.kind === 'drill' ? null : growthDirection(session.progress)}
           onRestart={restart}
           headingRef={focusTarget}
         />
@@ -1397,10 +1409,15 @@ export function App() {
             round={session.round}
             totalRounds={session.totalRounds}
             done={session.attempts.length}
+            menu={
+              menuOpen ? undefined : (
+                <MenuButton triggerRef={menuTriggerRef} onOpenMenu={() => setMenuOpen(true)} />
+              )
+            }
           />
 
           <section className="stage">
-            <p className="eyebrow">{eyebrowFor(session.phase, session.promptToneHz)}</p>
+            <p className="eyebrow">{eyebrowFor(session.phase, session.promptToneHz, session.sound.stage)}</p>
 
             {session.phase === 'feedback' && attempt !== null ? (
               <Reveal char={attempt.char} />
@@ -1520,14 +1537,17 @@ export function App() {
  * (CLAUDE.md 2.6). Die Tonhoehe steht immer daneben; sie ist zugleich der
  * sichtbare Hinweis darauf, dass dieser Modus ueber die Ohren geht.
  */
-function eyebrowFor(phase: SessionState['phase'], toneHz: number): string {
-  // Immer die *echte* Tonhoehe der laufenden Abfrage (CLAUDE.md 2.6) -- ab
-  // Variabilitaets-Stufe 1 ist sie nicht mehr die Konstante von frueher.
-  const hz = `${toneHz} Hz`;
-  if (phase === 'listening') return `Now playing · ${hz}`;
-  if (phase === 'answering') return `Your turn · ${hz}`;
-  if (phase === 'feedback') return `Answer · ${hz}`;
-  return `Ready · ${hz}`;
+function eyebrowFor(phase: SessionState['phase'], toneHz: number, stage: VariabilityStage): string {
+  // Immer die *echte* Tonhoehe der laufenden Abfrage (CLAUDE.md 2.6) -- aber
+  // erst ab Variabilitaets-Stufe 1, wo sie variiert und damit etwas sagt. Auf
+  // Stufe 0 ist sie eine Konstante ohne Handlung (Review §A2.3,
+  // Owner-Delegation Runde P24); dass der Modus auditiv ist, sagen Intro und
+  // About ausdruecklich.
+  const hz = stage === 0 ? '' : ` · ${toneHz} Hz`;
+  if (phase === 'listening') return `Now playing${hz}`;
+  if (phase === 'answering') return `Your turn${hz}`;
+  if (phase === 'feedback') return `Answer${hz}`;
+  return `Ready${hz}`;
 }
 
 /** Womit ein Drill angetreten ist -- siehe `drillTarget` in App(). */
@@ -1822,12 +1842,15 @@ function Summary({
   summary,
   streak,
   drillResult,
+  direction,
   onRestart,
   headingRef,
 }: {
   kind: SessionKind;
   summary: ReturnType<typeof summarize>;
   streak: StreakStanding;
+  /** Der eine Satz Richtung (Review §D2.3, Owner-Delegation P24); null = keiner. */
+  direction: GrowthDirection;
   /** Die Ergebniszeile eines Drills, oder null (auch bei normalen Sitzungen). */
   drillResult: string | null;
   onRestart: () => void;
@@ -1875,6 +1898,14 @@ function Summary({
       </dl>
 
       {drillResult !== null && <p className="note">{drillResult}</p>}
+
+      {direction !== null && (
+        <p className="note">
+          {direction.kind === 'ready'
+            ? `The set is ready to grow — next up: ${direction.next}.`
+            : `${direction.char} is the one still settling.`}
+        </p>
+      )}
 
       {/*
         Die Streak-Zeile steht *unter* den Zahlen, nicht ueber ihnen: geuebt

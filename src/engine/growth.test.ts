@@ -18,6 +18,8 @@ import {
   isReadyToGrow,
   maybeGrow,
   nextCandidate,
+  growthDirection,
+  settlingCharacter,
   unlockNext,
 } from './growth';
 import { advance, beginPlayback, createSession, promptFinished, submitAnswer } from './session';
@@ -154,6 +156,61 @@ describe('Wachstumsregel', () => {
   it('gibt ohne Einfuehrung denselben Fortschritt zurueck, nicht eine Kopie', () => {
     const progress = emptyProgress();
     expect(maybeGrow(progress).progress).toBe(progress);
+  });
+});
+
+describe('Woran das Wachstum haengt (settlingCharacter)', () => {
+  it('ist null, wenn jedes Zeichen beide Schwellen haelt', () => {
+    expect(settlingCharacter(readyProgress())).toBeNull();
+  });
+
+  it('nennt das Zeichen mit der niedrigsten Quote unter der Schwelle', () => {
+    const base = readyProgress();
+    const [first, second] = STARTING_CHARACTERS;
+    const progress = {
+      ...base,
+      characters: { ...base.characters, [first]: record(10, 7), [second]: record(10, 5) },
+    };
+    expect(settlingCharacter(progress)).toBe(second);
+  });
+
+  it('nennt sonst das erste Zeichen mit zu wenig Versuchen', () => {
+    const base = readyProgress();
+    const third = STARTING_CHARACTERS[2];
+    const progress = { ...base, characters: { ...base.characters, [third]: record(GROWTH_MIN_ATTEMPTS - 1, 4) } };
+    expect(settlingCharacter(progress)).toBe(third);
+  });
+
+  it('genau auf der 75-%-Schwelle haengt nichts (dieselbe Grenze wie isReadyToGrow)', () => {
+    const base = readyProgress();
+    const first = STARTING_CHARACTERS[0];
+    const progress = { ...base, characters: { ...base.characters, [first]: record(8, 6) } };
+    expect(6 / 8).toBe(GROWTH_MIN_CHARACTER_ACCURACY);
+    expect(settlingCharacter(progress)).toBeNull();
+  });
+});
+
+describe('Richtung fuer die Summary (growthDirection)', () => {
+  it('meldet "bereit" mit dem naechsten Zeichen, wenn die Regel greift', () => {
+    const progress = readyProgress();
+    expect(growthDirection(progress)).toEqual({ kind: 'ready', next: nextCandidate(progress) });
+  });
+
+  it('nennt sonst das Zeichen, das noch sitzen muss', () => {
+    const base = readyProgress();
+    const first = STARTING_CHARACTERS[0];
+    const progress = { ...base, characters: { ...base.characters, [first]: record(10, 5) } };
+    expect(growthDirection(progress)).toEqual({ kind: 'settling', char: first });
+  });
+
+  it('schweigt, wenn nur Fenster oder Sperre aufhalten', () => {
+    const progress = { ...readyProgress(), answersSinceGrowth: 0 };
+    expect(growthDirection(progress)).toBeNull();
+  });
+
+  it('schweigt, wenn alle Zeichen aktiv sind', () => {
+    const progress = { ...readyProgress(), activeCharacters: [...CHARACTER_ORDER] };
+    expect(growthDirection(progress)).toBeNull();
   });
 });
 

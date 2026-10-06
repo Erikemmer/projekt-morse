@@ -186,11 +186,12 @@ function WordsHeader({ heard }: { heard: number }) {
  * geht.
  */
 function eyebrowFor(state: WordSessionState): string {
-  const hz = `${state.promptToneHz} Hz`;
-  if (state.phase === 'listening') return `Now playing · ${hz}`;
-  if (state.phase === 'answering') return `Your turn · ${hz}`;
-  if (state.phase === 'feedback') return `Answer · ${hz}`;
-  return `Ready · ${hz}`;
+  // Hz erst ab Variabilitaets-Stufe 1 (Review §A2.3, Owner-Delegation P24).
+  const hz = state.sound.stage === 0 ? '' : ` · ${state.promptToneHz} Hz`;
+  if (state.phase === 'listening') return `Now playing${hz}`;
+  if (state.phase === 'answering') return `Your turn${hz}`;
+  if (state.phase === 'feedback') return `Answer${hz}`;
+  return `Ready${hz}`;
 }
 
 /**

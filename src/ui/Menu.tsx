@@ -39,7 +39,7 @@ export type MenuLocation =
  */
 type MenuEntry =
   | { readonly kind: 'place'; readonly location: MenuLocation; readonly label: string }
-  | { readonly kind: 'link'; readonly href: string; readonly label: string };
+  | { readonly kind: 'link'; readonly href: string; readonly label: string; readonly note: string };
 
 /*
  * „Account" stand in Runde A bewusst nicht hier (1.1 §7: nichts zeigen, was
@@ -92,14 +92,17 @@ export const ENTRIES: readonly MenuEntry[] = Object.freeze([
   { kind: 'place', location: 'progress', label: 'Progress' },
   { kind: 'place', location: 'account', label: 'Account' },
   { kind: 'place', location: 'settings', label: 'Settings' },
-  { kind: 'link', href: '/learn/', label: 'Learn' },
+  // Review §A4.1 (Owner-Delegation Runde P24): nicht zweimal "Learn" im selben
+  // Menue. Der Link verlaesst die App -- das sagt die Notiz, nicht erst der Klick.
+  { kind: 'link', href: '/learn/', label: 'Guides', note: 'reading pages, outside the app' },
   { kind: 'place', location: 'about', label: 'About' },
 ]);
 
 /**
  * Die Kopfzeile des Start-Screens (und der Screens dahinter): Wortmarke links,
- * Menü-Trigger rechts. Mitten in einer Sitzung erscheint sie nicht — dort
- * wäre sie eine Ablenkung, wie vorher schon der Wiederholen-Link.
+ * Menü-Trigger rechts. Im Training steht sie nicht: dort trägt seit Runde P24
+ * die Sitzungszeile den Menü-Knopf (Review §A3, Owner-Delegation) -- in jeder
+ * Phase, damit unter 900 px nichts springt und das Menü immer erreichbar ist.
  */
 export function AppHeader({
   triggerRef,
@@ -119,25 +122,43 @@ export function AppHeader({
       <span className="wordmark" aria-hidden="true">
         Morse Lab
       </span>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="icon-button"
-        aria-label="Menu"
-        aria-haspopup="dialog"
-        onClick={onOpenMenu}
-      >
-        {/* Drei kurze Linien: 1.5px Strich, runde Kappen, 24er-Raster (1.1 §8). */}
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M6 7h12M6 12h12M6 17h12"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
+      <MenuButton triggerRef={triggerRef} onOpenMenu={onOpenMenu} />
     </header>
+  );
+}
+
+/**
+ * Der Menü-Trigger. Zwei Orte (zweiter Bedarf, CLAUDE.md §4): die Kopfzeile
+ * oben und seit Runde P24 die Sitzungszeile des Trainings (`SessionHeader`).
+ */
+export function MenuButton({
+  triggerRef,
+  onOpenMenu,
+  className = 'icon-button',
+}: {
+  triggerRef: React.RefObject<HTMLButtonElement>;
+  onOpenMenu: () => void;
+  className?: string;
+}) {
+  return (
+    <button
+      ref={triggerRef}
+      type="button"
+      className={className}
+      aria-label="Menu"
+      aria-haspopup="dialog"
+      onClick={onOpenMenu}
+    >
+      {/* Drei kurze Linien: 1.5px Strich, runde Kappen, 24er-Raster (1.1 §8). */}
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M6 7h12M6 12h12M6 17h12"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
   );
 }
 
@@ -170,8 +191,14 @@ export function NavRail({
 }) {
   return (
     <nav className="nav-rail" aria-label="Morse Lab">
+      {/*
+        Eine Lockup-Regel fuer alle drei Orte (Review §C2/C3, Owner-Delegation
+        Runde P24): Marke + Wortmarke nur ab der Mindestbreite des Lockups
+        (1.1 §3: 140 px) -- das ist About. Hier, in der Kopfzeile und im
+        Menue-Panel steht die Wortmarke allein; die 24-px-Marke lag mit
+        Wortmarke unter dieser Breite und las als Punkt auf einem Strich.
+      */}
       <p className="nav-rail-lockup">
-        <img className="nav-rail-mark" src="/logo-key.svg" alt="" width="24" height="16" />
         <span className="wordmark nav-rail-wordmark">Morse Lab</span>
       </p>
 
@@ -181,6 +208,7 @@ export function NavRail({
             return (
               <a key={entry.href} className="nav-rail-item" href={entry.href}>
                 {entry.label}
+                <span className="menu-hint">{entry.note}</span>
               </a>
             );
           }
@@ -281,6 +309,7 @@ export function MenuPanel({
               <a key={entry.href} className="menu-item" href={entry.href}>
                 <span className="menu-dot" data-current={false} aria-hidden="true" />
                 {entry.label}
+                <span className="menu-hint">{entry.note}</span>
               </a>
             );
           }

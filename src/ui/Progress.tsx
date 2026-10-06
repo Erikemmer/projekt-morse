@@ -16,11 +16,19 @@
  * with labels, separated by hairlines"). Diese View kommt ohne Amber aus.
  */
 
+import {
+  GROWTH_LOCKOUT_ANSWERS,
+  GROWTH_MIN_ATTEMPTS,
+  GROWTH_MIN_CHARACTER_ACCURACY,
+  GROWTH_WINDOW_ACCURACY,
+  nextCandidate,
+} from '../engine/growth';
 import { CHARACTER_ORDER } from '../engine/settings';
 import {
   dayAccuracy,
   dayFor,
   hitRate,
+  RECENT_ANSWER_WINDOW,
   medianReaction,
   recordFor,
   type Progress,
@@ -40,6 +48,7 @@ export function ProgressScreen({
   // Der leere Zustand meint die Tabelle: wer noch nie geantwortet hat, sieht
   // statt lauter Strichen eine Zeile, die sagt, was hier erscheinen wird.
   const practised = progress.activeCharacters.some((char) => recordFor(progress, char).attempts > 0);
+  const next = nextCandidate(progress);
 
   return (
     <section className="screen progress-screen" aria-labelledby="progress-heading">
@@ -63,10 +72,25 @@ export function ProgressScreen({
           </dd>
         </div>
         <div className="stat-line">
+          <dt>Next up</dt>
+          <dd>{next ?? '— all characters are in'}</dd>
+        </div>
+        <div className="stat-line">
           <dt>Sessions</dt>
           <dd>{progress.sessionsStarted}</dd>
         </div>
       </dl>
+
+      {/*
+        Die Wachstumsregel in Saetzen (Review §D2.1, Owner-Delegation Runde P24):
+        kein Zaehler, kein "noch 4", die Fensterquote als Naeherung benannt
+        (26 von 30 sind 86,7 %). Die Zahlen kommen aus engine/growth.ts.
+      */}
+      {next !== null && (
+        <p className="note">
+          {`${next} joins when about ${Math.round(GROWTH_WINDOW_ACCURACY * 100)} percent of your last ${RECENT_ANSWER_WINDOW} answers are right and every active character has had at least ${GROWTH_MIN_ATTEMPTS} tries, ${Math.round(GROWTH_MIN_CHARACTER_ACCURACY * 100)} percent of them right — never sooner than ${GROWTH_LOCKOUT_ANSWERS} answers after the last one joined.`}
+        </p>
+      )}
 
       {practised ? (
         <>

@@ -174,7 +174,9 @@ const VIEWS = [
     async reach(page) {
       await page.getByRole('button', { name: 'Skip intro' }).click();
       await page.waitForSelector('.pattern-row', { timeout: 20000 });
-      await page.getByRole('button', { name: 'Try it' }).click();
+      // Karte 1 ohne Check (eine Option, Runde P24) -- der erste Check folgt Karte 2.
+      await page.getByRole('button', { name: 'Next' }).click();
+      await page.getByRole('button', { name: 'Try it' }).click({ timeout: 20000 });
       await page.getByRole('button', { name: /^Play the character/ }).click();
       await answering(page);
     },
@@ -185,7 +187,9 @@ const VIEWS = [
     async reach(page) {
       await page.getByRole('button', { name: 'Skip intro' }).click();
       await page.waitForSelector('.pattern-row', { timeout: 20000 });
-      await page.getByRole('button', { name: 'Try it' }).click();
+      // Karte 1 ohne Check (eine Option, Runde P24) -- der erste Check folgt Karte 2.
+      await page.getByRole('button', { name: 'Next' }).click();
+      await page.getByRole('button', { name: 'Try it' }).click({ timeout: 20000 });
       await page.getByRole('button', { name: /^Play the character/ }).click();
       await answering(page);
       await page.locator('.answer').first().click();

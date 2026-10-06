@@ -77,6 +77,52 @@ export function isReadyToGrow(progress: Progress): boolean {
   });
 }
 
+/**
+ * Das Zeichen, an dem das Wachstum gerade haengt -- fuer den einen Satz
+ * Richtung auf der Summary (Review §D2.3, Owner-Delegation Runde P24).
+ *
+ * Gemeint ist Bedingung (b)/(c): unter den aktiven Zeichen das mit der
+ * niedrigsten Quote, sofern es unter GROWTH_MIN_CHARACTER_ACCURACY liegt;
+ * sonst eines mit zu wenig Versuchen; sonst null. Bei Gleichstand gewinnt
+ * das zuerst eingefuehrte. Rein, ohne Seiteneffekt.
+ */
+export function settlingCharacter(progress: Progress): string | null {
+  let lowest: { char: string; rate: number } | null = null;
+  let untried: string | null = null;
+  for (const char of progress.activeCharacters) {
+    const record = recordFor(progress, char);
+    const rate = hitRate(record);
+    if (record.attempts < GROWTH_MIN_ATTEMPTS || rate === null) {
+      untried ??= char;
+      continue;
+    }
+    if (rate < GROWTH_MIN_CHARACTER_ACCURACY && (lowest === null || rate < lowest.rate)) {
+      lowest = { char, rate };
+    }
+  }
+  return lowest?.char ?? untried;
+}
+
+/** Der eine Satz Richtung auf der Summary -- als Datum, der Wortlaut lebt in der UI. */
+export type GrowthDirection =
+  | { readonly kind: 'ready'; readonly next: string }
+  | { readonly kind: 'settling'; readonly char: string }
+  | null;
+
+/**
+ * Wohin es gerade geht: bereit fuer das naechste Zeichen, oder welches Zeichen
+ * noch sitzen muss. null, wenn keins von beidem ehrlich zu sagen ist (alle 36
+ * aktiv, oder nur das Fenster/die Sperre haelt auf -- dann gibt es kein
+ * Zeichen, auf das man zeigen koennte).
+ */
+export function growthDirection(progress: Progress): GrowthDirection {
+  const next = nextCandidate(progress);
+  if (next === null) return null;
+  if (isReadyToGrow(progress)) return { kind: 'ready', next };
+  const char = settlingCharacter(progress);
+  return char === null ? null : { kind: 'settling', char };
+}
+
 export interface GrowthResult {
   progress: Progress;
   /** Das neu eingefuehrte Zeichen -- oder null, wenn die Regel nicht griff. */

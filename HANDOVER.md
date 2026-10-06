@@ -1,3 +1,38 @@
+# Übergabe — Stand nach Runde P25 (Review §G #2–#10, Owner-Delegation)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (davor P24), `main` = `fa579d0`. Kein PR.
+Der Owner hat #2–#10 aus `docs/REVIEW-DESIGN-UX.md` §G an Claude delegiert (06.10.2026);
+es sind **Setzungen von Claude, keine Fable-Rulings** — den Notion-Eintrag macht der Owner.
+
+**Entschieden und umgesetzt:**
+
+| # | Entscheidung | Wo |
+|---|---|---|
+| 2 | Im Training trägt die Sitzungszeile den Menü-Knopf (alle Phasen, unter 900 px). Keine eigene Kopfzeile mehr im Training: sie hätte die Tastenfeld-Auflösung bei 390 × 844 um 59 px ins Scrollen gebracht (gemessen). Kein Sprung mehr: die Sitzungszeile steht in Ruhe und beim Spielen bei y = 32. | `App.tsx`, `SessionHeader.tsx`, `Menu.tsx` (`MenuButton`), `styles.css` |
+| 3 | Progress: Zeile „Next up“ und die Wachstumsregel als ein Satz, Zahlen aus `growth.ts`, Fensterquote als „about“ benannt. | `Progress.tsx` |
+| 4 | Hz im Eyebrow erst ab Variabilitäts-Stufe 1 — Training, Echo-Check, Words, Send. | `App.tsx`, `Learn.tsx`, `Words.tsx`, `Send.tsx` |
+| 5 | Summary: ein Satz Richtung („The set is ready to grow — next up: O.“ / „R is the one still settling.“), nicht im Drill. Engine: `growthDirection`, `settlingCharacter`. | `growth.ts`, `App.tsx` |
+| 6 | Menü: externer Link „Learn“ → „Guides“ mit Notiz „reading pages, outside the app“. „Learn the sounds“ bleibt. | `Menu.tsx` |
+| 7 | „Morse Lab is sound only for now: you learn each character by ear, so the app needs hearing. A visual practice mode is planned.“ — Intro Schritt 1 (unter dem wortgleichen Text) und About. | `Intro.tsx`, `About.tsx` |
+| 8 | Echo-Check erst ab zwei Optionen (`echoDue`); Karte 1 eines neuen Nutzers: „Next“ statt „Try it“. | `learn.ts`, `Learn.tsx`, `App.tsx` |
+| 9 | Eine Lockup-Regel: Marke + Wortmarke nur ab 140 px (1.1 §3) = About; Schiene, Kopfzeile, Menü: Wortmarke allein. Fallback-Marke nicht eingeführt (Ruling #88 bleibt); Favicon 16 px unverändert. | `Menu.tsx`, `styles.css` |
+| 10 | Dreier-Gitter „jetzt nicht“: umrandet (edge-soft, Buchstabe gray), kein Opazitäts-Geist. Tastenfeld unverändert. | `styles.css` |
+
+**Gesamtlauf:** `npm test` 499 (488 + 11), `npm run build` grün, `verify:amber` 40,
+`verify:keyboard` 25, Kontrast 24/24. Bundle JS +1.841 B (235.442 → 237.283), CSS +201 B
+(20.636 → 20.837). Höhen (390 × 844 und 1280 × 720; 6, 15, 36 Zeichen; ready, listening,
+answering, Auflösung richtig/falsch): **kein Scroll**. Intro 1 bei 390 × 844: kein Scroll.
+Check-Skripte nachgezogen (Echo-Check-Weg über Karte 2).
+
+**Nicht belegt:** Summary-Höhe mit dem neuen Satz (20 Runden nicht automatisiert
+durchgespielt), Progress-Ansicht nur gerendert, nicht vermessen; Screenreader;
+Firefox/Safari; echte Geräte. Favicon-Kleinformat (1.1 §3 vs. #88) bleibt offen.
+
+**Offen:** Folgeliste aus Review §G (Freeze erklären, Fußnoten, Fokusring, Skip-Link …),
+B2-Pixeldiff, H2, H3, H8, H9, Notion-Log D1–D9 und P25. FINDINGS #18.
+
+---
+
 # Übergabe — Stand nach Runde P24 (#17: Words, ein Amber beim Tippen während des Tons)
 
 **Stand:** Branch `claude/clever-turing-77fkyo` (davor `fe96813`), `main` = `fa579d0`.

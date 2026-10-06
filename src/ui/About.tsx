@@ -12,6 +12,7 @@
  */
 
 import { buildVersion } from './build';
+import { SOUND_ONLY_NOTE } from './Intro';
 
 export function About({ headingRef }: { headingRef: (element: HTMLElement | null) => void }) {
   const build = buildVersion();
@@ -36,6 +37,8 @@ export function About({ headingRef }: { headingRef: (element: HTMLElement | null
       <ul className="about-facts">
         <li>Build {build}</li>
         <li>Works offline once loaded.</li>
+        {/* CLAUDE.md §6: wer nicht hoeren kann, erfaehrt hier, dass und warum (Review §F2.2). */}
+        <li>{SOUND_ONLY_NOTE}</li>
         {/*
           Diese Zeile hiess bis Runde B „stored only on this device — nothing is
           sent anywhere". Seit es Konten gibt, waere das fuer einen Teil der

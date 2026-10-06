@@ -21,6 +21,7 @@ export function SessionHeader({
   round,
   totalRounds,
   done,
+  menu,
 }: {
   /** Was links steht: "Session 12" oder "Speed round". */
   label: string;
@@ -28,13 +29,22 @@ export function SessionHeader({
   totalRounds: number;
   /** Wie viele Runden beantwortet sind -- der Stand der Linie. */
   done: number;
+  /**
+   * Der Menü-Knopf am Zeilenende (Runde P24, Review §A3): unter 900 px der
+   * einzige Weg zu Menü und Lautstärke während einer Sitzung. Ab 900 px
+   * blendet CSS ihn aus, dort steht die Schiene.
+   */
+  menu?: React.ReactNode;
 }) {
   return (
     <header className="masthead">
       <div className="masthead-row">
         <span>{label}</span>
-        <span>
-          Round {Math.min(round, totalRounds)} / {totalRounds}
+        <span className="masthead-end">
+          <span>
+            Round {Math.min(round, totalRounds)} / {totalRounds}
+          </span>
+          {menu !== undefined && <span className="masthead-menu">{menu}</span>}
         </span>
       </div>
       <div

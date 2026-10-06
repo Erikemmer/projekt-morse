@@ -15,6 +15,7 @@ import {
   answerEcho,
   answerPool,
   beginEcho,
+  echoDue,
   beginEchoPlayback,
   cardHeard,
   createLearnRun,
@@ -100,7 +101,7 @@ describe('Lernmodus: die Antwortoptionen', () => {
 
 describe('Lernmodus: der Echo-Check', () => {
   it('laeuft ueber ECHO_ROUNDS Abrufe und geht dann zur naechsten Karte', () => {
-    let state = beginEcho(cardHeard(createLearnRun({ queue: ['K', 'M'] })));
+    let state = beginEcho(cardHeard(createLearnRun({ queue: ['M', 'R'], known: ['K'] })));
 
     for (let i = 0; i < ECHO_ROUNDS; i++) {
       expect(state.phase).toBe('echo-ready');
@@ -112,8 +113,31 @@ describe('Lernmodus: der Echo-Check', () => {
     }
 
     expect(state.phase).toBe('card');
-    expect(currentCharacter(state)).toBe('M');
+    expect(currentCharacter(state)).toBe('R');
     expect(state.echoDone).toBe(0);
+  });
+
+  it('kommt erst ab zwei Optionen -- die erste Karte eines neuen Nutzers geht direkt weiter', () => {
+    const first = cardHeard(createLearnRun({ queue: ['K', 'M'] }));
+    expect(echoDue(first)).toBe(false);
+    const next = beginEcho(first);
+    expect(next.phase).toBe('card');
+    expect(currentCharacter(next)).toBe('M');
+
+    const second = cardHeard(next);
+    expect(echoDue(second)).toBe(true);
+    expect(beginEcho(second).phase).toBe('echo-ready');
+  });
+
+  it('ein Lauf aus einer einzigen ersten Karte endet ohne Check und fuehrt sie ein', () => {
+    const state = beginEcho(cardHeard(createLearnRun({ queue: ['K'] })));
+    expect(state.phase).toBe('done');
+    expect(introducesCharacters(state)).toBe(true);
+  });
+
+  it('beim freien Wiederholen nie, auch nicht mit vielen Optionen', () => {
+    const state = cardHeard(createLearnRun({ queue: ['P'], known: ['K', 'M'], requireEcho: false }));
+    expect(echoDue(state)).toBe(false);
   });
 
   it('merkt sich, was geantwortet wurde -- richtig wie falsch', () => {
@@ -191,7 +215,7 @@ describe('Lernmodus: freies Wiederholen', () => {
   });
 
   it('vor "done" fuehrt kein Zustand etwas ein', () => {
-    const state = beginEcho(cardHeard(createLearnRun({ queue: ['K'] })));
+    const state = beginEcho(cardHeard(createLearnRun({ queue: ['M'], known: ['K'] })));
     expect(introducesCharacters(state)).toBe(false);
   });
 });
