@@ -574,3 +574,30 @@ Der Abschnitt „heute“ ist damit historisch (er beschreibt den Stand vor B2).
 Build. Die Messung „nachher“ lief in P16 über ein Wegwerfskript im Scratchpad.
 **Was es kosten würde:** entweder das Skript auf den neuen DOM umstellen oder
 es als Beleg des Vorher-Zustands markieren/löschen.
+
+## 17. Words: zwei Amber-Flächen zugleich, wenn während des Tons getippt wird
+
+**Status: offen** (06.10.2026, Design-/UX-Review, `docs/REVIEW-DESIGN-UX.md` B4).
+
+**Gefunden:** 06.10.2026, beim Durchspielen des Wort-Trainings per Playwright
+(Screenshot `shots/19-words-feedback-390.png` im Scratchpad der Review-Sitzung).
+
+Im Modus „Words & groups" ist Tippen schon während `listening` erlaubt
+(`src/ui/Words.tsx:88`, `typingAllowed = answering || state.phase === 'listening'`).
+`AnswerLine` zeigt Löschen- und **Check**-Knopf, sobald `!empty && enabled` gilt
+(`Words.tsx:273`), und `enabled` ist dasselbe `typingAllowed`. Wer also während des
+Tons den ersten Buchstaben tippt, sieht den gefüllten Amber-Check **neben dem gefüllten
+Amber-Play-Kreis** — zwei Amber-Flächen in einer View (Guidelines 1.1 §4, CLAUDE.md
+§2.9 „Amber nie zweimal in einer View"). Der Kommentar direkt über der Stelle behauptet
+das Gegenteil („während des Tons ist der Play-Kreis das eine Amber").
+
+`verify:amber` (`tools/amber/check.mjs`) deckt den Zustand nicht ab: die Fälle
+„Wort-Training, Eingabe offen (F2)" tippen erst nach dem Tonende.
+
+**Nicht mitrepariert:** Review-Auftrag ohne Code-Änderung (CLAUDE.md §5).
+
+**Was es kosten würde:** S. Entweder den Check-Knopf nur in `answering` zeigen
+(Tippen während des Tons bleibt erlaubt, der Knopf erscheint mit dem Tonende), oder
+ihn während `listening` umrandet statt gefüllt setzen. Ersteres hält die Regel ohne
+neue Variante. Dazu ein Fall in `verify:amber`, der während des Tons tippt.
+Owner-Delegation reicht: die Regel ist eindeutig, nur der Weg ist zu wählen.
