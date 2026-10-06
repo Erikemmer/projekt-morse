@@ -24,8 +24,11 @@ es sind **Setzungen von Claude, keine Fable-Rulings** — den Notion-Eintrag mac
 answering, Auflösung richtig/falsch): **kein Scroll**. Intro 1 bei 390 × 844: kein Scroll.
 Check-Skripte nachgezogen (Echo-Check-Weg über Karte 2).
 
-**Nicht belegt:** Summary-Höhe mit dem neuen Satz (20 Runden nicht automatisiert
-durchgespielt), Progress-Ansicht nur gerendert, nicht vermessen; Screenreader;
+**Nachgemessen (P26):** Summary nach 20 automatisch gespielten Runden — 390 × 844 und
+1280 × 720, 6 und 36 Zeichen: **kein Scroll**; der Richtungssatz steht bei 6 Zeichen,
+bei 36 aktiven fehlt er (richtig). FINDINGS #18: Ursache gemessen (Streak-Zeile).
+
+**Nicht belegt:** Progress-Ansicht nur gerendert, nicht vermessen; Screenreader;
 Firefox/Safari; echte Geräte. Favicon-Kleinformat (1.1 §3 vs. #88) bleibt offen.
 
 **Offen:** Folgeliste aus Review §G (Freeze erklären, Fußnoten, Fokusring, Skip-Link …),

@@ -612,9 +612,15 @@ Owner-Delegation reicht: die Regel ist eindeutig, nur der Weg ist zu wählen.
 
 Bei 390 × 844 mit 6 Zeichen steht die Sitzungszeile in Ruhe und beim Spielen fest bei
 y = 32 (der Sprung der Kopfzeile ist mit P25 weg), der Play-Kreis aber wandert von
-y = 264 (ready) auf y = 283 (listening). Ursache nicht untersucht — vermutlich
-Inhalt, der nur auf dem Start-Screen steht (Streak-/Einladungszeile) und die zentrierte
-Bühne verschiebt. Ob das schon vor P25 so war, ist nicht gemessen.
+y = 264 (ready) auf y = 283 (listening). **Ursache (gemessen, Runde P26):** die Streak-Zeile („Starting fresh.“, 21 px + Abstand)
+steht nur auf dem Start-Screen (`onStartScreen`). Mit dem ersten Play fällt sie weg, die
+Bühne (`flex: 1`, Inhalt zentriert) wächst von 499 auf 537 px, die Mitte rückt um die
+Hälfte, 19 px. Unabhängig von P25 — die Zeile war vorher genauso an den Start-Screen
+gebunden; dort fiel es neben dem 60-px-Sprung der Kopfzeile nicht auf.
 
-**Nicht mitrepariert** (CLAUDE.md §5). **Was es kosten würde:** S, zuerst Ursache messen.
+**Nicht mitrepariert** (CLAUDE.md §5). **Wege (Design-Entscheidung):** (a) Platz der
+Zeile in der Sitzung reservieren — riskant, die Tastenfeld-Auflösung steht bei 390 × 844
+auf genau 844 px; (b) Bühneninhalt oben statt zentriert ausrichten; (c) Streak-Zeile
+unter das Gitter in den Fuß legen, wo sie die Bühne nicht trägt. Preis S, je nach Weg
+Fable-Ruling oder Owner-Delegation.
 
