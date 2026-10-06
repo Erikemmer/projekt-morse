@@ -2,7 +2,7 @@
  * Die Geräte-Einstellungen im localStorage.
  *
  * Ein **eigener Eintrag**, nicht ein Feld im Lernstand — und das ist der ganze
- * Punkt: dieser Schlüssel geht nie zum Konto. `pushProgress` (ui/account.ts)
+ * Punkt: dieser Schlüssel geht nie zum Konto. `pushProgress` (ui/accountApi.ts)
  * schickt `Progress`, und Tonhöhe und Lautstärke stehen bewusst nicht darin.
  * Wer sich auf einem zweiten Gerät anmeldet, bekommt seinen Lernstand und die
  * Lautstärke *dieses* Geräts (Produktentscheidung, Notion-Log #66;

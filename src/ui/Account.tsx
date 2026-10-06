@@ -4,7 +4,7 @@
  *
  * Diese Komponente rechnet nichts und weiss nichts ueber Lernstaende. Sie
  * rendert drei Zustaende (abgemeldet, angemeldet, Loeschen bestaetigen) und
- * meldet Klicks an `ui/account.ts`, das mit Passkeys und Server redet. Was
+ * meldet Klicks an `ui/accountApi.ts`, das mit Passkeys und Server redet. Was
  * beim Zusammenlegen zweier Staende gewinnt, steht in `engine/sync.ts`.
  *
  * **Ton (1.1 §11, CLAUDE.md 2.6).** Keine Ausrufezeichen, kein Schuldton,
@@ -35,7 +35,7 @@ import {
   signInWithPasskey,
   signOut,
   type AccountRecord,
-} from './account';
+} from './accountApi';
 
 /** Was der Screen gerade tut. `idle` ist der Normalfall. */
 type Busy = 'idle' | 'passkey' | 'deleting';

@@ -105,7 +105,7 @@ import { streakStanding, type StreakStanding } from '../engine/streak';
 import { computeTiming } from '../engine/timing';
 import { About } from './About';
 import { Account } from './Account';
-import { pushProgress } from './account';
+import { pushProgress } from './accountApi';
 import { Intro } from './Intro';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 import { Learn, ReviewPicker, useLearnKeyboard } from './Learn';
@@ -250,7 +250,7 @@ export function App() {
    * Am Ende einer Sitzung einmal zum Konto hochschieben -- **best effort**.
    *
    * Kein `await`, kein Ergebnis in der UI, kein Modal: ein Abgleich, der nicht
-   * durchkommt, ist kein Ereignis fuer den Nutzer (ui/account.ts). Ohne Konto
+   * durchkommt, ist kein Ereignis fuer den Nutzer (ui/accountApi.ts). Ohne Konto
    * tut `pushProgress` gar nichts und loest keinen einzigen Aufruf aus.
    *
    * Der synchrone Schreibvorgang davor ist Absicht: `pushProgress` schickt den
@@ -856,7 +856,7 @@ export function App() {
    * schrumpfte das Antwort-Gitter mitten in einer Übung, und die Ziehung zöge
    * plötzlich aus anderen Zeichen als die, die man gerade übt.
    *
-   * Geschrieben ist der Stand zu diesem Zeitpunkt schon (`ui/account.ts`); hier
+   * Geschrieben ist der Stand zu diesem Zeitpunkt schon (`ui/accountApi.ts`); hier
    * zieht nur der React-Zustand nach.
    */
   const adoptProgress = useCallback((progress: Progress) => {
