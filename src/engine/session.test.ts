@@ -11,6 +11,7 @@ import { pickNext, weightFor } from './selection';
 import {
   advance,
   beginPlayback,
+  confusionPair,
   createSession,
   promptFinished,
   submitAnswer,
@@ -701,5 +702,29 @@ describe('Der eine Satz zum Freeze (Review §D2.5, Runde P27)', () => {
     expect(parseProgress({ version: 1, characters: {} }).freezeNoticeSeen).toBe(false);
     const seen = { ...emptyProgress(), freezeNoticeSeen: true };
     expect(parseProgress(JSON.parse(JSON.stringify(seen))).freezeNoticeSeen).toBe(true);
+  });
+});
+
+describe('Verwechslungsbild (confusionPair, Review §E3.2, Runde P27)', () => {
+  const miss = (char: string, answer: string) => ({ char, answer, correct: false, reactionSeconds: null, replays: 0 });
+  const hit = (char: string) => ({ char, answer: char, correct: true, reactionSeconds: 1, replays: 0 });
+
+  it('zaehlt ein Paar in beide Richtungen', () => {
+    expect(confusionPair([miss('M', 'O'), hit('K'), miss('O', 'M')])).toEqual({ pair: ['M', 'O'], count: 2 });
+  });
+
+  it('schweigt unter zwei Verwechslungen desselben Paars', () => {
+    expect(confusionPair([miss('M', 'O'), miss('K', 'R')])).toBeNull();
+    expect(confusionPair([hit('K'), hit('M')])).toBeNull();
+  });
+
+  it('nimmt das haeufigste Paar, bei Gleichstand das zuerst aufgetretene', () => {
+    expect(
+      confusionPair([miss('K', 'R'), miss('M', 'O'), miss('R', 'K'), miss('O', 'M'), miss('M', 'O')]),
+    ).toEqual({ pair: ['M', 'O'], count: 3 });
+    expect(confusionPair([miss('K', 'R'), miss('M', 'O'), miss('R', 'K'), miss('O', 'M')])).toEqual({
+      pair: ['K', 'R'],
+      count: 2,
+    });
   });
 });

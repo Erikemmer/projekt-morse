@@ -33,6 +33,7 @@ import {
   recordFor,
   type Progress,
 } from '../engine/stats';
+import { Ornament } from './Ornament';
 
 export function ProgressScreen({
   progress,
@@ -89,10 +90,13 @@ export function ProgressScreen({
         (26 von 30 sind 86,7 %). Die Zahlen kommen aus engine/growth.ts.
       */}
       {next !== null && (
-        <p className="note">
+        <p className="account-note">
           {`${next} joins when about ${Math.round(GROWTH_WINDOW_ACCURACY * 100)} percent of your last ${RECENT_ANSWER_WINDOW} answers are right and every active character has had at least ${GROWTH_MIN_ATTEMPTS} tries, ${Math.round(GROWTH_MIN_CHARACTER_ACCURACY * 100)} percent of them right — never sooner than ${GROWTH_LOCKOUT_ANSWERS} answers after the last one joined.`}
         </p>
       )}
+
+      {/* Das eine Ornament dieses Screens (Runde P27, Review §B5.1). */}
+      <Ornament />
 
       {practised ? (
         <>

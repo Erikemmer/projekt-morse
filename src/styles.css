@@ -970,7 +970,10 @@ button:disabled {
 
 /* Der Fokus springt auf die Ueberschrift, damit sie vorgelesen wird -- ohne
  * dass dabei ein Rahmen um eine reine Textzeile steht. */
-.screen-heading:focus {
+/* Seit Runde P27 auch die Summary-Ueberschrift: mit dem Ink-Fokusring stand
+ * dort sonst ein Kasten um "Session done". */
+.screen-heading:focus,
+.summary-heading:focus {
   outline: none;
 }
 
@@ -1546,6 +1549,24 @@ a.menu-item {
 }
 
 /*
+ * Seit Runde P27 als Text gesetzt (Review §B2, Owner-Delegation): jeder
+ * Abschnitt durch eine Haarlinie vom vorigen getrennt -- Linien tragen die
+ * Oberflaeche, keine Flaechen (1.1 §7). Der Platz dafuer kommt aus dem
+ * Theme-Picker (eine Reihe statt drei) und dem Probeton (Textknopf statt
+ * 64-px-Flaeche).
+ */
+.settings-screen .setting + .setting,
+.settings-screen .account-note + .setting {
+  margin-top: var(--space-1);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--edge-soft);
+}
+
+.settings-screen .setting .quiet-action {
+  align-self: flex-start;
+}
+
+/*
  * Die Build-Kennung als Fussnote des Settings-Screens (Owner-Wunsch): der
  * Stand, der gerade laeuft, ohne Umweg ueber die DevTools. Sie steht als
  * Letztes, durch eine Haarlinie abgesetzt, und traegt bewusst kein Amber --
@@ -1622,28 +1643,9 @@ a.menu-item {
 }
 
 /*
- * Der Theme-Picker (Ruling Notion-Log #111, Punkt 4): ein Dreier-Raster je
- * Gruppe statt einer Liste. Sieben Zeilen zu je `--tap` (44 px) sprengten den
- * Screen bei 390 x 844 (gemessen: 1209 statt 844 px) -- Light und Dark haben
- * exakt drei Mitglieder, die deshalb in eine einzige Reihe passen.
+ * Der Theme-Picker (Ruling Notion-Log #111, Punkt 4) -- seit Runde P27 eine
+ * Reihe aus drei Werten (System, Paper, Night), ohne Gruppen-Beschriftung.
  */
-.theme-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-/* "Light"/"Dark" -- dieselbe leise Kennzeichnung wie die Augenbraue im
-   Training (.eyebrow), nur ohne deren Ton-Hz-Zusatz. */
-.theme-group-label {
-  margin: 0;
-  font-family: var(--font-sans);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--gray);
-}
-
 .theme-options {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1655,14 +1657,11 @@ a.menu-item {
  * Training/Tastenfeld) -- nur mit einer eigenen Groesse fuer Textnamen statt
  * eines einzelnen Zeichens.
  *
- * **32 px, nicht `--tap` (44 px).** Sieben Ziele zu je 44 px sprengten den
- * Screen (siehe Kommentar an `.theme-picker`); 32 px haelt WCAG 2.5.8 (AA,
- * 24 x 24 CSS-Pixel) sicher ein, nur nicht die strengere AAA-Empfehlung aus
- * 2.5.5, die `--tap` sonst ueberall in dieser App traegt. Eine dokumentierte
- * Ausnahme fuer eine dichte Werkzeugleiste, keine neue Regel.
+ * Seit Runde P27 (drei Werte in einer Reihe) volle Tap-Hoehe `--tap`; die
+ * fruehere 28/32-px-Ausnahme fuer sieben Ziele ist mit den Themes entfallen.
  */
 .theme-option {
-  height: 28px;
+  height: var(--tap);
   min-height: 0;
   padding: 0 var(--space-1);
   position: relative;
@@ -1673,10 +1672,6 @@ a.menu-item {
   background: transparent;
   border: 1px solid var(--edge);
   border-radius: var(--radius);
-}
-
-.theme-option[data-full] {
-  grid-column: 1 / -1;
 }
 
 /*
@@ -1779,6 +1774,41 @@ a.menu-item {
 }
 
 /*
+ * Das Trennornament in der App (ui/Ornament.tsx, Runde P27): dieselbe
+ * Geometrie wie auf den Learn-Seiten (tools/learn/learn.css, u = 6 px), nur
+ * mit knapperem Abstand -- die Screens der App stehen bei 390 x 844 eng.
+ */
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: var(--space-1) 0;
+}
+
+.ornament-letter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ornament i {
+  display: block;
+  height: 6px;
+  background: var(--ink);
+}
+
+.ornament i[data-kind='dit'] {
+  width: 6px;
+  border-radius: 50%;
+}
+
+.ornament i[data-kind='dah'] {
+  width: 18px;
+  border-radius: 3px;
+}
+
+/*
  * Der Skip-Link (Runde P27): unsichtbar wie .visually-hidden, bis er den
  * Fokus hat -- dann oben links, Papier und Ink, kein Amber.
  */
@@ -1818,7 +1848,13 @@ a.menu-item {
 /* ==========================================================================
    Themes (Runde T1, Ruling Notion-Log #111)
    ==========================================================================
-   Sechs Paletten, ein Mechanismus: jede setzt nur die acht Farb-Tokens aus
+   **Seit Runde P27 zwei Paletten, Paper und Night** (Review §B5.5,
+   Owner-Delegation; nimmt Ruling #111 zurueck): 1.1 §4 kennt einen Akzent, und
+   der Knopf des Tasters ist amber. Frost, Olive, Phosphor und Ink sind weg;
+   wer sie gewaehlt hatte, landet auf Paper bzw. Night (engine/deviceSettings.ts).
+   Der Text unten beschreibt den Mechanismus aus Runde T1 und gilt weiter.
+
+   Ein Mechanismus: jede Palette setzt nur die acht Farb-Tokens aus
    dem `:root`-Block oben neu (Typografie, Abstaende, Dauern usw. bleiben
    global, sie stehen nur einmal). Das ist der ganze Grund, warum diese Runde
    ohne ein einziges Bauteil anzufassen auskommt -- seit Runde A kommt jede
@@ -1878,31 +1914,7 @@ a.menu-item {
   --card: #FFFCF6;
 }
 
-/* Frost -- kuehles Grau, Petrol als Akzent. */
-[data-theme='frost'] {
-  color-scheme: light;
-  --paper: #F1F3F5;
-  --ink: #1A2028;
-  --amber: #0E6E6E;
-  --amber-deep: #0A5252;
-  --gray: #5A646E;
-  --edge: #D5DBE0;
-  --edge-soft: #E3E7EB;
-  --card: #FAFBFC;
-}
 
-/* Olive -- neutralwarmes Papier, Moos als Akzent. */
-[data-theme='olive'] {
-  color-scheme: light;
-  --paper: #F2F1E6;
-  --ink: #1E2118;
-  --amber: #4C6A26;
-  --amber-deep: #3B5320;
-  --gray: #61665A;
-  --edge: #DCDBCB;
-  --edge-soft: #E6E5D8;
-  --card: #FAF9F1;
-}
 
 /* Night -- die Marke bei Nacht: derselbe Amber-Ton, nur auf dunklem Papier. */
 [data-theme='night'] {
@@ -1917,33 +1929,7 @@ a.menu-item {
   --card: #1E1A14;
 }
 
-/* Phosphor -- CRT-Gruen als Akzent, Funkraum-Nostalgie. Nur der Akzent ist
-   gruen; --ink bleibt ein nahes Weiss, damit Fliesstext keine Lesefalle wird. */
-[data-theme='phosphor'] {
-  color-scheme: dark;
-  --paper: #0A0D0B;
-  --ink: #DCE8DE;
-  --amber: #4FBF74;
-  --amber-deep: #6FD68F;
-  --gray: #93A697;
-  --edge: #1E2620;
-  --edge-soft: #161D18;
-  --card: #10150F;
-}
 
-/* Ink -- kuehles Tiefblau. Der Themename und der Token --ink treffen sich
-   hier zufaellig; die Rolle "Text" ist gemeint, nie die Farbe des Themes. */
-[data-theme='ink'] {
-  color-scheme: dark;
-  --paper: #10151B;
-  --ink: #E4E9EE;
-  --amber: #5AA9CC;
-  --amber-deep: #7CC1DE;
-  --gray: #96A3AF;
-  --edge: #232C36;
-  --edge-soft: #1A222B;
-  --card: #151B22;
-}
 
 /*
  * Punkt 5: kein animierter Uebergang beim Umschalten. Ein Themewechsel setzt

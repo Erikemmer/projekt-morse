@@ -1,6 +1,12 @@
 /**
  * Der Settings-Screen: zwei Regler, ein Theme, ein Probeton, eine ehrliche Zeile.
  *
+ * **Seit Runde P27 als Text gesetzt, nicht als Formular** (Review §B2,
+ * Owner-Delegation): Abschnitte durch Haarlinien getrennt, der Probeton ein
+ * leiser Textknopf statt des gefuellten Amber-Primary, das Theme eine Reihe
+ * aus drei Werten. Die Absaetze zu "Amber-Budget" und zum Picker unten
+ * beschreiben den Stand davor, soweit sie Amber am Probeton nennen.
+ *
  * Bewusst kein Dschungel. Es gibt genau die Werte, die eine Person am eigenen
  * Gerät wirklich braucht — Tonhöhe, Lautstärke und, seit Ruling Notion-Log
  * #111, das Theme —, und keinen weiteren "weil man ihn einbauen könnte"
@@ -40,7 +46,7 @@ import {
   VOLUME_RANGE,
   VOLUME_STEP,
 } from '../engine/settings';
-import type { DeviceSettings, Theme } from '../engine/deviceSettings';
+import { THEMES, type DeviceSettings, type Theme } from '../engine/deviceSettings';
 import { buildVersion } from './build';
 import { Mark } from './Mark';
 
@@ -48,16 +54,8 @@ import { Mark } from './Mark';
 const THEME_LABELS: Record<Theme, string> = {
   system: 'System',
   paper: 'Paper',
-  frost: 'Frost',
-  olive: 'Olive',
   night: 'Night',
-  phosphor: 'Phosphor',
-  ink: 'Ink',
 };
-
-/** Gruppierung fuer die Anzeige: System zuerst, dann hell, dann dunkel. */
-const LIGHT_THEMES: readonly Theme[] = ['paper', 'frost', 'olive'];
-const DARK_THEMES: readonly Theme[] = ['night', 'phosphor', 'ink'];
 
 export function Settings({
   settings,
@@ -144,10 +142,13 @@ export function Settings({
           aria-valuetext={`${volumePercent} percent`}
           onChange={(event) => onVolume(Number(event.target.value))}
         />
-      </div>
-
-      <div className="account-actions">
-        <button type="button" className="button-primary" disabled={playing} onClick={onPreview}>
+        {/*
+          Der Probeton ist eine Nebenhandlung (1.1 §7: der Primary ist "usually
+          Start or Check") -- seit Runde P27 ein leiser Textknopf unter den
+          beiden Reglern statt der gefuellten Amber-Flaeche in voller Breite
+          (Review §B2, Owner-Delegation). Die View traegt damit kein Amber.
+        */}
+        <button type="button" className="quiet-action" disabled={playing} onClick={onPreview}>
           Play test tone
         </button>
       </div>
@@ -246,6 +247,11 @@ export function Settings({
         (styles.css) macht die Kennung mit einem Klick vollstaendig markierbar
         -- gedacht ist sie zum Vergleichen, nicht zum Abtippen.
       */}
+      {/*
+        Kein Ornament hier (Runde P27): die Build-Zeile mit ihrer Haarlinie
+        schliesst den Screen schon ab, und er scrollt bei 390 x 844 bereits
+        (gemessen 960 px vor diesem Umbau).
+      */}
       <p className="settings-build">
         Build <span className="settings-build-id">{buildVersion()}</span>
       </p>
@@ -254,8 +260,9 @@ export function Settings({
 }
 
 /**
- * Der Theme-Picker: System, dann Light, dann Dark -- ein `radiogroup` aus
- * `radio`-Knöpfen (Punkt 4).
+ * Der Theme-Picker -- ein `radiogroup` aus `radio`-Knöpfen (Punkt 4). Seit
+ * Runde P27 System, Paper, Night in einer Reihe; der Absatz zum Raster unten
+ * beschreibt die sechs Themes von davor.
  *
  * **Ein Raster aus drei Spalten je Gruppe, keine Liste** -- sieben Zeilen zu
  * je `--tap` (44 px) hätten allein über 300 px gebraucht und den Screen bei
@@ -269,23 +276,12 @@ export function Settings({
  * Theme probiert man aus, man sieht es nicht an einem Punkt an.
  */
 function ThemePicker({ theme, onTheme }: { theme: Theme; onTheme: (theme: Theme) => void }) {
+  // Seit Runde P27 drei Werte in einer Reihe (Review §B5.5): System, Paper, Night.
   return (
-    <div className="theme-picker" role="radiogroup" aria-labelledby="theme-heading">
-      <ThemeOption id="system" current={theme === 'system'} onSelect={onTheme} full />
-
-      <p className="theme-group-label">Light</p>
-      <div className="theme-options">
-        {LIGHT_THEMES.map((id) => (
-          <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
-        ))}
-      </div>
-
-      <p className="theme-group-label">Dark</p>
-      <div className="theme-options">
-        {DARK_THEMES.map((id) => (
-          <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
-        ))}
-      </div>
+    <div className="theme-options" role="radiogroup" aria-labelledby="theme-heading">
+      {THEMES.map((id) => (
+        <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
+      ))}
     </div>
   );
 }
@@ -301,13 +297,10 @@ function ThemeOption({
   id,
   current,
   onSelect,
-  full = false,
 }: {
   id: Theme;
   current: boolean;
   onSelect: (theme: Theme) => void;
-  /** "System" steht allein in einer vollen Zeile, nicht im Dreier-Raster. */
-  full?: boolean;
 }) {
   return (
     <button
@@ -315,7 +308,6 @@ function ThemeOption({
       role="radio"
       aria-checked={current}
       className="theme-option"
-      data-full={full || undefined}
       onClick={() => onSelect(id)}
     >
       {THEME_LABELS[id]}

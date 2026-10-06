@@ -4,10 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!--
-      Favicon ist das App-Icon aus den Owner-Dateien (Ruling #88): der Taster
-      auf Papier, abgeleitet aus docs/brand/assets/morse-lab-appicon.svg. Der
-      fruehere Punkt-und-Strich-Notbehelf fuer kleine Groessen ist keine
-      Ableitung der Marke und darum entfallen.
+      Favicon ist seit Runde P27 die Fallback-Marke aus 1.1 §3 (Punkt + Strich
+      in Amber, "fallback mark for 16 px"), abgeleitet aus
+      docs/brand/assets/morse-lab-fallback.svg -- der Taster liest unter 24 px
+      nur noch als Punkt auf einem Strich (Review §C2). App-Icons tragen
+      weiter den Taster. Nimmt Ruling #88 fuers Favicon zurueck
+      (Owner-Delegation).
     -->
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <!-- Schriften liegen als woff2 im Repo (@font-face in styles.css) -- kein Fremdabruf. -->
@@ -45,7 +47,11 @@
         try {
           var raw = localStorage.getItem('projekt-morse:device');
           var theme = raw && JSON.parse(raw).theme;
-          if (theme && theme !== 'system') {
+          // Seit Runde P27 nur Paper und Night; die zurueckgenommenen Themes
+          // landen auf ihrer Helligkeits-Seite (wie engine/deviceSettings.ts).
+          var retired = { frost: 'paper', olive: 'paper', phosphor: 'night', ink: 'night' };
+          if (retired[theme]) theme = retired[theme];
+          if (theme === 'paper' || theme === 'night') {
             document.documentElement.setAttribute('data-theme', theme);
           }
         } catch (error) {

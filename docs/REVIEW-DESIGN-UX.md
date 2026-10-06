@@ -644,7 +644,8 @@ während des Tons (`App.tsx:11–24`).
 | 10 | Antwortgitter im Ready-Zustand nicht als Opazitäts-Ghost (Umriss edge-soft, Buchstabe gray) oder ausblenden | A2.1/2, F2.5 | S–M | Fable-Ruling (Mockup) |
 
 **Stand 06.10.2026:** #1 umgesetzt (P24), #2–#10 vom Owner an Claude delegiert und
-umgesetzt (P25, Entscheidungen in `HANDOVER.md`). Die Folgeliste unten ist offen.
+umgesetzt (P25), die Folgeliste ebenfalls delegiert und umgesetzt (P27, P28) —
+Logo-Richtung nur als R2 (Favicon), R3 nicht als Marke (Begründung in `HANDOVER.md`).
 
 Danach, in dieser Reihenfolge: Freeze einmal erklären (D2.5), Fußnoten über die
 Progress-Tabelle (F2.6), Fokusring Ink (F2.1), Skip-Link (F2.4), „Sessions"-Zähler

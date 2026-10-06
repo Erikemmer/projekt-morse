@@ -117,6 +117,7 @@ import { Pattern } from './Pattern';
 import { ProgressScreen } from './Progress';
 import { Send, useSendKeyboard } from './Send';
 import { SessionHeader } from './SessionHeader';
+import { Ornament } from './Ornament';
 import { Words, useWordKeyboard } from './Words';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { loadDeviceSettings, saveDeviceSettings } from './deviceStorage';
@@ -1919,7 +1920,17 @@ function Summary({
         )}
       </dl>
 
+      {/* Das eine Ornament dieses Screens (Runde P27, Review §B5.1). */}
+      <Ornament />
+
       {drillResult !== null && <p className="note">{drillResult}</p>}
+
+      {/* Das Verwechslungsbild (Review §E3.2, Owner-Delegation P27): nur diese Sitzung. */}
+      {summary.confusion !== null && (
+        <p className="note">
+          {`${summary.confusion.pair[0]} and ${summary.confusion.pair[1]} were mixed up ${summary.confusion.count} times this session.`}
+        </p>
+      )}
 
       {direction !== null && (
         <p className="note">

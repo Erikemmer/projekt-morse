@@ -1,3 +1,34 @@
+# Übergabe — Stand nach Runde P28 (Review-Folgeliste, Block B)
+
+**Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. Kein PR.
+Owner-Delegation der ganzen Folgeliste (06.10.2026); Setzungen von Claude, keine
+Fable-Rulings. Den Notion-Eintrag (inkl. Rücknahme von Ruling #111 und #88 fürs
+Favicon) macht der Owner.
+
+**Block B, umgesetzt:**
+
+| Punkt | Entscheidung | Wo |
+|---|---|---|
+| B5.5 Themes | Nur noch System, Paper, Night (nimmt Ruling #111 zurück). Gespeichertes Frost/Olive → Paper, Phosphor/Ink → Night, Rest des Eintrags bleibt; auch im Vorab-Skript in `index.html`. | `deviceSettings.ts`, `styles.css`, `index.html`, `Settings.tsx`, `contrast.mjs` |
+| B2 Settings | Als Text: Haarlinien zwischen den Abschnitten, Probeton als leiser Textknopf unter den Reglern (kein Amber mehr in der View), Theme als eine Reihe aus drei 44-px-Werten. | `Settings.tsx`, `styles.css` |
+| B5.1 Ornament | `−− ·−··` („ML“) aus dem Engine-Alphabet, Geometrie wie auf den Learn-Seiten, Ink; je einmal in About, Progress, Summary. Nicht in Settings (scrollt ohnehin). | `Ornament.tsx`, `styles.css` |
+| E3.2 Verwechslung | Summary: „K and M were mixed up 4 times this session.“ — nur diese Sitzung, ab 2 Verwechslungen desselben Paars, nichts gespeichert. `confusionPair` in der Engine. | `session.ts`, `App.tsx` |
+| C3 Logo | **R2 umgesetzt, R3 nicht als Marke.** Favicon = Fallback-Marke aus 1.1 §3 (Punkt + Strich in Amber, „fallback mark for 16 px“, 1.1 Z. 188); neues Original `docs/brand/assets/morse-lab-fallback.svg`, abgeleitet über `tools/brand/derive.mjs`. App-Icons und About behalten den Taster. R3 (ML als Marke) hieße, den Taster als Hauptmarke aus 1.1 zu ersetzen — das ist eine Änderung der Guidelines selbst, und die schreibt Fable; das Ornament steht stattdessen in der App (B5.1). | `derive.mjs`, `public/favicon.svg`, `index.html` |
+| Nebenbei | `.summary-heading:focus` ohne Ring (wie `.screen-heading`); mit Ink-Fokus stand sonst ein Kasten um „Session done“. Kontrast-Check prüft den Fokusring jetzt als ink/paper. | `styles.css`, `contrast.mjs` |
+
+**Gesamtlauf:** `npm test` 507, Build grün (Learn 18 Seiten), `verify:amber` 40 + Night 6
++ Paper 6, `verify:keyboard` 25, `verify:contrast` 8/8 (zwei Themes statt sechs),
+`derive.mjs --check` grün. Training 390 × 844 / 1280 × 720 (6/15/36): kein Scroll.
+Summary 390 × 844 und 1280 × 720: kein Scroll. About: kein Scroll. Bundle JS +364 B,
+CSS −366 B.
+
+**Bekannt, nicht behoben:** Settings scrollt bei 390 × 844 (950 px; vor Block B 960 px)
+und 1280 × 720 (813 px) — schon vor dieser Runde, entgegen dem älteren Kommentar
+„genau 844“. Progress scrollt erwartbar mit der Tabelle. Favicon ist neu, die PNG-
+App-Icons unverändert.
+
+---
+
 # Übergabe — Stand nach Runde P27 (Review-Folgeliste, Block A; FINDINGS #18)
 
 **Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. Kein PR. Der Owner

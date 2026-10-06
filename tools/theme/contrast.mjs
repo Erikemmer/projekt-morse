@@ -19,7 +19,8 @@
  * - Sekundaertext auf Grund (gray/paper): >= 4.5:1 (AA fuer normalen Text)
  * - Text auf der Akzentflaeche (paper/amber): >= 4.5:1 (derselbe Knopf wie
  *   ".button-primary": weisser/papierner Text auf gefuelltem Amber)
- * - Fokusring auf Grund (amber-deep/paper): >= 3:1 (WCAG 1.4.11, kein Text)
+ * - Fokusring auf Grund (ink/paper, seit Runde P27; vorher amber-deep): >= 3:1
+ *   (WCAG 1.4.11, kein Text)
  *
  * Faellt ein Wert durch, ist die einzige erlaubte Reaktion, die Helligkeit
  * **dieses einen Tokens** im kleinsten noetigen Schritt nachzuziehen -- keine
@@ -40,21 +41,17 @@ const THEMES = {
   // Fehler der neuen Themes. Kleinstmoegliche Korrektur nach Punkt 9 des
   // Auftrags (nur die Helligkeit von --amber, sonst nichts).
   Paper: { paper: '#F6F1E8', ink: '#221D16', amber: '#B35209', gray: '#6F6455', 'amber-deep': '#92400E' },
-  Frost: { paper: '#F1F3F5', ink: '#1A2028', amber: '#0E6E6E', gray: '#5A646E', 'amber-deep': '#0A5252' },
-  Olive: { paper: '#F2F1E6', ink: '#1E2118', amber: '#4C6A26', gray: '#61665A', 'amber-deep': '#3B5320' },
   Night: { paper: '#17140F', ink: '#EDE6D8', amber: '#D97706', gray: '#A79C8A', 'amber-deep': '#F59E0B' },
-  Phosphor: { paper: '#0A0D0B', ink: '#DCE8DE', amber: '#4FBF74', gray: '#93A697', 'amber-deep': '#6FD68F' },
-  Ink: { paper: '#10151B', ink: '#E4E9EE', amber: '#5AA9CC', gray: '#96A3AF', 'amber-deep': '#7CC1DE' },
 };
 
 const THRESHOLDS = {
   'ink/paper (Fließtext)': 7,
   'gray/paper (Sekundärtext)': 4.5,
   'paper/amber (Text auf Akzentfläche)': 4.5,
-  // WCAG 1.4.11 (Non-text Contrast): der Fokusring (outline: amber-deep) muss
-  // sich vom Grund abheben, den er umrandet -- kein Fliesstext, deshalb 3:1
-  // statt 4.5:1.
-  'amber-deep/paper (Fokusring)': 3,
+  // WCAG 1.4.11 (Non-text Contrast): der Fokusring muss sich vom Grund
+  // abheben -- kein Fliesstext, deshalb 3:1. Seit Runde P27 ist er ink
+  // (Review §F2.1), vorher amber-deep.
+  'ink/paper (Fokusring)': 3,
 };
 
 function hexToRgb(hex) {
@@ -126,7 +123,7 @@ function main() {
       'ink/paper (Fließtext)': contrastRatio(ink, paper),
       'gray/paper (Sekundärtext)': contrastRatio(gray, paper),
       'paper/amber (Text auf Akzentfläche)': contrastRatio(paper, amber),
-      'amber-deep/paper (Fokusring)': contrastRatio(amberDeep, paper),
+      'ink/paper (Fokusring)': contrastRatio(ink, paper),
     };
     for (const [label, ratio] of Object.entries(values)) {
       const min = THRESHOLDS[label];

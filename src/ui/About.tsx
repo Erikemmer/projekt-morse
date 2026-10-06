@@ -13,6 +13,7 @@
 
 import { buildVersion } from './build';
 import { SOUND_ONLY_NOTE } from './Intro';
+import { Ornament } from './Ornament';
 
 export function About({ headingRef }: { headingRef: (element: HTMLElement | null) => void }) {
   const build = buildVersion();
@@ -33,6 +34,9 @@ export function About({ headingRef }: { headingRef: (element: HTMLElement | null
         An adaptive trainer for hearing Morse code — you learn each character as a sound, at full
         speed from day one.
       </p>
+
+      {/* Das eine Ornament dieses Screens (Runde P27, Review §B5.1). */}
+      <Ornament />
 
       <ul className="about-facts">
         <li>Build {build}</li>

@@ -31,8 +31,8 @@
  * **Themes (Ruling Notion-Log #111, Punkt 10):** ohne `AMBER_THEME` läuft der
  * volle Durchlauf über alle Ansichten im Standard-Theme. `AMBER_THEME=night
  * npm run verify:amber` schaltet stattdessen auf die sechs Kern-Ansichten in
- * `CORE_VIEW_NAMES` um, jetzt im genannten Theme (`paper`, `frost`, `olive`,
- * `night`, `phosphor` oder `ink`) -- ein Schalter im bestehenden Skript, keine
+ * `CORE_VIEW_NAMES` um, jetzt im genannten Theme (`paper` oder `night`, seit
+ * Runde P27 nur noch diese beiden) -- ein Schalter im bestehenden Skript, keine
  * Kopie davon (CLAUDE.md 4).
  *
  * Zwei Dinge, die nicht im Projekt liegen und deshalb konfigurierbar sind:
