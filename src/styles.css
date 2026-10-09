@@ -314,7 +314,10 @@ body {
   margin: 0;
   font-family: var(--font-serif);
   font-size: 64px;
-  font-weight: 500;
+  /* 300 wie der Buchstabe der Lernkarte (1.1 §5 "Practice letter"; Review
+   * §B3, Owner-Delegation Runde P33) -- vorher 500, zwei Gewichte fuer
+   * dasselbe Zeichen auf benachbarten Screens. */
+  font-weight: 300;
   line-height: 1;
 }
 
@@ -1271,19 +1274,21 @@ a.menu-item {
 }
 
 /* Der Ortsmarker: bei jedem Eintrag im Layout (sonst spraenge der Text),
- * gefuellt nur am aktuellen Ort -- das eine Amber der Menue-View (1.1 §4).
+ * gefuellt nur am aktuellen Ort. Seit Runde P33 derselbe Punkt wie in der
+ * Fusszeile und im Intro (`.dot`: 6 px, Ink) statt 8 px in Amber -- eine
+ * Punkt-Definition im ganzen Produkt (Review §B5.3, Owner-Delegation).
  * An- oder abwesend ist eine Form, nicht nur eine Farbe (CLAUDE.md 6);
  * aria-current sagt dasselbe fuer Screenreader. */
 .menu-dot {
   flex: none;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: transparent;
 }
 
 .menu-dot[data-current='true'] {
-  background: var(--amber);
+  background: var(--ink);
 }
 
 /*
@@ -1345,7 +1350,10 @@ a.menu-item {
 
 .stat-line dd {
   margin: 0;
-  font-size: 15px;
+  /* Zahlen als Fakten in Newsreader wie auf der Summary ("3 of 20") -- eine
+   * Stimme fuer Zahlen (Review §B5.4, Owner-Delegation Runde P33). */
+  font-family: var(--font-serif);
+  font-size: 17px;
   font-variant-numeric: tabular-nums;
 }
 

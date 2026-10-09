@@ -11,8 +11,9 @@
  * (CLAUDE.md 6). Fokusführung: beim Öffnen auf den ersten Eintrag, Esc und X
  * schließen, App.tsx holt den Fokus danach auf den Trigger zurück.
  *
- * Der aktuelle Ort trägt einen kleinen Amber-Punkt — das eine Amber dieser
- * View (1.1 §4). Der Punkt ist an- oder abwesend (Form, nicht nur Farbe),
+ * Der aktuelle Ort trägt einen kleinen Punkt — seit Runde P33 in Ink, derselbe
+ * Punkt wie in Fußzeile und Intro (Review §B5.3; vorher Amber). Der Punkt ist
+ * an- oder abwesend (Form, nicht nur Farbe),
  * und `aria-current` sagt dasselbe für Screenreader (CLAUDE.md 6).
  */
 
@@ -176,9 +177,9 @@ export function MenuButton({
  * sich wie dort -- nur die Form des Markers ist eine andere.
  *
  * **Kein Amber** (Teil B.5): der Ortsmarker ist eine kurze Tinten-Linie links
- * vom aktiven Eintrag (aktiv ink, übrige gray), nicht der gefüllte Punkt aus
- * `.menu-dot`. Sonst trüge die Übungsfläche daneben zwei Amber, sobald der
- * Play-Kreis während der Wiedergabe füllt (styles.css, `.nav-rail-item`).
+ * vom aktiven Eintrag (aktiv ink, übrige gray), nicht der Punkt aus
+ * `.menu-dot` (der war bis Runde P33 Amber und hätte neben dem gefüllten
+ * Play-Kreis ein zweites Amber ergeben; styles.css, `.nav-rail-item`).
  */
 export function NavRail({
   location,
