@@ -1,3 +1,27 @@
+# Übergabe — Stand nach Runde P34 (Review-Rest, B2 entschieden, PR angelegt)
+
+**Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. **PR angelegt**
+(Owner-Wunsch 09.10.2026), nicht gemergt. Owner-Delegation für die restlichen
+Review-Vorschläge; Setzungen von Claude, keine Fable-Rulings.
+
+| Runde | Inhalt |
+|---|---|
+| P31 | **B2 entschieden (Owner): Fließtext-Stellen bleiben markiert** (FINDINGS #5). Erklär-Sätze: „settling“ in der Progress-Tabelle (`isSettling`); „These first checks don't count — they're for hearing, not scoring.“ im ersten Echo-Abruf (Dreier-Gitter, bis zur Auflösung); ReviewPicker „They stand in the order they arrive.“; Einladung „K lands in 2 s or more.“ (einzeilig im Fuß); Settings „It starts rising once all 36 characters are in.“ vor der Progression. |
+| P32 | Ehrliche Zahlen: „8 of 36 active · 2 added early“ — neues Feld `addedEarly` (additiv, Default 0, Sync Maximum, nur `unlockNext` zählt) in Progress, Settings, Randspalte; „N heard/sent today“ erst ab 1; Progress-Link „Why 85 percent“ → `/learn/beyond-the-koch-method/` (`.text-link`, Ink + Unterstrich). |
+| P33 | Auflösungs-Buchstabe 300 statt 500; eine Punkt-Definition (Menü-Ortsmarker 6 px Ink statt 8 px Amber — das Menü trägt kein Amber mehr); Progress-Zahlen in Newsreader. |
+| P34 | Learn-Hub: Listen-Links Ink mit Haarlinie (`data-page="hub"`, EN und DE); Artikel-Links und CTA unverändert; `content/learn/` byte-identisch. |
+
+**Gemessen:** Settings 844/720/900 (auch mit „added early“ und Reset), Echo-Check mit
+Hinweis ohne Scroll, ReviewPicker ohne Scroll, Training ohne Scroll (6/15/36), Summary
+ohne Scroll, Einladung ohne Sprung. **Gesamtlauf:** `npm test` 513, Build grün
+(Learn 18 Seiten), `verify:amber` 41, `verify:keyboard` 25, Kontrast 8/8,
+`verify:colors`, `verify:fonts` grün. Bundle gegen P30: JS +955 B, CSS +349 B.
+
+**Offen:** Logo R3 (Fable), H2, H3, H8, H9, Firefox/Safari, Notion-Einträge (Vorlage
+liegt beim Owner).
+
+---
+
 # Übergabe — Stand nach Runde P30 (FINDINGS #20, Weg 1)
 
 **Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. Kein PR.
