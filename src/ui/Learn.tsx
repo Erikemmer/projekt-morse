@@ -77,6 +77,7 @@ export function Learn({
           playing={playing}
           requireEcho={state.requireEcho}
           echo={echoDue(state)}
+          last={state.index === state.queue.length - 1}
           buttonRef={focusRef}
           onPlay={onPlay}
           onContinue={echoDue(state) ? onBeginEcho : onNextCard}
@@ -248,6 +249,7 @@ function Card({
   playing,
   requireEcho,
   echo,
+  last,
   buttonRef,
   onPlay,
   onContinue,
@@ -258,6 +260,8 @@ function Card({
   requireEcho: boolean;
   /** Ob ein Echo-Check folgt (`echoDue`) -- nicht bei nur einer Option. */
   echo: boolean;
+  /** Letzte Karte des Laufs: dann beendet der Knopf ihn ("Done" statt "Next"). */
+  last: boolean;
   buttonRef: { current: HTMLElement | null };
   onPlay: () => void;
   onContinue: () => void;
@@ -269,7 +273,12 @@ function Card({
           {char}
         </h2>
 
+        {/*
+          Solange "Next"/"Try it" noch nicht da ist, traegt der Play-Kreis den
+          Fokus (Runde P29, Review): sonst fiel er nach "Next" auf <body>.
+        */}
         <button
+          ref={!heard ? (buttonRef as React.RefObject<HTMLButtonElement>) : undefined}
           type="button"
           className="play"
           data-sounding={playing}
@@ -304,7 +313,7 @@ function Card({
             className="button-go"
             onClick={onContinue}
           >
-            {echo ? 'Try it' : requireEcho ? 'Next' : 'Done'}
+            {echo ? 'Try it' : requireEcho && !last ? 'Next' : 'Done'}
           </button>
         </div>
       )}

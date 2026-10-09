@@ -1,3 +1,33 @@
+# Übergabe — Stand nach Runde P29 (Review der Runden P24–P28; FINDINGS #19)
+
+**Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. Kein PR.
+
+**Review:** zwei Prüfdurchgänge über `fe96813..HEAD` (Engine/Persistenz; UI/CSS/Skripte).
+Behoben, jeweils belegt:
+
+| Befund | Fix | Beleg |
+|---|---|---|
+| Gespeichertes Theme `toString`/`__proto__` passierte die Rückfall-Tabelle (Prototypkette) | `hasOwnProperty` in `deviceSettings.ts` und im Vorab-Skript `index.html` | Test rot mit altem Code, grün mit neuem |
+| Fokus fiel nach „Next“ (Karte ohne Check) auf `<body>` | Play-Kreis der Karte trägt den Fokus, solange der Knopf fehlt | Browser: nach „Next“ Fokus auf „Play M again“ |
+| Menü mitten im Prompt (neu unter 900 px) zählte als Reaktionszeit | Prompt mit Menü/anderer Ansicht/Klang-Auswahl wird ohne Reaktionszeit verbucht (wie Tastenfeld, #103c) | Browser: mit Menü `[] → []`, ohne Menü `[] → [0.22]` |
+| „Next“ auf der letzten Karte eines Laufs ohne Check beendete den Lauf | „Done“ auf der letzten Karte | Code |
+| Summary nannte ein gerade dazugekommenes, nie abgefragtes Zeichen „still settling“ | `settlingCharacter` überspringt Zeichen ohne Versuch | Test |
+| Gesperrter leiser Knopf reagierte auf Hover | `.quiet-action:hover:not(:disabled)` | Code |
+
+**Bewusst so gelassen:** „The set is ready to grow“ erscheint nach einer normalen Sitzung
+praktisch nie (das Wachstum greift schon während der Sitzung) — bleibt für den Stand nach
+einem Sync. Die Notiz an „Guides“ bricht in der Schiene um; Vorlesename korrekt.
+
+**FINDINGS #19 behoben:** Settings scrollte (950 px bei 390 × 844). Abstände über den
+Haarlinien 8 statt 24 px, Probeton und Tempo-Reset in die Kopfzeilen. Nachgemessen
+844/720/900, auch mit sichtbarem Reset; Tap-Flächen 80 × 44.
+
+**Gesamtlauf:** `npm test` 509, Build grün, `verify:amber` 40, `verify:keyboard` 25,
+Kontrast 8/8, Training ohne Scroll (390 × 844, 1280 × 720; 6/15/36). Bundle gegen P28
+(`ed16fdd`): JS +461 B, CSS +107 B.
+
+---
+
 # Übergabe — Stand nach Runde P28 (Review-Folgeliste, Block B)
 
 **Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. Kein PR.

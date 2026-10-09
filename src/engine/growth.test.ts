@@ -181,6 +181,13 @@ describe('Woran das Wachstum haengt (settlingCharacter)', () => {
     expect(settlingCharacter(progress)).toBe(third);
   });
 
+  it('nennt kein Zeichen ohne einen einzigen Versuch (gerade dazugekommen)', () => {
+    const base = readyProgress();
+    const fresh = CHARACTER_ORDER[STARTING_CHARACTERS.length];
+    const progress = { ...base, activeCharacters: [...base.activeCharacters, fresh] };
+    expect(settlingCharacter(progress)).toBeNull();
+  });
+
   it('genau auf der 75-%-Schwelle haengt nichts (dieselbe Grenze wie isReadyToGrow)', () => {
     const base = readyProgress();
     const first = STARTING_CHARACTERS[0];

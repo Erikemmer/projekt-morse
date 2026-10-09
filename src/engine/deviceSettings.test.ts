@@ -115,6 +115,13 @@ describe('Theme (Ruling Notion-Log #111)', () => {
     expect(parseDeviceSettings({ ...base, theme: 'neon' }).theme).toBe('system');
   });
 
+  it('nimmt keine Prototyp-Schluessel als Theme an', () => {
+    for (const key of ['toString', 'constructor', 'hasOwnProperty', '__proto__']) {
+      expect(parseDeviceSettings({ theme: key }).theme).toBe('system');
+    }
+    expect(parseDeviceSettings(JSON.parse('{"theme":"__proto__"}')).theme).toBe('system');
+  });
+
   it('liest ein gespeichertes Theme verlustfrei zurück', () => {
     for (const theme of THEMES) {
       const settings = withTheme(defaultDeviceSettings(), theme);

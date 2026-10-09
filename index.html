@@ -50,7 +50,7 @@
           // Seit Runde P27 nur Paper und Night; die zurueckgenommenen Themes
           // landen auf ihrer Helligkeits-Seite (wie engine/deviceSettings.ts).
           var retired = { frost: 'paper', olive: 'paper', phosphor: 'night', ink: 'night' };
-          if (retired[theme]) theme = retired[theme];
+          if (Object.prototype.hasOwnProperty.call(retired, theme)) theme = retired[theme];
           if (theme === 'paper' || theme === 'night') {
             document.documentElement.setAttribute('data-theme', theme);
           }

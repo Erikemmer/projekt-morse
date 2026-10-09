@@ -380,8 +380,27 @@ export function App() {
     [timing, learnToneHz, ensurePlayer],
   );
 
+  /*
+   * Ob waehrend des laufenden Prompts die Uebung verdeckt war -- Menue offen,
+   * andere Ansicht, Klang-Auswahl (Runde P29, Review). Seit der Menue-Knopf
+   * auch unter 900 px in der Sitzung steht, kann das mitten in einer Antwort
+   * passieren; die Audio-Uhr laeuft weiter, und die Zeit im Menue landete
+   * sonst als Reaktionszeit in der Statistik. Dann wird wie beim Tastenfeld
+   * (Ruling #103c) ohne Reaktionszeit verbucht; richtig/falsch zaehlt voll.
+   */
+  const promptInterruptedRef = useRef(false);
+  useEffect(() => {
+    if (session.phase === 'ready') promptInterruptedRef.current = false;
+  }, [session.phase, session.round]);
+  useEffect(() => {
+    const prompting = session.phase === 'listening' || session.phase === 'answering';
+    if (prompting && (menuOpen || view !== 'practice' || reviewing)) {
+      promptInterruptedRef.current = true;
+    }
+  }, [session.phase, menuOpen, view, reviewing]);
+
   const answer = useCallback((choice: string) => {
-    const at = playerRef.current?.currentTime ?? 0;
+    const at = promptInterruptedRef.current ? null : (playerRef.current?.currentTime ?? 0);
     setSession((current) => submitAnswer(current, choice, at));
   }, []);
 

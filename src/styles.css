@@ -1062,7 +1062,7 @@ button:disabled {
 }
 
 .skip:hover,
-.quiet-action:hover,
+.quiet-action:hover:not(:disabled),
 .quiet-link:hover {
   color: var(--amber-deep);
 }

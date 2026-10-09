@@ -83,7 +83,11 @@ export function isReadyToGrow(progress: Progress): boolean {
  *
  * Gemeint ist Bedingung (b)/(c): unter den aktiven Zeichen das mit der
  * niedrigsten Quote, sofern es unter GROWTH_MIN_CHARACTER_ACCURACY liegt;
- * sonst eines mit zu wenig Versuchen; sonst null. Bei Gleichstand gewinnt
+ * sonst eines mit zu wenig (aber mindestens einem) Versuch; sonst null.
+ *
+ * Der Fall 'ready' in `growthDirection` ist nach einer normalen Sitzung
+ * selten: `maybeGrow` laeuft nach jeder Antwort, die Regel greift also meist
+ * schon in der Sitzung. Er bleibt fuer den Stand nach einem Sync. Bei Gleichstand gewinnt
  * das zuerst eingefuehrte. Rein, ohne Seiteneffekt.
  */
 export function settlingCharacter(progress: Progress): string | null {
@@ -92,6 +96,10 @@ export function settlingCharacter(progress: Progress): string | null {
   for (const char of progress.activeCharacters) {
     const record = recordFor(progress, char);
     const rate = hitRate(record);
+    // Ein Zeichen ohne einen einzigen Versuch "setzt" sich nicht, es ist
+    // gerade erst dazugekommen -- es zu nennen, behauptete etwas, das nie
+    // abgefragt wurde (Review Runde P29: Wachstum in der letzten Runde).
+    if (record.attempts === 0) continue;
     if (record.attempts < GROWTH_MIN_ATTEMPTS || rate === null) {
       untried ??= char;
       continue;

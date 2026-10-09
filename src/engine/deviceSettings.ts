@@ -116,7 +116,10 @@ export function parseDeviceSettings(raw: unknown): DeviceSettings {
     volume: isNumber(entry.volume) ? snap(entry.volume, VOLUME_RANGE, VOLUME_STEP) : base.volume,
     theme: isTheme(entry.theme)
       ? entry.theme
-      : typeof entry.theme === 'string' && entry.theme in RETIRED_THEMES
+      : // Nur eigene Schluessel: `in` liefe die Prototypkette entlang, und
+        // ein gespeichertes 'toString' oder '__proto__' kaeme als Funktion
+        // bzw. Objekt zurueck (Review Runde P29).
+        typeof entry.theme === 'string' && Object.prototype.hasOwnProperty.call(RETIRED_THEMES, entry.theme)
         ? RETIRED_THEMES[entry.theme]
         : base.theme,
   };
