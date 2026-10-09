@@ -1,3 +1,23 @@
+# Übergabe — Stand nach Runde P30 (FINDINGS #20, Weg 1)
+
+**Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. Kein PR.
+
+**Umgesetzt (Owner-Entscheidung Weg 1):** Speed-round-Einladung und einmalige
+Variabilitäts-Zeile stehen auf dem Start-Screen links im Fuß statt unter dem Gitter
+(`App.tsx` `Footer` → `note`, `.footer-note`). Vorrang: Variabilität, dann Einladung,
+dann Streak. Eigenes Element, weil `.footer-stats` ab 1280 px ausgeblendet ist; der Fuß
+behält dort `min-height` einer Zeile.
+
+**Gemessen (ready → listening, Play-Kreis oben):** Einladung 0 px Sprung in 390 × 844
+und 1440 × 900 (vorher 45/44 px); Variabilitäts-Zeile 0 px bei 1440 × 900, **11 px bei
+390 × 844** (zweizeilig, einmalig, nicht gekürzt). Training ohne Scroll (390 × 844,
+1280 × 720; 6/15/36). Knopf startet die Speed round, Tap 111 × 44.
+
+**Gesamtlauf:** `npm test` 509, Build grün, `verify:amber` 41, `verify:keyboard` 25,
+Kontrast 8/8. Bundle JS −61 B, CSS +68 B.
+
+---
+
 # Übergabe — Stand nach Runde P29 (Review der Runden P24–P28; FINDINGS #19)
 
 **Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. Kein PR.

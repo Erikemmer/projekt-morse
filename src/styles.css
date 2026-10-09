@@ -375,6 +375,25 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/*
+ * Variabilitaets-Zeile oder Drill-Einladung auf dem Start-Screen (Runde P30,
+ * FINDINGS #20): links im Fuss wie die Streak-Zeile, aber auch ab 1280 px
+ * sichtbar (`.footer-stats` ist dort ausgeblendet). Der Knopf behaelt seine
+ * 44-px-Tap-Flaeche; die negativen Raender halten die Zeile so hoch wie den
+ * Text, damit der Fuss beim ersten Play nicht schrumpft.
+ */
+.footer-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
+.footer-note .quiet-action {
+  margin-block: -12px;
+  vertical-align: baseline;
+}
+
 .dots {
   display: flex;
   align-items: center;
@@ -1087,13 +1106,6 @@ button:disabled {
  * erreichbar sein und sonst nichts (CLAUDE.md 2.8). Der Knopf steht auf einer
  * eigenen Zeile, damit er die Zielgroesse aus WCAG 2.5.5 wirklich hat.
  */
-.drill-invite {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 /*
  * Der eine gefuellte Amber-Primary einer View (1.1 §7). Er steht dort, wo es
  * genau einen naechsten Schritt gibt: "Next", "Begin", "Try it", "Done",
@@ -1748,7 +1760,6 @@ a.menu-item {
  * sagen, *was* dasteht. Zusammengelegt sind sie erst, seit es die zweite Zeile
  * wirklich gibt (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
  */
-.variability-note,
 .streak-note {
   margin: 16px 0 0;
   font-size: 13px;
@@ -2281,14 +2292,22 @@ a.menu-item {
    * Abschluss-Screen) und `.footer-stats` (Fusszeile) in der Mittelspalte.
    * Ausgeblendet werden nur die beiden direkten Duplikate; die
    * Sitzungspunkte (`.dots`, ebenfalls in `.footer`) bleiben stehen, und die
-   * Drill-Einladung -- die zufaellig dieselbe `.streak-note`-Klasse nutzt,
-   * aber einen anderen Satz zeigt -- bleibt ueber die Kindselektoren
-   * unberuehrt (`.shell > .streak-note` trifft sie nicht, sie steckt in
-   * `.drill-invite`).
+   * Drill-Einladung steht seit Runde P30 als `.footer-note` im Fuss und ist
+   * von dieser Regel nicht betroffen (FINDINGS #20).
    */
   .shell > .streak-note,
   .shell > .stage > .streak-note,
   .footer-stats {
     display: none;
+  }
+
+  /*
+   * Der Fuss behaelt die Hoehe einer Zeile, auch wenn `.footer-stats` hier
+   * ausgeblendet ist: sonst schrumpfte er beim ersten Play von der
+   * Einladung (`.footer-note`) auf die Hoehe der Punkte, und die zentrierte
+   * Buehne rueckte um 7 px (Runde P30, FINDINGS #20).
+   */
+  .footer {
+    min-height: calc(13px * 1.65);
   }
 }

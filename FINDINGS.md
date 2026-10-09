@@ -644,7 +644,14 @@ Volume, „Reset to 10 wpm“ in der Kopfzeile von Effective speed (Tap-Fläche 
 
 ## 20. Einladung zur Speed round und Variabilitäts-Zeile lassen den Play-Kreis springen
 
-**Status: offen — Entscheidung nötig** (09.10.2026, Runde P29; Rest von #18).
+**Status: behoben** (09.10.2026, Runde P30, Owner-Entscheidung Weg 1). Einladung und
+Variabilitäts-Zeile stehen auf dem Start-Screen links im Fuß (`.footer-note`, auch ab
+1280 px sichtbar); der Fuß behält ab 1280 px die Höhe einer Zeile. Nachgemessen
+(ready → listening): Einladung 283 → 283 (390 × 844) und 297 → 297 (1440 × 900);
+Variabilitäts-Zeile 259 → 259 (1440 × 900), **bei 390 × 844 bleiben 11 px** (sie bricht
+dort zweizeilig um; Wortlaut aus einem Ruling, nicht gekürzt; erscheint einmal im
+Leben eines Standes). „Try a speed round?“ startet die Speed round, Tap-Fläche 111 × 44.
+Davor: offen — Entscheidung nötig (09.10.2026, Runde P29; Rest von #18).
 
 Gemessen (Play-Kreis oben, ready → listening):
 

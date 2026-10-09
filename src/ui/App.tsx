@@ -1520,29 +1520,20 @@ export function App() {
             dem ersten Play weg, die zentrierte Buehne wuchs, und der Play-Kreis
             rueckte um 19 px. In der Fusszeile tauscht sie nur den Text.
           */}
-          {onStartScreen && session.showVariabilityNotice && (
-            <p className="variability-note">
-              From here on, the pitch varies between sessions — real signals do.
-            </p>
-          )}
-
           {/*
-            Die Einladung zum Drill -- eine Feststellung und eine Frage, kein
-            Ausrufezeichen und kein Amber (CLAUDE.md 2.8). Sie erscheint schon
-            ab *einem* langsamen Zeichen (Ruling #69): laenger zu warten hiesse,
-            eine Hilfe vorzuenthalten, die schon greifen koennte. Dass ein
-            Ein-Zeichen-Drill nicht zur Tipp-Uebung wird, regelt DRILL_MIN_POOL
-            in der Engine, nicht diese Stelle.
-          */}
-          {invitation.length >= DRILL_INVITATION_MIN_SLOW && (
-            <div className="drill-invite">
-              <p className="streak-note">{slowSentence(invitation)}</p>
-              <button type="button" className="quiet-action" onClick={startDrill}>
-                Try a speed round?
-              </button>
-            </div>
-          )}
+            Variabilitaets-Zeile und Drill-Einladung stehen seit Runde P30 nicht
+            mehr in der Buehne, sondern in der Fusszeile (FINDINGS #20, Weg 1,
+            Owner-Entscheidung): als eigene Zeilen unter dem Gitter fielen sie
+            mit dem ersten Play weg, die zentrierte Buehne wuchs, und der
+            Play-Kreis sprang um 18-45 px. Vorrang wie bisher: die einmalige
+            Variabilitaets-Zeile, dann die Einladung, dann der Streak (der in
+            dieser Sitzung ohnehin auf der Summary steht).
 
+            Die Einladung: eine Feststellung und eine Frage, kein Ausrufezeichen
+            und kein Amber (CLAUDE.md 2.8). Sie erscheint schon ab *einem*
+            langsamen Zeichen (Ruling #69). Dass ein Ein-Zeichen-Drill nicht zur
+            Tipp-Uebung wird, regelt DRILL_MIN_POOL in der Engine.
+          */}
           {/*
             Die Fusszeile traegt seit Ruling #83 auch das Tempo -- und nur,
             solange die Tempo-Progression ueberhaupt laeuft (alle Zeichen
@@ -1550,7 +1541,19 @@ export function App() {
             Zeile ohne Aussage (1.1 §7, CLAUDE.md 2.8).
           */}
           <Footer
-            lead={onStartScreen && !session.showVariabilityNotice ? streakLine(streak) : null}
+            note={
+              !onStartScreen ? null : session.showVariabilityNotice ? (
+                'From here on, the pitch varies between sessions — real signals do.'
+              ) : invitation.length >= DRILL_INVITATION_MIN_SLOW ? (
+                <>
+                  {`${slowSentence(invitation)} `}
+                  <button type="button" className="quiet-action" onClick={startDrill}>
+                    Try a speed round?
+                  </button>
+                </>
+              ) : null
+            }
+            lead={onStartScreen ? streakLine(streak) : null}
             day={dayFor(session.progress, session.today)}
             done={session.attempts.length}
             wpm={speedProgressionActive(session.progress) ? session.progress.effectiveWpm : null}
@@ -1700,6 +1703,7 @@ function PlayCircle({
  * (CLAUDE.md 2.6).
  */
 function Footer({
+  note,
   lead,
   day,
   done,
@@ -1711,6 +1715,13 @@ function Footer({
    * gleiche Zeile, gleiche Hoehe -- die Buehne darueber bleibt stehen.
    */
   lead: string | null;
+  /**
+   * Variabilitaets-Zeile oder Drill-Einladung auf dem Start-Screen (FINDINGS
+   * #20) -- ersetzt die Zeile links, in einem eigenen Element: `.footer-stats`
+   * ist ab 1280 px ausgeblendet (die Randspalte traegt die Zahlen), die
+   * Einladung muss dort aber stehen bleiben.
+   */
+  note: React.ReactNode;
   day: DayStats;
   done: number;
   /** Das Tempo-Niveau -- oder null, solange die Progression nicht laeuft. */
@@ -1720,15 +1731,19 @@ function Footer({
 }) {
   return (
     <footer className="footer">
-      <p className="footer-stats">
-        {lead ??
-          dayQuotaLine(day) +
-            (speedUp !== null
-              ? ` · ${speedUp.from} → ${speedUp.to} wpm`
-              : wpm !== null
-                ? ` · ${wpm} wpm`
-                : '')}
-      </p>
+      {note !== null ? (
+        <p className="footer-note">{note}</p>
+      ) : (
+        <p className="footer-stats">
+          {lead ??
+            dayQuotaLine(day) +
+              (speedUp !== null
+                ? ` · ${speedUp.from} → ${speedUp.to} wpm`
+                : wpm !== null
+                  ? ` · ${wpm} wpm`
+                  : '')}
+        </p>
+      )}
       <GroupDots done={done} />
     </footer>
   );
