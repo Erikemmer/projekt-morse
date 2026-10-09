@@ -1557,13 +1557,27 @@ a.menu-item {
  */
 .settings-screen .setting + .setting,
 .settings-screen .account-note + .setting {
-  margin-top: var(--space-1);
-  padding-top: var(--space-2);
+  /* 8 px ueber der Linie statt 8 + 16 (Runde P29, FINDINGS #19): der Screen
+   * scrollte bei 390 x 844, die Abstaende aus P28 kosteten allein 96 px. */
+  padding-top: var(--space-1);
   border-top: 1px solid var(--edge-soft);
 }
 
-.settings-screen .setting .quiet-action {
+.settings-screen .setting > .quiet-action {
   align-self: flex-start;
+}
+
+/* Probeton und Wert rechts in der Kopfzeile der Lautstaerke (Runde P29). Die
+ * negativen Raender halten die Zeile so hoch wie den Text; die Tap-Flaeche
+ * bleibt 44 px (--tap). */
+.setting-head-end {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.setting-head-end .quiet-action {
+  margin: -12px 0;
 }
 
 /*

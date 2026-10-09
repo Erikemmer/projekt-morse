@@ -129,7 +129,20 @@ export function Settings({
       <div className="setting">
         <div className="setting-head">
           <label htmlFor="setting-volume">Volume</label>
-          <span className="setting-value">{volumePercent}%</span>
+          <span className="setting-head-end">
+            {/*
+              Der Probeton ist eine Nebenhandlung (1.1 §7: der Primary ist
+              "usually Start or Check") -- seit Runde P27 ein leiser Textknopf
+              statt der gefuellten Amber-Flaeche (Review §B2, Owner-Delegation),
+              seit Runde P29 in der Kopfzeile der Lautstaerke: auf einer eigenen
+              Zeile kostete er 44 px, und der Screen scrollte bei 390 x 844
+              (FINDINGS #19). Die View traegt kein Amber.
+            */}
+            <button type="button" className="quiet-action" disabled={playing} onClick={onPreview}>
+              Play test tone
+            </button>
+            <span className="setting-value">{volumePercent}%</span>
+          </span>
         </div>
         <input
           id="setting-volume"
@@ -142,15 +155,6 @@ export function Settings({
           aria-valuetext={`${volumePercent} percent`}
           onChange={(event) => onVolume(Number(event.target.value))}
         />
-        {/*
-          Der Probeton ist eine Nebenhandlung (1.1 §7: der Primary ist "usually
-          Start or Check") -- seit Runde P27 ein leiser Textknopf unter den
-          beiden Reglern statt der gefuellten Amber-Flaeche in voller Breite
-          (Review §B2, Owner-Delegation). Die View traegt damit kein Amber.
-        */}
-        <button type="button" className="quiet-action" disabled={playing} onClick={onPreview}>
-          Play test tone
-        </button>
       </div>
 
       {/*
@@ -190,7 +194,15 @@ export function Settings({
       <div className="setting">
         <div className="setting-head">
           <span>Effective speed</span>
-          <span className="setting-value">{effectiveWpm} wpm</span>
+          <span className="setting-head-end">
+            {/* In der Kopfzeile wie der Probeton (Runde P29, FINDINGS #19). */}
+            {raised && (
+              <button type="button" className="quiet-action" onClick={onResetSpeed}>
+                {`Reset to ${STARTING_EFFECTIVE_WPM} wpm`}
+              </button>
+            )}
+            <span className="setting-value">{effectiveWpm} wpm</span>
+          </span>
         </div>
         {/*
           Die zwei ehrlichen Sätze zu dieser Zahl (CLAUDE.md 2.6): das
@@ -201,11 +213,6 @@ export function Settings({
           Characters always play at {CHARACTER_WPM} wpm — the effective speed only stretches the
           gaps between them, and a single session varies a little around this value.
         </p>
-        {raised && (
-          <button type="button" className="quiet-action" onClick={onResetSpeed}>
-            {`Reset to ${STARTING_EFFECTIVE_WPM} wpm`}
-          </button>
-        )}
       </div>
 
       {/*

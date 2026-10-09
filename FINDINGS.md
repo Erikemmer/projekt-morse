@@ -628,3 +628,16 @@ auf genau 844 px; (b) Bühneninhalt oben statt zentriert ausrichten; (c) Streak-
 unter das Gitter in den Fuß legen, wo sie die Bühne nicht trägt. Preis S, je nach Weg
 Fable-Ruling oder Owner-Delegation.
 
+
+## 19. Settings scrollt bei 390 × 844 und 1280 × 720
+
+**Status: behoben** (09.10.2026, Runde P29). Gemessen vor dem Fix: 950 px bei
+390 × 844, 813 px bei 1280 × 720 (6 Zeichen, Tempo nicht erhöht); vor Runde P28 schon
+960 px — der Kommentar in `styles.css` („genau 844 px“) war älter als der
+Characters-Abschnitt. Größter Posten aus P28: die Abstände über den Haarlinien
+(4 × 24 px) und der Probeton als eigene 44-px-Zeile.
+
+**Fix:** Abstand über den Linien 8 statt 24 px; „Play test tone“ in der Kopfzeile von
+Volume, „Reset to 10 wpm“ in der Kopfzeile von Effective speed (Tap-Fläche bleibt
+80 × 44, negative Ränder halten die Zeile flach). **Nachgemessen:** 844/844, 720/720,
+900/900 — je mit 6 Zeichen/10 wpm und mit 36 Zeichen/16 wpm (Reset sichtbar).
