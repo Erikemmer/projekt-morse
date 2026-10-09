@@ -210,6 +210,27 @@ address {
   text-decoration: underline;
 }
 
+/*
+ * Der Hub (Runde P34, Review §B4, Owner-Delegation): er war die amberreichste
+ * Seite des Produkts -- sechs Amber-Links plus der gefuellte CTA in einem
+ * Viewport (CONCEPT-LEARN §5: "kein Amber zweimal pro Viewport-Hoehe
+ * anstreben"). Seine Listen-Links stehen deshalb in Ink mit einer
+ * Haarlinien-Unterstreichung, damit sie ohne Farbe als Links lesbar bleiben
+ * (CLAUDE.md §6). Nur im Hub und nur in Listen; Artikel-Links bleiben wie
+ * oben, der CTA bleibt das eine Amber.
+ */
+.article[data-page='hub'] li a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--edge);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+.article[data-page='hub'] li a:hover {
+  text-decoration-color: currentColor;
+}
+
 .article ul {
   margin: 0 0 24px;
   padding-left: 24px;

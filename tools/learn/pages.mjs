@@ -522,7 +522,7 @@ ${renderHead({ meta, title, canonical, pairUrl, enUrl })}
         <a class="masthead-app" href="/">${chrome.app}</a>
       </header>
       <main>
-        <article class="article">
+        <article class="article"${meta.slug === 'index' && meta.section !== 'legal' ? ' data-page="hub"' : ''}>
 ${indent(html.trimEnd(), 10)}${ctaHtml}
         </article>
       </main>
