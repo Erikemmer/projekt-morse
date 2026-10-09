@@ -48,6 +48,7 @@ import type { VariabilityStage } from '../engine/variability';
 import { withTheme, withToneHz, withVolume, type DeviceSettings } from '../engine/deviceSettings';
 import {
   DRILL_INVITATION_MIN_SLOW,
+  DRILL_SLOW_MEDIAN_SECONDS,
   DRILL_ROUNDS,
   attemptMedianOver,
   drillPool,
@@ -1397,6 +1398,7 @@ export function App() {
           settings={device}
           playing={tonePlaying}
           effectiveWpm={session.progress.effectiveWpm}
+          speedRising={speedProgressionActive(session.progress)}
           onToneHz={(hz) => applySettings(withToneHz(device, hz))}
           onVolume={(volume) => applySettings(withVolume(device, volume))}
           onTheme={(theme) => applySettings(withTheme(device, theme))}
@@ -1609,10 +1611,15 @@ function slowSentence(characters: readonly string[]): string {
   const rest = characters.length - named.length;
   if (rest > 0) named.push(`${rest} more`);
 
-  if (named.length === 1) return `${named[0]} is still slow to land.`;
+  // Mit Mass (Review §D2.7, Owner-Delegation Runde P31): die Schwelle steht
+  // als Zahl da. "or more", weil langsam heisst: Median ab der Schwelle.
+  // Kurz gehalten -- der Satz steht samt Knopf in einer Fusszeile, die
+  // einzeilig bleiben muss (FINDINGS #20).
+  const measure = `${DRILL_SLOW_MEDIAN_SECONDS} s or more`;
+  if (named.length === 1) return `${named[0]} lands in ${measure}.`;
 
   const list = `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
-  return `${list} are still slow to land.`;
+  return `${list} land in ${measure}.`;
 }
 
 /**

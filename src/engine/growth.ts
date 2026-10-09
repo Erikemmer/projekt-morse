@@ -20,7 +20,7 @@
  */
 
 import { CHARACTER_ORDER } from './settings';
-import { RECENT_ANSWER_WINDOW, hitRate, recordFor, type Progress } from './stats';
+import { RECENT_ANSWER_WINDOW, hitRate, recordFor, type CharacterRecord, type Progress } from './stats';
 
 /**
  * Mindest-Trefferquote im rollierenden Antwortfenster (a).
@@ -109,6 +109,18 @@ export function settlingCharacter(progress: Progress): string | null {
     }
   }
   return lowest?.char ?? untried;
+}
+
+/**
+ * Ob ein aktives Zeichen das Wachstum gerade aufhaelt -- Bedingung (b)/(c)
+ * fuer ein einzelnes Zeichen, fuer die Markierung in der Progress-Tabelle
+ * (Review §D2.2, Owner-Delegation Runde P31). Ein Zeichen ohne Versuch zaehlt
+ * nicht: es ist gerade erst dazugekommen (wie in `settlingCharacter`).
+ */
+export function isSettling(record: CharacterRecord): boolean {
+  if (record.attempts === 0) return false;
+  const rate = hitRate(record);
+  return record.attempts < GROWTH_MIN_ATTEMPTS || rate === null || rate < GROWTH_MIN_CHARACTER_ACCURACY;
 }
 
 /** Der eine Satz Richtung auf der Summary -- als Datum, der Wortlaut lebt in der UI. */

@@ -437,6 +437,19 @@ function Echo({
           die physische Tastatur beantwortet den Echo-Check ebenfalls
           (echoKeyAction). FINDINGS #14, Owner-Delegation P23. */}
       {keypad && <p className="keypad-hint">or just type — the keyboard answers too</p>}
+      {/*
+        Offenlegen, dass der Check nicht zaehlt (Review §D2.4, Owner-Delegation
+        P31; engine/learn.ts: kein recordAttempt). Nur im ersten Abruf (bis zu
+        seiner Aufloesung, sonst rutschte die Buehne beim Antworten) und nur
+        im Dreier-Gitter -- dort stehen die neuen Nutzer, und das Tastenfeld
+        laesst bei 390 x 844 keinen Platz.
+      */}
+      {!keypad &&
+        (state.echoDone === 0 || (state.echoDone === 1 && state.phase === 'echo-feedback')) && (
+        <p className="setting-note echo-note">
+          These first checks don't count — they're for hearing, not scoring.
+        </p>
+      )}
 
       {attempt !== null && (
         <div className="actions">
@@ -519,7 +532,10 @@ export function ReviewPicker({
         <h2 id="review-heading" className="screen-heading" ref={headingRef} tabIndex={-1}>
           Learn the sounds
         </h2>
-        <p className="learn-copy">Pick a character to hear it again.</p>
+        {/* Die Reihenfolge als Landkarte (Review §D2.6, Owner-Delegation P31). */}
+        <p className="learn-copy">
+          Pick a character to hear it again. They stand in the order they arrive.
+        </p>
       </div>
 
       <div className="keypad">

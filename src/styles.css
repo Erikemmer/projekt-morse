@@ -1798,6 +1798,22 @@ a.menu-item {
   border: 0;
 }
 
+/* "settling" in der Progress-Tabelle (Runde P31): ein Wort neben dem
+ * Zeichen, Sans, klein, gray -- nie Farbe allein (CLAUDE.md §6). */
+.row-note {
+  margin-left: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--gray);
+}
+
+/* Der Hinweis im ersten Echo-Abruf (Runde P31), mittig wie die Frage. */
+.echo-note {
+  margin-top: var(--space-2);
+  text-align: center;
+}
+
 /*
  * Das Trennornament in der App (ui/Ornament.tsx, Runde P27): dieselbe
  * Geometrie wie auf den Learn-Seiten (tools/learn/learn.css, u = 6 px), nur

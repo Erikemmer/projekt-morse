@@ -21,6 +21,7 @@ import {
   GROWTH_MIN_ATTEMPTS,
   GROWTH_MIN_CHARACTER_ACCURACY,
   GROWTH_WINDOW_ACCURACY,
+  isSettling,
   nextCandidate,
 } from '../engine/growth';
 import { CHARACTER_ORDER } from '../engine/settings';
@@ -138,6 +139,12 @@ export function ProgressScreen({
                   <tr key={char}>
                     <th scope="row" className="char-cell">
                       {char}
+                      {/*
+                        Ein Wort, nie Farbe allein (CLAUDE.md §6; Review §D2.2,
+                        Owner-Delegation P31): dieses Zeichen haelt das
+                        Wachstum gerade auf. Die Zahl daneben bleibt.
+                      */}
+                      {isSettling(record) && <span className="row-note">settling</span>}
                     </th>
                     <td>{record.attempts}</td>
                     <td>{accuracy === null ? '—' : `${Math.round(accuracy * 100)}%`}</td>

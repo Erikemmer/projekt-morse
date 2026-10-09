@@ -153,6 +153,11 @@ dem Quelltext. Accessibility-Tree: Zelle `A ·−` → `A dit dah`. **Offen:** H
 ein Screenreader daraus macht) und die Fließtext-Zeilen mit Subpixel-
 Abweichung im Pixelvergleich (Tabellen: 0) — Einzelheiten `docs/PLAN-FINDINGS.md`, B2.
 
+**Entschieden (09.10.2026, Runde P31, Owner): die Fließtext-Stellen bleiben markiert**
+(Option 1 der Vorlage unten). Screenreader lesen „dit dah“; der Preis — je eine
+Textzeile mit Subpixel-Abweichung auf 4 von 8 Bildern, Seitenhöhe gleich — ist
+angenommen. Kein Code geändert.
+
 **Entscheidungsvorlage B2-Pixeldiff (Runde P22, gemessen, nichts entschieden).**
 Frage: die Fließtext-Stellen (3 je Sprache: R `(·−·)` und SOS auf der Alphabet-Seite,
 SOS auf der Geschichts-Seite) **so lassen** oder **nicht markieren**? Messung

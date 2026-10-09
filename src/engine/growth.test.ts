@@ -19,6 +19,7 @@ import {
   maybeGrow,
   nextCandidate,
   growthDirection,
+  isSettling,
   settlingCharacter,
   unlockNext,
 } from './growth';
@@ -194,6 +195,16 @@ describe('Woran das Wachstum haengt (settlingCharacter)', () => {
     const progress = { ...base, characters: { ...base.characters, [first]: record(8, 6) } };
     expect(6 / 8).toBe(GROWTH_MIN_CHARACTER_ACCURACY);
     expect(settlingCharacter(progress)).toBeNull();
+  });
+});
+
+describe('isSettling (Progress-Markierung, Runde P31)', () => {
+  it('markiert unter 75 % oder unter 5 Versuchen, nie ohne Versuch', () => {
+    expect(isSettling(record(10, 7))).toBe(true);
+    expect(isSettling(record(GROWTH_MIN_ATTEMPTS - 1, 4))).toBe(true);
+    expect(isSettling(record(8, 6))).toBe(false); // genau 75 %
+    expect(isSettling(record(10, 10))).toBe(false);
+    expect(isSettling({ attempts: 0, hits: 0, recentReactions: [] })).toBe(false);
   });
 });
 

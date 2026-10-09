@@ -61,6 +61,7 @@ export function Settings({
   settings,
   playing,
   effectiveWpm,
+  speedRising,
   onToneHz,
   onVolume,
   onTheme,
@@ -77,6 +78,8 @@ export function Settings({
   playing: boolean;
   /** Das erreichte Tempo-Niveau in WpM (engine/tempo.ts). */
   effectiveWpm: number;
+  /** Ob die Tempo-Progression laeuft (`speedProgressionActive`, engine/tempo.ts). */
+  speedRising: boolean;
   onToneHz: (hz: number) => void;
   onVolume: (volume: number) => void;
   onTheme: (theme: Theme) => void;
@@ -209,9 +212,15 @@ export function Settings({
           Zeichentempo ändert sich nie, und was hier steht, ist das Niveau —
           eine einzelne Sitzung streut ab Variabilitäts-Stufe 2 leicht darum.
         */}
+        {/*
+          Seit Runde P31 (Review §D2.8, Owner-Delegation): solange die
+          Tempo-Progression noch nicht laeuft, sagt der Satz, wann sie beginnt
+          -- sonst steht hier eine Zahl, die sich ohne Erklaerung nie bewegt.
+        */}
         <p className="setting-note">
-          Characters always play at {CHARACTER_WPM} wpm — the effective speed only stretches the
-          gaps between them, and a single session varies a little around this value.
+          {speedRising
+            ? `Characters always play at ${CHARACTER_WPM} wpm — the effective speed only stretches the gaps between them, and a single session varies a little around this value.`
+            : `Characters always play at ${CHARACTER_WPM} wpm — the effective speed only stretches the gaps between them. It starts rising once all ${totalCharacterCount} characters are in.`}
         </p>
       </div>
 
