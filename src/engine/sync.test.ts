@@ -496,3 +496,13 @@ describe('Tempo-Niveau', () => {
     expect(learningRevision({ ...base, effectiveWpm: 19 })).toBe(learningRevision(base));
   });
 });
+
+describe('Vorgezogene Zeichen (addedEarly, Runde P32)', () => {
+  it('nimmt das Maximum -- der Zaehler waechst nur', () => {
+    const merged = mergeProgress(
+      { progress: { ...fullProgress(), addedEarly: 1 }, updatedAt: 900 },
+      { progress: { ...fullProgress(), addedEarly: 2 }, updatedAt: 100 },
+    );
+    expect(merged.addedEarly).toBe(2);
+  });
+});

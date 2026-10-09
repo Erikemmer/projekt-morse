@@ -162,7 +162,9 @@ function SendHeader({ sent }: { sent: number }) {
     <header className="masthead">
       <div className="masthead-row">
         <span>Send</span>
-        <span>{sent} sent today</span>
+        {/* Erst ab 1 (Review §E2, Owner-Delegation Runde P32): eine 0 ist eine
+            Zahl ohne Aussage. Sie zaehlt Aufgaben, nicht Richtigkeit. */}
+        {sent > 0 && <span>{sent} sent today</span>}
       </div>
     </header>
   );

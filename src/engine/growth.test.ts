@@ -296,6 +296,22 @@ describe('Wachstum im Lernloop', () => {
   });
 });
 
+describe('Vorgezogene Zeichen (addedEarly, Review §E2, Runde P32)', () => {
+  it('unlockNext zaehlt hoch, die Wachstumsregel nicht', () => {
+    const early = unlockNext(readyProgress());
+    expect(early.progress.addedEarly).toBe(1);
+    expect(unlockNext(early.progress).progress.addedEarly).toBe(2);
+    expect(maybeGrow(readyProgress()).progress.addedEarly).toBe(0);
+  });
+
+  it('ein Stand ohne das Feld bekommt 0, und es ueberlebt JSON', async () => {
+    const { parseProgress } = await import('./stats');
+    expect(parseProgress({ version: 1, characters: {} }).addedEarly).toBe(0);
+    const early = unlockNext(readyProgress()).progress;
+    expect(parseProgress(JSON.parse(JSON.stringify(early))).addedEarly).toBe(1);
+  });
+});
+
 describe('Persistenz der Wachstumsfelder', () => {
   it('ein Stand von vor der Regel bekommt Defaults, keine Verwerfung', async () => {
     const { parseProgress } = await import('./stats');

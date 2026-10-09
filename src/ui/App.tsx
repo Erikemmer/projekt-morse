@@ -123,7 +123,7 @@ import { Words, useWordKeyboard } from './Words';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { loadDeviceSettings, saveDeviceSettings } from './deviceStorage';
 import { Settings } from './Settings';
-import { dayQuotaLine, streakLine } from './statusLines';
+import { activeLine, dayQuotaLine, streakLine } from './statusLines';
 import { applyTheme, syncThemeColorMeta } from './theme';
 import { todayISO } from './today';
 import { isBrowserChord } from './keyChord';
@@ -1307,7 +1307,7 @@ export function App() {
    */
   const marginDay = dayFor(session.progress, session.today);
   const marginTempoLine =
-    `${session.progress.activeCharacters.length} of ${CHARACTER_ORDER.length} active` +
+    activeLine(session.progress.activeCharacters.length, CHARACTER_ORDER.length, session.progress.addedEarly) +
     (speedProgressionActive(session.progress) ? ` · ${session.progress.effectiveWpm} wpm` : '');
 
   return (
@@ -1405,6 +1405,7 @@ export function App() {
           onPreview={playPreview}
           onResetSpeed={resetSpeed}
           activeCharacterCount={session.progress.activeCharacters.length}
+          addedEarly={session.progress.addedEarly}
           totalCharacterCount={CHARACTER_ORDER.length}
           nextCharacter={nextCandidate(session.progress)}
           onUnlockNext={unlockNextCharacter}

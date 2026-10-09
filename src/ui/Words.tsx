@@ -173,7 +173,9 @@ function WordsHeader({ heard }: { heard: number }) {
     <header className="masthead">
       <div className="masthead-row">
         <span>Words &amp; groups</span>
-        <span>{heard} heard today</span>
+        {/* Erst ab 1 (Review §E2, Owner-Delegation Runde P32): eine 0 ist eine
+            Zahl ohne Aussage. Sie zaehlt Aufgaben, nicht Richtigkeit. */}
+        {heard > 0 && <span>{heard} heard today</span>}
       </div>
     </header>
   );

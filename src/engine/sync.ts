@@ -151,6 +151,8 @@ export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
       remote.progress.introducedCharacters,
     ),
     sessionsStarted: Math.max(local.progress.sessionsStarted, remote.progress.sessionsStarted),
+    // Monoton wachsend wie sessionsStarted: das Maximum (Runde P32).
+    addedEarly: Math.max(local.progress.addedEarly, remote.progress.addedEarly),
     introSeen: local.progress.introSeen || remote.progress.introSeen,
     variabilityNoticeSeen:
       local.progress.variabilityNoticeSeen || remote.progress.variabilityNoticeSeen,

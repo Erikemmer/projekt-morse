@@ -192,6 +192,8 @@ export function unlockNext(progress: Progress): GrowthResult {
       ...progress,
       activeCharacters: [...progress.activeCharacters, introduced],
       answersSinceGrowth: 0,
+      // Vorgezogen, nicht eruebt -- die Anzeige nennt es (Runde P32).
+      addedEarly: progress.addedEarly + 1,
     },
     introduced,
   };

@@ -35,6 +35,7 @@ import {
   type Progress,
 } from '../engine/stats';
 import { Ornament } from './Ornament';
+import { activeLine } from './statusLines';
 
 export function ProgressScreen({
   progress,
@@ -70,7 +71,7 @@ export function ProgressScreen({
         <div className="stat-line">
           <dt>Characters</dt>
           <dd>
-            {progress.activeCharacters.length} of {CHARACTER_ORDER.length} active
+            {activeLine(progress.activeCharacters.length, CHARACTER_ORDER.length, progress.addedEarly)}
           </dd>
         </div>
         <div className="stat-line">
@@ -92,7 +93,15 @@ export function ProgressScreen({
       */}
       {next !== null && (
         <p className="account-note">
-          {`${next} joins when about ${Math.round(GROWTH_WINDOW_ACCURACY * 100)} percent of your last ${RECENT_ANSWER_WINDOW} answers are right and every active character has had at least ${GROWTH_MIN_ATTEMPTS} tries, ${Math.round(GROWTH_MIN_CHARACTER_ACCURACY * 100)} percent of them right — never sooner than ${GROWTH_LOCKOUT_ANSWERS} answers after the last one joined.`}
+          {`${next} joins when about ${Math.round(GROWTH_WINDOW_ACCURACY * 100)} percent of your last ${RECENT_ANSWER_WINDOW} answers are right and every active character has had at least ${GROWTH_MIN_ATTEMPTS} tries, ${Math.round(GROWTH_MIN_CHARACTER_ACCURACY * 100)} percent of them right — never sooner than ${GROWTH_LOCKOUT_ANSWERS} answers after the last one joined.`}{' '}
+          {/*
+            Der Kreis zur Begruendung (Review §E3.6, Owner-Delegation Runde P32):
+            der Learn-Artikel erklaert die 85-%-Regel, auf die sich die Zahl
+            beruft. Ein echter Link aus der App heraus, wie in About.
+          */}
+          <a className="text-link" href="/learn/beyond-the-koch-method/">
+            Why 85 percent
+          </a>
         </p>
       )}
 

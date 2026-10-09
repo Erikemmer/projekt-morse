@@ -25,6 +25,16 @@ export function streakLine(streak: StreakStanding): string {
   return `Day ${streak.days}.`;
 }
 
+/**
+ * "9 of 36 active" -- und, wenn Zeichen ueber "Add now" vorgezogen wurden,
+ * "· 1 added early" dazu (Review §E2, Owner-Delegation Runde P32): sonst
+ * bedeutete die Zahl nicht dasselbe wie bei jemandem, der sie eruebt hat.
+ * Progress, Settings und Randspalte tragen dieselbe Zeile.
+ */
+export function activeLine(active: number, total: number, addedEarly: number): string {
+  return `${active} of ${total} active` + (addedEarly > 0 ? ` · ${addedEarly} added early` : '');
+}
+
 /** Die Tagesquote als Satz -- Fusszeile und Randspalte tragen dieselbe. */
 export function dayQuotaLine(day: DayStats): string {
   const accuracy = dayAccuracy(day);

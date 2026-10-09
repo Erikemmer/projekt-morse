@@ -1798,6 +1798,22 @@ a.menu-item {
   border: 0;
 }
 
+/*
+ * Ein Link mitten im Satz (Runde P32, Progress -> Learn-Artikel): Ink und
+ * unterstrichen, damit er sich nicht nur ueber Farbe vom grauen Text abhebt
+ * (CLAUDE.md §6); Hover wie die leisen Links in amber-deep.
+ */
+.text-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.text-link:hover {
+  color: var(--amber-deep);
+}
+
 /* "settling" in der Progress-Tabelle (Runde P31): ein Wort neben dem
  * Zeichen, Sans, klein, gray -- nie Farbe allein (CLAUDE.md §6). */
 .row-note {

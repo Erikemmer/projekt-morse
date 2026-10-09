@@ -48,6 +48,7 @@ import {
 } from '../engine/settings';
 import { THEMES, type DeviceSettings, type Theme } from '../engine/deviceSettings';
 import { buildVersion } from './build';
+import { activeLine } from './statusLines';
 import { Mark } from './Mark';
 
 /** Anzeigenamen -- reine Beschriftung, keine Engine-Entscheidung. */
@@ -68,6 +69,7 @@ export function Settings({
   onPreview,
   onResetSpeed,
   activeCharacterCount,
+  addedEarly,
   totalCharacterCount,
   nextCharacter,
   onUnlockNext,
@@ -87,6 +89,8 @@ export function Settings({
   onResetSpeed: () => void;
   /** Wie viele Zeichen aktiv sind, von wie vielen -- und welches als naechstes kaeme (null: Satz voll). */
   activeCharacterCount: number;
+  /** Wie viele davon vorgezogen wurden (`progress.addedEarly`). */
+  addedEarly: number;
   totalCharacterCount: number;
   nextCharacter: string | null;
   /** Schaltet das naechste Zeichen der Reihe frei (engine/growth.ts, unlockNext). */
@@ -236,7 +240,7 @@ export function Settings({
         <div className="setting-head">
           <span>Characters</span>
           <span className="setting-value">
-            {activeCharacterCount} of {totalCharacterCount} active
+            {activeLine(activeCharacterCount, totalCharacterCount, addedEarly)}
           </span>
         </div>
         {/* Ein Satz, nicht zwei: der Screen ist beim Platz knapp (T1). */}
