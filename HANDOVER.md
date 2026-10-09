@@ -22,6 +22,13 @@ einem Sync. Die Notiz an „Guides“ bricht in der Schiene um; Vorlesename korr
 Haarlinien 8 statt 24 px, Probeton und Tempo-Reset in die Kopfzeilen. Nachgemessen
 844/720/900, auch mit sichtbarem Reset; Tap-Flächen 80 × 44.
 
+**Nachtrag P29 (zweiter Commit):** `verify:amber` hat einen Fall „Summary mit Ornament
+und Sätzen“ (41 Ansichten; spielt eine ganze Sitzung, Streak auf sechs Tagen bis
+gestern). Rot-Fall belegt: Ornament in Amber → Summary, Progress, About rot, Exit 1.
+Gefunden dabei: mit allen drei Sätzen scrollte die Summary bei 390 × 844 um 5 px —
+`.stage > .ornament { margin: 0 }`, danach 844/720/900. Rest von #18 gemessen →
+FINDINGS #20 (Speed-round-Einladung 44–45 px Sprung, häufig; Entscheidung offen).
+
 **Gesamtlauf:** `npm test` 509, Build grün, `verify:amber` 40, `verify:keyboard` 25,
 Kontrast 8/8, Training ohne Scroll (390 × 844, 1280 × 720; 6/15/36). Bundle gegen P28
 (`ed16fdd`): JS +461 B, CSS +107 B.

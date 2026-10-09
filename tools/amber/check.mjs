@@ -103,6 +103,17 @@ const ALL_CHARACTERS = 'KMRSUAPTLOWINJEF0YVG5Q9ZH38B427C1D6X'; // alle 36
  * vorfindet. Ein gemeinsamer Baustein würde denselben Fehler auf beiden Seiten
  * machen.
  */
+/**
+ * Sechs geuebte Tage bis gestern (lokale Zeit wie im Browser): der heutige
+ * Abschluss macht den siebten und fuellt den Freeze (engine/streak.ts).
+ */
+function sixDayStreak() {
+  const yesterday = new Date(Date.now() - 86_400_000);
+  const pad = (n) => String(n).padStart(2, '0');
+  const day = `${yesterday.getFullYear()}-${pad(yesterday.getMonth() + 1)}-${pad(yesterday.getDate())}`;
+  return { lastPracticedDay: day, days: 6, freezeReady: false, daysTowardFreeze: 6, freezeUsedDay: '' };
+}
+
 function progress({ characters = LETTERS, introduced, slow = [], sessions = 3, effectiveWpm } = {}) {
   const active = [...characters];
   // `introduced` (B3): weniger eingeführt als aktiv -- das letzte ist fällig,
@@ -258,6 +269,28 @@ const VIEWS = [
     seed: progress(),
     async reach(page) {
       await answerPractice(page, { correct: false });
+    },
+  },
+  {
+    // Runde P29: die Summary traegt seit P25-P28 Ornament, Verwechslungs-,
+    // Richtungs- und (einmal) Freeze-Satz neben dem einen Amber "Practise
+    // again". Gespielt wird eine ganze Sitzung, immer mit der ersten Taste --
+    // das erzeugt Verwechslungen; der Streak steht auf sechs Tagen bis
+    // gestern, der heutige Abschluss fuellt den Freeze und zeigt den Satz.
+    name: 'Summary mit Ornament und Saetzen (P29)',
+    seed: { ...progress(), streak: sixDayStreak() },
+    async reach(page) {
+      for (let round = 0; round < 20; round += 1) {
+        await page.getByRole('button', { name: /^Play the character/ }).click();
+        await answering(page);
+        await page.locator('.answers .answer:not([disabled])').first().click();
+        await page.waitForSelector('.verdict');
+        await page.keyboard.press('Enter');
+        if ((await page.locator('#summary-heading').count()) > 0) break;
+        await page.waitForSelector('.play:not([data-sounding="true"])');
+      }
+      await page.waitForSelector('#summary-heading', { timeout: 10000 });
+      await page.waitForSelector('.ornament');
     },
   },
   {

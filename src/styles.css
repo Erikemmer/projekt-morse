@@ -1806,6 +1806,13 @@ a.menu-item {
   gap: 6px;
 }
 
+/* In der Summary traegt schon die Luecke der Buehne den Abstand; der eigene
+ * Rand kam doppelt dazu, und mit allen drei Saetzen (Verwechslung, Richtung,
+ * Freeze) scrollte sie bei 390 x 844 um 5 px (Runde P29). */
+.stage > .ornament {
+  margin: 0;
+}
+
 .ornament i {
   display: block;
   height: 6px;

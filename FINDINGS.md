@@ -641,3 +641,30 @@ Characters-Abschnitt. Größter Posten aus P28: die Abstände über den Haarlini
 Volume, „Reset to 10 wpm“ in der Kopfzeile von Effective speed (Tap-Fläche bleibt
 80 × 44, negative Ränder halten die Zeile flach). **Nachgemessen:** 844/844, 720/720,
 900/900 — je mit 6 Zeichen/10 wpm und mit 36 Zeichen/16 wpm (Reset sichtbar).
+
+## 20. Einladung zur Speed round und Variabilitäts-Zeile lassen den Play-Kreis springen
+
+**Status: offen — Entscheidung nötig** (09.10.2026, Runde P29; Rest von #18).
+
+Gemessen (Play-Kreis oben, ready → listening):
+
+| Viewport | Speed-round-Einladung | Variabilitäts-Zeile (einmalig) | ohne beides |
+|---|---|---|---|
+| 390 × 844 | 238 → 283 (**45 px**) | 216 → 245 (29 px) | 283 → 283 |
+| 1440 × 900 | 260 → 304 (**44 px**) | 248 → 266 (18 px) | 304 → 304 |
+
+Die Einladung ist **nicht selten**: sie steht, sobald ein einziges Zeichen langsam ist
+(`DRILL_INVITATION_MIN_SLOW = 1`). Ursache wie #18: Inhalt nur auf dem Start-Screen
+unter dem Gitter, zentrierte Bühne.
+
+**Wege:**
+1. **Wie #18 (c): in die Fußzeile.** Satz + „Try a speed round?“ links im Fuß statt der
+   Streak-Zeile; die Streak-Zeile rückt dann für diese Sitzung nur in die Summary (wie
+   heute schon bei der Variabilitäts-Zeile). Risiko: zweizeilig bei 390 px → Fuß höher,
+   kleiner Rest-Sprung; vor dem Bau messen.
+2. **Platz in der Sitzung reservieren**, nur im Dreier-Gitter (bis 12 Zeichen) — das
+   Tastenfeld steht bei 390 × 844 auf genau 844 px und hätte keinen Platz.
+3. **So lassen:** der Sprung folgt einer Nutzerhandlung (Play), 1.1 §9 erlaubt das eher
+   als einen Sprung ohne Handlung.
+
+**Nicht umgesetzt** (Gestaltungsentscheidung).
