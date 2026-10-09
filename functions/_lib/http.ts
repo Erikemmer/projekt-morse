@@ -23,7 +23,7 @@ export function json(body: unknown, status = 200, extraHeaders?: Headers): Respo
  * Ein Fehler in derselben Form wie alles andere.
  *
  * Der Text ist fuer Entwickler, nicht fuer die UI: welche Zeile ein Nutzer
- * sieht, entscheidet der Client (src/ui/account.ts) -- er kennt den Ton
+ * sieht, entscheidet der Client (src/ui/accountApi.ts) -- er kennt den Ton
  * (1.1 §11) und die Sprache (EN-first). Bewusst kein Detail darueber, *warum*
  * eine Anmeldung scheiterte: das waere ein Orakel fuer Fremde.
  */

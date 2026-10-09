@@ -16,6 +16,7 @@ import {
   answerPool,
   beginEcho,
   beginEchoPlayback,
+  cardHasEcho,
   cardHeard,
   createLearnRun,
   currentCharacter,
@@ -100,7 +101,7 @@ describe('Lernmodus: die Antwortoptionen', () => {
 
 describe('Lernmodus: der Echo-Check', () => {
   it('laeuft ueber ECHO_ROUNDS Abrufe und geht dann zur naechsten Karte', () => {
-    let state = beginEcho(cardHeard(createLearnRun({ queue: ['K', 'M'] })));
+    let state = beginEcho(cardHeard(createLearnRun({ queue: ['M', 'R'], known: ['K'] })));
 
     for (let i = 0; i < ECHO_ROUNDS; i++) {
       expect(state.phase).toBe('echo-ready');
@@ -112,8 +113,35 @@ describe('Lernmodus: der Echo-Check', () => {
     }
 
     expect(state.phase).toBe('card');
-    expect(currentCharacter(state)).toBe('M');
+    expect(currentCharacter(state)).toBe('R');
     expect(state.echoDone).toBe(0);
+  });
+
+  it('entfaellt bei der allerersten Karte -- eine einzige Option misst nichts', () => {
+    const first = cardHeard(createLearnRun({ queue: ['K', 'M'] }));
+    expect(cardHasEcho(first)).toBe(false);
+
+    const next = beginEcho(first);
+    expect(next.phase).toBe('card');
+    expect(currentCharacter(next)).toBe('M');
+  });
+
+  it('kommt ab der zweiten Karte, und dort steht das erste Zeichen zur Wahl', () => {
+    const second = cardHeard(beginEcho(cardHeard(createLearnRun({ queue: ['K', 'M'] }))));
+    expect(cardHasEcho(second)).toBe(true);
+    expect(answerPool(second)).toEqual(['K', 'M']);
+    expect(beginEcho(second).phase).toBe('echo-ready');
+  });
+
+  it('ein Lauf aus einem einzigen, ersten Zeichen fuehrt trotzdem ein', () => {
+    const done = beginEcho(cardHeard(createLearnRun({ queue: ['K'] })));
+    expect(done.phase).toBe('done');
+    expect(introducesCharacters(done)).toBe(true);
+  });
+
+  it('beim freien Wiederholen gibt es nie einen Check', () => {
+    const review = cardHeard(createLearnRun({ queue: ['M'], known: ['K'], requireEcho: false }));
+    expect(cardHasEcho(review)).toBe(false);
   });
 
   it('merkt sich, was geantwortet wurde -- richtig wie falsch', () => {
@@ -191,7 +219,7 @@ describe('Lernmodus: freies Wiederholen', () => {
   });
 
   it('vor "done" fuehrt kein Zustand etwas ein', () => {
-    const state = beginEcho(cardHeard(createLearnRun({ queue: ['K'] })));
+    const state = beginEcho(cardHeard(createLearnRun({ queue: ['M'], known: ['K'] })));
     expect(introducesCharacters(state)).toBe(false);
   });
 });

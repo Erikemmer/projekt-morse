@@ -26,6 +26,7 @@ import {
   renderArticle,
   renderPage,
   renderSitemap,
+  spellMarks,
   urlFor,
 } from './pages.mjs';
 
@@ -152,13 +153,61 @@ describe('renderArticle', () => {
     const { html } = renderArticle('# Titel\n\n| | |\n|---|---|\n| **A** ·− | **B** −··· |\n', 'x');
     expect(html).toContain('<div class="table-wrap">');
     expect(html).not.toContain('<thead>');
-    expect(html).toContain('<strong>A</strong> ·−');
+    // Seit B2 steht das Muster als aria-hidden-Zeichen plus vorgelesene Form da.
+    expect(html).toContain('<strong>A</strong><span class="morse-pattern" aria-hidden="true"> ·−</span>');
   });
 
   it('behält eine echte Kopfzeile', () => {
     const { html } = renderArticle('# Titel\n\n| Sign | Code |\n|---|---|\n| . | ·−·−·− |\n', 'x');
     expect(html).toContain('<thead>');
     expect(html).toContain('<th>Sign</th>');
+  });
+});
+
+describe('Morse-Muster für Screenreader (B2, Finding #5)', () => {
+  const render = (body) => renderArticle(`# Titel\n\n${body}\n`, 'x').html;
+  const hidden = (marks, spoken) =>
+    `<span class="morse-pattern" aria-hidden="true">${marks}</span><span class="visually-hidden">${spoken}</span>`;
+
+  it('gibt einer Zelle „**X** ·−" die vorgelesene Form und versteckt die Zeichen', () => {
+    const html = render('| | |\n|---|---|\n| **A** ·− | **E** · |');
+    // Das Leerzeichen vor dem Muster bleibt im Span (keine Subpixel-Verschiebung).
+    expect(html).toContain(`<strong>A</strong>${hidden(' ·−', 'dit dah')}`);
+    expect(html).toContain(`<strong>E</strong>${hidden(' ·', 'dit')}`);
+  });
+
+  it('erkennt die reine Code-Zelle der Satzzeichen-Tabelle', () => {
+    const html = render('| Sign | Code |\n|---|---|\n| Period . | ·−·−·− |');
+    expect(html).toContain(`<td>${hidden('·−·−·−', 'dit dah dit dah dit dah')}</td>`);
+    expect(html).toContain('<td>Period .</td>');
+  });
+
+  it('erkennt Muster im Fließtext ab zwei Zeichen, auch in Klammern und fett', () => {
+    // Der Span umfasst das ganze Wort; die Satzzeichen stehen auch im versteckten Span.
+    expect(render('Das R (·−·) dauert.')).toContain(`R ${hidden('(·−·)', '(dit dah dit)')} dauert`);
+    expect(render('Rhythmus, ··· −−− ···, nicht.')).toContain(
+      `Rhythmus, ${hidden('··· −−− ···,', 'dit dit dit dah dah dah dit dit dit,')} nicht`,
+    );
+    expect(render('**··· −−− ···** ist SOS.')).toContain(
+      `<strong>${hidden('··· −−− ···', 'dit dit dit dah dah dah dit dit dit')}</strong>`,
+    );
+  });
+
+  it('lässt ein einzelnes Trennzeichen und Inline-Code im Fließtext in Ruhe', () => {
+    const html = render('- **Dot:** 1 unit · **Dash:** 3 units\n\nEin Punkt ist `·`, ein Strich `−`.');
+    expect(html).not.toContain('morse-pattern');
+    expect(html).not.toContain('visually-hidden');
+    expect(html).toContain('1 unit · ');
+    expect(html).toContain('<code>·</code>');
+  });
+
+  it('ändert nichts an Seiten ohne Muster', () => {
+    expect(render('Ein Absatz — mit Gedankenstrich.')).not.toContain('morse-pattern');
+  });
+
+  it('spricht jedes Zeichen: · = dit, − = dah, Leerzeichen entfallen', () => {
+    expect(spellMarks('−·−')).toBe('dah dit dah');
+    expect(spellMarks('··· −−−')).toBe('dit dit dit dah dah dah');
   });
 });
 
@@ -454,6 +503,21 @@ describe('die echten Inhalte', async () => {
     const de = pages.find((page) => page.meta.lang === 'de' && page.meta.slug === 'index');
     expect(en.html).toContain('<p class="aside" lang="de">');
     expect(de.html).toContain('<p class="aside" lang="en">');
+  });
+
+  it('trägt auf den Alphabet- und Geschichtsseiten 43 + 1 Muster-Stellen je Sprache', () => {
+    const counts = {};
+    for (const page of pages) {
+      const html = renderArticle(page.body, page.name, page.meta.lang).html;
+      const n = (html.match(/class="morse-pattern"/g) ?? []).length;
+      if (n > 0) counts[page.meta.slug] = n;
+    }
+    expect(counts).toEqual({
+      'morse-code-alphabet': 43,
+      morsealphabet: 43,
+      'history-of-morse-code': 1,
+      'geschichte-des-morsecodes': 1,
+    });
   });
 
   it('nennt jede Seite in der Sitemap', () => {

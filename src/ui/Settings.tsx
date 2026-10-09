@@ -32,8 +32,6 @@
  * vorsieht.
  */
 
-import { useState } from 'react';
-
 import {
   CHARACTER_WPM,
   STARTING_EFFECTIVE_WPM,
@@ -44,6 +42,7 @@ import {
 } from '../engine/settings';
 import type { DeviceSettings, Theme } from '../engine/deviceSettings';
 import { buildVersion } from './build';
+import { Mark } from './Mark';
 
 /** Anzeigenamen -- reine Beschriftung, keine Engine-Entscheidung. */
 const THEME_LABELS: Record<Theme, string> = {
@@ -73,7 +72,6 @@ export function Settings({
   totalCharacterCount,
   nextCharacter,
   onUnlockNext,
-  onCopyInputLog,
   headingRef,
 }: {
   settings: DeviceSettings;
@@ -92,18 +90,8 @@ export function Settings({
   nextCharacter: string | null;
   /** Schaltet das naechste Zeichen der Reihe frei (engine/growth.ts, unlockNext). */
   onUnlockNext: () => void;
-  /** Gibt den Tastatur-Mitschnitt weiter (ui/keyLog.ts). Meldet, ob es geklappt hat. */
-  onCopyInputLog: () => Promise<boolean>;
   headingRef: (element: HTMLElement | null) => void;
 }) {
-  /*
-   * Nur Beschriftung, kein Zustand der App: ob der Mitschnitt gerade in der
-   * Zwischenablage liegt. Eine Rueckmeldung muss sein -- ein Knopf, der
-   * stumm bleibt, sieht aus wie einer, der nicht funktioniert, und ausgerechnet
-   * hier waere das die falsche Pointe.
-   */
-  const [logCopied, setLogCopied] = useState<'idle' | 'done' | 'failed'>('idle');
-
   const volumePercent = Math.round(settings.volume * 100);
   const raised = effectiveWpm > STARTING_EFFECTIVE_WPM;
 
@@ -158,8 +146,13 @@ export function Settings({
         />
       </div>
 
-      <div className="account-actions">
-        <button type="button" className="button-primary" disabled={playing} onClick={onPreview}>
+      {/*
+        Umrandet statt gefuellt (Review B7): ein Test ist nicht die eine
+        Haupthandlung, fuer die 1.1 §7 den gefuellten Amber-Primary vorsieht --
+        diese View hat keine, also auch kein Amber.
+      */}
+      <div className="settings-preview">
+        <button type="button" disabled={playing} onClick={onPreview}>
           Play test tone
         </button>
       </div>
@@ -180,7 +173,9 @@ export function Settings({
         muss weiterhin genau zwei meinen. System steht zuerst, weil es die
         Voreinstellung ist, dann Light und Dark als eigene, benannte Gruppen.
       */}
-      <div className="setting">
+      {/* Haarlinien zwischen den Gruppen (Review B7): Klang · Ansicht ·
+          Lernstand. */}
+      <div className="setting setting-group">
         <div className="setting-head">
           <span id="theme-heading">Theme</span>
         </div>
@@ -198,7 +193,7 @@ export function Settings({
         steht. Das Tempo gehört ohnehin dem Lernstand und nicht dem Gerät — es
         wandert mit dem Konto (engine/sync.ts).
       */}
-      <div className="setting">
+      <div className="setting setting-group">
         <div className="setting-head">
           <span>Effective speed</span>
           <span className="setting-value">{effectiveWpm} wpm</span>
@@ -260,30 +255,6 @@ export function Settings({
       */}
       <p className="settings-build">
         Build <span className="settings-build-id">{buildVersion()}</span>
-      </p>
-
-      {/*
-        Das Messgeraet zur offenen Tastatur-Meldung (ui/keyLog.ts). Es steht
-        hier, weil es hierhin gehoert: unter die Build-Kennung, zu den
-        Auskuenften ueber das Geraet, nicht zwischen die Regler.
-
-        Bewusst ohne Schalter und ohne Anzeige im Betrieb -- eine Liste von
-        Tastendruecken waehrend der Uebung waere genau die Art von
-        Mitlese-Hilfe, die CLAUDE.md 2.2 verbietet. Aufgezeichnet wird immer,
-        sichtbar wird es nur, wenn man es ausdruecklich holt.
-      */}
-      <p className="settings-build">
-        <button
-          type="button"
-          className="quiet-action settings-log-action"
-          onClick={() => {
-            void onCopyInputLog().then((ok) => setLogCopied(ok ? 'done' : 'failed'));
-          }}
-        >
-          {logCopied === 'done' && 'Input log copied'}
-          {logCopied === 'failed' && 'Could not copy — see the browser console'}
-          {logCopied === 'idle' && 'Copy input log'}
-        </button>
       </p>
     </section>
   );
@@ -357,7 +328,7 @@ function ThemeOption({
       {THEME_LABELS[id]}
       {current && (
         <span className="theme-option-mark" aria-hidden="true">
-          ✓
+          <Mark kind="hit" />
         </span>
       )}
     </button>

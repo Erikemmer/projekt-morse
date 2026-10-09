@@ -39,6 +39,7 @@ import type { SendAttempt, SendDeviationKind, SendSessionState } from '../engine
 import { sentToday } from '../engine/sendSession';
 import { Pattern, spellPattern } from './Pattern';
 import { isBrowserChord } from './keyChord';
+import { Mark } from './Mark';
 
 export function Send({
   state,
@@ -190,7 +191,14 @@ function questionFor(state: SendSessionState, keyPressed: boolean): string {
       ? 'Press and hold to send — release between dits and dahs.'
       : 'Tap the pattern, then Done.';
   }
-  if (state.phase === 'ready') return 'Ready when you are.';
+  // Im Ruhezustand sagt die Zeile, was dieser Modus ist (Review E2) --
+  // vorher "Ready when you are." wie ueberall, und wer den Menueeintrag nicht
+  // kannte, musste raten. Wortlaut-Entwurf, Fable-Abnahme offen.
+  if (state.phase === 'ready') {
+    return state.mode === 'keyed'
+      ? 'Send this character on the key.'
+      : 'Send this character — tap its dits and dahs.';
+  }
   return ''; // 'feedback': der Verdict in SendSolution traegt die Ansage.
 }
 
@@ -357,7 +365,7 @@ function SendSolution({ attempt }: { attempt: SendAttempt }) {
     <div className="solution send-solution">
       <p className="verdict" data-kind={attempt.correct ? 'hit' : 'miss'}>
         <span className="verdict-mark" aria-hidden="true">
-          {attempt.correct ? '✓' : '✗'}
+          <Mark kind={attempt.correct ? 'hit' : 'miss'} />
         </span>
         <span>
           {attempt.correct

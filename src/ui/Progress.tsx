@@ -16,6 +16,7 @@
  * with labels, separated by hairlines"). Diese View kommt ohne Amber aus.
  */
 
+import { nextCandidate } from '../engine/growth';
 import { CHARACTER_ORDER } from '../engine/settings';
 import {
   dayAccuracy,
@@ -41,11 +42,33 @@ export function ProgressScreen({
   // statt lauter Strichen eine Zeile, die sagt, was hier erscheinen wird.
   const practised = progress.activeCharacters.some((char) => recordFor(progress, char).attempts > 0);
 
+  const next = nextCandidate(progress);
+  const active = progress.activeCharacters.length;
+
   return (
     <section className="screen progress-screen" aria-labelledby="progress-heading">
-      <h2 id="progress-heading" className="screen-heading" ref={headingRef} tabIndex={-1}>
+      {/*
+        Seitenmuster aus dem Review (B1): Eyebrow als Ueberschrift, darunter
+        eine Aussage in Newsreader, dann Haarlinien. Die Ueberschrift bleibt
+        "Progress" (Fokusziel, Screenreader); die Aussage ist der Stand.
+      */}
+      <h2 id="progress-heading" className="screen-eyebrow" ref={headingRef} tabIndex={-1}>
         Progress
       </h2>
+      <p className="screen-statement">
+        {active} of {CHARACTER_ORDER.length} characters.
+      </p>
+
+      {/*
+        Was als Naechstes kommt und warum (Review D1b). Die Schwellen sind
+        Naeherungen und werden so genannt -- "roughly" -- statt als Zaehler
+        (CLAUDE.md 2.2, 2.6). Wortlaut-Entwurf, Fable-Abnahme offen.
+      */}
+      <p className="screen-note">
+        {next === null
+          ? 'All characters are in your practice.'
+          : `Next up: ${next}. It joins once your recent answers are steady — roughly 85 % right, with no character far behind.`}
+      </p>
 
       <dl className="stat-lines">
         <div className="stat-line">
@@ -56,16 +79,11 @@ export function ProgressScreen({
               : `${day.attempts} answer${day.attempts === 1 ? '' : 's'} · ${Math.round(rate * 100)}%`}
           </dd>
         </div>
-        <div className="stat-line">
-          <dt>Characters</dt>
-          <dd>
-            {progress.activeCharacters.length} of {CHARACTER_ORDER.length} active
-          </dd>
-        </div>
-        <div className="stat-line">
-          <dt>Sessions</dt>
-          <dd>{progress.sessionsStarted}</dd>
-        </div>
+        {/*
+          "Sessions" stand hier und zaehlte jedes Oeffnen der App mit
+          (`beginSession`) -- eine Zahl, die steigt, ohne dass das Koennen
+          steigt (CLAUDE.md 2.4, Review D2). Ersatzlos weg.
+        */}
       </dl>
 
       {practised ? (
@@ -110,6 +128,11 @@ export function ProgressScreen({
           */}
           <p className="footnote">
             Median from typed answers only — tapping a key includes the time to find it.
+          </p>
+          {/* Review D3: "Accuracy" zaehlt alle Antworten, das Wachstum nur die
+              juengsten. Wortlaut-Entwurf, Fable-Abnahme offen. */}
+          <p className="footnote">
+            Accuracy counts every answer so far; the set grows on your recent answers.
           </p>
         </>
       ) : (

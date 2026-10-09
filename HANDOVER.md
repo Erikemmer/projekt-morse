@@ -1,3 +1,659 @@
+# Übergabe — Stand nach Runde R1 (Review Design/UX umgesetzt)
+
+**Stand:** Branch `claude/review-design-ux` (von `claude/clever-turing-77fkyo`, P23 = `6d925a1`).
+Grundlage: [`docs/REVIEW-DESIGN-UX.md`](./docs/REVIEW-DESIGN-UX.md). **Owner-Entscheidung 06.10.2026:**
+Top 10 + „Danach“-Liste umsetzen, neue Texte als Entwurf markieren, Logo nur reparieren +
+Fallback, live deployen.
+
+**Umgesetzt:**
+- A1/A2 Menü in vier Gruppen (Haarlinien), „Learn“ mit Pfeil nach draußen (Linien-SVG).
+- A3 „End session“ in der Sitzungs-Kopfzeile (ersetzt die Beschriftung, solange eine Sitzung läuft).
+- A4 Kein Echo-Check mit nur einer Option (`cardHasEcho`, engine/learn.ts) — die erste Karte geht direkt weiter.
+- A5 „Skip“ im Lernlauf bucht nichts mehr; die Karten kommen vor der nächsten Sitzung wieder.
+- B1 Progress im Seitenmuster (Eyebrow · Aussage · Notiz · Haarlinien).
+- B2 Taster neben der Wortmarke: mobiler Kopf, Learn-Seiten. Marke inline (`ui/KeyMark.tsx`), Farben aus Tokens — trägt jetzt auch in dunklen Themes.
+- B3 Unvollständige letzte Reihe des Antwortfelds mittig.
+- B6 Hub: nur „Start here“ in Amber, übrige Links Ink.
+- B7 Settings: Test-Ton umrandet statt gefüllt, Haarlinien zwischen Klang · Ansicht · Lernstand.
+- C Favicon = Fallback-Marke (Punkt + Pille, Amber) — **nimmt Ruling #88 fürs Favicon zurück**; `logo-lockup.svg` repariert (FINDINGS #18).
+- D1a/c/d, D2, D3 neue Sätze (unten), „Sessions“ und „Session N“ entfernt (zählten App-Starts), Rückblick in Zeichen am Sitzungsende (`reviewCharacters`, engine/session.ts).
+- E2 Words/Send sagen im Ruhezustand, was sie sind. E6 „Download your practice data“ in About.
+- F1 44-px-Ziele (Imprint/Privacy, Learn-Kopf). F2 Fokusring Ink. F3 sichtbarer Audio-Hinweis in About. F4 Links im Learn-Fließtext immer unterstrichen.
+- FINDINGS #17–#19 behoben (u. a. Build auf macOS).
+
+**Fable-Abnahme offen (Wortlaut-Entwürfe, nichts davon ist beschlossen):**
+| Ort | Text |
+|---|---|
+| Lernkarte mit Check | „The next three are practice — nothing here counts.“ |
+| Erste Lernkarte | „This is K. Listen a few times, then go on.“ · Knopf „Next sound“ |
+| Wachstum | „… joins from the next round. Your recent answers were steady.“ |
+| Progress | Aussage „10 of 36 characters.“ · „Next up: W. It joins once your recent answers are steady — roughly 85 % right, with no character far behind.“ · „All characters are in your practice.“ · Fußnote „Accuracy counts every answer so far; the set grows on your recent answers.“ |
+| Sitzungsende | „Steady today: …“ · „Still settling: …“ · Offline-Hinweis als eigene Zeile |
+| Kopfzeile | „Practice“ statt „Session N“ · „End session“ |
+| Words / Send | „Hear a word or group, then type it.“ · „Send this character — tap its dits and dahs.“ · „Send this character on the key.“ |
+| About | „Morse Lab trains listening: every exercise starts with a tone. If you can't hear it, Send lets you practise the patterns by sight.“ · „Download your practice data“ |
+
+**Fable-Abnahme offen (Gestaltung/Regeln):** Favicon gegen Ruling #88 · Fokusring Ink statt amber-deep ·
+Link-Unterstreichung gegen CONCEPT-LEARN §5 · Hub-Linkfarben · Menügruppen · zentrierte Rest-Reihe ·
+„Skip“ verschiebt statt bucht · erste Karte ohne Check.
+
+**Nicht umgesetzt:** Logo-Richtungen R1–R3 (Owner: nur reparieren + Fallback), D1e (Freeze-Erklärung
+beim ersten „freeze ready“ — braucht ein neues persistentes Feld), B5 (Themes in der
+Außendarstellung — keine Code-Frage).
+
+**Prüfskripte angepasst:** `verify:keyboard` und `verify:amber` kennen den neuen Erstlauf (Check
+hinter Karte 2) und die neuen Ruhe-Zeilen in Words/Send; `verify:contrast` prüft den Fokusring als Ink/Paper.
+
+---
+
+# Übergabe — Stand nach Runde P23 (#14: Echo-Check-Zeile umgesetzt)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P22 = `7894187`), `main` = `fa579d0`.
+Kein PR. Geändert: `src/ui/Learn.tsx` (eine Zeile `.keypad-hint` im Echo-Check),
+`FINDINGS.md` (#14), `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+**Entscheidung (Owner-Delegation):** Option 1, derselbe String wie im Training und in
+Words. Sichtbar ab 900 px; Höhe laut P21-Simulation −33 px Bühne, kein Scroll (nicht
+neu gemessen).
+
+**Gesamtlauf:** 488 Tests, Build grün, `verify:amber` 39, `verify:keyboard` 25,
+Bundle JS +94 B, CSS ±0.
+
+**Offen:** B2-Pixeldiff (Entscheidung), H2, H3, H8, H9, Notion-Log D1–D9.
+Firefox/Safari ungeprüft.
+
+---
+
+# Übergabe — Stand nach Runde P22 (B2-Pixeldiff: Entscheidungsvorlage)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P21 = `cb27206`), `main` = `fa579d0`.
+Kein PR. Geändert: `tools/prep/pattern-pixeldiff.mjs` (neu, Messung), `FINDINGS.md`
+(#5), `docs/PLAN-FINDINGS.md`, diese Übergabe. `src/`, `content/learn/`, Generator
+unberührt.
+
+**Messung:** 4 Seiten (EN/DE, Alphabet/Geschichte) × 390×844 und 1440×900, drei
+Varianten. Tabellen markiert: **0 Pixel** in allen 8 Bildern. Fließtext markiert:
+4 von 8 Bildern weichen ab (63 / 147 / 253 / 215 px, eine Textzeile, max 60/255),
+**Seitenhöhe identisch**. Zwei Optionen in FINDINGS #5, **keine gewählt**
+(Messung spricht für „so lassen“; „nicht markieren“ macht R und SOS für Screenreader
+wieder stumm).
+
+**Gesamtlauf:** siehe Commit/Zusammenfassung P22.
+
+**Offen:** #14 (Fables Entscheidung), B2-Pixeldiff (Entscheidung), H2, H3, H8, H9,
+Notion-Log D1–D9. Firefox/Safari ungeprüft.
+
+---
+
+# Übergabe — Stand nach Runde P21 (#14: Entscheidungsvorlage Echo-Check-Zeile)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P20 = `7823349`), `main` = `fa579d0`.
+Kein PR. Geändert: `tools/prep/echo-height.mjs` (Variante `hint0–2`, Messung),
+`FINDINGS.md` (#14), `docs/PLAN-FINDINGS.md`, diese Übergabe. `src/` unberührt.
+
+**Messung:** Zeile unter 900 px unsichtbar (390×844: Delta 0). Bei 1280×720 und
+1440×900: 1 Zeile, 21 px + 12 px Rand, Bühne −33 px (362→329, 542→509), kein
+Scrollen, Abstand Bühne–Tasten 24 px; 15 = 36 Zeichen (ortsfestes Tastenfeld).
+Wortlaut ändert die Höhe nicht. Vier Optionen in FINDINGS #14, **keine gewählt**.
+
+**Gesamtlauf:** siehe Commit/Zusammenfassung P21 (488 Tests, Build, amber 39,
+keyboard 25, Bundle-Delta 0 B).
+
+**Offen:** #14 (Fables Entscheidung), B2-Pixeldiff, H2, H3, H8, H9, Notion-Log
+D1–D9. Firefox/Safari ungeprüft.
+
+---
+
+# Übergabe — Stand nach Runde P20 (#16: ax-pattern.mjs an B2 angepasst)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P19 = `d31d5a9`), `main` = `fa579d0`.
+Kein PR. Geändert: `tools/prep/ax-pattern.mjs`, `FINDINGS.md` (#16 „behoben“),
+`docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+**Nachweis:** Skript läuft durch (Exit 0); Zelle „A dit dah“; im Baum nur
+`StaticText "dit dah"`, `·−` nicht. EN und DE gleich.
+
+**Offen:** #14, B2-Pixeldiff, H2, H3, H8, H9, Notion-Log D1–D9. Firefox/Safari
+ungeprüft.
+
+---
+
+# Übergabe — Stand nach Runde P19 (#12/#15: verify:amber beendet den Server)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P18 = `85c7d66`), `main` = `fa579d0`.
+Kein PR. Geändert: `tools/amber/check.mjs` (Start per `node` statt `npx`),
+`FINDINGS.md` (#12, #15 „behoben“), `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+**Gesamtlauf:** `npm test` **488**; `npm run build` grün; `verify:amber` **39**
+Ansichten, Exit 0; `verify:keyboard` **25** Fälle. Bundle-Delta **0 B** (Skript in
+`tools/`, `src/` unberührt). **Nachweis:** nach grünem Lauf und nach künstlichem
+Rot-Lauf (Exit 1, danach zurückgenommen) kein vite-Prozess, Port 4183 frei.
+`tools/keyboard/check.mjs` hat den Fehler nicht (D11 bleibt nur Duplikat-Muster).
+
+**Offen:** #14, #16, B2-Pixeldiff, H2, H3, H8, H9, Notion-Log D1–D9. Firefox/Safari
+ungeprüft.
+
+---
+
+# Übergabe — Stand nach Runde P18 (D: Abschluss, PR 8)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P17 = `34298e5`), `main` = `fa579d0`.
+**P18 ist Plan-Schritt D (PR 8).** Kein PR angelegt. **Kein Code geändert**; berührt
+sind nur `FINDINGS.md`, `docs/PLAN-FINDINGS.md` und diese Übergabe.
+
+**Was geprüft war:** Status-Zeilen standen schon für #1–#6, #8, #10, #11, #13; es
+fehlten #7 und #9 (nur im Fließtext), #12, #14, #15, #16. Ergänzt, Ursprungstext
+unverändert. Plan §1 (Status-Spalte, Zeilen #14–#16), §4 (D4–D9 Owner-bestätigt),
+§5 (PR 8) und §6 (neuer Absatz „Stand P18“, Punkt für Punkt) nachgezogen; Datei
+bleibt. Inventur: Zeile Echo-Check (Tastenfeld seit P15) ergänzt; die übrigen
+Zeilen stimmen mit dem Code überein (Settings ohne eigenen Listener, K4 nur im
+historischen P8-Abschnitt).
+
+**Gesamtlauf:** `npm test` **488**; `npm run build` grün; `verify:amber` **39
+Ansichten**; `verify:contrast` **24 Werte**; `verify:keyboard` **25 Fälle** (46 s).
+**Bundle gegen `main`:** JS 235.957 → **235.318 B (−639 B)**, CSS 20.690 → 20.636 B,
+Plex +88/+96/+160 B, Newsreader unverändert. Timing-Budget nicht berührt.
+
+**Offen (benannt, nicht entschieden):** H2 (500 ms, S7/D8), H3 (Screenreader), H8
+(Glyphen auf Geräten, Form von Haken/Kreuz), H9 (Echo-Check am Telefon), B2-Pixeldiff
+(Fließtext-Stellen so lassen oder nicht markieren), Notion-Log der Owner-Delegationen
+D1–D3 und der Bestätigungen D4–D9 (Owner-Aussagen, keine Fable-Rulings). Findings
+#12/#15, #14, #16 bleiben offen. **Nichts davon ist umgesetzt.**
+
+**Nicht belegt:** alles, was ein Gerät oder einen Menschen braucht (H2–H9);
+Firefox/Safari. `FINDINGS.md` #15 erneut bestätigt (Server PID 4194, per `kill` beendet).
+
+---
+
+# Übergabe — Stand nach Runde P17 (C2: Konzeptfragen D4–D9 protokolliert)
+
+**Stand:** Branch `claude/clever-turing-77fkyo`, `main` = `fa579d0`. **P17 ist PR 7
+im Plan (Schritt C2).** Kein PR angelegt. **Kein Code geändert**; berührt sind nur
+`docs/PLAN-FINDINGS.md`, `FINDINGS.md` und diese Übergabe.
+
+**Warum kein Code:** Der Owner hat D4–D9 wie empfohlen bestätigt (D4 a, D5/D6/D9
+bestätigt, D7 Hash, D8 nicht bauen). Der Plan sieht Umsetzung nur bei „anders“ vor.
+Gegen den Code geprüft: D5 `echoKeyAction` gibt in `echo-ready` `'play'` zurück
+(`src/engine/learn.ts`); D6 `keyChord.ts` zählt `altKey` nicht mehr; D7 Kennung ist
+ein Hash; D8 keine „answer noted“-Zeile (`grep` leer); D9 unverändert, Zusatzsatz
+nicht gebaut (neuer UI-String, Fables Wortlaut). D4: 960 / 822 / 900 px akzeptiert.
+
+**Bundle:** unverändert (JS `index-BM2jghgC.js` 235.318 B, CSS `index-DUx-k1as.css`
+20.636 B) — Delta 0.
+
+**Tests:** `npm test` **488** (19 Dateien); `npm run build` grün (18 Seiten, 88
+Muster-Stellen); `verify:amber` **39 Ansichten** grün; `verify:keyboard` **25 Fälle**
+grün (44 s). Timing-Budget nicht berührt (kein Audio-/Engine-Code).
+
+**Nicht belegt:** dass die Bestätigung als Fable-Ruling vorliegt (Owner-Aussage;
+Notion-Log-Eintrag steht aus); H2 (D8); H3, H8, H9 weiter offen; Firefox/Safari.
+`FINDINGS.md` #15 erneut bestätigt (Vorschau-Server blieb stehen, per PID beendet).
+
+---
+
+# Übergabe — Stand nach Runde P16 (B2: Screenreader-Muster der Alphabet-Tabelle)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P15 = `c7b2482`), `main` = `fa579d0`.
+**P16 ist PR 5 im Plan (Schritt B2):** B2 mit D2
+(Owner-Delegation 04.10.2026, kein Fable-Ruling; den Notion-Log-Eintrag macht der
+Owner). Kein PR angelegt. **Bundle:** App unverändert (JS `index-BM2jghgC.js`
+235.318 B, CSS `index-DUx-k1as.css` 20.636 B — Hashes wie in P15). Learn:
+`learn.css` +345 B, Alphabet-Seiten je +4.560 B, Geschichts-Seiten je +127 B.
+
+**Was es ist:**
+
+1. **Generator (`tools/learn/pages.mjs`)** baut vor dem Rendern den `marked`-
+   Token-Baum um: jede Muster-Stelle wird `<span class="morse-pattern"
+   aria-hidden="true">·−</span><span class="visually-hidden">dit dah</span>`.
+   Kontextregel: Tabellenzelle = ganze Zelle aus `·`/`−` (auch ein einzelnes
+   Zeichen), Fließtext = Folge ab zwei Zeichen. Inline-Code und das Trennzeichen
+   `·` bleiben. **88 Stellen** (44 je Sprache: 36 + 5 + R + SOS auf der
+   Alphabet-Seite, SOS auf der Geschichts-Seite). `content/learn/` unverändert.
+2. **`learn.css`:** `.visually-hidden` aus `src/styles.css` kopiert (nicht extrahiert).
+3. **`verify:learn`** zählt die Stellen aus dem Markdown-Quelltext (eigene Zählung)
+   und gleicht je Seite ab; Form „dit/dah“ mit eigener Zuordnung; nichts Bloßes
+   übrig; `.visually-hidden` im ausgelieferten CSS.
+4. **Tests:** +7 → `npm test` **488**.
+
+**Was Fable/der Owner sehen muss:**
+
+1. **D2 ist eine Owner-Delegation** („D2 — Entscheidung“ im Plan). **Der DE-Wortlaut
+   „dit dah“ ist eine Setzung**, kein Beleg.
+2. **Pixeldiff ist nicht überall 0.** Tabellen: 0 Pixel Differenz in allen 16
+   Bildern. Die **Fließtext-Stellen** (`(·−·)`, SOS) verschieben die Subpixel-
+   Positionierung ihrer Zeile (8 von 16 Bildern, nur in diesen Zeilen, gleiche
+   Höhe, max. Kanalunterschied 60/255). Jedes Element im Textlauf tut das in
+   Chromium, auch ein nacktes `<span>`. Entscheidung offen: so lassen oder die
+   drei Fließtext-Stellen je Sprache nicht markieren.
+3. **Der Span umfasst das ganze Wort** (Klammer, Komma, Leerzeichen vor dem
+   Zellmuster) — das hat die Tabellen auf 0 gebracht; vorgelesen wird
+   „(dit dah dit)“.
+4. **H3 offen:** kein Screenreader gehört; die Aussprache im Deutschen ist nicht belegt.
+
+**Belegt:** Accessibility-Tree vorher/nachher (Zelle `A ·−` → `A dit dah`, 36
+Zellen; 47 → 4 StaticText mit `·`/`−`, die 4 sind Trennzeichen und Code); Rot-Test
+`verify:learn` (Versteck entfernt → 174 Fehler, falsches Wort → rot, zurückgenommen);
+`content/learn/` `git diff` leer.
+
+**Tests:** `npm test` **488** (19 Dateien). `npm run build` grün (`verify:learn`:
+18 Seiten, **88 Muster-Stellen**). `verify:amber` **39 Ansichten** grün.
+`verify:keyboard` **25 Fälle** grün (40 s). `verify:colors`, `verify:fonts` grün.
+**Nicht belegt:** H3; Firefox/Safari; schmale Fenster ≠ 390 px für die Tabellen-Scrollbox.
+Neu in `FINDINGS.md`: #16 (`tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch);
+#15 bestätigt (stehender Vorschau-Server, per PID beendet).
+
+Berührt: `tools/learn/pages.mjs`, `tools/learn/learn.css`, `tools/learn/verify.mjs`,
+`tools/learn/pages.test.mjs`, `FINDINGS.md`, `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
+# Übergabe — Stand nach Runde P15 (B3: Echo-Check als ortsfestes Tastenfeld)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P14 = `0b216d7`), `main` = `fa579d0`.
+**P15 ist Plan-Schritt 6 (PR 6):** B3 mit D3 (Owner-Delegation 04.10.2026, kein
+Fable-Ruling; den Notion-Log-Eintrag macht der Owner). Kein PR angelegt.
+**Bundle:** JS 235.144 → **235.318 Byte (+174 B**, gzip 71,69 → 71,76 kB); CSS
+unverändert (keine Regel angefasst).
+
+**Was es ist:**
+
+1. **`Echo` (`src/ui/Learn.tsx`)** zeigt ab 13 Optionen (`usesKeypad(pool.length)`,
+   Schwelle wie im Training) das Tastenfeld: `.keypad` über `KEYPAD_LAYOUT`,
+   `data-active` für „im Pool oder nicht“, „ — not in this round“ für Screenreader,
+   `data-row-start` für die Ziffernreihe. Darunter bleibt das Dreier-Gitter.
+   **Unverändert:** Engine (`answerPool`, `echoKeyAction`), `keypad.ts`, `styles.css`.
+2. **„Aktiv“ = die Optionen des Checks**, nicht der ganze aktive Satz.
+3. **`verify:amber`:** zwei neue Ansichten „Echo-Check, 36 Zeichen, Antwort offen
+   (B3)“ und „… Auflösung falsch (B3)“ → **39 Ansichten**. Es gab vorher keine
+   Echo-Ansicht mit mehr als einer Option. `progress()` bekam `introduced`.
+4. **`tools/prep/echo-height.mjs`** misst `.answers, .keypad`; die Simulationen
+   laufen nur noch mit `ECHO_VARIANTS=heute,a,a36,b` gegen einen Stand vor B3.
+
+**Gemessen (Seite / Fenster, vorher → nachher):**
+
+| Viewport | 15 Zeichen | 36 Zeichen | Taste |
+|---|---|---|---|
+| 390 × 844 | 844/844 → 844/844 | **1311** → 844/844 | 106 × 64 → 50 × 46 |
+| 1280 × 720 | **775** (+55, #13) → 720/720 | **1307** → 720/720 | 189 × 64 → 44 × 44 |
+| 1440 × 900 | 900/900 → 900/900 | **1307** → 900/900 | 189 × 64 → 44 × 44 |
+
+15 und 36 sind jetzt gleich hoch; Abstand Bühne–Tasten 24 px; Bühne ≥ 310 px.
+
+**Was Fable sehen muss:**
+
+1. **D3 ist eine Owner-Delegation, kein Ruling.** Wortlaut und Begründung:
+   `docs/PLAN-FINDINGS.md`, „D3 — Entscheidung“. Umkehrbar (eigener PR).
+2. **Die Schwelle (ab 13 Optionen)** ist meine Setzung, abgeleitet von
+   „wie im Training“. Darunter bleibt das Gitter (Ruling #75 Punkt 3). Der Pool
+   wächst innerhalb eines Laufs; die Form kann also **mitten im Lauf** vom Gitter
+   zum Tastenfeld kippen (nur aus dem Code gelesen, nicht im Browser gesehen).
+3. **Die Tasten sind kleiner** (50 × 46 / 44 × 44 statt 106/189 × 64). Das ist
+   **H9** und bleibt eine menschliche Prüfung am Telefon.
+4. **Der Echo-Check hat keine „or just type“-Zeile** (FINDINGS #14).
+
+**Tests:** `npm test` **481** (19 Dateien, unverändert). `npm run build` grün.
+`verify:amber` **39 Ansichten** grün (neu: Antwort offen 0 Amber, Auflösung falsch
+1 Amber = die richtige Antwort). `verify:keyboard` **25 Fälle** grün (42 s;
+K9–K11 laufen unverändert). **Nicht belegt:** H9 (Telefon), Screenreader über die
+gedimmten Tasten im Echo-Check (H3), Pixeldiff der übrigen Ansichten, der
+Formwechsel mitten im Lauf. Neu in `FINDINGS.md`: #14 (Hinweiszeile), #15 (stehender
+Vorschau-Server nach `verify:amber`, zu #12).
+
+Berührt: `src/ui/Learn.tsx`, `tools/amber/check.mjs`, `tools/prep/echo-height.mjs`,
+`FINDINGS.md`, `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
+# Übergabe — Stand nach Runde P14 (B1: `→ ≈` im Plex-Subset, `✓ ✗` als SVG-Paar)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P13 = `8f0c56a`), `main` = `fa579d0`.
+**P14 ist Plan-Schritt 5 (PR 4):** die Umsetzung von D1 (Owner-Delegation
+04.10.2026). Kein PR angelegt. **Bundle:** JS 234.624 → **235.144 Byte** (+520 B,
+gzip 71,69 kB — die Komponente `Mark` an zehn Stellen); Schriften zusammen
+**+344 B** (400: 22.588 → 22.676, 500: 24.184 → 24.280, 600: 24.252 → 24.412),
+Newsreader unverändert.
+
+**Was es ist:**
+
+1. **`→` und `≈` im IBM-Plex-Subset** (Weg A). **Nicht neu subsettet**, sondern in
+   die bestehenden drei Dateien ergänzt (`tools/fonts/add-glyphs.py`): das
+   heutige Subset ist Plex 3.201, `complete` 3.005, und 223–225 von 232 Zeichen
+   unterscheiden sich — ein Neu-Subsetten hätte den ganzen Text verändert. Das
+   Skript prüft selbst, dass jeder alte Umriss, jede Metrik und jeder
+   cmap-Eintrag bitgleich bleiben.
+2. **`✓` und `✗` als SVG-Paar** (Weg B), `src/ui/Mark.tsx`: Polyline-Haken und
+   Diagonalkreuz, 1,5 px `non-scaling-stroke`, runde Enden, 24er Raster, `1em`
+   groß (die bestehenden Regeln 18/12/11 px bestimmen das Maß), `currentColor`,
+   `aria-hidden`. Zehn Fundstellen in `App.tsx`, `Learn.tsx`, `Send.tsx`,
+   `Words.tsx`, `Settings.tsx`; eine CSS-Regel `.mark { display: block }`.
+3. **`verify:fonts`:** `KNOWN_GAPS` ist leer (Mechanismus bleibt); neu
+   `ACCEPTED_FALLBACK` für den **CTA-Pfeil** in `content/learn/` (Weg C, Newsreader
+   hat ihn nicht, Fables Text bleibt byte-identisch). Rot, wenn Newsreader den
+   Codepoint doch trägt; meldet die Stelle in jedem Lauf (14 Dateien).
+4. **Findings:** #4 Fußzeile behoben / CTA „bleibt“, #8 und #11 behoben
+   (`FINDINGS.md`, `docs/PLAN-FINDINGS.md` B1 „Umsetzung“).
+
+**Die sechs Bedingungen aus „D1 — Entscheidung“:** 1 erfüllt mit Vorbehalt
+(Form), 2 erfüllt, 3 erfüllt aber anders (Abweichung A), 4 in der Sache erfüllt,
+nicht im Wortlaut (Abweichung B), 5 teilweise (kein Pixeldiff, nicht jeder Modus
+einzeln gesehen), 6 offen (H8). Einzelheiten: `docs/PLAN-FINDINGS.md`, B1,
+„Umsetzung“.
+
+**Was Fable sehen muss:**
+
+1. **Die Form von Haken und Kreuz.** Guidelines 1.1 §8 regelt Strich, Enden und
+   Raster, **nicht die Gestalt** der beiden Zeichen. Gebaut ist die Standardform
+   dieser Strichsprache; ob das Fables Hand ist, ist seine Entscheidung
+   (Bedingung 1 sagte „bei Unklarheit anhalten“ — ich habe weitergemacht, weil
+   die Umsetzung umkehrbar ist und ein Stopp hier nur die Messwerte verzögert
+   hätte; das ist eine Abwägung, kein Beleg).
+2. **Der Strich wirkt leichter als das alte Schriftzeichen.** Bei 12 px und 11 px
+   (Tastenfeld, Theme-Haken) ist das Zeichen ca. 6 px breit mit 1,5 px Strich;
+   lesbar im Screenshot, am Gerät nicht beurteilt (H8).
+3. **`→`/`≈` stammen aus Plex 3.005, der Rest aus 3.201.** Gleiche Einheit (1000
+   upem), aber das Hinting dieser zwei Glyphen ist das der älteren Version.
+   Unter Windows nicht gesehen.
+4. **Der CTA-Pfeil bleibt Fallback** (Liberation Serif/Georgia je System): eine
+   bewusste Entscheidung, kein offenes Finding mehr.
+5. **Das Amber der richtigen Antwort** (`#92400e`, interner Shade nach Addendum
+   (b)) färbt jetzt auch deren SVG-Haken über `currentColor` — wie vorher das
+   Schriftzeichen; kein zweites Amber, `verify:amber` 37 Ansichten grün.
+
+**Tests:** `npm test` 481 (19 Dateien, unverändert — keine Test erwartete die
+Zeichen als Text). `npm run build` grün (`verify:fonts`: 62 Dateien, 110
+Codepoints, 234 in der Markenfamilie; `verify:learn`: 18 Seiten).
+`verify:amber` **37 Ansichten** grün. `verify:keyboard` **25 Fälle** grün (43 s).
+**Rot-Test `verify:fonts`:** Glyphen aus dem Subset → rot für `→` und `≈`;
+`ACCEPTED_FALLBACK`-Familie auf Plex → rot „Veraltete Ausnahme“; beide
+zurückgenommen. **Sichtprüfung** (Playwright, Wegwerf-Skript, Screenshots nur im
+Scratchpad): Training richtig/falsch bei 390 × 844 und 1440 × 900 — Strich
+1,5 px, `aria-hidden`, kein `✓`/`✗` mehr im Text, kein Überlauf; Theme-Haken in
+System + sechs Themes (`currentColor` folgt dem Theme); Schrift am Knoten per
+CDP: Fußzeile mit `→` (390 px) und `.note` mit `≈` aus „IBM Plex Sans (custom)“.
+**Nicht belegt:** Fußzeile bei 1440 px (Knoten ohne Ergebnis), Echo-Check,
+Wort- und Sende-Modus einzeln als Bild, Pixeldiff, Screenreader-Ansage, Geräte
+(H8).
+
+Berührt: `src/ui/Mark.tsx` (neu), `src/ui/{App,Learn,Send,Words,Settings}.tsx`,
+`src/styles.css` (eine Regel), `src/fonts/ibm-plex-sans-latin-{400,500,600}-normal.woff2`,
+`tools/fonts/add-glyphs.py` (neu), `tools/fonts/check.mjs`, `FINDINGS.md`,
+`docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
+# Übergabe — Stand nach Runde P13 (A2 + C1: Messgerät ausgebaut, Settings-Höhe gemessen)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P12-Docs = `da5ca68`), `main` = `fa579d0`.
+**P13 ist Plan-Schritt 4 (PR 2):** das Tastatur-Messgerät aus P7/P8 ausbauen und
+die Settings-Höhe messen. Kein PR angelegt.
+
+**Was es ist:**
+
+1. **A2:** entfernt sind `src/ui/keyLog.ts`, der Capture-Listener und
+   `copyInputLog` in `App.tsx`, Prop/State/Knopf „Copy input log“ in `Settings.tsx`
+   (samt ungenutztem `useState`-Import), `.settings-log-action` in `styles.css`
+   und Fall K4 in `tools/keyboard/check.mjs` (samt dem dann toten
+   `clipboard`-Flag und der Berechtigungsvergabe in `runCase`). **Bleibt:**
+   Build-Kennung (`build.ts`, Zeile in den Settings), `isBrowserChord`,
+   `keyChord.test.ts`. Die Kopfzeile von `check.mjs` nannte weder K4 noch eine
+   Fallzahl — dort war nichts anzupassen.
+2. **C1:** Dokumenthöhe der Settings, 20 aktive Zeichen, mit
+   `tools/prep/settings-height.mjs` (neu, Messung, kein Check, nicht im Build).
+
+| Viewport | vor dem Ausbau | nach dem Ausbau | scrollt? |
+|---|---|---|---|
+| 390 × 844 | 1031 px | **960 px** | ja (+116; vorher +187) |
+| 1280 × 720 | 893 px | **822 px** (Referenzwert) | ja (+102; vorher +173) |
+| 1440 × 900 | 900 px | **900 px** | nein (Seite = Fenster) |
+
+   Der Log-Knopf kostete 71 px. 960 / 900 entsprechen den P7-Werten.
+
+**Was Fable sehen muss:**
+
+1. **D10 war ein Standard, keine Antwort.** Der Owner hat „ausbauen“ nicht
+   ausdrücklich bestätigt (G1 = „sitzt“ ist die Beobachtung, dass das Symptom
+   weg ist, nicht der Nachweis der Ursache). Er kann es **vor dem Merge** noch
+   umkehren — dann diesen Commit zurücknehmen; das Messgerät steht in der
+   Historie.
+2. **D4 (Settings-Höhe) bleibt offen und ist nicht entschieden.** Nur Zahlen: Der
+   Screen scrollt bei 390 × 844 (+116 px) und 1280 × 720 (+102 px), bei 1440 × 900
+   nicht. Gemessen ist nur der Stand mit 20 aktiven Zeichen; andere
+   Zeichenzahlen sind nicht gemessen.
+3. **Vorsicht beim Messen:** Eine „Vorher“-Messung unmittelbar nach der
+   „Nachher“-Messung lieferte zunächst fälschlich dieselben Zahlen. Ursache war
+   ein offenbar noch laufender Vorschau-Server (vgl. FINDINGS #12); das Messskript
+   bricht jetzt ab, wenn der Port belegt ist.
+
+**Belege:**
+
+- `npm test` 481 (19 Dateien), unverändert — kein Test galt dem Messgerät,
+  `keyChord.test.ts` blieb. `npm run build` grün (inkl. `verify:fonts`,
+  `verify:learn`, 18 Seiten). `verify:amber` 37 Ansichten. `verify:keyboard`
+  **25 Fälle** (vorher 26; K4 weg).
+- **Bundle:** `dist/assets/index-*.js` 235.957 → 234.624 Byte, **−1.333 Byte
+  (−1,33 kB)**; CSS minimal kleiner.
+- **Rot-Test:** `KEYBOARD_ONLY=K4` → „unbekannte Fälle“ (K4 existiert nicht mehr).
+  `altKey` wieder in `isBrowserChord` → **K1, K2, K2b, K3, K3b, K3c rot (6 von 6)**;
+  zurückgesetzt → 6 von 6 grün. Der Ausbau hat nichts von P8 mitgenommen.
+- `grep` auf `keyLog|recordKey|formatKeyLog|onCopyInputLog|copyInputLog|logCopied`
+  im Quelltext leer (Chronik in `HANDOVER.md`/`FINDINGS.md`/`docs/PLAN-FINDINGS.md`
+  bleibt). `.settings-log-action` steht nur noch in `settings-height.mjs`
+  (dort, um den „Vorher“-Stand zu erkennen).
+
+**Nicht belegt:** dass ein hängendes Alt die Ursache des Ausfalls war (nur der
+Zustand ist nachgestellt, nicht Alt-Tab selbst); Verhalten am Gerät des Owners
+nach dem Ausbau.
+
+**Hilfscode dupliziert:** `settings-height.mjs` kopiert Vorschau-Server und
+Browser-Start (jetzt der fünfte Ort: `amber`, `keyboard`, `ax-pattern`,
+`echo-height`, `settings-height`) — D11 unverändert „duplizieren“.
+
+Berührt: `src/ui/App.tsx`, `src/ui/Settings.tsx`, `src/styles.css`,
+`src/ui/keyLog.ts` (gelöscht), `tools/keyboard/check.mjs`,
+`tools/prep/settings-height.mjs` (neu), `docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
+# Übergabe — Stand nach Runde P12 (B2- und B3-Vorarbeit: Screenreader-Muster, Echo-Check-Höhe)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P11 = `272031f`), `main` = `fa579d0`.
+**P12 ist Plan-Schritt 3:** Messungen und Entscheidungsvorlagen für D2 und D3.
+**Nichts entschieden, kein App-Code, kein Learn-Text, kein Generator geändert**
+(`git diff` auf `src/`, `content/learn/`, `tools/learn/` leer). Bundle-Delta
+**0** (`dist/assets/index-*.js` 235.957 Byte = 235,96 kB wie P11; Schriften
+unverändert).
+
+**Was es ist:**
+
+1. **B2 (Finding #5, D2):** Accessibility-Tree der Alphabet-Tabelle (EN und DE)
+   und der App gelesen, drei Optionen am DOM simuliert. Ergebnis in
+   `docs/PLAN-FINDINGS.md`, B2, „Vorarbeit — Ergebnis“.
+2. **B3 (Finding #6 Punkt 1, D3):** Höhe des Echo-Checks bei 15 und 36 Zeichen in
+   390 × 844, 1280 × 720, 1440 × 900; Wege (a)/(b) simuliert. Ergebnis in B3.
+3. **Zwei Messskripte**, `tools/prep/ax-pattern.mjs` und
+   `tools/prep/echo-height.mjs` — **Messungen, keine Checks**, nicht im Build,
+   kein `package.json`-Script. Hilfscode (Vorschau-Server, Browser-Start)
+   **dupliziert**, nicht extrahiert (D11; das ist jetzt der vierte Ort, siehe
+   „Was Fable sehen muss“ 5).
+
+**Was Fable sehen muss:**
+
+1. **D2: der Umfang ist größer als im Plan.** Nicht nur 36 Zellen `**X** ·−`,
+   sondern je Sprache **36 + 5 reine Code-Zellen (Satzzeichen-Tabelle) + 3
+   Fließtext-Stellen** (R in Klammern, SOS auf Alphabet- und Geschichts-Seite).
+   Dazu Fälle, die kein Muster sind (`·` als Trennzeichen, Inline-Code). Die
+   Erkennung ist eine Kontext-Regel; Aufwand eher M als S.
+2. **D2: Empfehlung bestätigt (Option 3, versteckter Text wie `Pattern.tsx`)** —
+   aber `.visually-hidden` **fehlt im Learn-Stylesheet**; eine Regel muss dort mit.
+   Die App ist bereits gelöst (`StaticText "dah dit dah"` im Baum).
+3. **D2: nicht belegt.** Ob `·`/`−` heute überhaupt hörbar fehlen, und wie
+   `role="img"` angesagt wird, kann nur ein echter Screenreader klären (H3). Der
+   Baum zeigt, was *dort steht*, nicht, was gesprochen wird. DE-Wortlaut
+   („dit dah“ oder „di dah“) ist Fables Frage.
+4. **D3: Empfehlung (a) bestätigt, simuliert.** Heute 1307–1311 px bei 36 Zeichen
+   (+407 bis +587 px Scrollen in allen drei Viewports); (a) und (b) lösen es.
+   **Neu (FINDINGS #13): schon bei 15 Zeichen scrollt der Echo-Check bei
+   1280 × 720 (+55 px).** Offen: Tastengröße (50 × 46 / 44 × 44 statt 64 px, nur am
+   Gerät zu beurteilen) und was „aktiv“ im Echo-Check heißt.
+5. **Grenzen der Simulation:** (a) und (b) sind DOM-Eingriffe, nur die Höhe ist
+   gemessen, nicht Verhalten und Treffsicherheit. Die Höhe „Seite = Fenster“
+   allein beweist kein Passen (die Bühne schrumpft) — deshalb sind Bühnenhöhe
+   und Abstand mitgemessen (≥ 24 px, Bühne ≥ 364 px).
+
+**Tests:** 481, unverändert. `npm test` (19 Dateien, 481), `npm run build`
+(inkl. `verify:fonts`, `verify:learn`, 18 Seiten), `verify:amber` (37 Ansichten)
+und `verify:keyboard` (26 Fälle) grün.
+
+Berührt: `tools/prep/ax-pattern.mjs`, `tools/prep/echo-height.mjs` (neu),
+`docs/PLAN-FINDINGS.md`, `FINDINGS.md` (#13), diese Übergabe.
+
+---
+
+# Übergabe — Stand nach Runde P11 (B1-Vorarbeit + cmap-Check: `npm run verify:fonts`)
+
+**Stand:** Branch `claude/clever-turing-77fkyo` (P10 = `22dfc04`), `main` = `fa579d0`.
+**P11 ist Plan-Schritt 2 (PR 3):** Vorarbeit zu den Findings #4/#8 und ein
+Absicherungs-Check. **Kein Code der App geändert** (`git diff` auf `src/` leer),
+`src/fonts/` und `content/learn/` byte-identisch. Bundle-Delta **0** (nur Tooling:
+`dist/assets/index-*.js` 235,96 kB, Schriften 22,59/24,18/24,25/58,08 kB wie zuvor).
+
+**Was es ist:**
+
+1. **Vorarbeit D1, nichts entschieden.** Ergebnis steht in
+   `docs/PLAN-FINDINGS.md`, B1, „Vorarbeit — Ergebnis“: Fundstellen, cmap der vier
+   Dateien, Upstream-Prüfung, Lizenz, gemessener Fallback (Screenshots unter
+   `docs/screenshots/b1-fallback-*.png`).
+2. **`tools/fonts/check.mjs`** (+ `tools/fonts/cmap.mjs`, ein woff2-cmap-Leser
+   mit `zlib.brotliDecompressSync`, keine neue Abhängigkeit), Script
+   `verify:fonts`, **Teil von `npm run build`** neben `verify:colors`. Rot bei
+   einem neuen fehlenden Codepoint und bei einer veralteten Ausnahme.
+   Scan-Umfang und was er **nicht** erfasst steht im Skriptkopf.
+
+**Was Fable sehen muss:**
+
+1. **D1 hat sich geändert.** Newsreader hat `→ ✓ ✗` auch upstream nicht; IBM Plex
+   Sans hat `→ ✓`, aber **nicht `✗`**. Weg A trägt also für `✓` und den
+   Fußzeilen-Pfeil, nicht für `✗` und nicht für den Newsreader-CTA-Pfeil. Details
+   und Optionen in B1. Entschieden ist nichts.
+2. **Der Check hat beim ersten Lauf ein viertes fehlendes Zeichen gefunden:**
+   `≈` U+2248 (`Send.tsx:390`, Tempo-Schätzung). Es steht upstream in beiden
+   Schriften. Ich habe es **zusätzlich zu `→ ✓ ✗` in die Baseline** genommen
+   (FINDINGS #11) — sonst wäre `npm run build` rot, und die Schrift darf ich nicht
+   anfassen. Das erweitert die im Auftrag genannte Baseline um einen Eintrag.
+3. **Die Lizenzlage** ist nur berichtet: OFL 1.1, **kein** deklarierter Reserved
+   Font Name in den Copyright-Zeilen. Keine Rechtsberatung.
+4. **Nicht belegt:** das Repo von Production Type (Newsreader) war nicht lesbar —
+   geprüft wurde die von Google verteilte TTF. Der App-Screenshot ist eine
+   Zusammenstellung mit den echten Klassen, kein echter Feedback-Screen.
+   Die CTA-Zeichnung kommt hier aus Liberation Serif, nicht aus DejaVu (so stand
+   es in #4) — je System anders, wie vermutet.
+5. **Neuer Nebenbefund #12:** `verify:amber` lässt nach dem Lauf einen
+   `vite preview` stehen (derselbe Fehler wie in P10 im Tastatur-Skript behoben).
+   Nicht mitrepariert, nach `FINDINGS.md`.
+
+**Tests:** 481, unverändert. `npm test` (19 Dateien, 481), `npm run build`
+(inkl. `verify:fonts` und `verify:learn`, 18 Seiten), `verify:amber` (37 Ansichten)
+und `verify:keyboard` (26 Fälle) grün.
+
+**Rot-Test belegt (`verify:fonts`):** (a) `☃` in eine Zeichenkette in
+`Send.tsx` → `ROT NEU fehlend: U+2603 … Send.tsx:388`, Exit 1; dasselbe Zeichen
+nur in einem Kommentar → bleibt grün. (b) `U+00E4` (vorhanden) in `KNOWN_GAPS` →
+`ROT Veraltete Ausnahme`, Exit 1. Beide danach zurückgesetzt.
+**Ohne Rot-Test:** ein Learn-Markdown mit neuem Zeichen (derselbe Codepfad wie
+Quelltext, aber nicht eigens ausgelöst).
+
+Berührt: `tools/fonts/check.mjs`, `tools/fonts/cmap.mjs` (neu), `package.json`
+(ein Script, `build` ruft es auf), `FINDINGS.md` (#11, #12),
+`docs/PLAN-FINDINGS.md`, `docs/screenshots/b1-fallback-*.png` (2, neu), diese Übergabe.
+
+---
+
+# Übergabe — Stand nach Runde P10 (A1: `npm run verify:keyboard`)
+
+**Stand:** `main` = `fa579d0`; der Plan (`docs/PLAN-FINDINGS.md`, P9) liegt auf
+dem Branch. **P10 setzt Arbeitspaket A1 um** — ein fester Browser-Check für die
+Tastatur. **Kein Code der App geändert**: Build `995d7d7674e9` unverändert,
+Bundle-Delta 0, Timing-Budget unberührt.
+
+**Was es ist:** `tools/keyboard/check.mjs`, aufgerufen mit
+`npm run verify:keyboard` (nach `npm run build`). **26 Fälle, 43–48 s.** Jeder
+Fall schickt echte `keydown`-Ereignisse über das DevTools-Protokoll — so lassen
+sich Modifikator-Flaggen und `repeat` setzen, was `page.keyboard` nicht kann —
+und liest danach, was der **Bildschirm** zeigt (Phase, Antwortzeile, Taste),
+nie, was der Code „sollte". Nicht Teil von `npm run build`: es braucht Chromium
+und `playwright-core` (`npm i --no-save`, wie bei `verify:amber`), keine neue
+Projektabhängigkeit. `KEYBOARD_ONLY=K1,K7` führt nur diese Fälle aus; ein
+Tippfehler im Filter scheitert laut statt still.
+
+**Abdeckung:** der Alt-Fall (P8) in Training, Klang-Auswahl, Echo-Check,
+Wort-Modus und beiden Sende-Wegen; der Schutz der Strg-/Cmd-Kürzel; P5
+(Nachdruck, Auto-Repeat), P5c (Speed round), P6 (alle drei Lücken des
+Echo-Checks); dazu je Phase der Inventur-Tabelle unten ein Anschlag je Taste
+für Training, Wort- und Sende-Modus (Auftrag S3).
+
+**Rot-Test belegt:** je ein Fix gezielt ausgebaut → genau die erwarteten Fälle
+werden rot (`altKey` zurück: K1–K3c; Repeat-Guard Training: K7; Repeat-Guard
+Echo-Check: K11; 500 ms: K6; `echoKeyAction` stumm: K9–K11), Kontrollfälle
+bleiben grün. K6 zusätzlich auf den **Grund** des Rots geprüft (nicht Timeout).
+Tabelle im Plan, A1.
+
+**Was Fable sehen muss:**
+
+1. **K2 ist anders als im Plan.** Enter auf einem fokussierten Knopf aktiviert
+   der Browser von selbst; ein Alt-Test mit Enter wäre auch bei verschlucktem
+   Anschlag grün geblieben. Er prüft jetzt einen Buchstaben in der Klang-Auswahl.
+2. **Der Inventur-Durchlauf (S3) hat keinen neuen Befund ergeben.** Der einzige
+   rote Fall der ersten Läufe (W4) war ein Fehler *im Fall*: eine leere Antwort
+   wird nicht abgeschickt — das ist dokumentierte Absicht
+   (`engine/wordSession.ts`, `submitWord`) und steht jetzt als Prüfung drin.
+3. **Zwei Fälle ohne eigenen Rot-Test:** K8 (Speed round) und K5 (Kürzel-Schutz)
+   — beide wären nur durch einen größeren Eingriff in `App.tsx` zu brechen.
+4. **Echtes Alt-Tab bleibt ungeprüft.** Der Check stellt den *Zustand* her, den
+   Alt-Tab hinterlässt (Alt-Flag ohne vorheriges Alt-`keydown`), nicht den
+   Fensterwechsel. G1 (Owner) steht unverändert aus.
+5. **Hilfscode dupliziert, nicht extrahiert** (Entscheidung D11): `startPreview`
+   und `openBrowser` stehen jetzt in zwei Skripten. Beim dritten Bedarf wird
+   verallgemeinert.
+6. **Ein Fehler im eigenen Skript gefunden und behoben:** der erste Entwurf
+   startete den Server über `npx`, `server.kill()` traf nur dieses; der Server
+   blieb nach jedem Lauf stehen und der nächste Lauf hängte sich unbemerkt an
+   ihn. Jetzt direkt über `node`, nach Volllauf hört kein Port mehr zu.
+
+**Tests:** 481, unverändert. `npm test`, `npm run build`, `verify:amber`
+(37 Ansichten) und `verify:keyboard` (26 Fälle) grün.
+
+Berührt: `tools/keyboard/check.mjs` (neu), `package.json` (ein Script),
+`docs/PLAN-FINDINGS.md`, diese Übergabe.
+
+---
+
+# Übergabe — Stand nach Runde P9 (Plan zur Beseitigung aller Findings)
+
+**Stand:** P6, P7, P8 sind gemergt (`main` = `fa579d0`). **P9 ist reine Planung —
+kein Code, kein Verhalten geändert.** Neu: [`docs/PLAN-FINDINGS.md`](./docs/PLAN-FINDINGS.md).
+
+Der Plan ordnet jedes offene Finding aus `FINDINGS.md` (**#4, #5, #6 Punkt 1,
+#8**) und jeden Vorschlag aus P5–P8 einem Arbeitspaket, einer Entscheidung (D1–D11)
+oder einer menschlichen Prüfung (H1–H9) zu, mit Reihenfolge, PR-Schnitt und
+einem Abschlusskriterium je Finding.
+
+**Was Fable sehen muss:**
+
+1. **Vier der Findings sind Entscheidungen, keine Fehler** (Schriftdateien,
+   Learn-Texte, Echo-Check-Liste) — der Plan baut dort nichts vor der Antwort,
+   bereitet aber alles bis zur Entscheidungsreife vor. D1–D3 sind die drei
+   Fragen, an denen vier Findings hängen.
+2. **G1 (Owner bestätigt P8 am eigenen Gerät) steht vor dem Ausbau des
+   Messgeräts.** P8 ist bewiesen für den *Zustand* „Alt-Flag gesetzt", nicht für
+   echtes Alt-Tab.
+3. **Zwei Messlücken sind offen benannt:** die Settings-Höhe seit P8 und bei
+   1280 × 720 ist nie gemessen.
+
+**Berührt:** `docs/PLAN-FINDINGS.md` (neu), diese Übergabe. Tests und Build
+unverändert (Stand P8: 481 Tests, Build `995d7d7674e9`).
+
+---
+
 # Übergabe — Stand nach Runde P8 (die Ursache: eine haengende Modifikator-Taste)
 
 **Stand:** P6 ist gemergt (`main` = `9ab9986`), P7 (Build-Kennung in den
@@ -709,6 +1365,7 @@ einzeln in der Tabelle.
 | **Echo-Check, `echo-ready`/`echo-listening`** | Leertaste/Enter | *bewusst kein eigener Listener — der Play-Kreis trägt in diesen Phasen ohnehin den Fokus (`Learn.tsx`), native Aktivierung spielt bereits ab* |
 | | ein Zeichen aus `answerPool` | **seit P6:** in `echo-ready` startet es die Wiedergabe (wie Ruling #105 im Training), in `echo-listening` wird es gepuffert und gilt, sobald der Ton durch ist (wie Ruling #103a) — vorher in beiden Phasen stumm verschluckt |
 | **Echo-Check, Antwort offen** (`echo-answering`) | ein Zeichen aus `answerPool` | beantwortet mit diesem Zeichen — **neu** |
+| | Darstellung ab 13 Optionen (**seit P15**) | ortsfestes Tastenfeld (`.keypad`, Nicht-Pool-Tasten gedimmt, „ — not in this round“) statt Dreier-Gitter; die Tastenbelegung (`echoKeyAction`, `answerPool`) ist unverändert, K9–K11 laufen unverändert |
 | | *jede Phase* | Auto-Repeat einer gehaltenen Taste zählt seit P6 nicht mehr als zweiter Anschlag |
 | | ein Zeichen außerhalb der Optionen | *bewusst nichts — nur was auf dem Schirm als Option steht* |
 | **Echo-Check, Auflösung** (`echo-feedback`) | Enter oder Leertaste | weiter (nächster Abruf oder nächste Karte) — **neu** |

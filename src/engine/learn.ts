@@ -84,10 +84,9 @@ export function currentCharacter(state: LearnState): string {
  * Die Antwortoptionen: alles, was bis hier eingefuehrt ist -- vorher Bekanntes
  * plus die Karten dieses Laufs bis einschliesslich der aktuellen.
  *
- * Bei der ersten Karte eines neuen Nutzers ist das genau ein Zeichen. Der
- * Abruf ist dann keine Unterscheidung, sondern eine Bestaetigung ("war das
- * eben K?"). Das ist die Folge der Vorgabe, nur Eingefuehrtes anzubieten, und
- * ehrlicher, als eine Auswahl aus Zeichen zu bauen, die noch niemand kennt.
+ * Bei der ersten Karte eines neuen Nutzers ist das genau ein Zeichen -- dann
+ * gibt es dort keinen Check (`cardHasEcho`), statt eine Auswahl aus Zeichen
+ * zu bauen, die noch niemand kennt.
  */
 export function answerPool(state: LearnState): string[] {
   const soFar = state.queue.slice(0, state.index + 1);
@@ -122,14 +121,30 @@ export function cardHeard(state: LearnState): LearnState {
 }
 
 /**
+ * Ob auf diese Karte ein Echo-Check folgt.
+ *
+ * Nur mit `requireEcho` -- und nur, wenn es etwas zu unterscheiden gibt. Bei
+ * der allerersten Karte eines neuen Nutzers ist der Antwortpool genau ein
+ * Zeichen; ein Abruf mit einer einzigen Option misst nichts und kostet drei
+ * Runden (Review Design/UX 06.10.2026, A4). Dort geht es direkt zur naechsten
+ * Karte, deren Check das erste Zeichen dann mit abfragt.
+ */
+export function cardHasEcho(state: LearnState): boolean {
+  return state.requireEcho && answerPool(state).length > 1;
+}
+
+/**
  * Von der Karte in den Echo-Check.
  *
  * Der erste Abruf ist immer das gerade eingefuehrte Zeichen: danach gefragt zu
  * werden, was man eben gehoert hat, ist der Sinn der Uebung. Die weiteren
  * ziehen aus allem Eingefuehrten, damit frueher Gelerntes nicht liegen bleibt.
+ *
+ * Folgt auf die Karte kein Check (`cardHasEcho`), geht es direkt weiter.
  */
 export function beginEcho(state: LearnState): LearnState {
   if (state.phase !== 'card-heard') return state;
+  if (!cardHasEcho(state)) return nextCard(state);
 
   return {
     ...state,

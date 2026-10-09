@@ -11,9 +11,35 @@
  * Der Amber-Knopf des Tasters ist das eine Amber dieser View (1.1 §4).
  */
 
+import type { Progress } from '../engine/stats';
 import { buildVersion } from './build';
+import { KeyMark } from './KeyMark';
+import { todayISO } from './today';
 
-export function About({ headingRef }: { headingRef: (element: HTMLElement | null) => void }) {
+/**
+ * Der eigene Stand als Datei (Review E6): die Daten liegen auf dem Geraet,
+ * also soll man sie auch mitnehmen koennen -- ohne Konto. Exakt der Blob, der
+ * im localStorage steht; nichts wird umgerechnet oder weggelassen.
+ */
+function downloadProgress(progress: Progress): void {
+  const blob = new Blob([JSON.stringify(progress, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `morse-lab-progress-${todayISO()}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function About({
+  headingRef,
+  progress,
+}: {
+  headingRef: (element: HTMLElement | null) => void;
+  progress: Progress;
+}) {
   const build = buildVersion();
 
   return (
@@ -24,13 +50,24 @@ export function About({ headingRef }: { headingRef: (element: HTMLElement | null
 
       <p className="about-lockup">
         {/* Dekorativ: den Namen sagt die Wortmarke daneben. */}
-        <img className="about-mark" src="/logo-key.svg" alt="" width="90" height="61" />
+        <KeyMark className="about-mark" width={90} />
         <span className="wordmark about-wordmark">Morse Lab</span>
       </p>
 
       <p className="about-line">
         An adaptive trainer for hearing Morse code — you learn each character as a sound, at full
         speed from day one.
+      </p>
+
+      {/*
+        Sichtbar statt nur fuer Screenreader (Review F3, CLAUDE.md 6: wer nicht
+        hoeren kann, muss klar erfahren, dass ein Modus auditiv ist -- und
+        warum). Send zeigt das Zeichen und fragt das Muster ab; es geht ohne
+        Ton. Wortlaut-Entwurf, Fable-Abnahme offen.
+      */}
+      <p className="about-line">
+        Morse Lab trains listening: every exercise starts with a tone. If you can't hear it, Send
+        lets you practise the patterns by sight.
       </p>
 
       <ul className="about-facts">
@@ -47,6 +84,12 @@ export function About({ headingRef }: { headingRef: (element: HTMLElement | null
           Your practice data stays on this device unless you create an account to sync it.
         </li>
       </ul>
+
+      <p className="about-more">
+        <button type="button" className="quiet-action" onClick={() => downloadProgress(progress)}>
+          Download your practice data
+        </button>
+      </p>
 
       {/*
         Der eine leise Weg in den Learn-Bereich (CONCEPT-LEARN §2). Ein echter

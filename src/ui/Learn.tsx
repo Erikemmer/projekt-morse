@@ -11,12 +11,15 @@ import { encodeChar } from '../engine/alphabet';
 import {
   ECHO_ROUNDS,
   answerPool,
+  cardHasEcho,
   currentCharacter,
   echoKeyAction,
   type LearnState,
 } from '../engine/learn';
 import { Pattern } from './Pattern';
 import { isBrowserChord } from './keyChord';
+import { Mark } from './Mark';
+import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 
 export function Learn({
   state,
@@ -69,7 +72,7 @@ export function Learn({
           char={char}
           heard={state.phase === 'card-heard'}
           playing={playing}
-          requireEcho={state.requireEcho}
+          continueAs={cardHasEcho(state) ? 'echo' : state.requireEcho ? 'next' : 'done'}
           buttonRef={focusRef}
           onPlay={onPlay}
           onContinue={state.requireEcho ? onBeginEcho : onNextCard}
@@ -239,7 +242,7 @@ function Card({
   char,
   heard,
   playing,
-  requireEcho,
+  continueAs,
   buttonRef,
   onPlay,
   onContinue,
@@ -247,7 +250,12 @@ function Card({
   char: string;
   heard: boolean;
   playing: boolean;
-  requireEcho: boolean;
+  /**
+   * Was nach der Karte kommt: der Echo-Check, direkt die naechste Karte (erste
+   * Karte eines Erstlaufs, `cardHasEcho`) oder -- beim freien Wiederholen --
+   * nichts weiter.
+   */
+  continueAs: 'echo' | 'next' | 'done';
   buttonRef: { current: HTMLElement | null };
   onPlay: () => void;
   onContinue: () => void;
@@ -276,8 +284,16 @@ function Card({
         )}
 
         <p className="learn-copy">
-          This is {char}. Listen a few times, then try it.
+          {continueAs === 'next'
+            ? `This is ${char}. Listen a few times, then go on.`
+            : `This is ${char}. Listen a few times, then try it.`}
         </p>
+        {/* Wortlaut-Entwurf, Fable-Abnahme offen (Review Design/UX, D1c): der
+            Check schreibt keine Statistik (engine/learn.ts) -- das darf man
+            wissen, bevor er beginnt. */}
+        {continueAs === 'echo' && (
+          <p className="learn-note">The next three are practice — nothing here counts.</p>
+        )}
       </div>
 
       {/*
@@ -294,7 +310,7 @@ function Card({
             className="button-go"
             onClick={onContinue}
           >
-            {requireEcho ? 'Try it' : 'Done'}
+            {continueAs === 'echo' ? 'Try it' : continueAs === 'next' ? 'Next sound' : 'Done'}
           </button>
         </div>
       )}
@@ -326,6 +342,12 @@ function Echo({
 }) {
   const pool = answerPool(state);
   const attempt = state.phase === 'echo-feedback' ? state.lastEcho : null;
+  // Ab 13 Optionen das ortsfeste Tastenfeld wie im Training (B3, D3 a):
+  // "aktiv" ist hier, was der Check anbietet (`answerPool`), der Rest ist
+  // gedimmt. Der Pool waechst nur, einmal Tastenfeld bleibt Tastenfeld.
+  const keypad = usesKeypad(pool.length);
+  const offered = new Set(pool);
+  const positions = keypad ? KEYPAD_LAYOUT : pool;
 
   return (
     <>
@@ -357,7 +379,7 @@ function Echo({
           {attempt !== null && (
             <span className="verdict" data-kind={attempt.correct ? 'hit' : 'miss'}>
               <span className="verdict-mark" aria-hidden="true">
-                {attempt.correct ? '✓' : '✗'}
+                <Mark kind={attempt.correct ? 'hit' : 'miss'} />
               </span>
               <span>{attempt.correct ? 'Correct.' : `Not quite — that was ${attempt.char}.`}</span>
             </span>
@@ -365,10 +387,11 @@ function Echo({
         </p>
       </div>
 
-      <div className="answers">
-        {pool.map((option) => {
+      <div className={keypad ? 'keypad' : 'answers'}>
+        {positions.map((option) => {
+          const active = !keypad || offered.has(option);
           const mark =
-            attempt === null
+            attempt === null || !active
               ? undefined
               : option === attempt.char
                 ? 'correct'
@@ -383,24 +406,31 @@ function Echo({
               className="answer"
               data-mark={mark}
               data-tone={mark === 'correct' && attempt !== null && !attempt.correct ? 'amber' : undefined}
-              disabled={state.phase !== 'echo-answering'}
+              data-active={keypad ? String(active) : undefined}
+              data-row-start={keypad && option === KEYPAD_ROW_BREAK ? 'true' : undefined}
+              disabled={state.phase !== 'echo-answering' || !active}
               onClick={() => onAnswer(option)}
             >
               <span aria-hidden="true">{option}</span>
               {mark !== undefined && (
                 <span className="answer-mark" aria-hidden="true">
-                  {mark === 'correct' ? '✓' : '✗'}
+                  <Mark kind={mark === 'correct' ? 'hit' : 'miss'} />
                 </span>
               )}
               <span className="visually-hidden">
                 {option}
                 {mark === 'correct' && ' — this was the character'}
                 {mark === 'wrong' && ' — your answer, not the character'}
+                {!active && ' — not in this round'}
               </span>
             </button>
           );
         })}
       </div>
+      {/* Ab 900 px (styles.css, `.keypad-hint`), wie im Training und in Words:
+          die physische Tastatur beantwortet den Echo-Check ebenfalls
+          (echoKeyAction). FINDINGS #14, Owner-Delegation P23. */}
+      {keypad && <p className="keypad-hint">or just type — the keyboard answers too</p>}
 
       {attempt !== null && (
         <div className="actions">

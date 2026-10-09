@@ -127,8 +127,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Fokus = 2 px Ink-Kontur, kein Glow (1.1 §7, §12). Vorher amber-deep:
+ * machte jede fokussierte Flaeche zu einer zweiten Amber-Stelle und legte
+ * um den Play-Kreis einen Doppelring, der wie ein Zustand aussah (Review F2,
+ * B4). Ink auf Paper ~15:1. */
 :focus-visible {
-  outline: 2px solid var(--amber-deep);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -168,6 +172,27 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--gray);
+}
+
+/* "End session" (Review A3): sieht aus wie die Beschriftung, die es
+ * ersetzt, traegt aber die volle 44er-Zielflaeche. Der negative Rand haelt
+ * die Zeile so hoch wie vorher. */
+.masthead-end {
+  min-height: var(--tap);
+  margin: -12px 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: var(--gray);
+  background: transparent;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.masthead-end:hover {
+  color: var(--ink);
 }
 
 .progress-track {
@@ -289,6 +314,12 @@ body {
 .verdict-mark {
   font-family: var(--font-sans);
   font-size: 18px;
+}
+
+/* Haken und Kreuz (ui/Mark.tsx): 1em gross, die Groesse setzt die Regel der
+ * jeweiligen Marke; block, damit sie nicht auf der Textgrundlinie sitzt. */
+.mark {
+  display: block;
 }
 
 /*
@@ -443,12 +474,20 @@ button:disabled {
 
 /* --- Antwort-Gitter: drei Spalten, Serif --- */
 
+/* Drei Spalten -- als umbrechende Flex-Reihe statt als Grid, damit eine
+ * unvollstaendige letzte Reihe mittig steht statt links auszufransen
+ * ("O" allein unter "P T L", Review B3). Volle Reihen sehen aus wie vorher. */
 .answers {
   flex: none;
   margin-top: 32px;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 12px;
+}
+
+.answers > .answer {
+  flex: 0 0 calc((100% - 24px) / 3);
 }
 
 .answer {
@@ -918,6 +957,15 @@ button:disabled {
   color: var(--gray);
 }
 
+/* Der leise Zusatz unter der Kartenzeile (Review D1c): kleiner, gleiche
+ * Farbe -- eine Randbemerkung, keine zweite Anweisung. */
+.learn-note {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--gray);
+}
+
 /* Haelt die Hoehe frei, solange das Muster noch nicht gezeigt werden darf --
  * sonst springt die Karte, sobald der Ton durch ist. */
 .pattern-blank {
@@ -946,6 +994,41 @@ button:disabled {
  * dass dabei ein Rahmen um eine reine Textzeile steht. */
 .screen-heading:focus {
   outline: none;
+}
+
+/*
+ * Seitenmuster der Verwaltungsseiten (Review B1): Eyebrow als Ueberschrift,
+ * darunter eine Aussage in Newsreader, eine leise Notiz, dann Haarlinien.
+ * Dieselben Masse wie die Eyebrow der Uebung (1.1 §5: Label 11-12 px, caps,
+ * +0.18 em) und die Frage (26 px Newsreader 500).
+ */
+.screen-eyebrow {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--gray);
+}
+
+.screen-eyebrow:focus {
+  outline: none;
+}
+
+.screen-statement {
+  margin: 8px 0 0;
+  font-family: var(--font-serif);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.screen-note {
+  margin: 12px 0 24px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--gray);
 }
 
 /* --- Einfuehrung: zwei Bildschirme, dann los --- */
@@ -1118,6 +1201,35 @@ button:disabled {
   line-height: 1;
 }
 
+/* Marke + Wortmarke im mobilen Kopf (Review B2). Abstand und Mark-Breite
+ * wie in der Schiene, eine Stufe groesser -- ueber 24 px, der Mindestbreite
+ * der Marke allein (1.1 §3). */
+/* Die Bildmarke inline (ui/KeyMark.tsx): Farben aus den Tokens, damit sie
+ * in jedem Theme traegt. */
+.key-bar {
+  fill: var(--ink);
+}
+
+.key-knob {
+  fill: var(--amber);
+}
+
+.key-bearing {
+  fill: none;
+  stroke: var(--ink);
+}
+
+.app-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.app-mark {
+  width: 30px;
+  height: auto;
+}
+
 /* Menue-Trigger und X: nur das Icon (24er-Raster, 1.5px Strich, runde
  * Kappen -- 1.1 §8), kein Rahmen, aber die volle 44er-Zielflaeche
  * (WCAG 2.5.5). Der negative Rand rueckt das Icon optisch an die
@@ -1164,7 +1276,8 @@ button:disabled {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 24px;
+  /* 16 statt 24 px, seit drei Gruppen-Haarlinien Hoehe kosten (Review A2). */
+  gap: 16px;
   /* Optischer Ausgleich fuer die X-Zeile oben: sonst haengt die Liste tief. */
   padding-bottom: 48px;
 }
@@ -1195,6 +1308,26 @@ button:disabled {
  * "Learn" fuehrt aus der App heraus (Ruling #83, C). */
 a.menu-item {
   text-decoration: none;
+}
+
+/* Gruppen im Menue (Review A2): Ueben · Stand · Geraet und Konto · Lesen.
+ * Eine Haarlinie ueber dem ersten Eintrag einer Gruppe, sonst nichts. */
+.menu-item[data-group-start='true'] {
+  margin-top: 4px;
+  padding-top: 20px;
+  border-top: var(--hairline);
+  /* Die globale button-Regel rundet die Ecken -- an einer Haarlinie
+   * sieht das wie ein Bogen aus. */
+  border-radius: 0;
+}
+
+/* Der Pfeil nach draussen am Eintrag "Learn" (Review A1): klein, gray, hinter
+ * dem Wort -- er sagt "verlaesst die App", nicht "wichtig". */
+.outward-mark {
+  flex: none;
+  /* Rueckt gegen den Flex-Abstand des Eintrags (16 px) ans Wort. */
+  margin-left: -8px;
+  color: var(--gray);
 }
 
 /* Der stille Hinweis an einem gesperrten Eintrag ("from 8 characters"): klein,
@@ -1244,6 +1377,10 @@ a.menu-item {
 }
 
 .menu-footer a {
+  /* Volle 44er-Zielflaeche (1.1 §6, Review F1) -- vorher 17 px hoch. */
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
   color: inherit;
   text-decoration: underline;
 }
@@ -1501,6 +1638,23 @@ a.menu-item {
   gap: 8px;
 }
 
+/* Luft unter der Ueberschrift und Haarlinien zwischen den Gruppen (Review
+ * B7): vorher klebte "Pitch" an "Settings", und Klang, Ansicht und Lernstand
+ * liefen ohne Absatz ineinander. */
+.settings-screen .screen-heading {
+  margin-bottom: var(--space-2);
+}
+
+.settings-screen .setting-group {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: var(--hairline);
+}
+
+.settings-preview {
+  margin: var(--space-1) 0;
+}
+
 /*
  * Die Build-Kennung als Fussnote des Settings-Screens (Owner-Wunsch): der
  * Stand, der gerade laeuft, ohne Umweg ueber die DevTools. Sie steht als
@@ -1518,19 +1672,6 @@ a.menu-item {
   border-top: 1px solid var(--edge-soft);
   color: var(--gray);
   font-size: 0.8125rem;
-}
-
-/*
- * Der Knopf des Messgeraets steht in derselben Fussnoten-Zeile wie die
- * Build-Kennung und erbt deren Groesse -- er ist eine Auskunft ueber das
- * Geraet, kein Angebot (1.1 Sect. 4). `.quiet-action` zentriert sonst; hier
- * beginnt er links, buendig mit "Build" darueber.
- */
-.settings-log-action {
-  margin: 0;
-  padding: 0;
-  font-size: inherit;
-  text-align: left;
 }
 
 .settings-build-id {
@@ -1709,6 +1850,19 @@ a.menu-item {
  * wirklich gibt (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
  */
 .variability-note,
+/* Rueckblick am Sitzungsende (Review D1d): zwei ruhige Zeilen ueber den
+ * Zahlen-Hinweisen, in Ink -- das ist die Aussage dieses Screens. */
+.summary-review {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.65;
+  text-align: center;
+}
+
+.summary-review p {
+  margin: 0;
+}
+
 .streak-note {
   margin: 16px 0 0;
   font-size: 13px;
@@ -2037,6 +2191,10 @@ a.menu-item {
     background: transparent;
   }
 
+  .nav-rail-item[data-group-start='true']::before {
+    top: calc(50% + 6px);
+  }
+
   .nav-rail-item[aria-current='page'] {
     color: var(--ink);
   }
@@ -2048,6 +2206,13 @@ a.menu-item {
   /* Der stille Hinweis am gesperrten Eintrag -- dieselbe Regel wie im Menue. */
   .nav-rail-item .menu-hint {
     margin-left: var(--space-1);
+  }
+
+  /* Gruppen wie im Menue-Panel (Review A2), hier mit weniger Luft. */
+  .nav-rail-item[data-group-start='true'] {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: var(--hairline);
   }
 
   /*
@@ -2067,6 +2232,9 @@ a.menu-item {
   }
 
   .nav-rail-footer a {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap);
     color: inherit;
     text-decoration: underline;
   }

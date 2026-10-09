@@ -59,8 +59,10 @@ import {
   createSession,
   promptFinished,
   retuneHomeTone,
+  reviewCharacters,
   submitAnswer,
   summarize,
+  type CharacterReview,
   type SessionKind,
   type SessionState,
 } from '../engine/session';
@@ -105,7 +107,7 @@ import { streakStanding, type StreakStanding } from '../engine/streak';
 import { computeTiming } from '../engine/timing';
 import { About } from './About';
 import { Account } from './Account';
-import { pushProgress } from './account';
+import { pushProgress } from './accountApi';
 import { Intro } from './Intro';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 import { Learn, ReviewPicker, useLearnKeyboard } from './Learn';
@@ -123,7 +125,7 @@ import { dayQuotaLine, streakLine } from './statusLines';
 import { applyTheme, syncThemeColorMeta } from './theme';
 import { todayISO } from './today';
 import { isBrowserChord } from './keyChord';
-import { formatKeyLog, recordKey } from './keyLog';
+import { Mark } from './Mark';
 
 export function App() {
   /**
@@ -250,7 +252,7 @@ export function App() {
    * Am Ende einer Sitzung einmal zum Konto hochschieben -- **best effort**.
    *
    * Kein `await`, kein Ergebnis in der UI, kein Modal: ein Abgleich, der nicht
-   * durchkommt, ist kein Ereignis fuer den Nutzer (ui/account.ts). Ohne Konto
+   * durchkommt, ist kein Ereignis fuer den Nutzer (ui/accountApi.ts). Ohne Konto
    * tut `pushProgress` gar nichts und loest keinen einzigen Aufruf aus.
    *
    * Der synchrone Schreibvorgang davor ist Absicht: `pushProgress` schickt den
@@ -668,6 +670,12 @@ export function App() {
    * unterbricht: seine Karte kommt vor der *naechsten*, so wie vorgesehen.
    */
   const pending = pendingIntroductions(session.progress);
+  /**
+   * In welcher Sitzung (`sessionsStarted`) der Lernlauf uebersprungen wurde,
+   * oder null. Nur Sitzungszustand: die naechste Sitzung hat eine andere
+   * Nummer und legt die Karten wieder vor.
+   */
+  const [learnSkippedIn, setLearnSkippedIn] = useState<number | null>(null);
   // `view` und `menuOpen` gehoeren in die Bedingung, seit es das Gehaeuse
   // gibt: ein Lauf, der startet, waehrend jemand auf Progress oder im Menue
   // steht, spielte seinen Karten-Ton in einen fremden Screen hinein.
@@ -681,6 +689,7 @@ export function App() {
     !reviewing &&
     learn === null &&
     pending.length > 0 &&
+    learnSkippedIn !== session.progress.sessionsStarted &&
     session.phase === 'ready' &&
     session.round === 1;
 
@@ -748,12 +757,14 @@ export function App() {
   }, [learn?.echoPrompt, playCharacter]);
 
   const skipLearn = useCallback(() => {
-    // "Skip for now" laesst den Durchgang aus, ohne ihn bei jedem Start erneut
-    // vorzulegen -- die Zeichen bleiben ueber "Review the sounds" erreichbar.
-    const queue = learn?.queue ?? pending;
-    setSession((current) => ({ ...current, progress: markIntroduced(current.progress, queue) }));
+    // "Skip" laesst den Durchgang *fuer diese Sitzung* aus. Die Zeichen bleiben
+    // unvorgestellt (`introducedCharacters` unveraendert) und kommen vor der
+    // naechsten Sitzung wieder -- vorher wurden sie als eingefuehrt gebucht,
+    // ohne je gehoert worden zu sein (Review Design/UX, A5). Bis dahin sind sie
+    // ueber "Learn the sounds" erreichbar.
+    setLearnSkippedIn(session.progress.sessionsStarted);
     setLearn(null);
-  }, [learn?.queue, pending]);
+  }, [session.progress.sessionsStarted]);
 
   const openReview = useCallback((char: string) => {
     setLearn(
@@ -856,7 +867,7 @@ export function App() {
    * schrumpfte das Antwort-Gitter mitten in einer Übung, und die Ziehung zöge
    * plötzlich aus anderen Zeichen als die, die man gerade übt.
    *
-   * Geschrieben ist der Stand zu diesem Zeitpunkt schon (`ui/account.ts`); hier
+   * Geschrieben ist der Stand zu diesem Zeitpunkt schon (`ui/accountApi.ts`); hier
    * zieht nur der React-Zustand nach.
    */
   const adoptProgress = useCallback((progress: Progress) => {
@@ -940,26 +951,6 @@ export function App() {
    * laufende Beutel behaelt seine restlichen Lose; das neue Zeichen kommt mit
    * dem naechsten Neufuellen (dieselbe Regel wie Ruling #103b).
    */
-  /*
-   * Den Mitschnitt weitergeben (ui/keyLog.ts). Der Nutzer reproduziert den
-   * Ausfall einmal und schickt die Zeilen -- damit ist die Frage, ob ein
-   * Anschlag ankam und mit welchen Flaggen, beantwortet statt geraten.
-   *
-   * `navigator.clipboard` braucht einen sicheren Kontext und kann abgelehnt
-   * werden. Scheitert es, landet der Text in der Konsole und der Knopf sagt
-   * das -- ein Messgeraet, das stumm scheitert, ist schlimmer als keines.
-   */
-  const copyInputLog = useCallback(async () => {
-    const text = formatKeyLog();
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch {
-      console.log(text);
-      return false;
-    }
-  }, []);
-
   const unlockNextCharacter = useCallback(() => {
     setSession((current) => {
       const { progress: unlocked, introduced } = unlockNext(current.progress);
@@ -1148,23 +1139,6 @@ export function App() {
   // zweimal ins Leere, was sich anfuehlt wie ein verschluckter Tastendruck,
   // obwohl der eigentliche Antwort-Anschlag laengst angekommen war. Ein
   // Anschlag aus dem Zeichensatz treibt den Ablauf jetzt in jeder Phase.
-  /*
-   * Das Messgeraet (siehe ui/keyLog.ts). Ein eigener Listener in der
-   * Capture-Phase, unabhaengig von jedem Modus: er entscheidet nichts, haelt
-   * nichts auf und ruft kein preventDefault -- er schreibt nur mit, was der
-   * Browser liefert.
-   *
-   * Absichtlich getrennt von den Handlern, statt in ihnen: die offene Frage
-   * ist, ob ein Anschlag ueberhaupt bei ihnen ankommt und mit welchen
-   * Flaggen. Ein Protokoll, das in denselben Handlern haengt, koennte diese
-   * Frage nicht beantworten -- es wuerde dieselbe Annahme teilen.
-   */
-  useEffect(() => {
-    const onAnyKey = (event: KeyboardEvent) => recordKey(event, menuOpen ? 'menu' : view);
-    window.addEventListener('keydown', onAnyKey, { capture: true });
-    return () => window.removeEventListener('keydown', onAnyKey, { capture: true });
-  }, [view, menuOpen]);
-
   useEffect(() => {
     if (view !== 'practice' || menuOpen) return undefined;
 
@@ -1404,11 +1378,10 @@ export function App() {
           totalCharacterCount={CHARACTER_ORDER.length}
           nextCharacter={nextCandidate(session.progress)}
           onUnlockNext={unlockNextCharacter}
-          onCopyInputLog={copyInputLog}
           headingRef={focusTarget}
         />
       ) : view === 'about' ? (
-        <About headingRef={focusTarget} />
+        <About headingRef={focusTarget} progress={session.progress} />
       ) : reviewing ? (
         <ReviewPicker
           characters={CHARACTER_ORDER}
@@ -1423,6 +1396,7 @@ export function App() {
           summary={summary}
           streak={streak}
           drillResult={drillResult(session, drillTarget)}
+          review={reviewCharacters(session)}
           onRestart={restart}
           headingRef={focusTarget}
         />
@@ -1430,11 +1404,14 @@ export function App() {
         <>
           <SessionHeader
             label={
-              session.kind === 'drill' ? 'Speed round' : `Session ${session.progress.sessionsStarted}`
+              // "Session N" zaehlte jedes Oeffnen der App mit (Review D2) --
+              // der Kopf nennt jetzt den Modus, nicht eine Zahl ohne Bedeutung.
+              session.kind === 'drill' ? 'Speed round' : 'Practice'
             }
             round={session.round}
             totalRounds={session.totalRounds}
             done={session.attempts.length}
+            onEnd={onStartScreen ? undefined : restart}
           />
 
           <section className="stage">
@@ -1466,7 +1443,9 @@ export function App() {
                 {session.introduced !== null && (
                   <p className="unlock" role="status">
                     The set grows: <strong>{session.introduced}</strong> joins from the next
-                    round.
+                    round. Your recent answers were steady.
+                    {/* Zweiter Satz: der Grund (Review D1a), ohne Zahl.
+                        Wortlaut-Entwurf, Fable-Abnahme offen. */}
                   </p>
                 )}
               </>
@@ -1587,14 +1566,21 @@ interface DrillTarget {
  * der Satz auch im Singular stimmen ("R is still slow to land.").
  */
 function slowSentence(characters: readonly string[]): string {
+  const list = characterList(characters);
+  return characters.length === 1 ? `${list} is still slow to land.` : `${list} are still slow to land.`;
+}
+
+/**
+ * "R", "R and K", "R, K, S and 2 more" -- hoechstens drei Zeichen beim Namen.
+ * Seit dem Rueckblick am Sitzungsende (Review D1d) der zweite Bedarf, deshalb
+ * aus `slowSentence` herausgezogen (CLAUDE.md 4).
+ */
+function characterList(characters: readonly string[]): string {
   const named: string[] = [...characters.slice(0, 3)];
   const rest = characters.length - named.length;
   if (rest > 0) named.push(`${rest} more`);
-
-  if (named.length === 1) return `${named[0]} is still slow to land.`;
-
-  const list = `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
-  return `${list} are still slow to land.`;
+  if (named.length === 1) return named[0];
+  return `${named.slice(0, -1).join(', ')} and ${named[named.length - 1]}`;
 }
 
 /**
@@ -1742,7 +1728,7 @@ function Verdict({ correct, char }: { correct: boolean; char: string }) {
   return (
     <span className="verdict" data-kind={correct ? 'hit' : 'miss'}>
       <span className="verdict-mark" aria-hidden="true">
-        {correct ? '✓' : '✗'}
+        <Mark kind={correct ? 'hit' : 'miss'} />
       </span>
       <span>{correct ? 'Correct.' : `Not quite — that was ${char}.`}</span>
     </span>
@@ -1831,7 +1817,7 @@ function Answers({
             <span aria-hidden="true">{char}</span>
             {mark !== undefined && (
               <span className="answer-mark" aria-hidden="true">
-                {mark === 'correct' ? '✓' : '✗'}
+                <Mark kind={mark === 'correct' ? 'hit' : 'miss'} />
               </span>
             )}
             <span className="visually-hidden">
@@ -1860,6 +1846,7 @@ function Summary({
   summary,
   streak,
   drillResult,
+  review,
   onRestart,
   headingRef,
 }: {
@@ -1868,6 +1855,8 @@ function Summary({
   streak: StreakStanding;
   /** Die Ergebniszeile eines Drills, oder null (auch bei normalen Sitzungen). */
   drillResult: string | null;
+  /** Welche Zeichen in dieser Sitzung sicher kamen und welche noch nicht. */
+  review: CharacterReview;
   onRestart: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
@@ -1915,6 +1904,18 @@ function Summary({
       {drillResult !== null && <p className="note">{drillResult}</p>}
 
       {/*
+        Der Rueckblick in Zeichen statt in Prozent (Review D1d): was sitzt,
+        was noch nicht. Kein Schuldton -- "still settling" stellt fest, und
+        die Zeichen kommen ohnehin wieder. Wortlaut-Entwurf, Fable-Abnahme offen.
+      */}
+      {!drill && (review.steady.length > 0 || review.settling.length > 0) && (
+        <div className="summary-review">
+          {review.steady.length > 0 && <p>Steady today: {characterList(review.steady)}.</p>}
+          {review.settling.length > 0 && <p>Still settling: {characterList(review.settling)}.</p>}
+        </div>
+      )}
+
+      {/*
         Die Streak-Zeile steht *unter* den Zahlen, nicht ueber ihnen: geuebt
         wird fuer das Koennen, nicht fuer die Reihe (CLAUDE.md 2.4). An dieser
         Stelle traegt sie den frisch verbuchten Tag -- der faellt in advance(),
@@ -1932,8 +1933,11 @@ function Summary({
       <p className="note">
         Response time is measured from the end of the tone, over correct answers only. Read it as a
         rough indicator of confidence, not a measurement of it — it also contains how fast you
-        found the button. Works offline once loaded.
+        found the button.
       </p>
+      {/* Eigene Zeile: im selben Absatz las sich der Offline-Hinweis wie ein
+          Teil der Reaktionszeit-Erklaerung (Review D). */}
+      <p className="note">Works offline once loaded.</p>
 
       <div className="actions">
         <button type="button" className="button-primary" onClick={onRestart}>

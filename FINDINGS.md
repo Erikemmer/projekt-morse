@@ -88,6 +88,14 @@ statt still mitrepariert (CLAUDE.md §5):
 
 ## 4. `→` (U+2192) fehlt in allen vier selbstgehosteten Schriftschnitten
 
+**Status: teils behoben, teils entschieden: bleibt** (04.10.2026, Runde P14;
+Owner-Delegation von D1). Der Pfeil der **Fußzeile** („10 → 11 wpm“, Plex) steht
+jetzt im IBM-Plex-Subset und kommt aus der Markenschrift. Der Pfeil der
+**Learn-CTA** (Newsreader, 14 Seiten) **bleibt Fallback** (Weg C): Newsreader hat
+ihn auch upstream nicht, und der Text ist Fables (CLAUDE.md §3), also
+byte-identisch. `verify:fonts` führt diese Stelle als `ACCEPTED_FALLBACK` und
+meldet sie in jedem Lauf. Der Ursprungstext bleibt als Begründung stehen.
+
 **Gefunden:** 02.09.2026, beim Bauen des Learn-Bereichs.
 
 Die CTA-Zeile aller 14 Learn-Seiten heißt „Start hearing it → Open Morse Lab"
@@ -114,7 +122,7 @@ Learn-Seiten; ein anderer Wortlaut wäre eine Abweichung von der Vorgabe und
 gehört Fable, nicht diesem Commit. Die Zeile steht in `--gray` bei 13 px, der
 Unterschied ist entsprechend klein.
 
-## 5. Die Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen
+## 5. Die Morse-Muster der Alphabet-Tabelle sind für Screenreader Satzzeichen — BEHOBEN (P16, Owner-Delegation D2)
 
 **Gefunden:** 02.09.2026, gleiche Aufgabe.
 
@@ -136,7 +144,53 @@ bleiben. Deshalb Bericht statt Eingriff (CLAUDE.md §5, §2.9).
 in der vorgelesenen Form ausgeben. Braucht eine Freigabe von Fable, weil es
 den vorgelesenen Inhalt der Seite ändert.
 
-## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter — Punkt 2 BEHOBEN (Ruling #110)
+**Status: behoben** (04.10.2026, Runde P16, Owner-Delegation D2 — kein
+Fable-Ruling). Der Umfang war größer als hier geschätzt: **44 Stellen je
+Sprache** (36 Zellen, 5 reine Code-Zellen, 3 im Fließtext), nicht 36. Der
+Generator markiert sie (`aria-hidden` + `.visually-hidden` „dit dah“, EN und
+DE), `content/learn/` ist byte-identisch; `verify:learn` zählt 88 Stellen aus
+dem Quelltext. Accessibility-Tree: Zelle `A ·−` → `A dit dah`. **Offen:** H3 (was
+ein Screenreader daraus macht) und die Fließtext-Zeilen mit Subpixel-
+Abweichung im Pixelvergleich (Tabellen: 0) — Einzelheiten `docs/PLAN-FINDINGS.md`, B2.
+
+**Entscheidungsvorlage B2-Pixeldiff (Runde P22, gemessen, nichts entschieden).**
+Frage: die Fließtext-Stellen (3 je Sprache: R `(·−·)` und SOS auf der Alphabet-Seite,
+SOS auf der Geschichts-Seite) **so lassen** oder **nicht markieren**? Messung
+`tools/prep/pattern-pixeldiff.mjs`: je vier Seiten (EN/DE, Alphabet/Geschichte) bei
+390×844 und 1440×900 (8 Bilder, volle Seite, dpr 1) in drei Varianten — A wie
+ausgeliefert, B Fließtext bloß/Tabellen markiert, C alles bloß (Stand vor B2).
+
+| Vergleich | Ergebnis |
+|---|---|
+| **B–C** (Tabellen markiert) | **0 Pixel in allen 8 Bildern** — die 82 Tabellen-Stellen (41 je Sprache) kosten nichts |
+| **A–C** (Fließtext markiert) | 4 von 8 Bildern weichen ab: EN Alphabet 390 = 63 px; DE Alphabet 390 = 147 px, 1440 = 253 px; DE Geschichte 1440 = 215 px. Je 9–16 Pixelzeilen (eine Textzeile), max. Kanalunterschied 59–60 von 255 (Kantenglättung), **Seitenhöhe in allen 8 Bildern identisch**, Anteil 0,005–0,011 % der Fläche |
+| A–B | identisch zu A–C (die Abweichung stammt allein aus den Fließtext-Stellen) |
+
+Vier der acht Bilder (EN Geschichte 390 und 1440, DE Geschichte 390, EN Alphabet 1440) sind
+auch markiert pixelgleich; die Abweichung hängt von Zeilenumbruch und Schriftlauf ab, nicht
+vom Inhalt. Sie ist **Subpixel-Positionierung des Rests der Zeile**, kein Umbruch, keine
+Höhenänderung, keine Farbe. Die Zählung weicht von P16 („8 von 16 Bildern“) ab: P16 zählte
+andere Bilder; hier gilt nur diese Messung.
+
+| Option | Wirkung | Preis |
+|---|---|---|
+| **1 — So lassen** (Empfehlung des Messenden) | Wie ausgeliefert. Sichtbar: eine Kantenglättung an einer Zeile, kein Leser sieht 60/255 an Glyphenkanten. | Nichts; die Seite bleibt für Screenreader stimmig. |
+| **2 — Fließtext nicht markieren** | Pixel wie vor B2 (B–C = 0). 6 Stellen (3 je Sprache) wieder bloß: im Baum `·−·`/`···` als Satzzeichen. | Genau die Stellen, an denen die Seite das Muster **erklärt** (R, SOS), sind für Screenreader wieder stumm oder „Mittelpunkt/Minus“ (§6; H3 offen). Dazu eine Sonderregel im Generator und im `verify:learn` (88 → 82 Stellen). |
+
+Zu wiegen: ein nicht wahrnehmbarer Pixelunterschied (Option 1) gegen eine
+Barrierefreiheits-Lücke (Option 2). Die Messung spricht nicht für 2. **Das ist eine
+Produktentscheidung (Owner/Fable);** weder Generator noch `verify:learn` noch
+`content/learn/` wurden berührt.
+
+## 6. Zwei weitere Flächen tragen dieselbe wachsende Liste im Dreier-Gitter — Punkt 2 BEHOBEN (Ruling #110), Punkt 1 BEHOBEN (P15)
+
+**Status Punkt 1: entschieden und behoben** (04.10.2026, Runde P15;
+Owner-Delegation von D3, kein Fable-Ruling). Der Echo-Check zeigt ab 13
+Optionen das ortsfeste 36-Plätze-Tastenfeld (`.keypad`, Nicht-Pool-Tasten
+gedimmt, „ — not in this round“); „aktiv“ = die Optionen des Checks. Nachgemessen:
+Seite = Fenster bei 390 × 844, 1280 × 720 und 1440 × 900, mit 15 **und** 36
+Zeichen (vorher bis +587 px). Tasten 50 × 46 / 44 × 44 — ob das am Telefon
+trägt, ist H9 und nicht geprüft. Der Ursprungstext unten bleibt stehen.
 
 **Gefunden:** 02.09.2026, beim Umsetzen von Ruling #75 (das feste Tastenfeld im
 Training).
@@ -183,6 +237,10 @@ Optionen des Checks oder der ganze aktive Satz. **Gehört Fable, nicht dem
 nächsten Commit.**
 
 ## 7. Der Start-Screen scrollt, sobald das Tastenfeld gilt — BEHOBEN (Ruling #98)
+
+**Status: entschieden und behoben** (Runde D1, Ruling Notion-Log #98): eine
+Tastenhöhe für alle Modi (46 px), Abstand über dem Tastenfeld 32 → 24 px; kein
+Zustand überschreitet 844 px bei 390 × 844. Der Ursprungstext bleibt stehen.
 
 **Gefunden:** 02.09.2026, beim Vermessen des Wort-Screens (Runde F2). **Nicht
 neu und nicht von dieser Runde** — auf `main` (66d0af4) genauso gemessen.
@@ -236,6 +294,13 @@ Spielraum statt einer Zahl, die knapp unter dem Limit lag.
 
 ## 8. ✓ und ✗ fehlen ebenfalls in allen vier Schriftschnitten
 
+**Status: entschieden und behoben** (04.10.2026, Runde P14; Owner-Delegation von
+D1, Weg B). Haken und Kreuz sind kein Schriftzeichen mehr, sondern ein
+SVG-Paar (`src/ui/Mark.tsx`) nach Guidelines 1.1 §8: 1,5 px Strich, runde Enden,
+24er Raster, nur Linie, Farbe über `currentColor`. Beide aus **einer** Hand, weil
+`✗` in keiner Upstream-Schrift steht. Der Ursprungstext bleibt als Begründung
+stehen.
+
 **Gefunden:** 02.09.2026, beim Prüfen der cmap-Tabellen für Eintrag 4
 (Runde F2). **Nicht neu** — die App benutzt beide Zeichen seit dem ersten
 Feedback-Screen.
@@ -261,6 +326,10 @@ neuen Dateien, ändert aber die Form von Haken und Kreuz — und das ist eine
 Gestaltungsfrage. **Gehört Fable.**
 
 ## 9. Die Auflösung einer falschen Antwort scrollt weiter — 849 px
+
+**Status: entschieden und behoben** (Runde D1, Ruling Notion-Log #96, Teil C.10;
+Nachtrag #98): 843 px, natürliche Inhaltskante 820 px bei fünf Fehlpositionen.
+Der Ursprungstext bleibt stehen.
 
 **Gefunden:** 02.09.2026, beim Nachmessen des Wort-Screens für Ruling #94.
 **Nicht neu und nicht von diesem Commit** — vorher waren es 891 px, die 46-px-
@@ -357,3 +426,169 @@ still mitgeändert.
 **Was es kosten würde:** vier Zeilenenden mit zwei Leerzeichen (oder `<br>`)
 in `impressum.de.md` und `imprint.en.md` — kein Code, nur die zwei
 Markdown-Dateien. Eine Zeile Bestätigung genügt.
+
+
+## 11. `≈` (U+2248) fehlt in allen vier Schriftschnitten — gefunden vom cmap-Check
+
+**Status: entschieden und behoben** (04.10.2026, Runde P14; Owner-Delegation von
+D1, Weg A). U+2248 steht im IBM-Plex-Subset (`tools/fonts/add-glyphs.py`);
+`KNOWN_GAPS` in `tools/fonts/check.mjs` ist damit leer. Der Ursprungstext bleibt
+als Begründung stehen.
+
+**Gefunden:** 03.10.2026, beim ersten Lauf von `npm run verify:fonts` (Runde P11).
+**Nicht neu** — vermutlich seit der Sende-Modus die Tempo-Schätzung zeigt.
+
+`src/ui/Send.tsx:390` zeigt nach einem getasteten Versuch `≈ 14 wpm`. U+2248 steht
+in keinem der vier woff2-Subsets in `src/fonts/` (cmap geprüft) und kommt deshalb
+aus dem Fallback-Stack. Es **steht** in den vollen Upstream-Schriften (IBM Plex
+Sans complete, Newsreader variable TTF) — es ist also nur ein Subsetting-Verlust,
+keine Lücke der Familie.
+
+**Warum es zählt:** dieselbe Klasse wie #4 und #8, kein Bruch, nur wechselnde
+Zeichnung. Die Zeile ist eine Näherungsangabe (CLAUDE.md 2.6), das Zeichen trägt
+die Aussage „ungefähr" — der Satz daneben („wpm") nicht allein.
+
+**Was es kosten würde:** gehört in dieselbe Entscheidung wie #4/#8 (D1): beim
+Neu-Subsetten ein Codepoint mehr. Bis dahin steht U+2248 mit Verweis auf diesen
+Eintrag in `KNOWN_GAPS` von `tools/fonts/check.mjs`; der Check wird rot, sobald
+ein Schnitt das Zeichen trägt, und fordert dann das Streichen des Eintrags.
+
+## 12. `verify:amber` lässt nach dem Lauf einen Vorschau-Server stehen
+
+**Status: behoben** (05.10.2026, Runde P19; Ursache und Nachweis siehe #15).
+Davor: offen (Stand 04.10.2026, Runde P18; bewusst nicht mitrepariert — eine
+fremde Datei, CLAUDE.md §5). Zuletzt bestätigt in P18, siehe #15.
+
+**Gefunden:** 03.10.2026, beim Prüfen der Definition of Done (Runde P11).
+
+Nach `npm run verify:amber` hört weiter ein `vite preview` zu (nach dem Lauf
+gezählt: 1 Prozess; nach `verify:keyboard` 0). Es ist derselbe Fehler, den P10 im
+Tastatur-Skript behoben hat: der Server wird über `npx`/`.bin` gestartet und
+`server.kill()` (`tools/amber/check.mjs:733`, `:833`) trifft nur den Vermittler.
+Folge: ein späterer Lauf kann sich unbemerkt an den alten Server hängen, der
+noch den alten `dist/` ausliefert.
+
+**Nicht mitrepariert:** eine fremde Datei (CLAUDE.md 5), nicht Teil dieser
+Aufgabe. **Was es kosten würde:** der Start direkt über `node` wie in
+`tools/keyboard/check.mjs`, wenige Zeilen.
+
+## 13. Der Echo-Check scrollt schon bei 15 Zeichen, wenn das Fenster 1280 × 720 hat
+
+**Gefunden:** 04.10.2026, bei der Messung für B3 (Runde P12).
+
+Finding #6 Punkt 1 nennt den Echo-Check erst bei 36 Optionen als zu hoch. Die
+Messung (`tools/prep/echo-height.mjs`) zeigt: bei **15** eingeführten Zeichen
+ist die Seite bei 1280 × 720 **775 px hoch (+55 px Scrollen)**, bei 390 × 844
+und 1440 × 900 passt sie (844 bzw. 900). Die Bühne (`.stage`) gibt dort schon
+bis auf ihr Minimum (235 px) nach. Der Fall ist also nicht erst „bei 36“,
+sondern ab etwa 13–15 Zeichen am Laptop-Fenster.
+
+**Nicht mitrepariert:** Teil von D3 (Echo-Check-Liste), gehört Fable. Jeder
+der Wege (a) und (b) löst ihn mit (in der Simulation, siehe
+`docs/PLAN-FINDINGS.md`, B3).
+
+**Status: behoben** (04.10.2026, Runde P15, mit B3). Nachgemessen: 15 Zeichen
+bei 1280 × 720 jetzt 720 px Seite bei 720 px Fenster (vorher 775, +55).
+
+## 14. Der Echo-Check hat keine „or just type“-Zeile, obwohl die Tastatur dort antwortet — BEHOBEN (P23, Owner-Delegation)
+
+**Status: behoben (05.10.2026, Runde P23).** Der Owner hat die Entscheidung an Claude
+delegiert; entschieden: **Option 1**, derselbe String wie im Training und in Words
+(„or just type — the keyboard answers too“), kein neuer EN-String, drei Stellen
+teilen denselben Wortlaut. Umgesetzt: eine Zeile in `Learn.tsx` unter dem Tastenfeld
+(`.keypad-hint`, unter 900 px unsichtbar). Bundle JS +94 B, CSS ±0. Die Höhe (−33 px
+Bühne, kein Scroll) stammt aus der P21-DOM-Simulation, in P23 nicht neu gemessen.
+Davor: Entscheidungsvorlage (05.10.2026, Runde P21;
+Höhe gemessen, nichts gebaut). Davor: offen (Stand P18).
+
+**Entscheidungsvorlage (P21).** Der Wortlaut ist ein neuer EN-String (CLAUDE.md §2.10,
+§5) und gehört Fable. Gemessen mit `ECHO_VARIANTS=heute,hint0,hint1,hint2 node
+tools/prep/echo-height.mjs` (Zeile als DOM-Simulation hinter `.keypad`, Klasse
+`.keypad-hint`, 15 und 36 Zeichen; der Echo-Check zeigt in beiden Fällen das
+ortsfeste Tastenfeld mit 36 Plätzen):
+
+| Viewport | Zeile sichtbar | Seite / Fenster | Bühne heute → mit Zeile | Abstand Bühne–Tasten |
+|---|---|---|---|---|
+| 390 × 844 | nein (`display: none` unter 900 px) | 844 / 844 | 310 → 310 | 24 → 24 |
+| 1280 × 720 | ja, 1 Zeile, 21 px (+12 px Rand) | 720 / 720, kein Scrollen | 362 → 329 (−33) | 24 → 24 |
+| 1440 × 900 | ja, 1 Zeile, 21 px (+12 px Rand) | 900 / 900, kein Scrollen | 542 → 509 (−33) | 24 → 24 |
+
+Bei 15 und 36 Zeichen identisch. Die Höhe hängt nicht vom Wortlaut ab: alle drei
+Kandidaten brechen nirgends um. Die Zeile kostet also **33 px Bühnenhöhe**, keinen
+Scroll.
+
+Optionen (keine empfohlen, keine gebaut):
+
+1. **Wie im Training:** „or just type — the keyboard answers too“ (derselbe String,
+   keine zweite Variante).
+2. **Kürzer, Imperativ:** „Or type the character.“
+3. **Kürzer, Aussage:** „Keyboard works too.“
+4. **Keine Zeile:** Status quo; die Tastatur bleibt unbeworben. Kostet nichts.
+
+Zu entscheiden bleibt außerdem, ob die Zeile in Words (`Words.tsx`, trägt sie schon)
+und Echo denselben String teilen sollen. Umsetzung nach Entscheidung: eine Zeile in
+`Learn.tsx` unter dem Tastenfeld, `.keypad-hint` existiert (nur ab 900 px sichtbar),
+Bundle-Delta einige Dutzend Byte.
+
+**Gefunden:** 04.10.2026, beim Umsetzen von B3 (Runde P15).
+
+Das Training zeigt ab 900 px unter dem Tastenfeld „or just type — the keyboard
+answers too“ (`App.tsx`, `.keypad-hint`, Ruling #96 B.6). Der Echo-Check
+beantwortet Tasten aus `answerPool` ebenso (`echoKeyAction`, Ruling #108), hat
+aber die Zeile nicht — auch nicht, seit er dasselbe Tastenfeld trägt.
+
+**Nicht mitrepariert:** ein neuer UI-Wert, der in B3 nicht verlangt war
+(CLAUDE.md §5); die Zeile kostet am Laptop zusätzliche Höhe, die nachzumessen
+wäre. **Was es kosten würde:** eine Zeile in `Echo`, eine Messung.
+
+## 15. `verify:amber` lässt weiterhin einen Vorschau-Server stehen (zu #12)
+
+**Status: behoben** (05.10.2026, Runde P19; Duplikat von #12). Ursache: `startPreview`
+in `tools/amber/check.mjs` startete über `npx`, `server.kill()` (im `finally`, das
+es schon gab) traf nur den npx-Vermittler. Behoben wie P10 im Tastatur-Skript:
+Start direkt per `node node_modules/vite/bin/vite.js`. Nachweis: grüner Lauf (Exit 0)
+und künstlicher Rot-Lauf (Exit 1) hinterlassen beide keinen Prozess, Port 4183 frei.
+Davor: offen (Stand 04.10.2026, Runde P18; nicht mitrepariert).
+
+**Gefunden:** 04.10.2026, Runde P15: nach `npm run verify:amber` lief ein
+`vite preview --port 4183` weiter (nur über `ps` + `kill <pid>` zu beenden).
+Bestätigt #12, unverändert, nicht mitrepariert. Runde P16: wieder derselbe
+Befund (PID per `ps` gefunden, per `kill <pid>` beendet). Runde P17: ein drittes Mal (PID 1706). Runde P18: ein viertes Mal (PID 4194, per `kill` beendet).
+
+## 16. `tools/prep/ax-pattern.mjs` läuft nach B2 nicht mehr durch
+
+**Status: behoben** (05.10.2026, Runde P20; davor offen, Stand P18). Das Skript
+liest Letter und Muster jetzt aus `<strong>` und `.morse-pattern` der B2-Zelle statt
+aus dem Zellentext; sonst unverändert. Nachweis: läuft durch (Exit 0), Zelle „A dit
+dah“, im Baum steht nur `StaticText "dit dah"`, die Zeichen `·−` nicht.
+
+**Gefunden:** 04.10.2026, Runde P16.
+
+Das Messskript aus P12 erwartet in der Alphabet-Tabelle die Muster als bloßen
+Text (`StaticText " ·−"`) und simuliert darauf die drei D2-Optionen. Seit B2
+liefert der Generator das Muster schon mit Versteck; das Skript bricht an der
+Stelle ab (`Accessibility.getPartialAXTree: Either nodeId … must be specified`).
+Der Abschnitt „heute“ ist damit historisch (er beschreibt den Stand vor B2).
+
+**Nicht mitrepariert:** es ist eine einmalige Vorarbeit, kein Check, nicht im
+Build. Die Messung „nachher“ lief in P16 über ein Wegwerfskript im Scratchpad.
+**Was es kosten würde:** entweder das Skript auf den neuen DOM umstellen oder
+es als Beleg des Vorher-Zustands markieren/löschen.
+
+## 17. `npm run build` bricht auf macOS/Windows an `Account.tsx` / `account.ts` ab — BEHOBEN
+
+**Status: behoben** (06.10.2026, Branch `claude/review-design-ux`): `account.ts` heißt `accountApi.ts`.
+
+**Gefunden:** 06.10.2026, Design-/UX-Review. `src/ui/` enthält `Account.tsx` und `account.ts`; `App.tsx` importiert `./Account` und `./account`. Auf case-insensitiven Dateisystemen kollidieren beide (`tsc`: TS1261/TS1149, `vite build` scheitert). Linux/CI sind nicht betroffen. **Nicht mitrepariert.** Kosten: eine Datei umbenennen (z. B. `accountApi.ts`) plus Importe, S.
+
+## 18. `public/logo-lockup.svg` ist ungültiges XML — BEHOBEN
+
+**Status: behoben** (06.10.2026): Doppelbindestrich im Kommentar ersetzt; `xmllint` über alle SVGs in `public/` grün.
+
+**Gefunden:** 06.10.2026, Review. Der Kommentar enthält `--` (Zeile 6); `xmllint` meldet „Comment must not contain '--'", als Bild lädt die Datei nicht. Sie ist im Repo nirgends eingebunden. **Nicht mitrepariert.** Kosten: S.
+
+## 19. Zwei veraltete Kommentare nennen überholte Schwellen — BEHOBEN
+
+**Status: behoben** (06.10.2026): beide Kommentare nennen jetzt 10 bzw. 85 %.
+
+**Gefunden:** 06.10.2026, Review. `src/engine/stats.ts:136` „Sperre 20" (Konstante ist 10, `growth.ts:53`); `src/engine/tempo.ts:20-22` „90-%-Fenster" (Konstante ist 0,85, `growth.ts:35`). **Nicht mitrepariert.** Kosten: S.
