@@ -121,6 +121,15 @@ export function streakStanding(streak: Streak, today: string): StreakStanding {
 }
 
 /**
+ * Ob der eine erklärende Satz zum Freeze jetzt fällig ist (Review D1e):
+ * ein Freeze liegt bereit, und der Satz stand noch nie. Rein; wer ihn
+ * gezeigt hat, setzt `freezeNoticeSeen` (engine/session.ts).
+ */
+export function freezeNoticeDue(streak: Streak, today: string, seen: boolean): boolean {
+  return !seen && streakStanding(streak, today).freezeReady;
+}
+
+/**
  * Verbucht `today` als geübten Tag und gibt einen **neuen** Stand zurück.
  *
  * Aufgerufen wird das genau einmal: wenn eine Sitzung beendet ist

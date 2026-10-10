@@ -39,7 +39,9 @@ import {
   parseProgress,
   recordAttempt,
   recordFor,
+  type Progress,
 } from './stats';
+import { emptyStreak, recordPracticeDay } from './streak';
 
 /** Zufallsquelle mit fester Folge -- wiederholt den letzten Wert, wenn sie leer ist. */
 function sequence(values: number[]): () => number {
@@ -691,5 +693,58 @@ describe('reviewCharacters: der Rueckblick am Sitzungsende', () => {
 
   it('ohne Antworten bleibt beides leer', () => {
     expect(reviewCharacters(start())).toEqual({ steady: [], settling: [] });
+  });
+});
+
+describe('Der Freeze-Satz (Review D1e)', () => {
+  const day = (n: number) => `2026-09-${String(n).padStart(2, '0')}`;
+  const session = (progress: Progress, today: string, totalRounds = 1) =>
+    createSession({ totalRounds, progress, random: () => 0, today });
+  const finish = (state: SessionState) => {
+    let next = beginPlayback(state, 0);
+    next = promptFinished(next);
+    next = submitAnswer(next, next.prompt, 1);
+    return advance(next, () => 0);
+  };
+  /** Sechs geuebte Tage in Folge -- der siebte verdient den Freeze. */
+  const sixDays = () => {
+    let streak = emptyStreak();
+    for (let d = 1; d <= 6; d++) streak = recordPracticeDay(streak, day(d));
+    return streak;
+  };
+
+  it('steht am Ende der Sitzung, die den Freeze verdient -- und merkt sich das', () => {
+    const progress = { ...emptyProgress(), streak: sixDays() };
+    const started = session(progress, day(7));
+    expect(started.freezeNoticeAt).toBeNull();
+
+    const done = finish(started);
+    expect(done.progress.streak.freezeReady).toBe(true);
+    expect(done.freezeNoticeAt).toBe('end');
+    expect(done.progress.freezeNoticeSeen).toBe(true);
+  });
+
+  it('kommt kein zweites Mal', () => {
+    const progress = { ...emptyProgress(), streak: sixDays() };
+    const next = finish(session(progress, day(7))).progress;
+    const again = finish(session(next, day(8)));
+    expect(again.progress.streak.freezeReady).toBe(true);
+    expect(again.freezeNoticeAt).toBeNull();
+  });
+
+  it('steht auf dem Start-Screen, wenn der Freeze anderswo verdient wurde', () => {
+    // Words/Send verbuchen den Tag ohne Sitzungsende: der Freeze liegt bereit,
+    // der Satz stand aber noch nie.
+    const streak = recordPracticeDay(sixDays(), day(7));
+    expect(streak.freezeReady).toBe(true);
+    const started = session({ ...emptyProgress(), streak }, day(8));
+    expect(started.freezeNoticeAt).toBe('start');
+    expect(started.progress.freezeNoticeSeen).toBe(true);
+  });
+
+  it('ohne Freeze kein Satz', () => {
+    const started = session(emptyProgress(), day(1));
+    expect(started.freezeNoticeAt).toBeNull();
+    expect(finish(started).freezeNoticeAt).toBeNull();
   });
 });

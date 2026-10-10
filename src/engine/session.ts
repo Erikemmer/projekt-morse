@@ -20,7 +20,7 @@
 import { drawFromBag, type Bag } from './bag';
 import { maybeGrow } from './growth';
 import { beginSession, recordAttempt, type Progress } from './stats';
-import { recordPracticeDay } from './streak';
+import { freezeNoticeDue, recordPracticeDay } from './streak';
 import { maybeSpeedUp } from './tempo';
 import { drawPromptTone, drawSessionSound, type SessionSound } from './variability';
 
@@ -123,6 +123,15 @@ export interface SessionState {
    * `progress.variabilityNoticeSeen`.
    */
   readonly showVariabilityNotice: boolean;
+  /**
+   * Wo der eine Satz zum Freeze steht (Review D1e): auf dem Start-Screen
+   * dieser Sitzung ('start' -- der Freeze wurde anderswo verdient, etwa in
+   * Words oder Send, oder die Zeile kam noch nie dran), auf dem Abschluss
+   * ('end' -- diese Sitzung hat ihn gerade verdient) oder nirgends. Das
+   * Merken uebernimmt `progress.freezeNoticeSeen`, wie bei der
+   * Variabilitaets-Zeile.
+   */
+  readonly freezeNoticeAt: 'start' | 'end' | null;
 }
 
 export interface SessionOptions {
@@ -172,6 +181,14 @@ export function createSession(options: SessionOptions): SessionState {
   const showVariabilityNotice = sound.stage >= 1 && !progress.variabilityNoticeSeen;
   if (showVariabilityNotice) progress = { ...progress, variabilityNoticeSeen: true };
 
+  // Dasselbe fuer den Freeze-Satz: faellig, wenn ein Freeze bereitliegt und
+  // der Satz noch nie stand -- der Normalfall ist aber das Sitzungsende
+  // (advance), wo er verdient wird.
+  const freezeNoticeAt = freezeNoticeDue(progress.streak, options.today, progress.freezeNoticeSeen)
+    ? 'start'
+    : null;
+  if (freezeNoticeAt !== null) progress = { ...progress, freezeNoticeSeen: true };
+
   const draw = drawFromBag(pool, [], progress, { random: options.random });
 
   return {
@@ -193,6 +210,7 @@ export function createSession(options: SessionOptions): SessionState {
     sound,
     promptToneHz: drawPromptTone(sound, options.random),
     showVariabilityNotice,
+    freezeNoticeAt,
   };
 }
 
@@ -329,12 +347,18 @@ export function submitAnswer(
 export function advance(state: SessionState, random: () => number): SessionState {
   if (state.phase !== 'feedback') return state;
   if (state.round >= state.totalRounds) {
+    const streak = recordPracticeDay(state.progress.streak, state.today);
+    // Der Freeze-Satz, wenn diese Sitzung den Freeze gerade verdient hat und
+    // er noch nie erklaert wurde (Review D1e).
+    const freezeNotice = freezeNoticeDue(streak, state.today, state.progress.freezeNoticeSeen);
     return {
       ...state,
       phase: 'finished',
+      freezeNoticeAt: freezeNotice ? 'end' : state.freezeNoticeAt,
       progress: {
         ...state.progress,
-        streak: recordPracticeDay(state.progress.streak, state.today),
+        streak,
+        freezeNoticeSeen: state.progress.freezeNoticeSeen || freezeNotice,
       },
     };
   }

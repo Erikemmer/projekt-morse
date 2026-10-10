@@ -1845,11 +1845,30 @@ a.menu-item {
  * eigene Flaeche; ein Streak, der ins Auge springt, waere Druck (CLAUDE.md
  * 2.8).
  *
- * Zwei Klassen mit einer Regel und nicht eine Klasse fuer beides: die Namen
- * sagen, *was* dasteht. Zusammengelegt sind sie erst, seit es die zweite Zeile
- * wirklich gibt (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
+ * Drei Klassen mit einer Regel und nicht eine Klasse fuer alles: die Namen
+ * sagen, *was* dasteht (Variabilitaet, Freeze-Erklaerung, Streak).
+ * Zusammengelegt sind sie, seit es die zweite Zeile wirklich gibt
+ * (CLAUDE.md 4: verallgemeinern beim zweiten Bedarf).
+ *
+ * In Runde R1 war der .summary-review-Block versehentlich zwischen die
+ * beiden ersten Selektoren geraten; die Variabilitaets-Zeile stand dadurch in
+ * 15 px Ink statt 13 px Gray. Hier wieder zusammengefuehrt.
  */
 .variability-note,
+.freeze-note,
+.streak-note {
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  text-align: center;
+  color: var(--gray);
+}
+
+/* Die Freeze-Erklaerung folgt direkt auf die Streak-Zeile -- halber Abstand. */
+.streak-note + .freeze-note {
+  margin-top: 4px;
+}
+
 /* Rueckblick am Sitzungsende (Review D1d): zwei ruhige Zeilen ueber den
  * Zahlen-Hinweisen, in Ink -- das ist die Aussage dieses Screens. */
 .summary-review {
@@ -1861,14 +1880,6 @@ a.menu-item {
 
 .summary-review p {
   margin: 0;
-}
-
-.streak-note {
-  margin: 16px 0 0;
-  font-size: 13px;
-  line-height: 1.65;
-  text-align: center;
-  color: var(--gray);
 }
 
 /* Auf dem Abschluss-Screen traegt schon die .stage-Luecke den Abstand. */

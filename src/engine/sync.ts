@@ -57,7 +57,7 @@
  * - `sessionsStarted`: das Maximum. Ein monoton wachsender Zähler darf durch
  *   einen Merge nicht sinken; die Summe wäre falsch, weil beide Stände dieselbe
  *   Vorgeschichte enthalten können.
- * - `introSeen` und `variabilityNoticeSeen`: logisches Oder. Wer die Einführung
+ * - `introSeen`, `variabilityNoticeSeen` und `freezeNoticeSeen`: logisches Oder. Wer die Einführung
  *   gesehen hat, hat sie gesehen -- sie ein zweites Mal vorzulegen wäre eine
  *   Rückstufung.
  *
@@ -154,6 +154,7 @@ export function mergeProgress(local: Snapshot, remote: Snapshot): Progress {
     introSeen: local.progress.introSeen || remote.progress.introSeen,
     variabilityNoticeSeen:
       local.progress.variabilityNoticeSeen || remote.progress.variabilityNoticeSeen,
+    freezeNoticeSeen: local.progress.freezeNoticeSeen || remote.progress.freezeNoticeSeen,
     // Eigene Regel, eigene Uhr: der zuletzt geübte Kalendertag entscheidet,
     // nicht `updatedAt` (siehe Kopf und engine/streak.ts).
     streak: mergeStreak(local.progress.streak, remote.progress.streak),
