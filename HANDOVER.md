@@ -1,3 +1,21 @@
+# Übergabe — Stand nach Runde P35 (Reste nach R3: Settings, Summary, Regressionsfälle)
+
+**Stand:** Branch `claude/port-p24-fixes` ab `main` = `00233f6` (R3), danach `main` (R4, `da74fd6`) hereingemergt. R3 (PR #7) hatte die
+drei Fehler aus PR #5 schon übernommen; nachgemessen blieb:
+
+| FINDINGS | Auf main gemessen | Fix | Nachher |
+|---|---|---|---|
+| #22 Rest | Settings 946/925 px (390 × 844), 808/787 px (1280 × 720) — sieben Themes statt zwei wie auf PR #5 | Theme-Picker als Raster mit „Theme“/„Light“/„Dark“ in Spalte 1; „Add … now“ in die Kopfzeile | 844 / 720 / 900 in allen sechs Fällen |
+| #24 neu | Summary mit allen Sätzen 871 px (390 × 844) | Streak + Freeze-Satz als ein Block (`.streak-block`), die 4-px-Regel greift | 844 / 720 / 900 |
+| #20 Nachtrag | Regressionsfall fehlte in `verify:amber` | Fälle „Tippen während des Tons“ und „Summary mit allen Saetzen“ | 41 Ansichten grün |
+
+Play-Kreis-Sprung (#21): auf main schon in allen Breiten 0 px (nur einmalige Zeilen am
+Telefon 11 px) — hier nichts zu tun. Gesamtlauf: `npm test` 505, Build grün,
+`verify:amber` 41 (+ night/frost je 6), `verify:keyboard` 25, Kontrast 24/24; Training
+ohne Scroll. Bundle gegen main: JS ±0 B (anderer Inhalt, gleiche Länge), CSS +81 B.
+
+---
+
 # Übergabe — Stand nach Runde R4 (Themes: PR #8 verworfen)
 
 **Stand:** `main`. Owner-Delegation 10.10.2026 („entscheide du selbst“) an Claude: PR #8
