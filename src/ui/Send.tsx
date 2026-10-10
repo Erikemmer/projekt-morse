@@ -162,7 +162,8 @@ function SendHeader({ sent }: { sent: number }) {
     <header className="masthead">
       <div className="masthead-row">
         <span>Send</span>
-        <span>{sent} sent today</span>
+        {/* Erst ab 1 (aus PR #5): eine 0 ist eine Zahl ohne Aussage. */}
+        {sent > 0 && <span>{sent} sent today</span>}
       </div>
     </header>
   );
@@ -170,11 +171,13 @@ function SendHeader({ sent }: { sent: number }) {
 
 /** `keyPressed` aus demselben Grund wie bei `questionFor`. */
 function eyebrowFor(state: SendSessionState, keyPressed: boolean): string {
-  const hz = `${state.promptToneHz} Hz`;
-  if (keyPressed || state.phase === 'sending') return `Your turn · ${hz}`;
-  if (state.phase === 'listening') return `Now playing · ${hz}`;
-  if (state.phase === 'feedback') return `Answer · ${hz}`;
-  return `Ready · ${hz}`;
+  // Hz erst ab Variabilitaets-Stufe 1, wo sie variiert und damit etwas sagt
+  // (aus PR #5). Dass der Modus auditiv ist, sagen Intro und About.
+  const hz = state.sound.stage === 0 ? '' : ` · ${state.promptToneHz} Hz`;
+  if (keyPressed || state.phase === 'sending') return `Your turn${hz}`;
+  if (state.phase === 'listening') return `Now playing${hz}`;
+  if (state.phase === 'feedback') return `Answer${hz}`;
+  return `Ready${hz}`;
 }
 
 /**

@@ -128,6 +128,7 @@ export function Words({
         <AnswerLine
           typed={state.typed}
           enabled={typingAllowed}
+          submittable={answering}
           onDelete={onDelete}
           onSubmit={onSubmit}
         />
@@ -174,7 +175,8 @@ function WordsHeader({ heard }: { heard: number }) {
     <header className="masthead">
       <div className="masthead-row">
         <span>Words &amp; groups</span>
-        <span>{heard} heard today</span>
+        {/* Erst ab 1 (aus PR #5): eine 0 ist eine Zahl ohne Aussage. */}
+        {heard > 0 && <span>{heard} heard today</span>}
       </div>
     </header>
   );
@@ -187,11 +189,12 @@ function WordsHeader({ heard }: { heard: number }) {
  * geht.
  */
 function eyebrowFor(state: WordSessionState): string {
-  const hz = `${state.promptToneHz} Hz`;
-  if (state.phase === 'listening') return `Now playing · ${hz}`;
-  if (state.phase === 'answering') return `Your turn · ${hz}`;
-  if (state.phase === 'feedback') return `Answer · ${hz}`;
-  return `Ready · ${hz}`;
+  // Hz erst ab Variabilitaets-Stufe 1 (aus PR #5).
+  const hz = state.sound.stage === 0 ? '' : ` · ${state.promptToneHz} Hz`;
+  if (state.phase === 'listening') return `Now playing${hz}`;
+  if (state.phase === 'answering') return `Your turn${hz}`;
+  if (state.phase === 'feedback') return `Answer${hz}`;
+  return `Ready${hz}`;
 }
 
 /**
@@ -239,11 +242,14 @@ function PlayCircle({
 function AnswerLine({
   typed,
   enabled,
+  submittable,
   onDelete,
   onSubmit,
 }: {
   typed: string;
   enabled: boolean;
+  /** Nur in 'answering': "Check" erscheint erst mit dem Tonende -- waehrend des Tons ist der Play-Kreis das eine Amber (PR #5, FINDINGS #17 dort). */
+  submittable: boolean;
   onDelete: () => void;
   onSubmit: () => void;
 }) {
@@ -291,9 +297,11 @@ function AnswerLine({
               />
             </svg>
           </button>
-          <button type="button" className="button-check" onClick={onSubmit}>
-            Check
-          </button>
+          {submittable && (
+            <button type="button" className="button-check" onClick={onSubmit}>
+              Check
+            </button>
+          )}
         </>
       )}
     </div>

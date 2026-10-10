@@ -13,6 +13,7 @@
 
 import type { Progress } from '../engine/stats';
 import { buildVersion } from './build';
+import { SOUND_ONLY_NOTE } from './Intro';
 import { KeyMark } from './KeyMark';
 import { todayISO } from './today';
 
@@ -65,10 +66,7 @@ export function About({
         warum). Send zeigt das Zeichen und fragt das Muster ab; es geht ohne
         Ton. Wortlaut-Entwurf, Fable-Abnahme offen.
       */}
-      <p className="about-line">
-        Morse Lab trains listening: every exercise starts with a tone. If you can't hear it, Send
-        lets you practise the patterns by sight.
-      </p>
+      <p className="about-line">{SOUND_ONLY_NOTE}</p>
 
       <ul className="about-facts">
         <li>Build {build}</li>

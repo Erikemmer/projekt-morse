@@ -165,7 +165,7 @@ body {
 .masthead-row {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
   font-variant-numeric: tabular-nums;
   font-size: 12px;
@@ -192,6 +192,23 @@ body {
 }
 
 .masthead-end:hover {
+  color: var(--ink);
+}
+
+/*
+ * Runde und Menue-Knopf am Zeilenende (aus PR #5). Die Tap-Flaeche bleibt
+ * 44 px (--tap), die negativen Raender halten die Zeile so hoch wie vorher --
+ * die Aufloesung im Tastenfeld steht bei 390 x 844 genau auf 844 px.
+ */
+.masthead-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.masthead-menu {
+  display: flex;
+  margin: -14px 0;
   color: var(--ink);
 }
 
@@ -337,7 +354,9 @@ body {
   margin: 0;
   font-family: var(--font-serif);
   font-size: 64px;
-  font-weight: 500;
+  /* 300 wie der Buchstabe der Lernkarte (1.1 §5; aus PR #5) -- vorher 500,
+   * zwei Gewichte fuer dasselbe Zeichen auf benachbarten Screens. */
+  font-weight: 300;
   line-height: 1;
 }
 
@@ -396,6 +415,25 @@ body {
   color: var(--gray);
   /* Zahlen springen sonst beim Zaehlen (1.1 §5). */
   font-variant-numeric: tabular-nums;
+}
+
+/*
+ * Variabilitaets-Zeile, Freeze-Satz oder Drill-Einladung auf dem Start-Screen
+ * (aus PR #5, FINDINGS #20 dort): links im Fuss wie die Streak-Zeile, aber
+ * auch ab 1280 px sichtbar (`.footer-stats` ist dort ausgeblendet). Der Knopf
+ * behaelt seine 44-px-Tap-Flaeche; die negativen Raender halten die Zeile so
+ * hoch wie den Text, damit der Fuss beim ersten Play nicht schrumpft.
+ */
+.footer-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
+.footer-note .quiet-action {
+  margin-block: -12px;
+  vertical-align: baseline;
 }
 
 .dots {
@@ -504,9 +542,13 @@ button:disabled {
   border-radius: var(--radius);
 }
 
-.answer:hover:not(:disabled),
-.answer:focus-visible {
+.answer:hover:not(:disabled) {
   border-color: var(--amber);
+}
+
+/* Fokus in Ink wie ueberall -- der Ring traegt ihn, der Rand folgt. */
+.answer:focus-visible {
+  border-color: var(--ink);
 }
 
 /*
@@ -551,6 +593,19 @@ button:disabled {
  */
 .answer:disabled[data-mark] {
   opacity: 1;
+}
+
+/*
+ * Das Dreier-Gitter im Zustand "jetzt nicht" (ready, listening, und die nicht
+ * markierten Tasten der Aufloesung): umrandet statt Opazitaets-Geist (1.1 §7
+ * "outlined", kein "disabled-gray ghost"). Weiche Kante, Buchstabe gray --
+ * sichtbar als Kontext der Frage, aber ruhig (aus PR #5). Das Tastenfeld hat
+ * seine eigene Regel weiter unten.
+ */
+.answers .answer:disabled:not([data-mark]) {
+  opacity: 1;
+  color: var(--gray);
+  border-color: var(--edge-soft);
 }
 
 /* --- Das feste Tastenfeld: sechs Spalten, alle 36 Positionen ---
@@ -992,7 +1047,10 @@ button:disabled {
 
 /* Der Fokus springt auf die Ueberschrift, damit sie vorgelesen wird -- ohne
  * dass dabei ein Rahmen um eine reine Textzeile steht. */
-.screen-heading:focus {
+/* Auch die Summary-Ueberschrift: mit dem Ink-Fokusring stand dort sonst
+ * ein Kasten um "Session done". */
+.screen-heading:focus,
+.summary-heading:focus {
   outline: none;
 }
 
@@ -1077,6 +1135,14 @@ button:disabled {
   outline: none;
 }
 
+/* Der Hinweis fuer Nicht-Hoerende unter dem Intro-Text (aus PR #5): kleiner, gray. */
+.intro-note {
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--gray);
+}
+
 .intro-text {
   margin: 0;
   /* Fliesstext 15-16 px bei 1.65 (1.1 §5); 17 px lag darueber. */
@@ -1116,7 +1182,7 @@ button:disabled {
 }
 
 .skip:hover,
-.quiet-action:hover,
+.quiet-action:hover:not(:disabled),
 .quiet-link:hover {
   color: var(--amber-deep);
 }
@@ -1141,13 +1207,6 @@ button:disabled {
  * erreichbar sein und sonst nichts (CLAUDE.md 2.8). Der Knopf steht auf einer
  * eigenen Zeile, damit er die Zielgroesse aus WCAG 2.5.5 wirklich hat.
  */
-.drill-invite {
-  margin-top: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 /*
  * Der eine gefuellte Amber-Primary einer View (1.1 §7). Er steht dort, wo es
  * genau einen naechsten Schritt gibt: "Next", "Begin", "Try it", "Done",
@@ -1350,14 +1409,16 @@ a.menu-item {
  * aria-current sagt dasselbe fuer Screenreader. */
 .menu-dot {
   flex: none;
-  width: 8px;
-  height: 8px;
+  /* 6 px Ink wie die Punkte in Fusszeile und Intro (aus PR #5): eine
+   * Punkt-Definition im Produkt; das Menue traegt kein Amber mehr. */
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: transparent;
 }
 
 .menu-dot[data-current='true'] {
-  background: var(--amber);
+  background: var(--ink);
 }
 
 /*
@@ -1423,7 +1484,10 @@ a.menu-item {
 
 .stat-line dd {
   margin: 0;
-  font-size: 15px;
+  /* Zahlen als Fakten in Newsreader wie auf der Summary -- eine Stimme fuer
+   * Zahlen (aus PR #5). */
+  font-family: var(--font-serif);
+  font-size: 17px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1638,21 +1702,36 @@ a.menu-item {
   gap: 8px;
 }
 
-/* Luft unter der Ueberschrift und Haarlinien zwischen den Gruppen (Review
- * B7): vorher klebte "Pitch" an "Settings", und Klang, Ansicht und Lernstand
- * liefen ohne Absatz ineinander. */
+/* Luft unter der Ueberschrift (Review B7): vorher klebte "Pitch" an "Settings". */
 .settings-screen .screen-heading {
   margin-bottom: var(--space-2);
 }
 
-.settings-screen .setting-group {
-  margin-top: var(--space-2);
-  padding-top: var(--space-2);
-  border-top: var(--hairline);
+/*
+ * Als Text gesetzt (aus PR #5): jeder Abschnitt durch eine Haarlinie vom
+ * vorigen getrennt -- Linien tragen die Oberflaeche, keine Flaechen (1.1 §7).
+ * 8 px ueber der Linie, damit der Screen bei 390 x 844 nicht scrollt.
+ */
+.settings-screen .setting + .setting,
+.settings-screen .account-note + .setting {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--edge-soft);
 }
 
-.settings-preview {
-  margin: var(--space-1) 0;
+.settings-screen .setting > .quiet-action {
+  align-self: flex-start;
+}
+
+/* Probeton bzw. Tempo-Reset und Wert rechts in der Kopfzeile. Die negativen
+ * Raender halten die Zeile so hoch wie den Text; Tap-Flaeche bleibt 44 px. */
+.setting-head-end {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.setting-head-end .quiet-action {
+  margin: -12px 0;
 }
 
 /*
@@ -1912,6 +1991,107 @@ a.menu-item {
   border: 0;
 }
 
+/* Der leise Zusatz zur Aussage ("· 2 added early"): Sans, klein, gray. */
+.screen-statement-aside {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--gray);
+}
+
+/*
+ * Ein Link mitten im Satz (aus PR #5, Progress -> Learn-Artikel): Ink und
+ * unterstrichen, damit er sich nicht nur ueber Farbe vom grauen Text abhebt
+ * (CLAUDE.md §6); Hover wie die leisen Links in amber-deep.
+ */
+.text-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.text-link:hover {
+  color: var(--amber-deep);
+}
+
+/* "settling" in der Progress-Tabelle (aus PR #5): ein Wort neben dem
+ * Zeichen, Sans, klein, gray -- nie Farbe allein (CLAUDE.md §6). */
+.row-note {
+  margin-left: var(--space-1);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--gray);
+}
+
+/*
+ * Das Trennornament in der App (ui/Ornament.tsx, aus PR #5): dieselbe
+ * Geometrie wie auf den Learn-Seiten (tools/learn/learn.css, u = 6 px), nur
+ * mit knapperem Abstand -- die Screens der App stehen bei 390 x 844 eng.
+ */
+.ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin: var(--space-1) 0;
+}
+
+.ornament-letter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* In der Summary traegt schon die Luecke der Buehne den Abstand. */
+.stage > .ornament {
+  margin: 0;
+}
+
+.ornament i {
+  display: block;
+  height: 6px;
+  background: var(--ink);
+}
+
+.ornament i[data-kind='dit'] {
+  width: 6px;
+  border-radius: 50%;
+}
+
+.ornament i[data-kind='dah'] {
+  width: 18px;
+  border-radius: 3px;
+}
+
+/*
+ * Der Skip-Link (aus PR #5): unsichtbar wie .visually-hidden, bis er den
+ * Fokus hat -- dann oben links, Papier und Ink, kein Amber.
+ */
+.skip-link {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  z-index: 10;
+  padding: var(--space-1) var(--space-2);
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  font-size: 14px;
+  text-decoration: none;
+  transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+  transform: none;
+}
+
+.shell:focus {
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -2096,7 +2276,8 @@ a.menu-item {
    * hier der Navigations-Weg, und das Menue-Panel oeffnet hier nie (Teil
    * A.2) -- der Ausloeser dafuer ist ja verschwunden.
    */
-  .app-header {
+  .app-header,
+  .masthead-menu {
     display: none;
   }
 
@@ -2217,6 +2398,12 @@ a.menu-item {
   /* Der stille Hinweis am gesperrten Eintrag -- dieselbe Regel wie im Menue. */
   .nav-rail-item .menu-hint {
     margin-left: var(--space-1);
+  }
+
+  /* Der Pfeil nach draussen: in der Schiene gibt es keinen Flex-Abstand
+   * zum Ausgleichen, der negative Rand des Panels ueberlappte das Wort. */
+  .nav-rail-item .outward-mark {
+    margin-left: 6px;
   }
 
   /* Gruppen wie im Menue-Panel (Review A2), hier mit weniger Luft. */
@@ -2408,5 +2595,14 @@ a.menu-item {
   .shell > .stage > .streak-note,
   .footer-stats {
     display: none;
+  }
+
+  /*
+   * Der Fuss behaelt die Hoehe einer Zeile, auch wenn `.footer-stats` hier
+   * ausgeblendet ist: sonst schrumpfte er beim ersten Play von der Notiz
+   * (`.footer-note`) auf die Hoehe der Punkte (aus PR #5).
+   */
+  .footer {
+    min-height: calc(13px * 1.65);
   }
 }

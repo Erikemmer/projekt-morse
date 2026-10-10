@@ -16,6 +16,7 @@ import {
   GROWTH_MIN_CHARACTER_ACCURACY,
   GROWTH_WINDOW_ACCURACY,
   isReadyToGrow,
+  isSettling,
   maybeGrow,
   nextCandidate,
   unlockNext,
@@ -25,6 +26,7 @@ import { CHARACTER_ORDER, STARTING_CHARACTERS } from './settings';
 import {
   RECENT_ANSWER_WINDOW,
   emptyProgress,
+  parseProgress,
   recordAttempt,
   type CharacterRecord,
   type Progress,
@@ -245,5 +247,30 @@ describe('Persistenz der Wachstumsfelder', () => {
       const parsed = parseProgress({ version: 1, characters: {}, activeCharacters: broken });
       expect(parsed.activeCharacters).toEqual([...STARTING_CHARACTERS]);
     }
+  });
+});
+
+describe('isSettling (Wort "settling" in der Progress-Tabelle, aus PR #5)', () => {
+  it('markiert unter 75 % oder unter 5 Versuchen, nie ohne Versuch', () => {
+    expect(isSettling(record(10, 7))).toBe(true);
+    expect(isSettling(record(GROWTH_MIN_ATTEMPTS - 1, 4))).toBe(true);
+    expect(isSettling(record(8, 6))).toBe(false); // genau 75 %
+    expect(isSettling(record(10, 10))).toBe(false);
+    expect(isSettling({ attempts: 0, hits: 0, recentReactions: [] })).toBe(false);
+  });
+});
+
+describe('Vorgezogene Zeichen (addedEarly, aus PR #5)', () => {
+  it('unlockNext zaehlt hoch, die Wachstumsregel nicht', () => {
+    const early = unlockNext(readyProgress());
+    expect(early.progress.addedEarly).toBe(1);
+    expect(unlockNext(early.progress).progress.addedEarly).toBe(2);
+    expect(maybeGrow(readyProgress()).progress.addedEarly).toBe(0);
+  });
+
+  it('ein Stand ohne das Feld bekommt 0, und es ueberlebt JSON', () => {
+    expect(parseProgress({ version: 1, characters: {} }).addedEarly).toBe(0);
+    const early = unlockNext(readyProgress()).progress;
+    expect(parseProgress(JSON.parse(JSON.stringify(early))).addedEarly).toBe(1);
   });
 });

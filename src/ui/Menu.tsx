@@ -123,7 +123,9 @@ export const ENTRIES: readonly MenuEntry[] = Object.freeze([
   { kind: 'place', location: 'progress', label: 'Progress', groupStart: true },
   { kind: 'place', location: 'account', label: 'Account', groupStart: true },
   { kind: 'place', location: 'settings', label: 'Settings' },
-  { kind: 'link', href: '/learn/', label: 'Learn', groupStart: true },
+  // "Guides" statt "Learn" (aus PR #5): nicht zweimal "Learn" im selben Menue
+  // neben "Learn the sounds".
+  { kind: 'link', href: '/learn/', label: 'Guides', groupStart: true },
   { kind: 'place', location: 'about', label: 'About' },
 ]);
 
@@ -153,25 +155,41 @@ export function AppHeader({
         <KeyMark className="app-mark" width={30} />
         <span className="wordmark">Morse Lab</span>
       </span>
-      <button
-        ref={triggerRef}
-        type="button"
-        className="icon-button"
-        aria-label="Menu"
-        aria-haspopup="dialog"
-        onClick={onOpenMenu}
-      >
-        {/* Drei kurze Linien: 1.5px Strich, runde Kappen, 24er-Raster (1.1 §8). */}
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path
-            d="M6 7h12M6 12h12M6 17h12"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
+      <MenuButton triggerRef={triggerRef} onOpenMenu={onOpenMenu} />
     </header>
+  );
+}
+
+/**
+ * Der Menü-Trigger. Zwei Orte (zweiter Bedarf, CLAUDE.md §4): die Kopfzeile
+ * oben und die Sitzungszeile des Trainings (`SessionHeader`, aus PR #5).
+ */
+export function MenuButton({
+  triggerRef,
+  onOpenMenu,
+}: {
+  triggerRef: React.RefObject<HTMLButtonElement>;
+  onOpenMenu: () => void;
+}) {
+  return (
+    <button
+      ref={triggerRef}
+      type="button"
+      className="icon-button"
+      aria-label="Menu"
+      aria-haspopup="dialog"
+      onClick={onOpenMenu}
+    >
+      {/* Drei kurze Linien: 1.5px Strich, runde Kappen, 24er-Raster (1.1 §8). */}
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M6 7h12M6 12h12M6 17h12"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>
   );
 }
 

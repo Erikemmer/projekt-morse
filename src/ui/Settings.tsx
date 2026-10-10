@@ -42,6 +42,7 @@ import {
 } from '../engine/settings';
 import type { DeviceSettings, Theme } from '../engine/deviceSettings';
 import { buildVersion } from './build';
+import { activeLine } from './statusLines';
 import { Mark } from './Mark';
 
 /** Anzeigenamen -- reine Beschriftung, keine Engine-Entscheidung. */
@@ -63,12 +64,14 @@ export function Settings({
   settings,
   playing,
   effectiveWpm,
+  speedRising,
   onToneHz,
   onVolume,
   onTheme,
   onPreview,
   onResetSpeed,
   activeCharacterCount,
+  addedEarly,
   totalCharacterCount,
   nextCharacter,
   onUnlockNext,
@@ -79,6 +82,8 @@ export function Settings({
   playing: boolean;
   /** Das erreichte Tempo-Niveau in WpM (engine/tempo.ts). */
   effectiveWpm: number;
+  /** Ob die Tempo-Progression laeuft (`speedProgressionActive`, engine/tempo.ts). */
+  speedRising: boolean;
   onToneHz: (hz: number) => void;
   onVolume: (volume: number) => void;
   onTheme: (theme: Theme) => void;
@@ -86,6 +91,8 @@ export function Settings({
   onResetSpeed: () => void;
   /** Wie viele Zeichen aktiv sind, von wie vielen -- und welches als naechstes kaeme (null: Satz voll). */
   activeCharacterCount: number;
+  /** Wie viele davon vorgezogen wurden (`progress.addedEarly`). */
+  addedEarly: number;
   totalCharacterCount: number;
   nextCharacter: string | null;
   /** Schaltet das naechste Zeichen der Reihe frei (engine/growth.ts, unlockNext). */
@@ -131,7 +138,18 @@ export function Settings({
       <div className="setting">
         <div className="setting-head">
           <label htmlFor="setting-volume">Volume</label>
-          <span className="setting-value">{volumePercent}%</span>
+          <span className="setting-head-end">
+            {/*
+              Der Probeton ist eine Nebenhandlung (1.1 §7) -- ein leiser
+              Textknopf in der Kopfzeile der Lautstaerke (aus PR #5, Runde P29):
+              auf einer eigenen Zeile kostete er 44 px, und der Screen scrollte
+              bei 390 x 844. Die View traegt kein Amber.
+            */}
+            <button type="button" className="quiet-action" disabled={playing} onClick={onPreview}>
+              Play test tone
+            </button>
+            <span className="setting-value">{volumePercent}%</span>
+          </span>
         </div>
         <input
           id="setting-volume"
@@ -144,17 +162,6 @@ export function Settings({
           aria-valuetext={`${volumePercent} percent`}
           onChange={(event) => onVolume(Number(event.target.value))}
         />
-      </div>
-
-      {/*
-        Umrandet statt gefuellt (Review B7): ein Test ist nicht die eine
-        Haupthandlung, fuer die 1.1 §7 den gefuellten Amber-Primary vorsieht --
-        diese View hat keine, also auch kein Amber.
-      */}
-      <div className="settings-preview">
-        <button type="button" disabled={playing} onClick={onPreview}>
-          Play test tone
-        </button>
       </div>
 
       {/*
@@ -175,7 +182,7 @@ export function Settings({
       */}
       {/* Haarlinien zwischen den Gruppen (Review B7): Klang · Ansicht ·
           Lernstand. */}
-      <div className="setting setting-group">
+      <div className="setting">
         <div className="setting-head">
           <span id="theme-heading">Theme</span>
         </div>
@@ -193,25 +200,34 @@ export function Settings({
         steht. Das Tempo gehört ohnehin dem Lernstand und nicht dem Gerät — es
         wandert mit dem Konto (engine/sync.ts).
       */}
-      <div className="setting setting-group">
+      <div className="setting">
         <div className="setting-head">
           <span>Effective speed</span>
-          <span className="setting-value">{effectiveWpm} wpm</span>
+          <span className="setting-head-end">
+            {/* In der Kopfzeile wie der Probeton (aus PR #5). */}
+            {raised && (
+              <button type="button" className="quiet-action" onClick={onResetSpeed}>
+                {`Reset to ${STARTING_EFFECTIVE_WPM} wpm`}
+              </button>
+            )}
+            <span className="setting-value">{effectiveWpm} wpm</span>
+          </span>
         </div>
         {/*
           Die zwei ehrlichen Sätze zu dieser Zahl (CLAUDE.md 2.6): das
           Zeichentempo ändert sich nie, und was hier steht, ist das Niveau —
           eine einzelne Sitzung streut ab Variabilitäts-Stufe 2 leicht darum.
         */}
+        {/*
+          Solange die Tempo-Progression noch nicht laeuft, sagt der Satz, wann
+          sie beginnt (aus PR #5, Runde P31) -- sonst steht hier eine Zahl, die
+          sich ohne Erklaerung nie bewegt.
+        */}
         <p className="setting-note">
-          Characters always play at {CHARACTER_WPM} wpm — the effective speed only stretches the
-          gaps between them, and a single session varies a little around this value.
+          {speedRising
+            ? `Characters always play at ${CHARACTER_WPM} wpm — the effective speed only stretches the gaps between them, and a single session varies a little around this value.`
+            : `Characters always play at ${CHARACTER_WPM} wpm — the effective speed only stretches the gaps between them. It starts rising once all ${totalCharacterCount} characters are in.`}
         </p>
-        {raised && (
-          <button type="button" className="quiet-action" onClick={onResetSpeed}>
-            {`Reset to ${STARTING_EFFECTIVE_WPM} wpm`}
-          </button>
-        )}
       </div>
 
       {/*
@@ -226,7 +242,7 @@ export function Settings({
         <div className="setting-head">
           <span>Characters</span>
           <span className="setting-value">
-            {activeCharacterCount} of {totalCharacterCount} active
+            {activeLine(activeCharacterCount, totalCharacterCount, addedEarly)}
           </span>
         </div>
         {/* Ein Satz, nicht zwei: der Screen ist beim Platz knapp (T1). */}

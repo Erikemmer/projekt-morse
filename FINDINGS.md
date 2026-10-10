@@ -592,3 +592,30 @@ es als Beleg des Vorher-Zustands markieren/löschen.
 **Status: behoben** (06.10.2026): beide Kommentare nennen jetzt 10 bzw. 85 %.
 
 **Gefunden:** 06.10.2026, Review. `src/engine/stats.ts:136` „Sperre 20" (Konstante ist 10, `growth.ts:53`); `src/engine/tempo.ts:20-22` „90-%-Fenster" (Konstante ist 0,85, `growth.ts:35`). **Nicht mitrepariert.** Kosten: S.
+
+## 20. Words: zwei Amber-Flächen zugleich, wenn während des Tons getippt wird — BEHOBEN
+
+**Status: behoben** (10.10.2026, Branch `claude/rosinen-pr5`, übernommen aus PR #5, dort #17).
+„Check“ erscheint erst in `answering`; Tippen und Löschen bleiben während des Tons.
+
+Tippen ist in Words schon während `listening` erlaubt; `AnswerLine` zeigte den gefüllten
+Amber-Check, sobald ein Buchstabe stand — neben dem gefüllten Amber-Play-Kreis (1.1 §4).
+
+## 21. Der Play-Kreis rückt beim ersten Play um 19 px nach unten — BEHOBEN
+
+**Status: behoben** (10.10.2026, übernommen aus PR #5, dort #18, Weg c): Streak-Zeile,
+Variabilitäts-Zeile, Freeze-Satz und Drill-Einladung stehen auf dem Start-Screen in der
+Fußzeile statt unter dem Gitter. Sie fielen mit dem ersten Play weg, die zentrierte Bühne
+wuchs, der Play-Kreis sprang (19 px Streak, 29 px Variabilität, 45 px Einladung bei 390 × 844).
+
+## 22. Settings scrollt bei 390 × 844 und 1280 × 720 — BEHOBEN
+
+**Status: behoben** (10.10.2026, übernommen aus PR #5, dort #19). Probeton und Tempo-Reset
+in den Kopfzeilen von Volume bzw. Effective speed, 8 px über den Haarlinien. Höhen in dieser
+Runde nicht nachgemessen (PR #5: 844/720/900).
+
+## 23. Fokus fiel nach dem Kartenwechsel ohne Echo-Check auf `<body>` — BEHOBEN
+
+**Status: behoben** (10.10.2026, übernommen aus PR #5, Runde P29). Seit die erste Karte
+keinen Check hat (PR #4), trug vor dem ersten Ton nichts den Fokus-Ref; der Play-Kreis der
+Karte trägt ihn jetzt, solange „Try it“/„Next sound“ fehlt. Betraf PR #4 ebenso.

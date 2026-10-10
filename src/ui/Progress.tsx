@@ -16,8 +16,9 @@
  * with labels, separated by hairlines"). Diese View kommt ohne Amber aus.
  */
 
-import { nextCandidate } from '../engine/growth';
+import { isSettling, nextCandidate } from '../engine/growth';
 import { CHARACTER_ORDER } from '../engine/settings';
+import { Ornament } from './Ornament';
 import {
   dayAccuracy,
   dayFor,
@@ -57,6 +58,11 @@ export function ProgressScreen({
       </h2>
       <p className="screen-statement">
         {active} of {CHARACTER_ORDER.length} characters.
+        {/* Vorgezogene Zeichen beim Namen nennen (aus PR #5), sonst bedeutet
+            die Zahl nicht dasselbe wie bei jemandem, der sie eruebt hat. */}
+        {progress.addedEarly > 0 && (
+          <span className="screen-statement-aside">{` · ${progress.addedEarly} added early`}</span>
+        )}
       </p>
 
       {/*
@@ -67,8 +73,18 @@ export function ProgressScreen({
       <p className="screen-note">
         {next === null
           ? 'All characters are in your practice.'
-          : `Next up: ${next}. It joins once your recent answers are steady — roughly 85 % right, with no character far behind.`}
+          : `Next up: ${next}. It joins once your recent answers are steady — roughly 85 % right, with no character far behind. `}
+        {/* Der Kreis zur Begruendung (aus PR #5): der Learn-Artikel erklaert
+            die 85-%-Regel. Ein echter Link aus der App heraus, wie in About. */}
+        {next !== null && (
+          <a className="text-link" href="/learn/beyond-the-koch-method/">
+            Why 85 percent
+          </a>
+        )}
       </p>
+
+      {/* Das eine Ornament dieses Screens (aus PR #5). */}
+      <Ornament />
 
       <dl className="stat-lines">
         <div className="stat-line">
@@ -106,6 +122,9 @@ export function ProgressScreen({
                   <tr key={char}>
                     <th scope="row" className="char-cell">
                       {char}
+                      {/* Ein Wort, nie Farbe allein (CLAUDE.md §6; aus PR #5): dieses
+                          Zeichen haelt das Wachstum gerade auf. */}
+                      {isSettling(record) && <span className="row-note">settling</span>}
                     </th>
                     <td>{record.attempts}</td>
                     <td>{accuracy === null ? '—' : `${Math.round(accuracy * 100)}%`}</td>

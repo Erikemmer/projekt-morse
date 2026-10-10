@@ -277,7 +277,8 @@ const VIEWS = [
     name: 'Einladung zur Speed round',
     seed: progress({ slow: ['R'] }),
     async reach(page) {
-      await page.waitForSelector('.drill-invite');
+      // Seit der Uebernahme aus PR #5 steht die Einladung in der Fusszeile.
+      await page.waitForSelector('.footer-note');
     },
   },
   {

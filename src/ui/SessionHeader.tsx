@@ -22,6 +22,7 @@ export function SessionHeader({
   totalRounds,
   done,
   onEnd,
+  menu,
 }: {
   /** Was links steht: "Practice" oder "Speed round". */
   label: string;
@@ -37,6 +38,12 @@ export function SessionHeader({
    * mit einer beendeten Sitzung.
    */
   onEnd?: () => void;
+  /**
+   * Der Menü-Knopf am Zeilenende (aus PR #5): unter 900 px der Weg zu Menü
+   * und Lautstärke während einer Sitzung. Ab 900 px blendet CSS ihn aus,
+   * dort steht die Schiene.
+   */
+  menu?: React.ReactNode;
 }) {
   return (
     <header className="masthead">
@@ -48,8 +55,11 @@ export function SessionHeader({
             End session
           </button>
         )}
-        <span>
-          Round {Math.min(round, totalRounds)} / {totalRounds}
+        <span className="masthead-right">
+          <span>
+            Round {Math.min(round, totalRounds)} / {totalRounds}
+          </span>
+          {menu !== undefined && <span className="masthead-menu">{menu}</span>}
         </span>
       </div>
       <div

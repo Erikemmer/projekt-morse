@@ -44,8 +44,10 @@ import {
   type LearnState,
 } from '../engine/learn';
 import { withTheme, withToneHz, withVolume, type DeviceSettings } from '../engine/deviceSettings';
+import type { VariabilityStage } from '../engine/variability';
 import {
   DRILL_INVITATION_MIN_SLOW,
+  DRILL_SLOW_MEDIAN_SECONDS,
   DRILL_ROUNDS,
   attemptMedianOver,
   drillPool,
@@ -111,7 +113,8 @@ import { pushProgress } from './accountApi';
 import { Intro } from './Intro';
 import { KEYPAD_LAYOUT, KEYPAD_ROW_BREAK, usesKeypad } from './keypad';
 import { Learn, ReviewPicker, useLearnKeyboard } from './Learn';
-import { AppHeader, MenuPanel, NavRail, type MenuLocation } from './Menu';
+import { AppHeader, MenuButton, MenuPanel, NavRail, type MenuLocation } from './Menu';
+import { Ornament } from './Ornament';
 import { MarginColumn } from './MarginColumn';
 import { Pattern } from './Pattern';
 import { ProgressScreen } from './Progress';
@@ -121,7 +124,7 @@ import { Words, useWordKeyboard } from './Words';
 import { loadProgress, saveProgressNow, saveProgressWhenIdle } from './progressStorage';
 import { loadDeviceSettings, saveDeviceSettings } from './deviceStorage';
 import { Settings } from './Settings';
-import { dayQuotaLine, streakLine } from './statusLines';
+import { activeLine, dayQuotaLine, streakLine } from './statusLines';
 import { applyTheme, syncThemeColorMeta } from './theme';
 import { todayISO } from './today';
 import { isBrowserChord } from './keyChord';
@@ -381,8 +384,27 @@ export function App() {
     [timing, learnToneHz, ensurePlayer],
   );
 
+  /*
+   * Ob waehrend des laufenden Prompts die Uebung verdeckt war -- Menue offen,
+   * andere Ansicht, Klang-Auswahl (aus PR #5, Runde P29). Seit der Menue-Knopf
+   * auch unter 900 px in der Sitzung steht, kann das mitten in einer Antwort
+   * passieren; die Audio-Uhr laeuft weiter, und die Zeit im Menue landete
+   * sonst als Reaktionszeit in der Statistik. Dann wird wie beim Tastenfeld
+   * (Ruling #103c) ohne Reaktionszeit verbucht; richtig/falsch zaehlt voll.
+   */
+  const promptInterruptedRef = useRef(false);
+  useEffect(() => {
+    if (session.phase === 'ready') promptInterruptedRef.current = false;
+  }, [session.phase, session.round]);
+  useEffect(() => {
+    const prompting = session.phase === 'listening' || session.phase === 'answering';
+    if (prompting && (menuOpen || view !== 'practice' || reviewing)) {
+      promptInterruptedRef.current = true;
+    }
+  }, [session.phase, menuOpen, view, reviewing]);
+
   const answer = useCallback((choice: string) => {
-    const at = playerRef.current?.currentTime ?? 0;
+    const at = promptInterruptedRef.current ? null : (playerRef.current?.currentTime ?? 0);
     setSession((current) => submitAnswer(current, choice, at));
   }, []);
 
@@ -1273,11 +1295,16 @@ export function App() {
    * ueber das Menue, und dafuer muss der Knopf dafuer da sein. Der Platz, den
    * das kostet, ist gemessen und in der Uebergabe (§4) genannt.
    */
+  /*
+   * Im Training traegt die Sitzungszeile den Menue-Knopf (aus PR #5, Runde
+   * P24), in jeder Phase einschliesslich des Start-Screens: unter 900 px gab
+   * es sonst 20 Runden lang keinen Weg zu Lautstaerke und Menue, und die
+   * Buehne sprang beim ersten Play um die Hoehe der Kopfzeile nach oben.
+   */
+  const practiceMasthead =
+    view === 'practice' && !reviewing && learn === null && session.phase !== 'finished';
   const headerShown =
-    !menuOpen &&
-    session.progress.introSeen &&
-    learn === null &&
-    (view !== 'practice' || reviewing || onStartScreen);
+    !menuOpen && session.progress.introSeen && learn === null && !practiceMasthead;
 
   /*
    * Die Randspalte ab 1280 px (Teil A.3) -- dieselben drei Zahlen wie die
@@ -1289,13 +1316,20 @@ export function App() {
    */
   const marginDay = dayFor(session.progress, session.today);
   const marginTempoLine =
-    `${session.progress.activeCharacters.length} of ${CHARACTER_ORDER.length} active` +
+    activeLine(session.progress.activeCharacters.length, CHARACTER_ORDER.length, session.progress.addedEarly) +
     (speedProgressionActive(session.progress) ? ` · ${session.progress.effectiveWpm} wpm` : '');
 
   return (
     <div className="app-layout">
+      {/*
+        Skip-Link (aus PR #5): ab 900 px stehen die Eintraege der Schiene vor
+        der Uebung im Tab-Weg. Unsichtbar, bis er den Fokus hat.
+      */}
+      <a className="skip-link" href="#content">
+        Skip to content
+      </a>
       <NavRail location={menuLocation} locked={menuLocked} onNavigate={navigateTo} />
-      <main className="shell">
+      <main className="shell" id="content" tabIndex={-1}>
       {/*
         Der Name der App steht fuer Screenreader weiter oben in der Struktur,
         auch wenn der Trainings-Screen ihn nicht mehr zeigt (Ruhe-Mockup: die
@@ -1326,6 +1360,7 @@ export function App() {
           state={learn}
           playing={tonePlaying}
           toneHz={learnToneHz}
+          showHz={session.sound.stage !== 0}
           onPlay={learnOnPlay}
           onBeginEcho={() => setLearn((c) => (c === null ? null : beginEcho(c)))}
           onNextCard={() => setLearn((c) => (c === null ? null : nextCard(c)))}
@@ -1376,7 +1411,9 @@ export function App() {
           onTheme={(theme) => applySettings(withTheme(device, theme))}
           onPreview={playPreview}
           onResetSpeed={resetSpeed}
+          speedRising={speedProgressionActive(session.progress)}
           activeCharacterCount={session.progress.activeCharacters.length}
+          addedEarly={session.progress.addedEarly}
           totalCharacterCount={CHARACTER_ORDER.length}
           nextCharacter={nextCandidate(session.progress)}
           onUnlockNext={unlockNextCharacter}
@@ -1415,10 +1452,15 @@ export function App() {
             totalRounds={session.totalRounds}
             done={session.attempts.length}
             onEnd={onStartScreen ? undefined : restart}
+            menu={
+              menuOpen ? undefined : (
+                <MenuButton triggerRef={menuTriggerRef} onOpenMenu={() => setMenuOpen(true)} />
+              )
+            }
           />
 
           <section className="stage">
-            <p className="eyebrow">{eyebrowFor(session.phase, session.promptToneHz)}</p>
+            <p className="eyebrow">{eyebrowFor(session.phase, session.promptToneHz, session.sound.stage)}</p>
 
             {session.phase === 'feedback' && attempt !== null ? (
               <Reveal char={attempt.char} />
@@ -1488,21 +1530,14 @@ export function App() {
             steht in genau dieser einen Sitzung nur auf dem Abschluss-Screen
             -- verloren geht er dadurch nicht.
           */}
-          {onStartScreen &&
-            (session.showVariabilityNotice ? (
-              <p className="variability-note">
-                From here on, the pitch varies between sessions — real signals do.
-              </p>
-            ) : (
-              <>
-                <p className="streak-note">{streakLine(streak)}</p>
-                {/* Einmalig, wenn der Freeze anderswo verdient wurde (Review
-                    D1e). Wortlaut-Entwurf, Fable-Abnahme offen. */}
-                {session.freezeNoticeAt === 'start' && (
-                  <p className="freeze-note">A rest day won't break your streak — the freeze covers it.</p>
-                )}
-              </>
-            ))}
+          {/*
+            Streak-Zeile, Variabilitaets-Zeile, Freeze-Satz und Drill-Einladung
+            stehen seit der Uebernahme aus PR #5 (FINDINGS #18/#20 dort) nicht
+            mehr in der Buehne, sondern in der Fusszeile: als eigene Zeilen
+            fielen sie mit dem ersten Play weg, die zentrierte Buehne wuchs,
+            und der Play-Kreis sprang um 18-45 px. In der Fusszeile tauscht
+            nur der Text. Vorrang: Variabilitaet, Freeze, Einladung, Streak.
+          */}
 
           {/*
             Die Einladung zum Drill -- eine Feststellung und eine Frage, kein
@@ -1512,15 +1547,6 @@ export function App() {
             Ein-Zeichen-Drill nicht zur Tipp-Uebung wird, regelt DRILL_MIN_POOL
             in der Engine, nicht diese Stelle.
           */}
-          {invitation.length >= DRILL_INVITATION_MIN_SLOW && (
-            <div className="drill-invite">
-              <p className="streak-note">{slowSentence(invitation)}</p>
-              <button type="button" className="quiet-action" onClick={startDrill}>
-                Try a speed round?
-              </button>
-            </div>
-          )}
-
           {/*
             Die Fusszeile traegt seit Ruling #83 auch das Tempo -- und nur,
             solange die Tempo-Progression ueberhaupt laeuft (alle Zeichen
@@ -1528,6 +1554,22 @@ export function App() {
             Zeile ohne Aussage (1.1 §7, CLAUDE.md 2.8).
           */}
           <Footer
+            note={
+              !onStartScreen ? null : session.showVariabilityNotice ? (
+                'From here on, the pitch varies between sessions — real signals do.'
+              ) : session.freezeNoticeAt === 'start' ? (
+                // Einmalig, wenn der Freeze anderswo verdient wurde (Review D1e).
+                "A rest day won't break your streak — the freeze covers it."
+              ) : invitation.length >= DRILL_INVITATION_MIN_SLOW ? (
+                <>
+                  {`${slowSentence(invitation)} `}
+                  <button type="button" className="quiet-action" onClick={startDrill}>
+                    Try a speed round?
+                  </button>
+                </>
+              ) : null
+            }
+            lead={onStartScreen ? streakLine(streak) : null}
             day={dayFor(session.progress, session.today)}
             done={session.attempts.length}
             wpm={speedProgressionActive(session.progress) ? session.progress.effectiveWpm : null}
@@ -1547,14 +1589,16 @@ export function App() {
  * (CLAUDE.md 2.6). Die Tonhoehe steht immer daneben; sie ist zugleich der
  * sichtbare Hinweis darauf, dass dieser Modus ueber die Ohren geht.
  */
-function eyebrowFor(phase: SessionState['phase'], toneHz: number): string {
-  // Immer die *echte* Tonhoehe der laufenden Abfrage (CLAUDE.md 2.6) -- ab
-  // Variabilitaets-Stufe 1 ist sie nicht mehr die Konstante von frueher.
-  const hz = `${toneHz} Hz`;
-  if (phase === 'listening') return `Now playing · ${hz}`;
-  if (phase === 'answering') return `Your turn · ${hz}`;
-  if (phase === 'feedback') return `Answer · ${hz}`;
-  return `Ready · ${hz}`;
+function eyebrowFor(phase: SessionState['phase'], toneHz: number, stage: VariabilityStage): string {
+  // Immer die *echte* Tonhoehe der laufenden Abfrage (CLAUDE.md 2.6) -- aber
+  // erst ab Variabilitaets-Stufe 1, wo sie variiert und damit etwas sagt. Auf
+  // Stufe 0 ist sie eine Konstante ohne Handlung (aus PR #5); dass der Modus
+  // auditiv ist, sagen Intro und About ausdruecklich.
+  const hz = stage === 0 ? '' : ` · ${toneHz} Hz`;
+  if (phase === 'listening') return `Now playing${hz}`;
+  if (phase === 'answering') return `Your turn${hz}`;
+  if (phase === 'feedback') return `Answer${hz}`;
+  return `Ready${hz}`;
 }
 
 /** Womit ein Drill angetreten ist -- siehe `drillTarget` in App(). */
@@ -1576,8 +1620,12 @@ interface DrillTarget {
  * der Satz auch im Singular stimmen ("R is still slow to land.").
  */
 function slowSentence(characters: readonly string[]): string {
+  // Mit Mass (aus PR #5, Runde P31): die Schwelle steht als Zahl da. "or
+  // more", weil langsam heisst: Median ab der Schwelle. Kurz, weil der Satz
+  // samt Knopf in einer Fusszeile steht, die einzeilig bleiben muss.
   const list = characterList(characters);
-  return characters.length === 1 ? `${list} is still slow to land.` : `${list} are still slow to land.`;
+  const measure = `${DRILL_SLOW_MEDIAN_SECONDS} s or more`;
+  return characters.length === 1 ? `${list} lands in ${measure}.` : `${list} land in ${measure}.`;
 }
 
 /**
@@ -1681,11 +1729,25 @@ function PlayCircle({
  * (CLAUDE.md 2.6).
  */
 function Footer({
+  note,
+  lead,
   day,
   done,
   wpm,
   speedUp,
 }: {
+  /**
+   * Auf dem Start-Screen die Streak-Zeile statt des Tagesstands: gleiche
+   * Zeile, gleiche Hoehe -- die Buehne darueber bleibt stehen.
+   */
+  lead: string | null;
+  /**
+   * Variabilitaets-Zeile, Freeze-Satz oder Drill-Einladung auf dem
+   * Start-Screen -- ersetzt die Zeile links, in einem eigenen Element:
+   * `.footer-stats` ist ab 1280 px ausgeblendet (die Randspalte traegt die
+   * Zahlen), die Einladung muss dort aber stehen bleiben.
+   */
+  note: React.ReactNode;
   day: DayStats;
   done: number;
   /** Das Tempo-Niveau -- oder null, solange die Progression nicht laeuft. */
@@ -1695,14 +1757,19 @@ function Footer({
 }) {
   return (
     <footer className="footer">
-      <p className="footer-stats">
-        {dayQuotaLine(day)}
-        {speedUp !== null
-          ? ` · ${speedUp.from} → ${speedUp.to} wpm`
-          : wpm !== null
-            ? ` · ${wpm} wpm`
-            : ''}
-      </p>
+      {note !== null ? (
+        <p className="footer-note">{note}</p>
+      ) : (
+        <p className="footer-stats">
+          {lead ??
+            dayQuotaLine(day) +
+              (speedUp !== null
+                ? ` · ${speedUp.from} → ${speedUp.to} wpm`
+                : wpm !== null
+                  ? ` · ${wpm} wpm`
+                  : '')}
+        </p>
+      )}
       <GroupDots done={done} />
     </footer>
   );
@@ -1914,7 +1981,17 @@ function Summary({
         )}
       </dl>
 
+      {/* Das eine Ornament dieses Screens (aus PR #5): echter Code, "ML". */}
+      <Ornament />
+
       {drillResult !== null && <p className="note">{drillResult}</p>}
+
+      {/* Das Verwechslungsbild (aus PR #5): nur diese Sitzung, nichts gespeichert. */}
+      {summary.confusion !== null && (
+        <p className="note">
+          {`${summary.confusion.pair[0]} and ${summary.confusion.pair[1]} were mixed up ${summary.confusion.count} times this session.`}
+        </p>
+      )}
 
       {/*
         Der Rueckblick in Zeichen statt in Prozent (Review D1d): was sitzt,

@@ -20,7 +20,7 @@
  */
 
 import { CHARACTER_ORDER } from './settings';
-import { RECENT_ANSWER_WINDOW, hitRate, recordFor, type Progress } from './stats';
+import { RECENT_ANSWER_WINDOW, hitRate, recordFor, type CharacterRecord, type Progress } from './stats';
 
 /**
  * Mindest-Trefferquote im rollierenden Antwortfenster (a).
@@ -77,6 +77,18 @@ export function isReadyToGrow(progress: Progress): boolean {
   });
 }
 
+/**
+ * Ob ein aktives Zeichen das Wachstum gerade aufhaelt -- Bedingung (b)/(c)
+ * fuer ein einzelnes Zeichen, fuer das Wort "settling" in der
+ * Progress-Tabelle (uebernommen aus PR #5, Runde P31). Ein Zeichen ohne
+ * Versuch zaehlt nicht: es ist gerade erst dazugekommen.
+ */
+export function isSettling(record: CharacterRecord): boolean {
+  if (record.attempts === 0) return false;
+  const rate = hitRate(record);
+  return record.attempts < GROWTH_MIN_ATTEMPTS || rate === null || rate < GROWTH_MIN_CHARACTER_ACCURACY;
+}
+
 export interface GrowthResult {
   progress: Progress;
   /** Das neu eingefuehrte Zeichen -- oder null, wenn die Regel nicht griff. */
@@ -126,6 +138,8 @@ export function unlockNext(progress: Progress): GrowthResult {
       ...progress,
       activeCharacters: [...progress.activeCharacters, introduced],
       answersSinceGrowth: 0,
+      // Vorgezogen, nicht eruebt -- die Anzeige nennt es (aus PR #5).
+      addedEarly: progress.addedEarly + 1,
     },
     introduced,
   };
