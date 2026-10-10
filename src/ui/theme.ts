@@ -3,7 +3,7 @@
  *
  * Reine DOM-Arbeit, kein Zustand: `device.theme` in React ist die Wahrheit
  * (`engine/deviceSettings.ts`), dieses Modul zieht nur den DOM und
- * `<meta name="theme-color">` nach. Kein zweiter Ort kennt die sechs
+ * `<meta name="theme-color">` nach. Kein zweiter Ort kennt die
  * Paletten -- die Hex-Werte selbst stehen ausschliesslich in
  * `src/styles.css` (CLAUDE.md 4: eine Wahrheit).
  */

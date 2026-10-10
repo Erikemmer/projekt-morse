@@ -44,18 +44,30 @@ import {
  * `--amber`/`--amber-deep` usw. auch dort, wo die Farbe es nicht mehr ist
  * (styles.css erklaert das ausfuehrlich an den sechs `[data-theme]`-Bloecken).
  */
-export type Theme = 'system' | 'paper' | 'frost' | 'olive' | 'night' | 'phosphor' | 'ink';
+export type Theme = 'system' | 'paper' | 'night';
 
-/** Alle gueltigen Werte, in der Reihenfolge, in der Settings.tsx sie anbietet. */
-export const THEMES: readonly Theme[] = Object.freeze([
-  'system',
-  'paper',
-  'frost',
-  'olive',
-  'night',
-  'phosphor',
-  'ink',
-]);
+/**
+ * Alle gueltigen Werte, in der Reihenfolge, in der Settings.tsx sie anbietet.
+ *
+ * Nur noch Paper und Night (Review B5, uebernommen aus PR #5; nimmt Ruling
+ * #111 zurueck -- **Fable-Abnahme offen**): 1.1 §4 kennt einen Akzent, und
+ * der Knopf des Tasters ist amber. Frost, Olive, Phosphor und Ink waren
+ * andere Marken.
+ */
+export const THEMES: readonly Theme[] = Object.freeze(['system', 'paper', 'night']);
+
+/**
+ * Die vier zurueckgenommenen Themes landen auf ihrer Helligkeits-Seite, statt
+ * auf 'system' zurueckzufallen: wer bewusst ein dunkles Theme gewaehlt hatte,
+ * bekommt weiter ein dunkles (CLAUDE.md 4: Persistenz verliert nichts, was
+ * sich erhalten laesst).
+ */
+const RETIRED_THEMES: Readonly<Record<string, Theme>> = Object.freeze({
+  frost: 'paper',
+  olive: 'paper',
+  phosphor: 'night',
+  ink: 'night',
+});
 
 export const DEFAULT_THEME: Theme = 'system';
 
@@ -106,7 +118,14 @@ export function parseDeviceSettings(raw: unknown): DeviceSettings {
   return {
     toneHz: isNumber(entry.toneHz) ? snap(entry.toneHz, TONE_HZ_RANGE, TONE_HZ_STEP) : base.toneHz,
     volume: isNumber(entry.volume) ? snap(entry.volume, VOLUME_RANGE, VOLUME_STEP) : base.volume,
-    theme: isTheme(entry.theme) ? entry.theme : base.theme,
+    theme: isTheme(entry.theme)
+      ? entry.theme
+      : // Nur eigene Schluessel: `in` liefe die Prototypkette entlang, und
+        // ein gespeichertes 'toString' oder '__proto__' kaeme als Funktion
+        // bzw. Objekt zurueck.
+        typeof entry.theme === 'string' && Object.prototype.hasOwnProperty.call(RETIRED_THEMES, entry.theme)
+        ? RETIRED_THEMES[entry.theme]
+        : base.theme,
   };
 }
 

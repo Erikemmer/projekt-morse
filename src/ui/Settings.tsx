@@ -40,7 +40,7 @@ import {
   VOLUME_RANGE,
   VOLUME_STEP,
 } from '../engine/settings';
-import type { DeviceSettings, Theme } from '../engine/deviceSettings';
+import { THEMES, type DeviceSettings, type Theme } from '../engine/deviceSettings';
 import { buildVersion } from './build';
 import { activeLine } from './statusLines';
 import { Mark } from './Mark';
@@ -49,16 +49,8 @@ import { Mark } from './Mark';
 const THEME_LABELS: Record<Theme, string> = {
   system: 'System',
   paper: 'Paper',
-  frost: 'Frost',
-  olive: 'Olive',
   night: 'Night',
-  phosphor: 'Phosphor',
-  ink: 'Ink',
 };
-
-/** Gruppierung fuer die Anzeige: System zuerst, dann hell, dann dunkel. */
-const LIGHT_THEMES: readonly Theme[] = ['paper', 'frost', 'olive'];
-const DARK_THEMES: readonly Theme[] = ['night', 'phosphor', 'ink'];
 
 export function Settings({
   settings,
@@ -293,22 +285,11 @@ export function Settings({
  */
 function ThemePicker({ theme, onTheme }: { theme: Theme; onTheme: (theme: Theme) => void }) {
   return (
-    <div className="theme-picker" role="radiogroup" aria-labelledby="theme-heading">
-      <ThemeOption id="system" current={theme === 'system'} onSelect={onTheme} full />
-
-      <p className="theme-group-label">Light</p>
-      <div className="theme-options">
-        {LIGHT_THEMES.map((id) => (
-          <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
-        ))}
-      </div>
-
-      <p className="theme-group-label">Dark</p>
-      <div className="theme-options">
-        {DARK_THEMES.map((id) => (
-          <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
-        ))}
-      </div>
+    // Drei Werte in einer Reihe (Review B5, aus PR #5): System, Paper, Night.
+    <div className="theme-options" role="radiogroup" aria-labelledby="theme-heading">
+      {THEMES.map((id) => (
+        <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
+      ))}
     </div>
   );
 }
@@ -324,13 +305,10 @@ function ThemeOption({
   id,
   current,
   onSelect,
-  full = false,
 }: {
   id: Theme;
   current: boolean;
   onSelect: (theme: Theme) => void;
-  /** "System" steht allein in einer vollen Zeile, nicht im Dreier-Raster. */
-  full?: boolean;
 }) {
   return (
     <button
@@ -338,7 +316,6 @@ function ThemeOption({
       role="radio"
       aria-checked={current}
       className="theme-option"
-      data-full={full || undefined}
       onClick={() => onSelect(id)}
     >
       {THEME_LABELS[id]}

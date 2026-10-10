@@ -1,3 +1,20 @@
+# Übergabe — Stand nach Runde R4 (Themes auf Paper/Night — wartet auf Fable)
+
+**Stand:** Branch `claude/themes-paper-night` (auf R3 = `claude/rosinen-pr5`). **Nicht gemergt:**
+nimmt Ruling Notion-Log #111 (sechs Themes) zurück — das ist eine Markenentscheidung, die
+Fable sehen muss. Übernommen aus PR #5 (dort Runde P27, Owner-Delegation).
+
+**Inhalt:** `THEMES = ['system', 'paper', 'night']`; Frost/Olive → Paper, Phosphor/Ink → Night
+(`RETIRED_THEMES`, auch im Vorab-Skript in `index.html`); Theme-Picker eine Reihe, volle
+Tap-Höhe; vier Paletten aus `styles.css` entfernt; Kontrast-Check auf 2 Themes (8/8); Tests
+gegen Prototyp-Schlüssel. `npm test` 507, Build grün.
+
+**Begründung aus PR #5:** 1.1 §4 kennt einen Akzent, der Knopf des Tasters ist amber; Frost,
+Olive, Phosphor und Ink waren andere Marken. **Gegenargument (Review B5):** die Themes sind ein
+Zugänglichkeitsgewinn (Kontrast, Blendung). Entscheidung: Fable.
+
+---
+
 # Übergabe — Stand nach Runde R3 (Rosinen aus PR #5)
 
 **Stand:** Branch `claude/rosinen-pr5` (von `main` = `7e77f82`). Owner-Entscheidung 10.10.2026:

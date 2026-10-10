@@ -1,9 +1,9 @@
 /**
- * Kontrast-Report der sechs Themes (Ruling Notion-Log #111, Punkt 9).
+ * Kontrast-Report der Themes (Paper, Night) (Ruling Notion-Log #111, Punkt 9).
  *
  * "Lesbarkeit wird gemessen, nicht behauptet" -- dieses Skript berechnet den
  * WCAG-Kontrast direkt aus den Token-Werten unten, nicht aus einem Browser.
- * Die Werte hier sind eine **bewusste, dokumentierte Kopie** der sechs
+ * Die Werte hier sind eine **bewusste, dokumentierte Kopie** der
  * `[data-theme]`-Bloecke in `src/styles.css`: ein Node-Skript kann kein CSS
  * parsen, ohne selbst zur Abhaengigkeit zu werden (CLAUDE.md 3), und die
  * Alternative -- ein Kontrast-Check im Browser wie `tools/amber/check.mjs`
@@ -40,11 +40,7 @@ const THEMES = {
   // Fehler der neuen Themes. Kleinstmoegliche Korrektur nach Punkt 9 des
   // Auftrags (nur die Helligkeit von --amber, sonst nichts).
   Paper: { paper: '#F6F1E8', ink: '#221D16', amber: '#B35209', gray: '#6F6455', 'amber-deep': '#92400E' },
-  Frost: { paper: '#F1F3F5', ink: '#1A2028', amber: '#0E6E6E', gray: '#5A646E', 'amber-deep': '#0A5252' },
-  Olive: { paper: '#F2F1E6', ink: '#1E2118', amber: '#4C6A26', gray: '#61665A', 'amber-deep': '#3B5320' },
   Night: { paper: '#17140F', ink: '#EDE6D8', amber: '#D97706', gray: '#A79C8A', 'amber-deep': '#F59E0B' },
-  Phosphor: { paper: '#0A0D0B', ink: '#DCE8DE', amber: '#4FBF74', gray: '#93A697', 'amber-deep': '#6FD68F' },
-  Ink: { paper: '#10151B', ink: '#E4E9EE', amber: '#5AA9CC', gray: '#96A3AF', 'amber-deep': '#7CC1DE' },
 };
 
 const THRESHOLDS = {

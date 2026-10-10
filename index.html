@@ -45,7 +45,11 @@
         try {
           var raw = localStorage.getItem('projekt-morse:device');
           var theme = raw && JSON.parse(raw).theme;
-          if (theme && theme !== 'system') {
+          // Nur Paper und Night; die zurueckgenommenen Themes landen auf ihrer
+          // Helligkeits-Seite (wie engine/deviceSettings.ts).
+          var retired = { frost: 'paper', olive: 'paper', phosphor: 'night', ink: 'night' };
+          if (Object.prototype.hasOwnProperty.call(retired, theme)) theme = retired[theme];
+          if (theme === 'paper' || theme === 'night') {
             document.documentElement.setAttribute('data-theme', theme);
           }
         } catch (error) {

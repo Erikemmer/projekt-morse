@@ -96,14 +96,30 @@ describe('Theme (Ruling Notion-Log #111)', () => {
   });
 
   it('withTheme setzt genau das eine Feld', () => {
-    const settings = withTheme(defaultDeviceSettings(), 'phosphor');
-    expect(settings.theme).toBe('phosphor');
+    const settings = withTheme(defaultDeviceSettings(), 'night');
+    expect(settings.theme).toBe('night');
     expect(settings.toneHz).toBe(DEFAULT_TONE_HZ);
     expect(settings.volume).toBe(DEFAULT_VOLUME);
   });
 
-  it('kennt alle sechs Themes plus "system"', () => {
-    expect(THEMES).toEqual(['system', 'paper', 'frost', 'olive', 'night', 'phosphor', 'ink']);
+  it('kennt nur noch Paper und Night plus "system" (Review B5, aus PR #5)', () => {
+    expect(THEMES).toEqual(['system', 'paper', 'night']);
+  });
+
+  it('fuehrt zurueckgenommene Themes auf ihre Helligkeits-Seite, Rest bleibt', () => {
+    const base = { toneHz: 700, volume: 0.5 };
+    expect(parseDeviceSettings({ ...base, theme: 'frost' }).theme).toBe('paper');
+    expect(parseDeviceSettings({ ...base, theme: 'olive' }).theme).toBe('paper');
+    expect(parseDeviceSettings({ ...base, theme: 'phosphor' }).theme).toBe('night');
+    expect(parseDeviceSettings({ ...base, theme: 'ink' })).toEqual({ ...base, theme: 'night' });
+    expect(parseDeviceSettings({ ...base, theme: 'neon' }).theme).toBe('system');
+  });
+
+  it('nimmt keine Prototyp-Schluessel als Theme an', () => {
+    for (const key of ['toString', 'constructor', 'hasOwnProperty', '__proto__']) {
+      expect(parseDeviceSettings({ theme: key }).theme).toBe('system');
+    }
+    expect(parseDeviceSettings(JSON.parse('{"theme":"__proto__"}')).theme).toBe('system');
   });
 
   it('liest ein gespeichertes Theme verlustfrei zurück', () => {
