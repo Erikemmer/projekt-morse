@@ -1817,9 +1817,17 @@ a.menu-item {
  * exakt drei Mitglieder, die deshalb in eine einzige Reihe passen.
  */
 .theme-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  /* Erste Spalte "Theme"/"Light"/"Dark", dann drei Werte (Runde P35,
+   * FINDINGS #22 Rest) -- vorher je eine eigene Zeile fuer die Beschriftung. */
+  display: grid;
+  grid-template-columns: auto repeat(3, 1fr);
+  align-items: center;
+  gap: 4px 8px;
+}
+
+/* "Theme" so gross wie die anderen Abschnittskoepfe (`.setting-head`). */
+.theme-heading {
+  font-size: 16px;
 }
 
 /* "Light"/"Dark" -- dieselbe leise Kennzeichnung wie die Augenbraue im
@@ -1831,12 +1839,6 @@ a.menu-item {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--gray);
-}
-
-.theme-options {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
 }
 
 /*
@@ -1865,7 +1867,7 @@ a.menu-item {
 }
 
 .theme-option[data-full] {
-  grid-column: 1 / -1;
+  grid-column: 2 / -1;
 }
 
 /*
@@ -1946,6 +1948,12 @@ a.menu-item {
 /* Die Freeze-Erklaerung folgt direkt auf die Streak-Zeile -- halber Abstand. */
 .streak-note + .freeze-note {
   margin-top: 4px;
+}
+
+/* Streak + Freeze-Satz auf der Summary als ein Block (Runde P35, FINDINGS
+ * #24): die Buehnen-Luecke steht davor, nicht dazwischen. */
+.streak-block > .streak-note {
+  margin-top: 0;
 }
 
 /* Rueckblick am Sitzungsende (Review D1d): zwei ruhige Zeilen ueber den
@@ -2593,6 +2601,7 @@ a.menu-item {
    */
   .shell > .streak-note,
   .shell > .stage > .streak-note,
+  .shell > .stage > .streak-block > .streak-note,
   .footer-stats {
     display: none;
   }

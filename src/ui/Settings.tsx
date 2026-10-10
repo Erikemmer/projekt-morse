@@ -183,9 +183,8 @@ export function Settings({
       {/* Haarlinien zwischen den Gruppen (Review B7): Klang · Ansicht ·
           Lernstand. */}
       <div className="setting">
-        <div className="setting-head">
-          <span id="theme-heading">Theme</span>
-        </div>
+        {/* Die Ueberschrift steht in der ersten Spalte des Pickers, in der
+            Zeile von "System" (Runde P35, FINDINGS #22 Rest). */}
         <ThemePicker theme={settings.theme} onTheme={onTheme} />
       </div>
 
@@ -241,19 +240,23 @@ export function Settings({
       <div className="setting">
         <div className="setting-head">
           <span>Characters</span>
-          <span className="setting-value">
-            {activeLine(activeCharacterCount, totalCharacterCount, addedEarly)}
+          <span className="setting-head-end">
+            {/* In der Kopfzeile wie Probeton und Reset (Runde P35, FINDINGS #22 Rest). */}
+            {nextCharacter !== null && (
+              <button type="button" className="quiet-action" onClick={onUnlockNext}>
+                {`Add ${nextCharacter} now`}
+              </button>
+            )}
+            <span className="setting-value">
+              {activeLine(activeCharacterCount, totalCharacterCount, addedEarly)}
+            </span>
           </span>
         </div>
         {/* Ein Satz, nicht zwei: der Screen ist beim Platz knapp (T1). */}
         <p className="setting-note">
           The set grows on its own — or add the next character early, one at a time.
         </p>
-        {nextCharacter !== null ? (
-          <button type="button" className="quiet-action" onClick={onUnlockNext}>
-            {`Add ${nextCharacter} now`}
-          </button>
-        ) : (
+        {nextCharacter === null && (
           <p className="setting-note">All {totalCharacterCount} characters are active.</p>
         )}
       </div>
@@ -293,22 +296,24 @@ export function Settings({
  */
 function ThemePicker({ theme, onTheme }: { theme: Theme; onTheme: (theme: Theme) => void }) {
   return (
+    // Ein Raster: "Theme", "Light" und "Dark" in der ersten Spalte statt auf
+    // eigenen Zeilen (Runde P35, FINDINGS #22 Rest) -- drei Zeilen weniger,
+    // dieselben Werte in derselben Reihenfolge.
     <div className="theme-picker" role="radiogroup" aria-labelledby="theme-heading">
+      <span id="theme-heading" className="theme-heading">
+        Theme
+      </span>
       <ThemeOption id="system" current={theme === 'system'} onSelect={onTheme} full />
 
-      <p className="theme-group-label">Light</p>
-      <div className="theme-options">
-        {LIGHT_THEMES.map((id) => (
-          <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
-        ))}
-      </div>
+      <span className="theme-group-label">Light</span>
+      {LIGHT_THEMES.map((id) => (
+        <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
+      ))}
 
-      <p className="theme-group-label">Dark</p>
-      <div className="theme-options">
-        {DARK_THEMES.map((id) => (
-          <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
-        ))}
-      </div>
+      <span className="theme-group-label">Dark</span>
+      {DARK_THEMES.map((id) => (
+        <ThemeOption key={id} id={id} current={theme === id} onSelect={onTheme} />
+      ))}
     </div>
   );
 }
