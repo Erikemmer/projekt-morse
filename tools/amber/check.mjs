@@ -103,6 +103,17 @@ const ALL_CHARACTERS = 'KMRSUAPTLOWINJEF0YVG5Q9ZH38B427C1D6X'; // alle 36
  * vorfindet. Ein gemeinsamer Baustein würde denselben Fehler auf beiden Seiten
  * machen.
  */
+/**
+ * Sechs geuebte Tage bis gestern (lokale Zeit wie im Browser): der heutige
+ * Abschluss macht den siebten und fuellt den Freeze (engine/streak.ts).
+ */
+function sixDayStreak() {
+  const yesterday = new Date(Date.now() - 86_400_000);
+  const pad = (n) => String(n).padStart(2, '0');
+  const day = `${yesterday.getFullYear()}-${pad(yesterday.getMonth() + 1)}-${pad(yesterday.getDate())}`;
+  return { lastPracticedDay: day, days: 6, freezeReady: false, daysTowardFreeze: 6, freezeUsedDay: '' };
+}
+
 function progress({ characters = LETTERS, introduced, slow = [], sessions = 3, effectiveWpm } = {}) {
   const active = [...characters];
   // `introduced` (B3): weniger eingeführt als aktiv -- das letzte ist fällig,
@@ -257,6 +268,28 @@ const VIEWS = [
     },
   },
   {
+    // Runde P35 (FINDINGS #24): die Summary mit allen Saetzen -- Rueckblick,
+    // Verwechslung, Streak + Freeze-Satz -- neben dem einen Amber "Practise
+    // again". Gespielt wird eine ganze Sitzung, immer mit der ersten Taste
+    // (das erzeugt Verwechslungen); der Streak steht auf sechs Tagen bis
+    // gestern, der heutige Abschluss fuellt den Freeze und zeigt den Satz.
+    name: 'Summary mit allen Saetzen (P35)',
+    seed: { ...progress(), streak: sixDayStreak() },
+    async reach(page) {
+      for (let round = 0; round < 20; round += 1) {
+        await page.getByRole('button', { name: /^Play the character/ }).click();
+        await answering(page);
+        await page.locator('.answers .answer:not([disabled])').first().click();
+        await page.waitForSelector('.verdict');
+        await page.keyboard.press('Enter');
+        if ((await page.locator('#summary-heading').count()) > 0) break;
+        await page.waitForSelector('.play:not([data-sounding="true"])');
+      }
+      await page.waitForSelector('#summary-heading', { timeout: 10000 });
+      await page.waitForSelector('.ornament');
+    },
+  },
+  {
     name: 'Tastenfeld, Antwort offen (U1)',
     seed: progress({ characters: KEYPAD_LETTERS }),
     async reach(page) {
@@ -308,6 +341,20 @@ const VIEWS = [
       await openMenu(page, 'Words & groups');
       await page.getByRole('button', { name: /^Play the word/ }).click();
       await page.waitForSelector('.play[data-sounding="true"]', { timeout: 10000 });
+    },
+  },
+  {
+    // FINDINGS #20: Tippen waehrend des Tons (Ruling #112) -- der Play-Kreis
+    // ist das eine Amber, der Check darf noch nicht daneben stehen.
+    // Regressionsfall, Runde P35.
+    name: 'Wort-Training, Tippen während des Tons (F2)',
+    seed: progress({ characters: WORD_LETTERS }),
+    async reach(page) {
+      await openMenu(page, 'Words & groups');
+      await page.getByRole('button', { name: /^Play the word/ }).click();
+      await page.waitForSelector('.play[data-sounding="true"]', { timeout: 10000 });
+      await page.locator('.answer:not([disabled])').first().click();
+      await page.waitForSelector('.answer-delete');
     },
   },
   {

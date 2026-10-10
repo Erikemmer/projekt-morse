@@ -601,6 +601,9 @@ es als Beleg des Vorher-Zustands markieren/löschen.
 Tippen ist in Words schon während `listening` erlaubt; `AnswerLine` zeigte den gefüllten
 Amber-Check, sobald ein Buchstabe stand — neben dem gefüllten Amber-Play-Kreis (1.1 §4).
 
+**Nachtrag (Runde P35):** `verify:amber` hat jetzt den Regressionsfall „Wort-Training,
+Tippen während des Tons (F2)“ (in R3 nicht mit übernommen; auf PR #5 rot ohne Fix belegt).
+
 ## 21. Der Play-Kreis rückt beim ersten Play um 19 px nach unten — BEHOBEN
 
 **Status: behoben** (10.10.2026, übernommen aus PR #5, dort #18, Weg c): Streak-Zeile,
@@ -614,8 +617,29 @@ wuchs, der Play-Kreis sprang (19 px Streak, 29 px Variabilität, 45 px Einladung
 in den Kopfzeilen von Volume bzw. Effective speed, 8 px über den Haarlinien. Höhen in dieser
 Runde nicht nachgemessen (PR #5: 844/720/900).
 
+**Nachtrag (Runde P35): war nur zum Teil behoben.** Nachgemessen auf `main` = `00233f6`:
+946/925 px bei 390 × 844 und 808/787 px bei 1280 × 720 (6 Zeichen/10 wpm bzw. 36/16 mit
+Reset); nur 1440 × 900 passte. Grund: auf PR #5 waren es zwei Themes statt sieben —
+der Theme-Picker ist hier um drei Zeilen höher. **Rest behoben:** Theme-Picker als Raster
+mit „Theme“/„Light“/„Dark“ in der ersten Spalte, „Add … now“ in die Kopfzeile wie Probeton
+und Reset. Jetzt 844/844, 720/720, 900/900 in allen sechs Fällen; Theme-Wahl, Probeton und
+„Add now“ im Browser geprüft.
+
 ## 23. Fokus fiel nach dem Kartenwechsel ohne Echo-Check auf `<body>` — BEHOBEN
 
 **Status: behoben** (10.10.2026, übernommen aus PR #5, Runde P29). Seit die erste Karte
 keinen Check hat (PR #4), trug vor dem ersten Ton nichts den Fokus-Ref; der Play-Kreis der
 Karte trägt ihn jetzt, solange „Try it“/„Next sound“ fehlt. Betraf PR #4 ebenso.
+
+## 24. Die Summary scrollt bei 390 × 844, wenn alle Sätze stehen — BEHOBEN
+
+**Status: behoben** (10.10.2026, Runde P35). Gefunden beim Nachmessen von `main` =
+`00233f6`: mit Rückblick, Verwechslungssatz, Streak und dem einmaligen Freeze-Satz 871 px
+statt 844. Ursache: Streak-Zeile und Freeze-Satz standen als zwei Kinder der Bühne, also mit
+deren Flex-Lücke (32 px) plus 16 px Rand dazwischen — die bestehende Regel
+`.streak-note + .freeze-note { margin-top: 4px }` griff nie.
+
+**Fix:** beide in einem Block (`.streak-block`); die Regel für ≥ 1280 px, die die
+Streak-Zeile dort ausblendet (Randspalte), kennt den Block. Nachgemessen 844/720/900.
+`verify:amber` hat den Fall „Summary mit allen Saetzen (P35)“ (41 Ansichten).
+
