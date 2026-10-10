@@ -1,3 +1,21 @@
+# Übergabe — Stand nach Runde R2 (Freeze-Erklärung, Review D1e)
+
+**Stand:** Branch `claude/freeze-notice` (von `main` = `1e90ae9`, R1 live). Owner-Auftrag 10.10.2026.
+
+**Umgesetzt:** Der eine Satz zum Freeze, genau einmal — am Ende der Sitzung, die ihn verdient
+(`freezeNoticeAt: 'end'`), sonst auf dem nächsten Start-Screen, wenn er anderswo verdient wurde
+(Words/Send, `'start'`). Neues Feld `progress.freezeNoticeSeen` (additiv, Default false, im Sync
+logisches Oder — wie `variabilityNoticeSeen`). Regel `freezeNoticeDue` in `engine/streak.ts`,
+Plumbing in `engine/session.ts`; vier Tests.
+
+**Mitrepariert (eigener Fehler aus R1):** `.summary-review` war in `styles.css` zwischen
+`.variability-note,` und `.streak-note` geraten; die Variabilitäts-Zeile stand live in 15 px Ink
+statt 13 px Gray. Wieder zusammengeführt.
+
+**Fable-Abnahme offen (Wortlaut-Entwurf):** „A rest day won't break your streak — the freeze covers it.“
+
+---
+
 # Übergabe — Stand nach Runde R1 (Review Design/UX umgesetzt)
 
 **Stand:** Branch `claude/review-design-ux` (von `claude/clever-turing-77fkyo`, P23 = `6d925a1`).
@@ -37,8 +55,7 @@ Fallback, live deployen.
 Link-Unterstreichung gegen CONCEPT-LEARN §5 · Hub-Linkfarben · Menügruppen · zentrierte Rest-Reihe ·
 „Skip“ verschiebt statt bucht · erste Karte ohne Check.
 
-**Nicht umgesetzt:** Logo-Richtungen R1–R3 (Owner: nur reparieren + Fallback), D1e (Freeze-Erklärung
-beim ersten „freeze ready“ — braucht ein neues persistentes Feld), B5 (Themes in der
+**Nicht umgesetzt:** Logo-Richtungen R1–R3 (Owner: nur reparieren + Fallback), ~~D1e~~ (→ R2), B5 (Themes in der
 Außendarstellung — keine Code-Frage).
 
 **Prüfskripte angepasst:** `verify:keyboard` und `verify:amber` kennen den neuen Erstlauf (Check

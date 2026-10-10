@@ -357,12 +357,16 @@ describe('Regel: lokal bleibt Quelle', () => {
 
 describe('Regel: Einmal-Merker fallen nicht zurück', () => {
   it('behält introSeen, auch wenn der jüngere Stand ihn nicht hat', () => {
-    const local = snapshot({ introSeen: true, variabilityNoticeSeen: true }, 1_000);
-    const remote = snapshot({ introSeen: false, variabilityNoticeSeen: false }, 2_000);
+    const local = snapshot({ introSeen: true, variabilityNoticeSeen: true, freezeNoticeSeen: true }, 1_000);
+    const remote = snapshot(
+      { introSeen: false, variabilityNoticeSeen: false, freezeNoticeSeen: false },
+      2_000,
+    );
 
     const merged = mergeProgress(local, remote);
     expect(merged.introSeen).toBe(true);
     expect(merged.variabilityNoticeSeen).toBe(true);
+    expect(merged.freezeNoticeSeen).toBe(true);
   });
 
   it('übernimmt sie auch in die andere Richtung', () => {

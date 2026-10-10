@@ -244,9 +244,11 @@ export function App() {
   // im Browser-Durchlauf passiert. Absichtlich nur vom Flag abhaengig: ein
   // synchroner Schreiber pro Sitzungsstart, keiner auf dem Eingabepfad.
   useEffect(() => {
-    if (session.showVariabilityNotice) saveProgressNow(session.progress);
+    if (session.showVariabilityNotice || session.freezeNoticeAt === 'start') {
+      saveProgressNow(session.progress);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session.showVariabilityNotice]);
+  }, [session.showVariabilityNotice, session.freezeNoticeAt]);
 
   /*
    * Am Ende einer Sitzung einmal zum Konto hochschieben -- **best effort**.
@@ -1397,6 +1399,7 @@ export function App() {
           streak={streak}
           drillResult={drillResult(session, drillTarget)}
           review={reviewCharacters(session)}
+          freezeNotice={session.freezeNoticeAt === 'end'}
           onRestart={restart}
           headingRef={focusTarget}
         />
@@ -1491,7 +1494,14 @@ export function App() {
                 From here on, the pitch varies between sessions — real signals do.
               </p>
             ) : (
-              <p className="streak-note">{streakLine(streak)}</p>
+              <>
+                <p className="streak-note">{streakLine(streak)}</p>
+                {/* Einmalig, wenn der Freeze anderswo verdient wurde (Review
+                    D1e). Wortlaut-Entwurf, Fable-Abnahme offen. */}
+                {session.freezeNoticeAt === 'start' && (
+                  <p className="freeze-note">A rest day won't break your streak — the freeze covers it.</p>
+                )}
+              </>
             ))}
 
           {/*
@@ -1847,6 +1857,7 @@ function Summary({
   streak,
   drillResult,
   review,
+  freezeNotice,
   onRestart,
   headingRef,
 }: {
@@ -1857,6 +1868,8 @@ function Summary({
   drillResult: string | null;
   /** Welche Zeichen in dieser Sitzung sicher kamen und welche noch nicht. */
   review: CharacterReview;
+  /** Ob diese Sitzung den ersten Freeze verdient hat -- dann wird er einmal erklaert. */
+  freezeNotice: boolean;
   onRestart: () => void;
   headingRef: (element: HTMLElement | null) => void;
 }) {
@@ -1922,6 +1935,13 @@ function Summary({
         wenn die Sitzung beendet ist.
       */}
       <p className="streak-note">{streakLine(streak)}</p>
+      {/*
+        Der eine Satz zum Freeze, genau einmal: wenn er gerade verdient wurde
+        (Review D1e). "freeze ready" allein sagte nicht, was das ist -- und die
+        Zusage aus CLAUDE.md 2.8 (Aussetzer werden verziehen) stand nirgends.
+        Wortlaut-Entwurf, Fable-Abnahme offen.
+      */}
+      {freezeNotice && <p className="freeze-note">A rest day won't break your streak — the freeze covers it.</p>}
 
       {/*
         Der Hinweis auf den Offline-Betrieb stand bisher in der Fusszeile des
