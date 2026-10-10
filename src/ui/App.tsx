@@ -2011,14 +2011,22 @@ function Summary({
         Stelle traegt sie den frisch verbuchten Tag -- der faellt in advance(),
         wenn die Sitzung beendet ist.
       */}
-      <p className="streak-note">{streakLine(streak)}</p>
       {/*
-        Der eine Satz zum Freeze, genau einmal: wenn er gerade verdient wurde
-        (Review D1e). "freeze ready" allein sagte nicht, was das ist -- und die
-        Zusage aus CLAUDE.md 2.8 (Aussetzer werden verziehen) stand nirgends.
-        Wortlaut-Entwurf, Fable-Abnahme offen.
+        Streak und Freeze-Satz als ein Block (Runde P35, FINDINGS #24): in der
+        Buehne trennte sie sonst deren Flex-Luecke (32 px) plus 16 px Rand, statt
+        der 4 px aus `.streak-note + .freeze-note` -- und mit allen Saetzen
+        scrollte die Summary bei 390 x 844 um 27 px.
       */}
-      {freezeNotice && <p className="freeze-note">A rest day won't break your streak — the freeze covers it.</p>}
+      <div className="streak-block">
+        <p className="streak-note">{streakLine(streak)}</p>
+        {/*
+          Der eine Satz zum Freeze, genau einmal: wenn er gerade verdient wurde
+          (Review D1e). "freeze ready" allein sagte nicht, was das ist -- und die
+          Zusage aus CLAUDE.md 2.8 (Aussetzer werden verziehen) stand nirgends.
+          Wortlaut-Entwurf, Fable-Abnahme offen.
+        */}
+        {freezeNotice && <p className="freeze-note">A rest day won't break your streak — the freeze covers it.</p>}
+      </div>
 
       {/*
         Der Hinweis auf den Offline-Betrieb stand bisher in der Fusszeile des
