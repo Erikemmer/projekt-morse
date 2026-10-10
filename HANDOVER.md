@@ -1,3 +1,24 @@
+# Übergabe — Stand nach Runde R4 (Themes: PR #8 verworfen)
+
+**Stand:** `main`. Owner-Delegation 10.10.2026 („entscheide du selbst“) an Claude: PR #8
+(`claude/themes-paper-night`, Reduktion auf System/Paper/Night, aus PR #5 Runde P27) ist
+**ohne Merge geschlossen**, Branch gelöscht. Ruling Notion-Log #111 (sechs Themes) gilt weiter.
+
+**Begründung:**
+- #111 ist eine dokumentierte Fable-Entscheidung; sie zurückzunehmen wäre eine Markenentscheidung
+  gegen ein bestehendes Ruling, nicht eine Umsetzung davon.
+- Die Themes sind ein Zugänglichkeitsgewinn (Kontrast, Blendung, Farbsehen) — CLAUDE.md §2
+  stellt Zugänglichkeit vor Geschmack. Review B5 hat deshalb (c) empfohlen: alle Themes behalten,
+  die Marke in jeder Außendarstellung nur als Paper zeigen. Das ist eine Marketing-Regel, kein Code.
+- PR #8 hätte die gespeicherte Wahl von Nutzern still auf Paper/Night umgebogen; „Persistenz
+  verliert keine Nutzerdaten“ (§4) spricht dagegen.
+
+**Fable kann das umstoßen.** Der Diff war klein (8 Dateien, 94+/129−) und ist im geschlossenen
+PR #8 dokumentiert; er lässt sich jederzeit neu aufsetzen. Offen bleibt aus B5 nur die
+Rückfrage `#B35209` vs. `#B45309` (`styles.css`, Rulings-Abschnitt).
+
+---
+
 # Übergabe — Stand nach Runde R3 (Rosinen aus PR #5)
 
 **Stand:** Branch `claude/rosinen-pr5` (von `main` = `7e77f82`). Owner-Entscheidung 10.10.2026:
