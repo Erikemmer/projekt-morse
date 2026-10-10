@@ -234,6 +234,9 @@ async function main() {
   const mark = await readFile(join(ASSETS, 'morse-lab-mark.svg'), 'utf8');
   const inverse = await readFile(join(ASSETS, 'morse-lab-mark-inverse.svg'), 'utf8');
   const appicon = await readFile(join(ASSETS, 'morse-lab-appicon.svg'), 'utf8');
+  // Unter 24 px die Fallback-Marke aus 1.1 §3 (Punkt + Strich in Amber),
+  // Geometrie u = 64 im 512er-Feld -- siehe public/favicon.svg.
+  const fallback = await readFile(join(ASSETS, 'morse-lab-fallback.svg'), 'utf8');
 
   const browser = await openBrowser();
   const page = await browser.newPage();
@@ -254,7 +257,7 @@ async function main() {
     await emit('logo-key.svg', labelled(mark));
     await emit('logo-mark-inverse.svg', labelled(inverse));
     await emit('logo-lockup.svg', lockupSvg);
-    await emit('favicon.svg', iconSvg);
+    await emit('favicon.svg', labelled(fallback));
     await emit('icons/icon.svg', iconSvg);
     await emit('icons/icon-maskable.svg', maskableSvg);
 

@@ -23,7 +23,17 @@ import { useEffect, useRef, useState } from 'react';
 interface Screen {
   headline: string;
   body: string;
+  /**
+   * Eine Zeile unter dem vorgegebenen Text -- der vorgegebene Text selbst
+   * bleibt wortgleich. Erster Bildschirm: der Hinweis fuer Nicht-Hoerende
+   * (CLAUDE.md §6; aus PR #5, mit dem Satz aus About).
+   */
+  note?: string;
 }
+
+/** Derselbe Satz steht in About (`ui/About.tsx`). Wortlaut-Entwurf, Fable-Abnahme offen. */
+export const SOUND_ONLY_NOTE =
+  "Morse Lab trains listening: every exercise starts with a tone. If you can't hear it, Send lets you practise the patterns by sight.";
 
 const SCREENS: readonly Screen[] = Object.freeze([
   {
@@ -31,6 +41,7 @@ const SCREENS: readonly Screen[] = Object.freeze([
     body:
       "No tables, no counting dots and dashes. You'll learn each character as a sound — at " +
       "full speed from day one, the way it's meant to be heard.",
+    note: SOUND_ONLY_NOTE,
   },
   {
     headline: 'A few minutes a day.',
@@ -65,6 +76,7 @@ export function Intro({ onDone }: { onDone: () => void }) {
           {screen.headline}
         </h2>
         <p className="intro-text">{screen.body}</p>
+        {screen.note !== undefined && <p className="intro-note">{screen.note}</p>}
       </div>
 
       <div className="intro-foot">

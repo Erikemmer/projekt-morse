@@ -414,6 +414,8 @@ export interface SessionSummary {
   accuracy: number | null;
   /** Median der Reaktionszeiten *richtiger* Antworten, oder null. */
   medianReactionSeconds: number | null;
+  /** Das am oeftesten verwechselte Paar dieser Sitzung (`confusionPair`), oder null. */
+  confusion: ReturnType<typeof confusionPair>;
 }
 
 /** Fasst die laufende Sitzung zusammen. Reine Ableitung, kein Zustand. */
@@ -439,6 +441,7 @@ export function summarize(state: SessionState): SessionSummary {
     hits: hits.length,
     accuracy: state.attempts.length === 0 ? null : hits.length / state.attempts.length,
     medianReactionSeconds,
+    confusion: confusionPair(state.attempts),
   };
 }
 
@@ -480,4 +483,35 @@ export function reviewCharacters(state: SessionState): CharacterReview {
     else if (entry.attempts >= 2) steady.push(char);
   }
   return { steady, settling };
+}
+
+/** Ab so vielen Verwechslungen in einer Sitzung ist es ein Muster, kein Ausrutscher. */
+export const CONFUSION_MIN_COUNT = 2;
+
+/**
+ * Das Paar, das in dieser Sitzung am oeftesten verwechselt wurde -- in beide
+ * Richtungen gezaehlt (M fuer O und O fuer M sind dasselbe Paar). Uebernommen
+ * aus PR #5 (Runde P27): Kompetenz-Information, keine Punktzahl.
+ *
+ * Nur ueber diese Sitzung, nichts wird gespeichert: eine Behauptung ueber
+ * "immer noch" braeuchte eine Historie, die es nicht gibt (CLAUDE.md 2.6).
+ * null unter CONFUSION_MIN_COUNT. Bei Gleichstand gewinnt das zuerst
+ * aufgetretene Paar -- deterministisch, ohne Zufall.
+ */
+export function confusionPair(
+  attempts: readonly Attempt[],
+): { readonly pair: readonly [string, string]; readonly count: number } | null {
+  const counts = new Map<string, number>();
+  for (const attempt of attempts) {
+    if (attempt.correct || attempt.answer === attempt.char) continue;
+    const key = [attempt.char, attempt.answer].sort().join('');
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  let best: { key: string; count: number } | null = null;
+  for (const [key, count] of counts) {
+    if (count >= CONFUSION_MIN_COUNT && (best === null || count > best.count)) best = { key, count };
+  }
+  if (best === null) return null;
+  const [a, b] = [...best.key];
+  return { pair: [a, b], count: best.count };
 }

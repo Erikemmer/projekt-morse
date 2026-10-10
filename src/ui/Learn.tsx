@@ -25,6 +25,7 @@ export function Learn({
   state,
   playing,
   toneHz,
+  showHz,
   onPlay,
   onBeginEcho,
   onNextCard,
@@ -36,6 +37,8 @@ export function Learn({
   playing: boolean;
   /** Der Sitzungs-Ton in Hz -- Lernkarten und Echo-Check spielen immer ihn. */
   toneHz: number;
+  /** Hz erst ab Variabilitaets-Stufe 1 (aus PR #5). */
+  showHz: boolean;
   onPlay: () => void;
   onBeginEcho: () => void;
   onNextCard: () => void;
@@ -78,7 +81,7 @@ export function Learn({
           onContinue={state.requireEcho ? onBeginEcho : onNextCard}
         />
       ) : (
-        <Echo state={state} playing={playing} toneHz={toneHz} buttonRef={focusRef} onPlay={onPlay} onAnswer={onAnswer} onAdvance={onAdvance} />
+        <Echo state={state} playing={playing} toneHz={toneHz} showHz={showHz} buttonRef={focusRef} onPlay={onPlay} onAnswer={onAnswer} onAdvance={onAdvance} />
       )}
 
       {onSkip !== undefined && (
@@ -267,7 +270,13 @@ function Card({
           {char}
         </h2>
 
+        {/*
+          Solange "Try it"/"Next sound" noch nicht da ist, traegt der Play-Kreis
+          den Fokus (aus PR #5, Runde P29): sonst fiel er nach dem Kartenwechsel
+          auf <body>.
+        */}
         <button
+          ref={!heard ? (buttonRef as React.RefObject<HTMLButtonElement>) : undefined}
           type="button"
           className="play"
           data-sounding={playing}
@@ -327,6 +336,7 @@ function Echo({
   state,
   playing,
   toneHz,
+  showHz,
   buttonRef,
   onPlay,
   onAnswer,
@@ -335,6 +345,7 @@ function Echo({
   state: LearnState;
   playing: boolean;
   toneHz: number;
+  showHz: boolean;
   buttonRef: { current: HTMLElement | null };
   onPlay: () => void;
   onAnswer: (choice: string) => void;
@@ -352,7 +363,7 @@ function Echo({
   return (
     <>
       <div className="stage">
-        <p className="eyebrow">{`${playing ? 'Now playing' : 'Your turn'} · ${toneHz} Hz`}</p>
+        <p className="eyebrow">{`${playing ? 'Now playing' : 'Your turn'}${showHz ? ` · ${toneHz} Hz` : ''}`}</p>
 
         {attempt !== null ? (
           <>
@@ -513,7 +524,10 @@ export function ReviewPicker({
         <h2 id="review-heading" className="screen-heading" ref={headingRef} tabIndex={-1}>
           Learn the sounds
         </h2>
-        <p className="learn-copy">Pick a character to hear it again.</p>
+        {/* Die Reihenfolge als Landkarte (aus PR #5, Runde P31). */}
+        <p className="learn-copy">
+          Pick a character to hear it again. They stand in the order they arrive.
+        </p>
       </div>
 
       <div className="keypad">

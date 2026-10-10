@@ -1,3 +1,44 @@
+# Übergabe — Stand nach Runde R3 (Rosinen aus PR #5)
+
+**Stand:** Branch `claude/rosinen-pr5` (von `main` = `7e77f82`). Owner-Entscheidung 10.10.2026:
+PR #5 (Parallel-Umsetzung desselben Reviews, 22 Konflikt-Dateien gegen `main`) geschlossen,
+die Punkte, die nur dort standen, einzeln übernommen. Alles darin waren Owner-Delegationen
+an Claude, keine Fable-Rulings — das gilt hier weiter.
+
+**Übernommen:**
+- Menü-Knopf in der Sitzungszeile (auch mitten in der Sitzung, unter 900 px); Antworten nach
+  geöffnetem Menü/anderer Ansicht zählen ohne Reaktionszeit. „End session“ (R1) bleibt links.
+- Start-Screen: Streak-Zeile, Variabilitäts-Zeile, Freeze-Satz und Drill-Einladung in der
+  Fußzeile (FINDINGS #21). Einladung mit Maß: „K lands in 2 s or more.“
+- Words: „Check“ erst nach Tonende (#20); „N heard/sent today“ erst ab 1.
+- Hz-Angabe erst ab Variabilitäts-Stufe 1 (Training, Echo, Words, Send).
+- `addedEarly` (additiv, Default 0, Sync Maximum): „10 of 36 active · 2 added early“ in
+  Settings, Randspalte, Progress-Aussage.
+- Progress: „settling“ neben Zeichen unter den Schwellen (`isSettling`), Link „Why 85
+  percent“ → `/learn/beyond-the-koch-method/`, Zahlen in Newsreader, Ornament.
+- Summary: Verwechslungsbild (`confusionPair`, nur diese Sitzung), Ornament.
+- Settings kompakt: Probeton und Tempo-Reset in den Kopfzeilen, Haarlinien zwischen allen
+  Abschnitten, Satz „It starts rising once all 36 characters are in.“ (#22).
+- ML-Ornament (`ui/Ornament.tsx`) in About, Progress, Summary.
+- Intro-Hinweis für Nicht-Hörende (derselbe Satz wie About, `SOUND_ONLY_NOTE`).
+- Menü: „Guides“ statt „Learn“ (Doppelung mit „Learn the sounds“); Ortspunkt 6 px Ink statt
+  8 px Amber; Antwortfeld-Tasten im Zustand „jetzt nicht“ umrandet statt Opazität; Skip-Link
+  „Skip to content“; Auflösungs-Buchstabe 300 statt 500; Fokus-Fix (#23); ReviewPicker-Satz.
+- `docs/brand/assets/morse-lab-fallback.svg`, `tools/brand/derive.mjs` liefert das Favicon daraus.
+
+**Bewusst nicht übernommen:** Themes-Reduktion auf Paper/Night (nimmt Ruling #111 zurück —
+eigener PR, wartet auf Fable); Entfernung der 24-px-Marke aus der Schiene (R1 hat die Marke
+im Kopf *ergänzt*; 1.1 §3 nennt 140 px Mindestbreite fürs Lockup — der mobile Kopf liegt mit
+≈133 px knapp darunter, **Fable-Frage**); `growthDirection`/„settling“-Satz auf der Summary
+(R1 hat dort schon den Rückblick in Zeichen); Echo-Hinweis im Dreier-Gitter (R1 hat ihn auf
+der Karte); Hub-Links mit Haarlinie (R1: nur „Start here“ amber); PR-#5-Review-Bericht.
+
+**Fable-Abnahme offen (Wortlaut):** „Why 85 percent“ · „settling“ · „M and O were mixed up
+2 times this session.“ · „K lands in 2 s or more.“ · „It starts rising once all 36 characters
+are in.“ · „· 2 added early“ · „Guides“ · „They stand in the order they arrive.“ · Intro-Note.
+
+---
+
 # Übergabe — Stand nach Runde R2 (Freeze-Erklärung, Review D1e)
 
 **Stand:** Branch `claude/freeze-notice` (von `main` = `1e90ae9`, R1 live). Owner-Auftrag 10.10.2026.

@@ -142,6 +142,16 @@ export interface Progress {
    * laufende Sitzung, und eine abgebrochene ist trotzdem eine gewesen.
    */
   sessionsStarted: number;
+  /**
+   * Wie viele Zeichen ueber "Add now" (Settings, `unlockNext`) vorgezogen
+   * wurden, statt sich ueber die Wachstumsregel zu ergeben. Die Anzeige
+   * "N of 36 active" nennt sie dazu ("· 1 added early"), damit die Zahl
+   * dasselbe bedeutet wie bei jemandem, der sie eruebt hat (CLAUDE.md 2.6;
+   * uebernommen aus PR #5, Runde P32). Additiv mit Default 0: wer vorher
+   * schon vorgezogen hat, wird nicht rueckwirkend gezaehlt -- das liesse
+   * sich nicht ehrlich rekonstruieren.
+   */
+  addedEarly: number;
   /** Der laufende Kalendertag. Wechselt das Datum, faengt er bei null an. */
   day: DayStats;
   /** Ob die Einfuehrung schon gelaufen ist. Default false: neue Staende sehen sie. */
@@ -223,6 +233,7 @@ export function emptyProgress(): Progress {
     recentAnswers: [],
     answersSinceGrowth: 0,
     sessionsStarted: 0,
+    addedEarly: 0,
     day: emptyDay(),
     introSeen: false,
     introducedCharacters: [],
@@ -503,6 +514,7 @@ export function parseProgress(raw: unknown): Progress {
     recentAnswers,
     answersSinceGrowth: finiteOrZero((raw as { answersSinceGrowth?: unknown }).answersSinceGrowth),
     sessionsStarted: finiteOrZero((raw as { sessionsStarted?: unknown }).sessionsStarted),
+    addedEarly: finiteOrZero((raw as { addedEarly?: unknown }).addedEarly),
     day: parseDay((raw as { day?: unknown }).day),
     introSeen: (raw as { introSeen?: unknown }).introSeen === true,
     streak: parseStreak((raw as { streak?: unknown }).streak),
