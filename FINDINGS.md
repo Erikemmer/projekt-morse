@@ -622,6 +622,13 @@ Karte trägt ihn jetzt, solange „Try it“/„Next sound“ fehlt. Betraf PR #
 
 ## 24. Handy-Durchsicht (17.11.2026, Runde R6) — was offen blieb
 
+**Nachtrag Runde R7 (17.11.2026, Owner-Entscheidung „Tastenfeld dichter“):** (a) und (b) sind
+für alle Ansichten **mit Tastenfeld** behoben, (e) ebenfalls — zwei Verdichtungsstufen am Ende
+von `styles.css`. Gemessen bei 360 × 640, 375 × 635, 390 × 664, 375 × 812, 390 × 844: kein
+Scrollen. Offen bleibt: unter etwa 630 px sichtbarer Höhe (z. B. iPhone SE im Browser, 360 × 560)
+scrollt es weiter; Words und Send **ohne** Tastenfeld (unter 13 Zeichen: 754–787 px bzw. 650–663 px)
+sowie Wachstumsmeldung und Sitzungsende (780–817 px) passen bei diesen Höhen weiterhin nicht.
+
 Gemessen headless (System-Chrome, Viewport-Emulation) über 35 App-Zustände × 5 Viewports und
 18 Lese-Seiten × 6 Viewports. Horizontales Überlaufen gibt es nach R6 nirgends mehr. Offen ist,
 was eine Gestaltungs- oder Produktentscheidung braucht:
