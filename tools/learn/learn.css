@@ -165,7 +165,10 @@ body {
 .page-footer a {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   min-height: 44px;
+  /* Auch die Breite 44 px: "Learn" war 33, "English" 42 px breit. */
+  min-width: 44px;
 }
 
 .masthead-app:hover,
@@ -267,6 +270,10 @@ address {
 .table-wrap {
   margin: 0 0 24px;
   overflow-x: auto;
+  /* Containing Block fuer die absolut positionierten `.visually-hidden`-
+   * Spans der Muster-Zellen: ohne ihn ragen sie aus dem Scrollkasten heraus
+   * und weiten die Seite (341 statt 320 px auf der Alphabet-Seite). */
+  position: relative;
 }
 
 table {
