@@ -1,3 +1,49 @@
+# Übergabe — Stand nach Runde R5 (Startseite nach außen, Menü im Erstbesuch)
+
+**Stand:** Branch `claude/startseite-meta-mobile-menue` (von `main` = `da74fd6`). Owner-Auftrag
+17.11.2026 („verbessere das Projekt“, ergebnisoffen; beide Pakete einzeln freigegeben).
+Nicht deployt, nicht gepusht.
+
+**Paket 1 — was Suchmaschinen, Link-Vorschauen und der Cache von der Startseite sehen:**
+- `index.html`: Titel „Morse Lab — Learn Morse code by ear“, Beschreibung, Canonical,
+  Open-Graph-Angaben mit `og-morse-lab.png`, JSON-LD (`WebApplication`), `<noscript>`-Rückfall.
+  Vorher trug die Startseite nur „Morse Lab“ als Titel; die Learn-Seiten hatten das alles schon.
+- Schrift-Preload für Newsreader und Plex 400 (die zwei Schnitte des ersten Bildschirms).
+- `public/robots.txt` (vorher lieferte die Adresse die App-Seite als HTML) mit Sitemap-Verweis.
+- `public/_headers`: `/assets/*` ein Jahr `immutable` (Pages gab den Hash-Dateien vier Stunden);
+  `X-Robots-Tag: noindex` für `*.pages.dev`, damit nur morse-lab.com indexiert wird.
+- `tools/site/verify.mjs` (`npm run verify:site`, Teil von `npm run build`) prüft das alles an
+  der gebauten Datei. Bundle-Delta: JS und CSS unverändert, `index.html` 3,1 → 6,4 kB.
+
+**Paket 2 — Kopfzeile mit Menü im Intro und im Lernlauf (unter 900 px):**
+- `ui/App.tsx`: `headerShown` gilt jetzt auch in Einführung und Lernlauf; beide stehen in der
+  Render-Kette nur noch vorn, solange der Ort „practice“ ist. Vorher waren Impressum,
+  Datenschutz, Settings und About am Handy erst nach Intro und sechs Karten erreichbar.
+- **Mitbehoben (bestand schon):** ab 900 px waren die Einträge der Schiene während Intro und
+  Lernlauf tot — „Settings“ wurde markiert, das Intro blieb stehen.
+- Der Lernlauf läuft nach einem Ausflug ins Menü an derselben Stelle weiter, verbucht wird
+  nichts. Das Intro beginnt wieder bei Bildschirm 1.
+- Geprüft im Produktions-Build bei 375 × 812 und 360 × 640: kein Scrollen, Fokus nach
+  „Close menu“ auf dem Menü-Knopf. Die Kopfzeile kostet 68 px.
+
+**Fable-Abnahme offen:**
+- Wortlaut: Titel der Startseite (aus Manifest- und Intro-Zeile zusammengesetzt) · noscript-Satz
+  „The trainer needs JavaScript to play sound. The guides work without it.“
+- Kopfzeile im Erstbesuch überhaupt (der alte Kommentar nannte sie dort „Ablenkung“).
+- **Amber zweimal:** der Knauf der Marke in der Kopfzeile steht jetzt neben dem amber Knopf der
+  Lernkarte (§2.9). Auf anderen Seiten mit Kopfzeile gibt es das schon.
+- **Enge bei 360 × 640:** auf Lernkarte 2 bleiben 8 px Luft, die Eyebrow-Zeile sitzt fast auf
+  dem Buchstaben.
+- „Learn the sounds“ mitten im Einführungslauf zeigt den laufenden Lauf weiter (ohne Skip),
+  nicht die Zeichenauswahl.
+
+**Nicht geprüft:** echte Geräte, Safari, Firefox; die neuen Header erst nach einem Deploy
+(`curl -I https://morse-lab.com/assets/…`). Im eingebetteten Vorschau-Browser meldete die
+Konsole beim Registrieren des Service Workers „error fetching the script“ — `sw.js` ist
+unverändert, wird ausgeliefert und ist gültig; in einem normalen Browser gegenprüfen.
+
+---
+
 # Übergabe — Stand nach Runde R4 (Themes: PR #8 verworfen)
 
 **Stand:** `main`. Owner-Delegation 10.10.2026 („entscheide du selbst“) an Claude: PR #8

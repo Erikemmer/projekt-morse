@@ -1,0 +1,8 @@
+# Alles darf gelesen werden; die Rechtsseiten tragen ihr noindex selbst
+# (tools/learn/pages.mjs). /api/ sind die Functions -- dort gibt es nichts
+# zu indexieren.
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://morse-lab.com/sitemap.xml

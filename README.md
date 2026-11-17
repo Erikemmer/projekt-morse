@@ -73,6 +73,7 @@ npm run dev      # Entwicklungsserver (nur die App, ohne /learn/)
 npm test         # Engine- und Generator-Tests (Vitest)
 npm run build    # Typprüfung + Produktionsbuild + Learn-Seiten
 npm run preview  # dist/ ausliefern -- so ist auch /learn/ zu sehen
+npm run verify:site  # Head-Tags der Startseite, robots.txt, _headers (läuft im Build mit)
 ```
 
 Der Learn-Bereich ist statisches HTML und entsteht erst im Build. Wer nur an ihm

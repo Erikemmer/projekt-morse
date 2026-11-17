@@ -1,0 +1,14 @@
+# Cloudflare Pages -- Antwort-Header fuer statische Dateien.
+# (Gilt nicht fuer die Functions unter /api/; die setzen ihre Header selbst.)
+#
+# /assets/ kommt von Vite mit Inhalts-Hash im Namen: derselbe Name heisst
+# derselbe Inhalt, also darf der Browser die Datei ein Jahr behalten, ohne
+# nachzufragen. Ohne diese Zeile gibt Pages ihr vier Stunden.
+# /learn/assets/ steht bewusst NICHT hier -- diese Dateien haben keinen Hash.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Die Seite ist auch unter projekt-morse.pages.dev (und je Deploy unter einer
+# Vorschau-Adresse) erreichbar. Indexiert werden soll nur morse-lab.com.
+https://:project.pages.dev/*
+  X-Robots-Tag: noindex
