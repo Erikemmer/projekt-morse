@@ -55,9 +55,87 @@
       })();
     </script>
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-    <title>Morse Lab</title>
+    <!--
+      Was Suchmaschinen und Link-Vorschauen von der Startseite sehen. Die
+      Learn-Seiten tragen das seit jeher (tools/learn/pages.mjs), die
+      Startseite hatte nur den Titel. Die Beschreibung ist wortgleich die aus
+      public/manifest.webmanifest, das Bild dasselbe wie im Learn-Bereich --
+      kein neuer Wortlaut. `tools/site/verify.mjs` prueft die gebaute Datei.
+    -->
+    <title>Morse Lab — Learn Morse code by ear</title>
+    <meta
+      name="description"
+      content="Learn Morse code by ear. Hear a character, answer, get feedback."
+    />
+    <link rel="canonical" href="https://morse-lab.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Morse Lab" />
+    <meta property="og:title" content="Morse Lab — Learn Morse code by ear" />
+    <meta
+      property="og:description"
+      content="Learn Morse code by ear. Hear a character, answer, get feedback."
+    />
+    <meta property="og:url" content="https://morse-lab.com/" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="https://morse-lab.com/og-morse-lab.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Morse Lab" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Morse Lab",
+        "url": "https://morse-lab.com/",
+        "description": "Learn Morse code by ear. Hear a character, answer, get feedback.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript and Web Audio.",
+        "inLanguage": "en",
+        "isAccessibleForFree": true,
+        "image": "https://morse-lab.com/og-morse-lab.png"
+      }
+    </script>
+    <!--
+      Die zwei Schriften des ersten Bildschirms vorladen: ohne das entdeckt
+      der Browser sie erst, wenn das Stylesheet da ist, und der Text springt
+      beim ersten Aufruf von der Ersatzschrift um. Vite haengt denselben Hash
+      an wie an die url() im Stylesheet -- es bleibt eine Datei, ein Abruf.
+      `crossorigin` ist Pflicht: Schriften werden immer im CORS-Modus geholt,
+      ohne das Attribut laedt der Browser sie doppelt.
+    -->
+    <link
+      rel="preload"
+      href="/src/fonts/newsreader-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/src/fonts/ibm-plex-sans-latin-400-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
   </head>
   <body>
+    <!--
+      Ohne JavaScript bliebe die Seite leer. Der Absatz sagt, was hier ist
+      und wo es ohne Skript etwas zu lesen gibt. Wortlaut-Entwurf fuer den
+      zweiten Satz, Fable-Abnahme offen; der erste ist die Manifest-Zeile.
+    -->
+    <noscript>
+      <div style="max-width: 34rem; margin: 0 auto; padding: 48px 24px">
+        <h1>Morse Lab</h1>
+        <p>Learn Morse code by ear. Hear a character, answer, get feedback.</p>
+        <p>
+          The trainer needs JavaScript to play sound. The
+          <a href="/learn/">guides</a> work without it.
+        </p>
+      </div>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

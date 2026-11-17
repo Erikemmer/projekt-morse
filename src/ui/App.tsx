@@ -1262,9 +1262,8 @@ export function App() {
   const streak = streakStanding(session.progress.streak, session.today);
 
   /**
-   * Der Start-Screen: Runde 1, noch nichts gespielt. Nur hier (und auf den
-   * Screens des Gehäuses) steht die Kopfzeile mit dem Menü — mitten in einer
-   * Sitzung wäre sie eine Ablenkung, im Lernmodus und in der Einführung auch.
+   * Der Start-Screen: Runde 1, noch nichts gespielt. Die Kopfzeile regelt
+   * `headerShown` weiter unten.
    */
   const onStartScreen =
     session.progress.introSeen &&
@@ -1301,10 +1300,19 @@ export function App() {
    * es sonst 20 Runden lang keinen Weg zu Lautstaerke und Menue, und die
    * Buehne sprang beim ersten Play um die Hoehe der Kopfzeile nach oben.
    */
+  /*
+   * Einfuehrung und Lernlauf tragen die Kopfzeile seit dem Erstbesuch-Befund
+   * (Owner-Freigabe): unter 900 px gab es dort sonst keinen Weg zu Impressum,
+   * Datenschutz, Settings, About und Guides, bis Intro und sechs Lernkarten
+   * hinter einem lagen. Ab 900 px blendet CSS sie aus, die Schiene reicht.
+   */
   const practiceMasthead =
-    view === 'practice' && !reviewing && learn === null && session.phase !== 'finished';
-  const headerShown =
-    !menuOpen && session.progress.introSeen && learn === null && !practiceMasthead;
+    session.progress.introSeen &&
+    view === 'practice' &&
+    !reviewing &&
+    learn === null &&
+    session.phase !== 'finished';
+  const headerShown = !menuOpen && !practiceMasthead;
 
   /*
    * Die Randspalte ab 1280 px (Teil A.3) -- dieselben drei Zahlen wie die
@@ -1353,9 +1361,17 @@ export function App() {
           onNavigate={navigateTo}
           onDismiss={dismissMenu}
         />
-      ) : !session.progress.introSeen ? (
+      ) : /*
+          Einfuehrung und Lernlauf stehen nur vorne, solange der Ort 'practice'
+          ist: seit beide die Kopfzeile tragen (und die Schiene ab 900 px ohnehin
+          daneben steht), fuehrt das Menue von hier zu Settings, About & Co. --
+          stuenden sie unbedingt vor den Orten, waeren diese Eintraege tot. Der
+          Lernlauf bleibt dabei in `learn` liegen und geht beim Zurueckkehren
+          unveraendert weiter; die Einfuehrung beginnt wieder bei Bildschirm 1.
+        */
+        !session.progress.introSeen && view === 'practice' && !reviewing ? (
         <Intro onDone={finishIntro} />
-      ) : learn !== null ? (
+      ) : learn !== null && view === 'practice' ? (
         <Learn
           state={learn}
           playing={tonePlaying}
