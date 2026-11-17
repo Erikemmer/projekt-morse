@@ -1174,6 +1174,9 @@ button:disabled {
 .quiet-link {
   padding: 0.5rem 0;
   min-height: var(--tap);
+  /* Auch in der Breite 44 px (1.1 §6): "Done" im Send-Modus war 31 px breit.
+   * Der Text bleibt mittig, laengere Beschriftungen aendern sich nicht. */
+  min-width: var(--tap);
   font-size: 13px;
   color: var(--gray);
   background: transparent;
@@ -1862,6 +1865,19 @@ a.menu-item {
   background: transparent;
   border: 1px solid var(--edge);
   border-radius: var(--radius);
+}
+
+/*
+ * Die Tippflaeche reicht trotzdem auf 44 px (`--tap`): unsichtbar 8 px ueber
+ * und unter die Taste. `inset` misst ab der Innenkante des 1-px-Rands, daher
+ * 26 statt 28. Zwischen zwei Reihen liegen 4 px Abstand und die Gruppenzeile
+ * ("Light"/"Dark"), die Flaechen beruehren sich also nicht. Am Bild aendert
+ * sich nichts.
+ */
+.theme-option::after {
+  content: '';
+  position: absolute;
+  inset: calc((var(--tap) - 26px) / -2) 0;
 }
 
 .theme-option[data-full] {

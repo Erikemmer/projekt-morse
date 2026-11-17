@@ -328,7 +328,9 @@ function markPatterns(tokens, inCell = false) {
   }
 }
 
-function createMarked() {
+const TABLE_LABEL = { en: 'Table, scrolls sideways', de: 'Tabelle, seitlich scrollbar' };
+
+function createMarked(lang = 'en') {
   const renderer = new Renderer();
 
   /*
@@ -346,7 +348,7 @@ function createMarked() {
       .map((row) => this.tablerow({ text: row.map((cell) => this.tablecell(cell)).join('') }))
       .join('');
     const body = rows ? `<tbody>${rows}</tbody>` : '';
-    return `<div class="table-wrap">\n<table>\n${head}${body}</table>\n</div>\n`;
+    return `<div class="table-wrap" role="region" tabindex="0" aria-label="${TABLE_LABEL[lang] ?? TABLE_LABEL.en}">\n<table>\n${head}${body}</table>\n</div>\n`;
   };
 
   return new Marked({ renderer, gfm: true });
@@ -361,7 +363,7 @@ function createMarked() {
  * entstehen können.
  */
 export function renderArticle(body, name = 'unbenannt', lang = 'en') {
-  const marked = createMarked();
+  const marked = createMarked(lang);
   const tokens = marked.lexer(body);
   markPatterns(tokens);
   const blocks = tokens.filter((token) => token.type !== 'space');

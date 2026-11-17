@@ -619,3 +619,29 @@ Runde nicht nachgemessen (PR #5: 844/720/900).
 **Status: behoben** (10.10.2026, übernommen aus PR #5, Runde P29). Seit die erste Karte
 keinen Check hat (PR #4), trug vor dem ersten Ton nichts den Fokus-Ref; der Play-Kreis der
 Karte trägt ihn jetzt, solange „Try it“/„Next sound“ fehlt. Betraf PR #4 ebenso.
+
+## 24. Handy-Durchsicht (17.11.2026, Runde R6) — was offen blieb
+
+Gemessen headless (System-Chrome, Viewport-Emulation) über 35 App-Zustände × 5 Viewports und
+18 Lese-Seiten × 6 Viewports. Horizontales Überlaufen gibt es nach R6 nirgends mehr. Offen ist,
+was eine Gestaltungs- oder Produktentscheidung braucht:
+
+- **(a) Tastenfeld-Ansichten scrollen bei 375 × 812.** Auflösung mit vollem Tastenfeld 835 px,
+  Words mit Tastenfeld 824–834 px — 12 bis 23 px zu viel. Bei 390 × 844 passt alles; darauf sind
+  #7/#9 kalibriert. **Zu bedenken:** die Messung nimmt die volle Bildschirmhöhe an. In Safari
+  und Chrome am Handy nehmen die Browserleisten davon etwa 100–180 px weg; vermutlich scrollen
+  die Tastenfeld-Ansichten deshalb im Browser auf den meisten Telefonen, nur in der
+  installierten App nicht. Nicht auf Geräten nachgemessen. Kleinster Eingriff: unter
+  `max-height: 830px` die Lücke im Tastenfeld 8 → 4 px (spart 24 px).
+- **(b) 360 × 640:** alle Tastenfeld-Ansichten scrollen 95–195 px; „Next character“ liegt auf der
+  Auflösung unter dem Falz. Ohne dichteres Tastenfeld nicht lösbar.
+- **(c) Querformat (844 × 390):** unter 900 px gilt das Hochkant-Layout, fast jede Ansicht ist
+  ein- bis zweimal so hoch wie der Bildschirm. Eigenes Quer-Layout oder bewusst hinnehmen.
+- **(d) Settings scrollt wieder** (946 px bei 390 × 844) — seit dem Theme-Picker (#111). #22
+  nennt es behoben; das stimmt nicht mehr.
+- **(e) „Learn the sounds“ bei 360 × 640:** 708 px, „Back to practice“ unter dem Falz.
+- **(f) Sitzungsende bei 360 × 640:** 789–817 px, der Knopf liegt unter dem Falz.
+- **(g) Guides-Hub:** die sechs Linkzeilen sind 22 px hoch (Tippziel). Tabellenköpfe 11 px.
+  Kein sichtbarer Hinweis, dass die Alphabet-Tabellen seitlich scrollen.
+- **(h) Kommentar an `.theme-option`** nennt 32 px, der Code hat 28.
+

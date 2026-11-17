@@ -1,3 +1,31 @@
+# Übergabe — Stand nach Runde R6 (Handy-Durchsicht)
+
+**Stand:** Branch `claude/handy-durchsicht` (von `main` = `d4f9c29`, R5 live). Owner-Auftrag
+17.11.2026. Nicht deployt.
+
+**Behoben (alles nachgemessen):**
+- Alphabet-Seiten (EN/DE) liefen am Handy seitlich über (341–380 px bei 320–375 px Breite):
+  die `.visually-hidden`-Spans der Muster-Zellen entkamen dem Scrollkasten. `.table-wrap` ist
+  jetzt ihr Containing Block (`tools/learn/learn.css`).
+- Tabellenrahmen per Tastatur erreichbar (`role="region"`, `tabindex="0"`, `aria-label`,
+  `tools/learn/pages.mjs`).
+- Tippziele auf 44 px: Fußzeilen-Links der Lese-Seiten, „Done“ im Send-Modus (`.quiet-action`),
+  Theme-Tasten in Settings (unsichtbar erweiterte Tippfläche, Bild unverändert; gilt auch ab 900 px).
+- Geklärt: der Service Worker registriert sich live fehlerfrei, die App lädt offline samt
+  Schriften. Die Konsolenmeldung aus R5 kam vom eingebetteten Vorschau-Browser.
+
+**Fable-Abnahme offen:** `aria-label` der Tabellen — „Table, scrolls sideways“ /
+„Tabelle, seitlich scrollbar“.
+
+**Offen, braucht Entscheidung:** FINDINGS #24 (a)–(h). Am wichtigsten ist (a): die
+Tastenfeld-Ansichten passen bei 375 × 812 knapp nicht und im Handy-Browser vermutlich auf den
+meisten Telefonen nicht.
+
+**Nicht geprüft:** echte Geräte, Safari/iOS, Safe-Area, dynamische Browserleisten, Screenreader,
+Account im angemeldeten Zustand; dunkle Themes nur als Stichprobe.
+
+---
+
 # Übergabe — Stand nach Runde R5 (Startseite nach außen, Menü im Erstbesuch)
 
 **Stand:** Branch `claude/startseite-meta-mobile-menue` (von `main` = `da74fd6`). Owner-Auftrag

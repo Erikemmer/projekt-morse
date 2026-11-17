@@ -151,7 +151,7 @@ describe('renderArticle', () => {
 
   it('gibt einer Tabelle ohne Kopfzeile kein leeres thead', () => {
     const { html } = renderArticle('# Titel\n\n| | |\n|---|---|\n| **A** ·− | **B** −··· |\n', 'x');
-    expect(html).toContain('<div class="table-wrap">');
+    expect(html).toContain('<div class="table-wrap" role="region" tabindex="0" aria-label="Table, scrolls sideways">');
     expect(html).not.toContain('<thead>');
     // Seit B2 steht das Muster als aria-hidden-Zeichen plus vorgelesene Form da.
     expect(html).toContain('<strong>A</strong><span class="morse-pattern" aria-hidden="true"> ·−</span>');
