@@ -2622,3 +2622,106 @@ a.menu-item {
     min-height: calc(13px * 1.65);
   }
 }
+
+/* --- Das Tastenfeld auf niedrigen Bildschirmen (Owner-Entscheidung 17.11.2026) ---
+ *
+ * Mit dem festen Tastenfeld (sieben Reihen) ist die Aufloesung 835 px hoch.
+ * Das passte bei 390 x 844, bei 375 x 812 um 23 px nicht -- und im
+ * Handy-Browser, wo die Leisten 100-180 px der Hoehe nehmen, auf fast keinem
+ * Telefon: "Next character" lag unter dem Falz (FINDINGS #24a/b).
+ *
+ * Zwei Stufen, nur unter 900 px Breite und nur fuer Ansichten **mit**
+ * Tastenfeld (`:has(.keypad)`) -- das Dreier-Gitter passt ohnehin, und hohe
+ * Telefone behalten das bisherige Bild. Browser ohne `:has` zeigen den alten
+ * Stand: es scrollt, nichts bricht.
+ *
+ * Verdichtet werden zuerst die Abstaende, erst dann die Tasten. Positionen,
+ * Reihenfolge und Zahl der Tasten bleiben -- Ortsfestigkeit ist der Zweck des
+ * Tastenfelds (ui/keypad.ts).
+ */
+
+/* Stufe 1: es fehlen nur wenige Pixel (375 x 812, 390 x 844 mit Kopfzeile). */
+@media (max-width: 899px) and (max-height: 830px) {
+  .shell:has(.keypad) .keypad {
+    margin-top: var(--space-2);
+    gap: 4px;
+  }
+}
+
+/*
+ * Stufe 2: Telefon im Browser oder kleines Telefon. Ziel: die Aufloesung der
+ * Uebung passt in 635 px (iPhone X/mini in Safari).
+ *
+ * Die Tasten sind hier 40 px hoch. Die Tippflaeche bleibt 44 px (`--tap`):
+ * `::after` reicht in die 4-px-Luecke darueber und darunter, die Flaechen
+ * zweier Reihen schliessen also lueckenlos aneinander an (nachgemessen).
+ */
+@media (max-width: 899px) and (max-height: 720px) {
+  .shell:has(.keypad) {
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+  }
+
+  .shell:has(.keypad) .app-header {
+    margin-bottom: var(--space-1);
+  }
+
+  .shell:has(.keypad) .stage {
+    gap: 12px;
+  }
+
+  .shell:has(.keypad) .reveal {
+    font-size: 48px;
+  }
+
+  .shell:has(.keypad) .keypad .answer {
+    height: 40px;
+    min-height: 0;
+  }
+
+  .shell:has(.keypad) .keypad .answer::after {
+    content: '';
+    position: absolute;
+    inset: -3px -1px;
+  }
+
+  .shell:has(.keypad) .actions {
+    margin-top: var(--space-1);
+  }
+
+  .shell:has(.keypad) .button-next {
+    height: 48px;
+  }
+
+  .shell:has(.keypad) .footer {
+    margin-top: 12px;
+  }
+
+  /*
+   * Der Wort-Modus traegt zusaetzlich Kopfzeile und Antwortzeile (bzw. die
+   * Aufloesung mit zweizeiliger Rueckmeldung) und war damit noch 25-35 px zu
+   * hoch. Erkannt wird er an Antwortzeile oder Aufloesung. Hier -- und nur
+   * hier -- wird auch der Play-Kreis kleiner: 72 statt 88 px, weiter deutlich
+   * ueber `--tap`.
+   */
+  .shell:has(.keypad):has(.answer-line, .solution) .stage {
+    gap: var(--space-1);
+  }
+
+  .shell:has(.keypad):has(.answer-line, .solution) .play {
+    width: 72px;
+    height: 72px;
+  }
+
+  .shell:has(.keypad):has(.answer-line, .solution) .question {
+    font-size: 22px;
+  }
+
+  .shell:has(.keypad):has(.answer-line, .solution) .keypad {
+    margin-top: var(--space-1);
+  }
+
+  .shell:has(.keypad) .answer-line {
+    margin-top: var(--space-1);
+  }
+}

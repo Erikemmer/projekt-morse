@@ -1,3 +1,30 @@
+# Übergabe — Stand nach Runde R7 (Tastenfeld dichter)
+
+**Stand:** Branch `claude/tastenfeld-dichter` (von `main` = `ef79f05`, R6 live). Owner-Entscheidung
+17.11.2026: „mach das Tastenfeld dichter, dass es passt“. Nicht deployt.
+
+**Umgesetzt** (nur `src/styles.css`, Block am Dateiende; nur unter 900 px Breite und nur für
+Ansichten mit Tastenfeld, `:has(.keypad)`):
+- **Stufe 1, Höhe ≤ 830 px:** Lücke im Tastenfeld 8 → 4 px, Abstand darüber 24 → 16 px.
+  Behebt 375 × 812 (835 → 803 px).
+- **Stufe 2, Höhe ≤ 720 px** (Telefon im Browser, kleine Telefone): Tasten 46 → 40 px hoch
+  (Tippfläche bleibt 44 px über `::after`), Bühnenabstände 32 → 12 px, Auflösungsbuchstabe
+  64 → 48 px, „Next“ 64 → 48 px, Schalenrand 32/24 → 16 px. Im Wort-Modus zusätzlich Play-Kreis
+  88 → 72 px und Frage 26 → 22 px.
+- Positionen, Reihenfolge und Zahl der Tasten sind unverändert. Ab 900 px und auf hohen
+  Telefonen (über 830 px) ändert sich nichts.
+
+**Gemessen** (headless Chrome, drei Läufe): Übung (Start, Ton, Antwort, Auflösung), Words mit
+Tastenfeld und „Learn the sounds“ passen bei 360 × 640, 375 × 635, 390 × 664, 375 × 812 und
+390 × 844 ohne Scrollen. Vorher: 735–835 px. CSS +1,1 kB (gzip +0,2 kB).
+
+**Fable-Abnahme offen:** das dichtere Bild überhaupt (Ruling #98 nannte 46 px „eine Höhe für
+alle Modi“ — unter 720 px Höhe gilt jetzt 40 px), kleinerer Play-Kreis im Wort-Modus.
+
+**Offen:** siehe Nachtrag in FINDINGS #24. **Nicht geprüft:** echte Geräte, Safari/iOS.
+
+---
+
 # Übergabe — Stand nach Runde R6 (Handy-Durchsicht)
 
 **Stand:** Branch `claude/handy-durchsicht` (von `main` = `d4f9c29`, R5 live). Owner-Auftrag
