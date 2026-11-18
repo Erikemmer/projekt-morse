@@ -629,6 +629,12 @@ Scrollen. Offen bleibt: unter etwa 630 px sichtbarer Höhe (z. B. iPhone SE im B
 scrollt es weiter; Words und Send **ohne** Tastenfeld (unter 13 Zeichen: 754–787 px bzw. 650–663 px)
 sowie Wachstumsmeldung und Sitzungsende (780–817 px) passen bei diesen Höhen weiterhin nicht.
 
+**Nachtrag Runde R8 (18.11.2026, Owner-Entscheidung „Ansichten ohne Tastenfeld auch passend“):**
+Words und Send ohne Tastenfeld, Wachstumsmeldung und Sitzungsende passen jetzt bei 360 × 640,
+375 × 635 und 390 × 664 — zweiter Verdichtungsblock am Ende von `styles.css`, nur bis 720 px
+Höhe. Offen bleibt: unter etwa 630 px sichtbarer Höhe; Progress, Settings und About scrollen als
+Leseseiten weiter (siehe (c)).
+
 Gemessen headless (System-Chrome, Viewport-Emulation) über 35 App-Zustände × 5 Viewports und
 18 Lese-Seiten × 6 Viewports. Horizontales Überlaufen gibt es nach R6 nirgends mehr. Offen ist,
 was eine Gestaltungs- oder Produktentscheidung braucht:
