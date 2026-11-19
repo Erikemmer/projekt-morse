@@ -1,3 +1,31 @@
+# Übergabe — Stand nach Runde R8 (Ansichten ohne Tastenfeld)
+
+**Stand:** Branch `claude/ansichten-ohne-tastenfeld` (von `main` = `7915f9d`, R7 live).
+Owner-Entscheidung 18.11.2026: „mach die Ansichten ohne Tastenfeld auch passend“. Nicht deployt.
+
+**Umgesetzt** (nur `src/styles.css`, zweiter Block am Dateiende; nur unter 900 px Breite und
+bis 720 px Höhe, nur für Ansichten ohne Tastenfeld, erkannt am eigenen Inhalt):
+- **Words (unter 13 Zeichen), Wachstumsmeldung:** Schalenrand 32/24 → 16 px, Bühnenabstände
+  32 → 12 px, Antworttasten 64 → 52 px, Lücken 12 → 8 px, „Next“ 64 → 48 px; in Words Play-Kreis
+  88 → 72 px, in der Wachstumsmeldung Auflösungsbuchstabe 64 → 48 px.
+- **Sitzungsende (Übung und Speed):** Schalenrand und Bühnenabstände wie oben, sonst nichts.
+- **Send:** nur Schalenrand und Kopfabstand — es fehlten 15–30 px.
+- Die Übung mit Dreier-Gitter (passte schon) und alles über 720 px Höhe bleiben unverändert.
+
+**Gemessen** (headless Chrome): Words (bereit, Eingabe, Auflösung), Send (beide Wege),
+Wachstumsmeldung und beide Sitzungsenden passen bei 360 × 640, 375 × 635, 390 × 664, 375 × 812
+und 390 × 844 ohne Scrollen. Vorher: 650–817 px. `practice-right-13` scheitert im Messskript bei
+360 × 640 und 375 × 812 an „outcome not reached“ — schon vor der Änderung, ein Skript-Artefakt.
+
+**Fable-Abnahme offen:** das dichtere Bild dieser Ansichten (Antworttasten 52 statt 64 px,
+engeres Sitzungsende).
+
+**Offen:** Progress, Settings und About scrollen weiter (lange Leseseiten, bewusst nicht
+angefasst); unter etwa 630 px sichtbarer Höhe scrollt es weiter. **Nicht geprüft:** echte
+Geräte, Safari/iOS.
+
+---
+
 # Übergabe — Stand nach Runde R7 (Tastenfeld dichter)
 
 **Stand:** Branch `claude/tastenfeld-dichter` (von `main` = `ef79f05`, R6 live). Owner-Entscheidung
